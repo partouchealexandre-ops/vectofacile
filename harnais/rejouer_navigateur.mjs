@@ -20,6 +20,25 @@
  * genre d'endroit ou deux resultats divergent sans que personne ne le voie.
  */
 
+/**
+ * Ce harnais demande Node 20 ou plus, parce que Playwright le demande. Sur une
+ * version anterieure il s'arretait par un plantage brut, ce qui est le pire des
+ * comportements : celui qui lance le harnais ne sait pas s'il a casse quelque
+ * chose ou s'il lui manque un outil, et il cesse de le lancer. Un controle
+ * SAUTE doit le dire fort et ne pas se faire passer pour un echec.
+ */
+const versionNode = Number(process.versions.node.split('.')[0]);
+if (versionNode < 20) {
+  console.log('');
+  console.log('  HARNAIS DE BOUT EN BOUT : SAUTE, pas reussi.');
+  console.log(`  Il demande Node 20 ou plus, cette machine est en Node ${process.versions.node}.`);
+  console.log('  Netlify construit en Node 22, la production n'
+    + "'est donc pas concernee : c'est la verification LOCALE qui manque.");
+  console.log('  Pour l\'avoir : installer Node 22, puis relancer npm ci.');
+  console.log('');
+  process.exit(0);
+}
+
 import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';

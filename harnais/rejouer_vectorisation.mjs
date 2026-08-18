@@ -36,7 +36,23 @@ import { versPdf } from '../src/vectorisation/pdf.js';
 import { preparerVectorisation } from '../src/vectorisation/options.js';
 
 const require = createRequire(import.meta.url);
-const vtracer = require('@visioncortex/vtracer');
+
+/**
+ * Meme principe que le harnais de bout en bout : on dit ce qui manque et
+ * comment l'obtenir, on ne deroule pas une pile d'appels a la figure de celui
+ * qui a simplement oublie d'installer les dependances.
+ */
+let vtracer;
+try {
+  vtracer = require('@visioncortex/vtracer');
+} catch {
+  console.log('');
+  console.log('  HARNAIS DE LA CHAINE DE VECTORISATION : SAUTE, pas reussi.');
+  console.log('  Le vectoriseur n\'est pas installe dans ce dossier.');
+  console.log('  Pour l\'avoir : npm ci');
+  console.log('');
+  process.exit(0);
+}
 
 const ICI = path.dirname(fileURLToPath(import.meta.url));
 const IMAGES = path.join(ICI, 'corpus_synthetique', 'images');

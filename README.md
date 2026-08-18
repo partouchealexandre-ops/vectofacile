@@ -173,6 +173,25 @@ Aucune ne doit se retrouver dans `seuils.json`, et aucune valeur de
 
 ---
 
+## Ce qu'il faut pour tout faire tourner en local
+
+| Outil | Sert a | Sans lui |
+|---|---|---|
+| Node 22 | tout, et c'est la version que Netlify utilise | le harnais de bout en bout est SAUTE : Playwright demande Node 20 au minimum |
+| Python 3 | generer le corpus synthetique | plus de corpus, donc plus aucun harnais |
+| Ghostscript | comparer les rendus EPS et PDF | le harnais de vectorisation tourne, mais ses controles de rendu sont SAUTES |
+
+Sur macOS : `brew install node@22 ghostscript`.
+
+**Un controle saute n'est pas un controle reussi**, et les harnais le disent en
+toutes lettres plutot que de passer au vert en silence. C'est la seule raison
+pour laquelle ils s'autorisent a sortir sans erreur quand un outil manque : un
+harnais qui plante au lieu d'expliquer est un harnais qu'on cesse de lancer.
+
+La production, elle, ne depend d'aucun de ces outils. Netlify construit en
+Node 22 et ne lance aucun harnais : ils tournent en local et, plus tard, en
+integration continue.
+
 ## Commandes
 
 ```
