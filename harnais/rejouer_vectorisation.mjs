@@ -160,6 +160,20 @@ for (const cas of verite.cas) {
   const image = { largeur: cas.largeur, hauteur: cas.hauteur, donnees };
   const mesures = mesurer(image);
   const prepare = preparerVectorisation(image, mesures);
+  const refusAttendu = cas.vectorisation === 'refusee';
+
+  if (Boolean(prepare.refus) !== refusAttendu) {
+    console.log(
+      `  ECHEC ${cas.nom.padEnd(20)} vectorisation ${prepare.refus ? 'refusee' : 'acceptee'}, `
+      + `${refusAttendu ? 'refus' : 'acceptation'} attendu`
+    );
+    echecs++;
+    continue;
+  }
+  if (prepare.refus) {
+    console.log(`  ok    ${cas.nom.padEnd(20)} refusee a raison : ${prepare.refus.motif}`);
+    continue;
+  }
 
   let svg;
   try {

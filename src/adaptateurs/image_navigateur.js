@@ -18,8 +18,21 @@ export const LARGEUR_MAXIMALE = 2000;
 export class FichierNonSupporte extends Error {}
 
 const TYPES_ADMIS = new Set([
-  'image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/bmp', 'image/svg+xml',
+  'image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/bmp',
 ]);
+
+/**
+ * Le SVG est traite a part, et pas par oubli.
+ *
+ * Il figurait dans les types admis, mais createImageBitmap le refuse dans
+ * Chromium : le visiteur recevait "ce fichier ne s'ouvre pas comme une image,
+ * il est peut etre corrompu". C'est un mensonge, son fichier va tres bien, et
+ * accuser le fichier du client est la faute la plus couteuse que puisse
+ * commettre un outil de diagnostic.
+ *
+ * La bonne reponse tient en une phrase : un SVG est deja vectoriel.
+ */
+const TYPE_SVG = 'image/svg+xml';
 
 /**
  * @param {File|Blob} fichier
@@ -27,6 +40,14 @@ const TYPES_ADMIS = new Set([
  */
 export async function lireImage(fichier, options = {}) {
   const largeurMaximale = options.largeurMaximale ?? LARGEUR_MAXIMALE;
+
+  if (fichier.type === TYPE_SVG || /\.svg$/i.test(fichier.name || '')) {
+    throw new FichierNonSupporte(
+      "votre fichier est deja vectoriel : un SVG n'a rien a se faire vectoriser. "
+      + "Le diagnostic de marquabilite sur fichier vectoriel arrivera, il demande "
+      + "un autre chemin de lecture que celui d'une image."
+    );
+  }
 
   if (fichier.type && !TYPES_ADMIS.has(fichier.type)) {
     throw new FichierNonSupporte(

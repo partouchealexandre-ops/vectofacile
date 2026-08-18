@@ -581,6 +581,10 @@ export function mesurer(image, options = {}) {
       pixelsStables: m2.pixelsStables,
       palette: m2.palette,
       pixelsHorsPalette: m2.pixelsHorsPalette,
+      // Part de l'encre qui ne correspond a AUCUNE couleur retenue. C'est le
+      // discriminant le plus franc entre un dessin et une photo : nul ou quasi
+      // nul sur tout logo, meme tres compresse ; 0,86 sur une image de bruit.
+      partHorsPalette: m2.pixelsEncre ? m2.pixelsHorsPalette / m2.pixelsEncre : 0,
       pixelsEncre: m2.pixelsEncre,
     },
     m3Halo: {

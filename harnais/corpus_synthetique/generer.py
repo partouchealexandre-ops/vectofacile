@@ -54,7 +54,7 @@ NEUF_COULEURS = [
 cas = []
 
 
-def enregistrer(nom, image, attendus, commentaire, format_apercu="PNG"):
+def enregistrer(nom, image, attendus, commentaire, format_apercu="PNG", vectorisation="attendue"):
     os.makedirs(IMAGES, exist_ok=True)
     rvba = image.convert("RGBA")
     extension = "png" if format_apercu == "PNG" else "jpg"
@@ -76,6 +76,10 @@ def enregistrer(nom, image, attendus, commentaire, format_apercu="PNG"):
         "largeur": rvba.width,
         "hauteur": rvba.height,
         "commentaire": commentaire,
+        # "attendue" ou "refusee". Le harnais de vectorisation verifie les DEUX
+        # sens : qu'un dessin passe, et qu'une photo soit refusee. Un garde-fou
+        # dont on ne teste que le silence n'est pas teste.
+        "vectorisation": vectorisation,
         "attendus": attendus,
     })
 
@@ -246,6 +250,9 @@ enregistrer(
         egal("m2Couleurs.couleursReelles", 9),
         egal("m2Couleurs.couleursBrutes", 9),
         egal("m10IndicesExport.partInterieurVariable", 0),
+        # Le revers du controle de bruit : sur un dessin a aplats francs, la
+        # part hors palette doit etre nulle. Les deux bornes se tiennent.
+        au_plus("m2Couleurs.partHorsPalette", 0.02),
     ],
     "Neuf aplats francs, en PNG. Couleurs reelles et couleurs brutes doivent "
     "coincider : c'est le cas ou le fichier est deja propre.",
@@ -358,6 +365,31 @@ enregistrer(
     "Un degrade rouge vers bleu sur 300 px. Un degrade est LOCALEMENT plat : le "
     "filtre de stabilite ne le voit pas, et c'est pour ce cas precis que la "
     "mesure de variation interne regarde a huit pixels au lieu d'un.",
+)
+
+
+# --------------------------------------------------------- bruit de photo
+
+img = Image.new("RGB", (300, 300), BLANC)
+pixels = img.load()
+alea_bruit = random.Random(180820261)
+for y in range(40, 260):
+    for x in range(40, 260):
+        pixels[x, y] = (alea_bruit.randrange(0, 256),
+                        alea_bruit.randrange(0, 256),
+                        alea_bruit.randrange(0, 256))
+enregistrer(
+    "bruit_photographique", img,
+    [
+        au_moins("m2Couleurs.partHorsPalette", 0.5),
+        au_moins("m2Couleurs.couleursBrutes", 10000),
+    ],
+    "Un carre de bruit pur : aucune teinte n'est majoritaire, donc presque aucun "
+    "pixel ne rejoint une couleur retenue. C'est la signature d'une photo, et "
+    "c'est ce qui distingue un fichier a vectoriser d'un fichier a refuser. Sans "
+    "ce controle, une photo deposee par un visiteur produisait 457 260 formes en "
+    "34 secondes et gelait son onglet.",
+    vectorisation="refusee",
 )
 
 

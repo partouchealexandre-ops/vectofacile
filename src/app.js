@@ -14,7 +14,7 @@
 
 import { lireImage, telecharger, FichierNonSupporte } from './adaptateurs/image_navigateur.js';
 import { mesurer } from './moteur/mesures.js';
-import { preparerVectorisation } from './vectorisation/options.js';
+import { preparerVectorisation, FORMES_MAXIMALES } from './vectorisation/options.js';
 import { construireProgramme, inventaire } from './vectorisation/programme.js';
 import { versEps } from './vectorisation/eps.js';
 import { versPdf } from './vectorisation/pdf.js';
@@ -106,11 +106,18 @@ function afficherVerdictAbsent() {
 async function traiter(fichier) {
   $('erreur').hidden = true;
   $('travail').hidden = false;
+  // L'etape courante est suivie explicitement : quand quelque chose casse chez
+  // un visiteur, savoir A QUEL MOMENT vaut plus que le message d'erreur lui
+  // meme. Le 18/08, un rapport disant seulement "TextDecoder" a coute une heure
+  // de recherche faute de savoir si la lecture, la mesure ou la vectorisation
+  // avait echoue.
+  let etape = 'lecture du fichier';
   $('travail').textContent = 'Lecture du fichier';
 
   try {
     const image = await lireImage(fichier);
 
+    etape = 'mesure';
     $('travail').textContent = 'Mesure';
     const mesures = mesurer(image);
     etat.mesures = mesures;
@@ -118,12 +125,27 @@ async function traiter(fichier) {
     afficherMesures(mesures, image);
     afficherVerdictAbsent();
 
+    // Le refus se decide sur les MESURES, avant de charger le vectoriseur et
+    // avant de lui donner un seul pixel. Un fichier qui ne sera pas vectorise
+    // ne doit pas faire telecharger 650 ko de WebAssembly au visiteur.
+    const prepare = preparerVectorisation(image, mesures);
+    if (prepare.refus) {
+      $('resultat').innerHTML = `
+        <h2>Pas de fichier vectoriel pour celui-ci</h2>
+        <p class="gris">${prepare.refus.texte}</p>`;
+      $('resultat').hidden = false;
+      $('travail').hidden = true;
+      return;
+    }
+
+    etape = 'chargement du vectoriseur';
     $('travail').textContent = 'Chargement du vectoriseur';
     await initialiser(new URL('./vtracer_wasm_bg.wasm', document.baseURI));
 
+    etape = 'vectorisation';
     $('travail').textContent = 'Vectorisation';
-    const prepare = preparerVectorisation(image, mesures);
     const svg = vectorize_rgba(new Uint8Array(prepare.pixels.buffer), image.largeur, image.hauteur, prepare.options);
+    etape = 'lecture des chemins';
     etat.programme = construireProgramme(svg);
     // On n'affiche ni ne livre JAMAIS le SVG brut du vectoriseur : il contient
     // des chemins que la grammaire SVG interdit. Voir vectorisation/svg.js.
@@ -131,6 +153,16 @@ async function traiter(fichier) {
     etat.avertissements = prepare.avertissements;
 
     const inv = inventaire(etat.programme);
+    if (inv.formes > FORMES_MAXIMALES) {
+      $('resultat').innerHTML = `
+        <h2>Pas de fichier vectoriel pour celui-ci</h2>
+        <p class="gris">Le tracé de ce fichier compte ${inv.formes.toLocaleString('fr-FR')} formes.
+        Aucune technique de marquage ne sait rendre ça, et aucun atelier n'ouvrira
+        le fichier. Le diagnostic ci-dessus reste valable, il décrit bien votre fichier.</p>`;
+      $('resultat').hidden = false;
+      $('travail').hidden = true;
+      return;
+    }
     $('apercu').innerHTML = etat.svg;
     $('resultat').innerHTML = `
       <h2>Votre fichier vectoriel</h2>
@@ -150,10 +182,18 @@ async function traiter(fichier) {
   } catch (e) {
     $('travail').hidden = true;
     $('erreur').hidden = false;
-    $('erreur').textContent = e instanceof FichierNonSupporte
-      ? e.message
-      : `Le traitement s'est arrêté : ${e.message}`;
-    console.error(e);
+    if (e instanceof FichierNonSupporte) {
+      $('erreur').textContent = e.message;
+    } else {
+      // On montre l'etape ET la pile. Un visiteur qui rapporte un probleme nous
+      // donne alors de quoi le reproduire, au lieu d'une phrase seule.
+      $('erreur').innerHTML = `Le traitement s'est arrêté pendant l'étape « ${etape} ».`
+        + `<br><br>Si vous voulez nous aider à corriger, copiez ce qui suit :`
+        + `<pre style="white-space:pre-wrap;font-size:12px;margin:8px 0 0">`
+        + `${etape} | ${(e && e.message) || e}\n${((e && e.stack) || '').split('\n').slice(0, 4).join('\n')}`
+        + `</pre>`;
+    }
+    console.error('[vecto] etape', etape, e);
   }
 }
 

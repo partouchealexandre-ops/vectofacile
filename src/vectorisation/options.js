@@ -18,6 +18,57 @@ import { versLab, ecartLab, creerCacheLab } from '../moteur/couleurs.js';
  */
 
 /**
+ * Part des pixels d'encre hors palette au dela de laquelle le fichier n'est pas
+ * un dessin a aplats.
+ *
+ * Mesure du 18/08 sur une image de bruit : 86 pour cent des pixels d'encre ne
+ * correspondent a AUCUNE couleur retenue. Sur un logo, meme tres compresse,
+ * meme sorti d'un scan de charte, cette part est nulle ou quasi nulle. Le
+ * discriminant est donc franc, il n'y a pas de zone grise a arbitrer.
+ *
+ * Ce que le garde-fou evite n'est pas seulement une lenteur. Vectoriser cette
+ * image produisait 457 260 formes en 34 secondes : l'onglet du visiteur gelait,
+ * et le fichier livre aurait ete inutilisable par n'importe quel marqueur. Un
+ * refus explique en une seconde vaut mieux qu'un fichier absurde en trente.
+ */
+export const PART_HORS_PALETTE_MAXIMALE = 0.45;
+
+/*
+ * Pourquoi 0,45 et pas la moitie de l'ecart.
+ *
+ * Les fichiers legitimes mesures le 18/08, logos compresses, scans de charte,
+ * exports webp, sont TOUS a 0,00. Le bruit est a 0,87. N'importe quelle valeur
+ * entre les deux marcherait, et c'est justement pour ca qu'il faut choisir en
+ * pensant a l'erreur qu'on prefere commettre.
+ *
+ * Refuser a tort le logo textures d'un vrai client coute plus cher que laisser
+ * passer une image lente : le plafond de formes attrape ensuite le cas absurde,
+ * alors que rien ne rattrape un client a qui on a dit a tort "ce n'est pas un
+ * dessin". On se place donc pres du bruit, pas au milieu.
+ */
+
+/** Au dela de ce nombre de formes, le fichier livre n'est marquable nulle part. */
+export const FORMES_MAXIMALES = 4000;
+
+/**
+ * Le fichier est il un dessin a aplats, ou une photo ?
+ * Rend null si c'est un dessin, sinon la raison du refus, en clair.
+ */
+export function refusDeVectorisation(mesures) {
+  const part = mesures.m2Couleurs.partHorsPalette ?? 0;
+  if (part > PART_HORS_PALETTE_MAXIMALE) {
+    return {
+      motif: 'photo',
+      texte: `${Math.round(100 * part)} pour cent des pixels de ce fichier ne correspondent `
+        + "a aucune couleur franche : c'est une photo ou une image bruitee, pas un dessin. "
+        + "La vectoriser produirait des dizaines de milliers de formes, inutilisables par "
+        + "un marqueur. Le diagnostic ci dessus reste valable, il decrit bien votre fichier.",
+    };
+  }
+  return null;
+}
+
+/**
  * @param {object} mesures  sortie de mesurer()
  * @param {object} reglages surcharges eventuelles
  */
@@ -86,10 +137,12 @@ export function optionsDepuisMesures(mesures, reglages = {}) {
  * moities separement : c'est ce qui garantit qu'ils vectorisent pareil.
  */
 export function preparerVectorisation(image, mesures, reglages = {}) {
+  const refus = refusDeVectorisation(mesures);
+  if (refus) return { refus, options: null, pixels: null, avertissements: [] };
   const options = optionsDepuisMesures(mesures, reglages);
   const avertissements = options._avertissements;
   delete options._avertissements;
-  return { options, pixels: pixelsPourVectorisation(image, mesures), avertissements };
+  return { refus: null, options, pixels: pixelsPourVectorisation(image, mesures), avertissements };
 }
 
 /**
