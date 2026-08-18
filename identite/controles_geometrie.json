@@ -1,0 +1,10 @@
+{
+  "epaisseur_anneau_et_coche_pct": 13.5,
+  "blanc_constant_coche_anneau_pct": 7.3,
+  "ouverture_bas_pct": 8.3,
+  "depassement_coche_pct": 0.88,
+  "boite_avec_zone_de_protection": [
+    116.0,
+    116.0
+  ]
+}

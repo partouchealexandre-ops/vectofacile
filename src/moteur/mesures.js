@@ -321,7 +321,7 @@ export function m6ContreFormesEtEcarts(masque, largeur, hauteur, boite) {
     const candidats = cretes.filter((i) => {
       const x = i % largeur, y = (i / largeur) | 0;
       if (x < boite.xMin || x > boite.xMax || y < boite.yMin || y > boite.yMax) return false;
-      return cotesOpposes(i, distanceFond[i] + 1, masque, largeur, hauteur, ANGLE_OPPOSITION);
+      return cotesOpposes(i, distanceFond[i] + 1, masque, largeur, hauteur, ANGLE_OPPOSITION, 16, false);
     });
     for (const groupe of grouperCretes(candidats, largeur, hauteur)) {
       if (groupe.length < LONGUEUR_MINIMALE_CRETE) continue;

@@ -181,3 +181,65 @@ npm run corpus:generer    regenere le corpus synthetique
 npm run site:construire   wasm navigateur et dossier publie
 npm run servir            sert public/ sur le port 8123
 ```
+
+---
+
+## Mise en ligne
+
+Hebergement **Netlify**, source de verite **GitHub**, un seul depot, un seul
+auteur. Rien d'autre : ni base de donnees, ni fonction serveur, ni service
+tiers. Tout le travail du produit se fait dans le navigateur du visiteur.
+
+```
+construction : npm run site:construire
+publication  : public/
+node         : 22, epingle dans .nvmrc et netlify.toml
+```
+
+La construction produit 18 fichiers pour 820 ko, WebAssembly du vectoriseur
+compris. Il n'y a pas de bundler : moins il y a de machinerie entre le code
+ecrit et le code execute, moins il y a d'endroits ou une difference peut se
+cacher entre ce que le harnais teste et ce que le visiteur recoit.
+
+### Le site n'est pas indexable, et c'est une decision
+
+`outils/entetes.mjs` porte une constante `INDEXABLE`, a **faux**. Elle bascule
+d'un coup l'entete `X-Robots-Tag` et le `robots.txt`.
+
+Le diagnostic par technique n'existe pas encore et aucune page de contenu n'est
+ecrite. Publier maintenant en indexable ferait crawler un site dont la seule
+page dit "pas encore disponible" : on brulerait la premiere impression du
+domaine, alors que tout le trafic du projet doit venir du referencement. La
+regle du projet est qu'aucune page ne nait vide ; elle vaut aussi pour le site
+entier.
+
+Meme raison pour la navigation : les trois rubriques sont arretees
+(Techniques de marquage, Marquage par objet, Questions frequentes) mais ne sont
+pas posees dans l'entete, parce qu'aucune des pages qu'elles designent
+n'existe. Un lien qui ne mene nulle part est une page vide sous une autre
+forme. Ce qui est deja la, c'est ce qui ne depend d'aucun contenu : le retour a
+l'outil et la preuve de confidentialite.
+
+### La politique de securite est une PREUVE, pas une case a cocher
+
+Le produit promet que le logo du visiteur ne quitte jamais sa machine. Sur
+parole, c'est invérifiable. La directive `connect-src 'self'` rend la promesse
+**mecanique** : sous cette politique, la page ne PEUT PAS envoyer quoi que ce
+soit vers un autre domaine, et n'importe qui peut le constater en lisant les
+entetes de reponse. La confidentialite cesse d'etre un argument commercial pour
+devenir un fait observable.
+
+Les entetes sont ecrits **une seule fois**, dans `outils/entetes.mjs`. La
+construction en genere `public/_headers`, et le harnais de bout en bout sert
+exactement les memes a Chromium : le site est donc teste sous sa politique de
+production. Une regle de securite qui n'est verifiee que par le serveur de
+production n'est pas verifiee.
+
+### Ce qu'il reste a faire pour ouvrir au public
+
+1. Reserver le domaine et le brancher sur Netlify.
+2. Passer `INDEXABLE` a vrai, une fois la couche verdict et les six guides en
+   place.
+3. Poser les trois rubriques dans l'entete, en meme temps que les pages.
+4. Ecrire le `sitemap.xml`, tenu a jour a chaque page publiee et pas par
+   campagne.

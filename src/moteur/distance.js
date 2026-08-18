@@ -140,7 +140,7 @@ export function pointsDeCrete(distance, zone, largeur, hauteur) {
  * coin, les deux contacts du disque sont separes de l'angle du coin, 90 degres.
  * Dans une vraie barre, ils sont a 180. Le seuil se pose entre les deux.
  */
-export function cotesOpposes(i, rayon, cible, largeur, hauteur, angleMinimal = 120, echantillons = 16) {
+export function cotesOpposes(i, rayon, cible, largeur, hauteur, angleMinimal = 120, echantillons = 16, horsImageCompte = true) {
   const x = i % largeur;
   const y = (i / largeur) | 0;
   const r = Math.max(1, Math.round(rayon));
@@ -150,9 +150,18 @@ export function cotesOpposes(i, rayon, cible, largeur, hauteur, angleMinimal = 1
     const xx = Math.round(x + r * Math.cos(angle));
     const yy = Math.round(y + r * Math.sin(angle));
     if (xx < 0 || yy < 0 || xx >= largeur || yy >= hauteur) {
-      // Hors image : on considere que la cible y est, sinon un logo colle au
-      // bord du fichier verrait ses traits de bord disparaitre de la mesure.
-      touches.push((360 * k) / echantillons);
+      // Hors image, et la bonne reponse depend de ce qu'on cherche.
+      //
+      // Pour un TRAIT, on cherche du fond autour de l'encre : ce qui est hors
+      // du fichier est du fond, sinon un logo colle au bord perdrait ses traits
+      // de bord.
+      //
+      // Pour un ECART, on cherche de l'encre autour du fond : ce qui est hors
+      // du fichier n'est PAS de l'encre. Compter l'inverse fabrique un ecart
+      // fantome tout le long du bord. Le symbole Vecto Facile, dont le cercle
+      // touche le haut de son propre fichier, etait ainsi diagnostique avec un
+      // ecart de 0,10 pour cent du diametre, mesure sur du vide.
+      if (horsImageCompte) touches.push((360 * k) / echantillons);
       continue;
     }
     if (cible[yy * largeur + xx]) touches.push((360 * k) / echantillons);

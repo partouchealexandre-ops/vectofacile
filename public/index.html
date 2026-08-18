@@ -7,19 +7,47 @@
 <title>Vecto Facile : votre logo est-il bon à marquer ?</title>
 <meta name="description" content="Déposez votre logo. Il est vectorisé et analysé dans votre navigateur, sans envoi, et vous repartez avec un fichier .eps et un diagnostic de marquage.">
 <style>
+  /* Palette validee par Alex le 18/08. L'orange ne sert qu'a la conversion :
+     un seul bouton orange par ecran, celui qui ramene a l'outil. */
   :root {
-    --encre: #16181d;
+    --navy: #0A2D4D;
+    --orange: #FF6A00;
+    --encre: #0A2D4D;
     --papier: #ffffff;
-    --gris: #6b7280;
-    --trait: #e5e7eb;
-    --accent: #0f62fe;
-    --gris-clair: #f7f8fa;
+    --gris: #7B8794;
+    --trait: #E3E8ED;
+    --accent: #0A2D4D;
+    --gris-clair: #F6F8FA;
+    --vert: #0E7C52;
   }
   * { box-sizing: border-box; }
   body {
     margin: 0; background: var(--papier); color: var(--encre);
     font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   }
+
+  /* ------------------------------------------------------------- l'entete
+     Version validee par Alex le 18/08.
+     Les rubriques de navigation (Techniques de marquage, Marquage par objet,
+     Questions frequentes) sont arretees mais PAS encore posees ici : aucune
+     des pages qu'elles designent n'existe. Un lien de navigation qui ne mene
+     nulle part est une page vide sous une autre forme, et la regle du projet
+     est qu'aucune page ne nait vide. Elles arrivent avec les premiers guides.
+     Ce qui est deja la, en revanche, c'est ce qui ne depend d'aucun contenu :
+     le retour a l'outil et la preuve de confidentialite. */
+  .entete { display: flex; align-items: center; justify-content: space-between;
+            gap: 18px; padding: 16px 0 18px; border-bottom: 1px solid var(--trait);
+            margin-bottom: 34px; flex-wrap: wrap; }
+  .lockup { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+  .lockup svg { width: 36px; height: 36px; display: block; }
+  .lockup .mot { font-weight: 700; font-size: 18px; line-height: 1.05;
+                 color: var(--navy); letter-spacing: -0.025em; }
+  .entete .droite { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .cadenas { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--gris); }
+  .cadenas svg { width: 14px; height: 14px; color: var(--vert); flex: none; }
+  .cta-entete { font-size: 14px; font-weight: 600; padding: 9px 17px; border-radius: 8px;
+                border: 1.5px solid var(--orange); background: var(--orange); color: #fff;
+                text-decoration: none; white-space: nowrap; }
   main { max-width: 860px; margin: 0 auto; padding: 48px 20px 96px; }
   h1 { font-size: 34px; line-height: 1.2; margin: 0 0 12px; letter-spacing: -0.02em; }
   h2 { font-size: 17px; margin: 32px 0 12px; letter-spacing: -0.01em; }
@@ -49,7 +77,7 @@
   #apercu svg { max-width: 100%; height: auto; display: block; margin: 0 auto; }
   #telechargements { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
   button { font: inherit; font-size: 14px; font-weight: 600; padding: 10px 18px; border-radius: 8px;
-           border: 1px solid var(--encre); background: var(--encre); color: #fff; cursor: pointer; }
+           border: 1.5px solid var(--navy); background: var(--navy); color: #fff; cursor: pointer; }
   button.second { background: #fff; color: var(--encre); }
   button.tertiaire { background: #fff; color: var(--gris); border-color: var(--trait); font-weight: 500; }
   #travail { margin-top: 20px; color: var(--gris); font-size: 14px; }
@@ -61,6 +89,17 @@
 </head>
 <body>
 <main>
+  <header class="entete">
+    <a class="lockup" href="/"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="-8 -8 116 116"><title>Vecto Facile</title><path d="M11.832,82.298C20.815,92.914 33.813,99.309 47.705,99.947C61.597,100.586 75.127,95.41 85.045,85.663L75.583,76.034C68.203,83.286 58.091,87.066 47.762,86.431C37.434,85.797 27.861,80.809 21.423,72.707Z" fill="#0A2D4D"/><path d="M35.899,97.97C15.108,91.859 0.62,73.05 0.019,51.387C-0.582,29.724 12.84,10.141 33.261,2.885C53.681,-4.37 76.45,2.355 89.652,19.541C102.853,36.727 103.481,60.461 91.206,78.32L80.081,70.674C89.455,57.034 88.479,38.795 77.702,26.234C66.926,13.673 49.047,9.934 34.141,17.125C19.235,24.317 11.032,40.637 14.156,56.89C17.28,73.142 30.948,85.259 47.458,86.411Z" fill="#0A2D4D"/><path d="M22.627,50.173L43.227,70.773C45.863,73.409 50.137,73.409 52.773,70.773L95.773,27.773L86.227,18.227L48,56.454L32.173,40.627Z" fill="#FF6A00"/></svg><span class="mot">Vecto<br>Facile</span></a>
+    <div class="droite">
+      <span class="cadenas">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+        Vos fichiers restent chez vous
+      </span>
+      <a class="cta-entete" href="#depot" id="retour_outil">Vectoriser mon logo</a>
+    </div>
+  </header>
+
   <h1>Votre logo est-il bon à marquer ?</h1>
   <p class="accroche">
     Déposez votre logo. Il est vectorisé et mesuré dans votre navigateur, sans
@@ -89,9 +128,11 @@
   </div>
 
   <footer>
-    Chantier en cours. Le diagnostic par technique arrive quand les seuils du
-    référentiel de marquage auront été arbitrés, un par un. Rien n'est affiché
-    tant que ce n'est pas établi.
+    Chantier en cours, et volontairement non référencé pour l'instant : le
+    diagnostic par technique arrive quand les seuils du référentiel de marquage
+    auront été arbitrés, un par un. Rien n'est affiché tant que ce n'est pas
+    établi, et rien n'est donné à indexer tant qu'il n'y a rien à lire.
+    Une initiative Bytouch.
   </footer>
 </main>
 <script type="module" src="./src/app.js"></script>

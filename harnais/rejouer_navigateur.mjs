@@ -27,6 +27,7 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 import { mesurer } from '../src/moteur/mesures.js';
+import { entetesGlobales } from '../outils/entetes.mjs';
 
 const ICI = path.dirname(fileURLToPath(import.meta.url));
 const RACINE = path.resolve(ICI, '..');
@@ -55,7 +56,14 @@ function servir() {
       if (!fichier.startsWith(PUBLIC) || !fs.existsSync(fichier) || fs.statSync(fichier).isDirectory()) {
         reponse.writeHead(404); reponse.end('absent'); return;
       }
-      reponse.writeHead(200, { 'Content-Type': TYPES[path.extname(fichier)] || 'application/octet-stream' });
+      // Les MEMES entetes qu'en production, politique de securite comprise.
+      // Un site qui ne tourne que sous une politique de developpement
+      // permissive n'est pas teste : la surprise arrive le jour de la mise en
+      // ligne, sur le domaine public.
+      reponse.writeHead(200, {
+        'Content-Type': TYPES[path.extname(fichier)] || 'application/octet-stream',
+        ...entetesGlobales(),
+      });
       reponse.end(fs.readFileSync(fichier));
     });
     serveur.listen(PORT, () => resolve(serveur));

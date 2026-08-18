@@ -19,3 +19,5 @@ public/src/
 public/apercus/
 public/vtracer_wasm_bg.wasm
 src/vectorisation/vtracer_web.js
+public/_headers
+public/robots.txt

@@ -143,6 +143,25 @@ for w in (1, 3, 4, 5, 9):
     cas_trait(w)
 
 
+# ------------------------------------------------------ dessin colle au bord
+
+img = Image.new("RGB", (300, 300), BLANC)
+d = ImageDraw.Draw(img)
+d.rectangle([50, 0, 249, 199], fill=NOIR)
+enregistrer(
+    "bloc_au_bord", img,
+    [
+        est_nul("m6ContreFormes.ecartMinimalPx"),
+        egal("m5TraitLePlusFin.encadrementPx.basse", 199),
+    ],
+    "Un aplat de 200 x 200 qui touche le haut de son propre fichier. Il n'y a "
+    "AUCUN ecart dans ce dessin. Le hors fichier compte comme du fond pour "
+    "mesurer un trait, et ne compte PAS comme de l'encre pour mesurer un "
+    "ecart : compter l'inverse fabriquait un ecart fantome tout le long du "
+    "bord. Cas trouve sur le symbole Vecto Facile lui meme.",
+)
+
+
 # --------------------------------------------------- trait avec crenelage
 
 img = Image.new("RGB", (300, 300), BLANC)

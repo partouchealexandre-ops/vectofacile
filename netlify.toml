@@ -1,0 +1,32 @@
+# Construction et publication du site Vecto Facile.
+#
+# Il n'y a ni bundler, ni framework, ni fonction serveur : le site est un
+# ensemble de modules ES que le navigateur charge directement, et TOUT le
+# travail du produit se fait chez le visiteur. Netlify ne sert donc que des
+# fichiers statiques, ce qui est exactement ce qu'on veut : moins il y a de
+# machinerie entre le code ecrit et le code execute, moins il y a d'endroits ou
+# une difference peut se cacher entre ce que le harnais teste et ce que le
+# visiteur recoit.
+
+[build]
+  command = "npm run site:construire"
+  publish = "public"
+
+[build.environment]
+  NODE_VERSION = "22"
+  # Playwright ne sert QU'AUX HARNAIS, jamais au site. Sans cette variable, son
+  # installation telecharge plusieurs centaines de mega octets de navigateurs a
+  # chaque construction, pour rien.
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD = "1"
+  # Ghostscript non plus n'est pas installe sur Netlify : le harnais de
+  # vectorisation ne tourne pas ici, il tourne en local et en integration.
+  NPM_FLAGS = "--no-audit --no-fund"
+
+# Les entetes vivent dans public/_headers, GENERE par la construction depuis
+# outils/entetes.mjs. Ne pas les dupliquer ici : une seule source par verite,
+# sinon les deux divergent et personne ne sait laquelle s'applique.
+
+[[headers]]
+  for = "/src/*"
+  [headers.values]
+    Cache-Control = "public, max-age=600"

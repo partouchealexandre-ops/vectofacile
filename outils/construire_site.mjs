@@ -16,6 +16,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { fichierHeaders, fichierRobots, INDEXABLE } from './entetes.mjs';
 
 const RACINE = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SOURCE = path.join(RACINE, 'src');
@@ -33,9 +34,15 @@ const compter = (dossier) => {
 };
 compter(CIBLE);
 
+// Entetes et robots : generes, jamais ecrits a la main, pour qu'ils ne
+// puissent pas diverger de ce que le harnais teste.
+fs.writeFileSync(path.join(RACINE, 'public', '_headers'), fichierHeaders());
+fs.writeFileSync(path.join(RACINE, 'public', 'robots.txt'), fichierRobots());
+
 if (!fs.existsSync(path.join(RACINE, 'public', 'vtracer_wasm_bg.wasm'))) {
   console.error('  Le WebAssembly manque dans public/. Lancer : npm run vtracer:web');
   process.exit(1);
 }
 
 console.log(`  ${fichiers} modules copies dans public/src/`);
+console.log(`  _headers et robots.txt generes, indexation ${INDEXABLE ? 'OUVERTE' : 'FERMEE'}`);
