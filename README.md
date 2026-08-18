@@ -181,7 +181,21 @@ Aucune ne doit se retrouver dans `seuils.json`, et aucune valeur de
 | Python 3 | generer le corpus synthetique | plus de corpus, donc plus aucun harnais |
 | Ghostscript | comparer les rendus EPS et PDF | le harnais de vectorisation tourne, mais ses controles de rendu sont SAUTES |
 
-Sur macOS : `brew install node@22 ghostscript`.
+Sur macOS :
+
+```
+brew install node@22 ghostscript
+export PATH="/opt/homebrew/opt/node@22/bin:$PATH"
+npx playwright install chromium
+```
+
+Le paquet Playwright ne telecharge PAS son navigateur : la construction pose
+`PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD` pour ne pas tirer des centaines de mega
+octets a chaque build Netlify, qui ne lance aucun harnais. En local, le
+navigateur se pose donc une fois, a la main, par la commande ci dessus.
+
+Homebrew installe `node@22` sans le brancher : sans la ligne `export`, la
+machine continue de repondre avec sa version de Node par defaut.
 
 **Un controle saute n'est pas un controle reussi**, et les harnais le disent en
 toutes lettres plutot que de passer au vert en silence. C'est la seule raison

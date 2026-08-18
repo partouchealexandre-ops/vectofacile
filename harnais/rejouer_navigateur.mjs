@@ -134,6 +134,18 @@ async function ouvrirChromium() {
         }
       }
     }
+    // Playwright installe mais SANS navigateur : c'est le cas normal apres un
+    // npm ci lance avec PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD, qui est justement ce
+    // qu'on recommande pour ne pas telecharger des centaines de mega octets a
+    // chaque construction. En local, le navigateur se pose une fois, a la main.
+    if (/Executable doesn't exist|playwright install/i.test(premiereErreur.message || '')) {
+      console.log('');
+      console.log('  HARNAIS DE BOUT EN BOUT : SAUTE, pas reussi.');
+      console.log('  Playwright est installe, mais aucun navigateur ne l\'accompagne.');
+      console.log('  Pour l\'avoir, une seule fois : npx playwright install chromium');
+      console.log('');
+      process.exit(0);
+    }
     throw premiereErreur;
   }
 }
