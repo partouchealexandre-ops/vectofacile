@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22><rect width=%2216%22 height=%2216%22 rx=%223%22 fill=%22%2316181d%22/></svg>">
+<title>Vecto Facile : votre logo est-il bon à marquer ?</title>
+<meta name="description" content="Déposez votre logo. Il est vectorisé et analysé dans votre navigateur, sans envoi, et vous repartez avec un fichier .eps et un diagnostic de marquage.">
+<style>
+  :root {
+    --encre: #16181d;
+    --papier: #ffffff;
+    --gris: #6b7280;
+    --trait: #e5e7eb;
+    --accent: #0f62fe;
+    --gris-clair: #f7f8fa;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--papier); color: var(--encre);
+    font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  main { max-width: 860px; margin: 0 auto; padding: 48px 20px 96px; }
+  h1 { font-size: 34px; line-height: 1.2; margin: 0 0 12px; letter-spacing: -0.02em; }
+  h2 { font-size: 17px; margin: 32px 0 12px; letter-spacing: -0.01em; }
+  .accroche { color: var(--gris); margin: 0 0 32px; max-width: 60ch; }
+  #depot {
+    border: 2px dashed var(--trait); border-radius: 12px; padding: 48px 24px;
+    text-align: center; cursor: pointer; transition: border-color .15s, background .15s;
+  }
+  #depot:hover, #depot.survol { border-color: var(--accent); background: var(--gris-clair); }
+  #depot strong { display: block; font-size: 18px; margin-bottom: 6px; }
+  #depot span { color: var(--gris); font-size: 14px; }
+  input[type=file] { display: none; }
+  .ligne { display: flex; align-items: baseline; gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--trait); }
+  .intitule { flex: 0 0 210px; color: var(--gris); font-size: 14px; }
+  .valeur { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .precision { color: var(--gris); font-size: 13px; }
+  .pastille { display: inline-block; width: 13px; height: 13px; border-radius: 3px; margin-left: 3px;
+              vertical-align: -1px; border: 1px solid rgba(0,0,0,.15); }
+  .note { color: var(--gris); font-size: 13.5px; margin: 10px 0; }
+  .gris { background: var(--gris-clair); border-left: 3px solid var(--trait); padding: 14px 16px;
+          color: var(--gris); font-size: 14px; border-radius: 0 6px 6px 0; }
+  .techniques { list-style: none; padding: 0; margin: 14px 0 0; display: flex; flex-wrap: wrap; gap: 8px; }
+  .techniques li { font-size: 13px; color: var(--gris); background: var(--gris-clair);
+                   border: 1px solid var(--trait); border-radius: 999px; padding: 4px 12px; }
+  #apercu { margin-top: 14px; border: 1px solid var(--trait); border-radius: 8px; padding: 12px;
+            background: repeating-conic-gradient(#f3f4f6 0% 25%, #ffffff 0% 50%) 50% / 16px 16px; }
+  #apercu svg { max-width: 100%; height: auto; display: block; margin: 0 auto; }
+  #telechargements { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+  button { font: inherit; font-size: 14px; font-weight: 600; padding: 10px 18px; border-radius: 8px;
+           border: 1px solid var(--encre); background: var(--encre); color: #fff; cursor: pointer; }
+  button.second { background: #fff; color: var(--encre); }
+  button.tertiaire { background: #fff; color: var(--gris); border-color: var(--trait); font-weight: 500; }
+  #travail { margin-top: 20px; color: var(--gris); font-size: 14px; }
+  #erreur { margin-top: 20px; color: #b42318; background: #fef3f2; border: 1px solid #fecdca;
+            padding: 12px 14px; border-radius: 8px; font-size: 14px; }
+  footer { border-top: 1px solid var(--trait); margin-top: 56px; padding-top: 20px;
+           color: var(--gris); font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Votre logo est-il bon à marquer ?</h1>
+  <p class="accroche">
+    Déposez votre logo. Il est vectorisé et mesuré dans votre navigateur, sans
+    aucun envoi : ni le fichier, ni son nom, ni une vignette ne quittent votre
+    machine. Vous repartez avec un fichier vectoriel prêt pour un marqueur.
+  </p>
+
+  <div id="depot">
+    <strong>Déposez votre logo ici</strong>
+    <span>PNG, JPEG, GIF, WEBP. Ou cliquez pour choisir un fichier.</span>
+  </div>
+  <input type="file" id="fichier" accept="image/*">
+
+  <div id="travail" hidden></div>
+  <div id="erreur" hidden></div>
+
+  <section id="mesures" hidden></section>
+  <section id="verdict" hidden></section>
+
+  <section id="resultat" hidden></section>
+  <div id="apercu"></div>
+  <div id="telechargements" hidden>
+    <button id="telecharger_eps">Télécharger le .eps</button>
+    <button id="telecharger_pdf" class="second">Télécharger le .pdf</button>
+    <button id="telecharger_svg" class="tertiaire">Le .svg, pour votre site web</button>
+  </div>
+
+  <footer>
+    Chantier en cours. Le diagnostic par technique arrive quand les seuils du
+    référentiel de marquage auront été arbitrés, un par un. Rien n'est affiché
+    tant que ce n'est pas établi.
+  </footer>
+</main>
+<script type="module" src="./src/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+{
+  "name": "vecto-facile",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Vecto Facile : diagnostic de marquabilite d'un logo, tout en navigateur.",
+  "scripts": {
+    "corpus:generer": "python3 harnais/corpus_synthetique/generer.py",
+    "vtracer:web": "node outils/construire_vtracer_web.mjs",
+    "site:construire": "npm run vtracer:web && node outils/construire_site.mjs",
+    "harnais:moteur": "node harnais/rejouer_synthetique.mjs",
+    "harnais:vectorisation": "node harnais/rejouer_vectorisation.mjs",
+    "harnais:navigateur": "node harnais/rejouer_navigateur.mjs",
+    "verifier": "npm run corpus:generer && npm run harnais:moteur && npm run harnais:vectorisation && npm run site:construire && npm run harnais:navigateur",
+    "servir": "python3 -m http.server 8123 --directory public"
+  },
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@visioncortex/vtracer": "^1.0.0-alpha.3"
+  },
+  "devDependencies": {
+    "playwright": "^1.62.1"
+  }
+}

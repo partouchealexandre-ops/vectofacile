@@ -1,0 +1,21 @@
+# Corpus de logos clients : JAMAIS dans le dépôt.
+# Ce sont des fichiers de clients réels. Règle de confidentialité du projet.
+corpus/
+corpus_reel/
+*.ai
+*.eps.orig
+
+# Sorties du harnais
+harnais/sorties/
+harnais/corpus_synthetique/images/
+
+node_modules/
+dist/
+.DS_Store
+
+# Fichiers produits par la construction. Tout se regenere avec
+# npm run site:construire, rien ici n'est ecrit a la main.
+public/src/
+public/apercus/
+public/vtracer_wasm_bg.wasm
+src/vectorisation/vtracer_web.js

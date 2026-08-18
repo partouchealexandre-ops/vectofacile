@@ -1,0 +1,41 @@
+#!/usr/bin/env node
+/**
+ * Construction du site : copie des modules dans le dossier publie.
+ *
+ * Pas de bundler, et c'est un choix. Le site est fait de modules ES que le
+ * navigateur charge directement ; le seul travail de construction est de mettre
+ * dans public/ ce qui doit y etre. Moins il y a de machinerie entre le code
+ * ecrit et le code execute, moins il y a d'endroits ou une difference peut se
+ * cacher entre ce que le harnais teste et ce que le visiteur recoit.
+ *
+ * Le jour ou la taille ou le nombre de requetes deviennent un probleme, un
+ * bundler s'ajoutera ici, et le harnais devra alors tester le paquet produit,
+ * pas la source.
+ */
+
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const RACINE = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const SOURCE = path.join(RACINE, 'src');
+const CIBLE = path.join(RACINE, 'public', 'src');
+
+fs.rmSync(CIBLE, { recursive: true, force: true });
+fs.cpSync(SOURCE, CIBLE, { recursive: true });
+
+let fichiers = 0;
+const compter = (dossier) => {
+  for (const entree of fs.readdirSync(dossier, { withFileTypes: true })) {
+    if (entree.isDirectory()) compter(path.join(dossier, entree.name));
+    else fichiers++;
+  }
+};
+compter(CIBLE);
+
+if (!fs.existsSync(path.join(RACINE, 'public', 'vtracer_wasm_bg.wasm'))) {
+  console.error('  Le WebAssembly manque dans public/. Lancer : npm run vtracer:web');
+  process.exit(1);
+}
+
+console.log(`  ${fichiers} modules copies dans public/src/`);
