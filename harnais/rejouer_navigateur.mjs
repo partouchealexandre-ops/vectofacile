@@ -71,8 +71,32 @@ function servir() {
   return new Promise((resolve) => {
     const serveur = http.createServer((requete, reponse) => {
       const url = decodeURIComponent(requete.url.split('?')[0]);
-      const fichier = path.join(PUBLIC, url === '/' ? 'index.html' : url);
-      if (!fichier.startsWith(PUBLIC) || !fs.existsSync(fichier) || fs.statSync(fichier).isDirectory()) {
+
+      // Les apercus du corpus sont servis depuis LEUR SOURCE, pas depuis une
+      // copie dans public/.
+      //
+      // Faute payee le 18/08, et c'est la plus grave du projet a ce jour. Le
+      // harnais lisait /apercus/, un dossier cree a la main des mois plus tot
+      // sur la machine du fil, ignore par git et regenere par rien. Il
+      // n'existait donc nulle part ailleurs : chez Alex, les quatre cas
+      // recevaient une page 404 a la place d'une image, et le site repondait
+      // tres correctement "ce fichier ne s'ouvre pas comme une image".
+      //
+      // Autrement dit ce harnais n'avait jamais ete vert que sur une seule
+      // machine, et son vert ne prouvait rien pour personne d'autre. Un
+      // harnais qui depend d'un etat local n'est pas un harnais, c'est une
+      // habitude. Il lit maintenant le dossier que le generateur ecrit, celui
+      // la meme que les deux autres harnais utilisent.
+      const fichier = url.startsWith('/apercus/')
+        ? path.join(IMAGES, url.slice('/apercus/'.length))
+        : path.join(PUBLIC, url === '/' ? 'index.html' : url);
+      const autorise = fichier.startsWith(PUBLIC) || fichier.startsWith(IMAGES);
+      if (!autorise || !fs.existsSync(fichier) || fs.statSync(fichier).isDirectory()) {
+        // Un 404 sur une ressource du harnais est une faute du harnais, pas un
+        // resultat de test. On le dit tout de suite, au lieu de laisser le site
+        // rendre une erreur parfaitement correcte sur une page HTML recue a la
+        // place d'une image.
+        console.error(`  RESSOURCE MANQUANTE : ${url}`);
         reponse.writeHead(404); reponse.end('absent'); return;
       }
       // Les MEMES entetes qu'en production, politique de securite comprise.
