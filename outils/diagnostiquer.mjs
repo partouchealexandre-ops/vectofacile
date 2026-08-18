@@ -1,6 +1,28 @@
+#!/usr/bin/env node
+/**
+ * Passe une image au moteur de mesure et rend le resultat en clair.
+ *
+ *   node outils/diagnostiquer.mjs mon_logo.png [largeur_impression_mm]
+ *
+ * Le decodage passe par un vrai navigateur, comme chez le visiteur, et non par
+ * une bibliotheque de node : les deux ne rendent pas exactement les memes
+ * pixels sur les bords adoucis, et c'est le rendu du navigateur qui fait foi
+ * puisque c'est celui que le produit utilise.
+ */
 import fs from 'node:fs'; import { chromium } from 'playwright';
 import { mesurer } from '../src/moteur/mesures.js';
 const [fichier, mmStr] = process.argv.slice(2);
+if (!fichier || !fs.existsSync(fichier)) {
+  console.error("Usage : node outils/diagnostiquer.mjs <image.png|jpg|gif|webp> [largeur_mm]");
+  process.exit(2);
+}
+if (/\.svg$/i.test(fichier)) {
+  console.error(
+    "Un SVG est deja vectoriel : il n'y a rien a mesurer dessus.\n"
+    + "Rasterisez le d'abord : node outils/rendre_svg.mjs " + fichier + " sortie.png 1000"
+  );
+  process.exit(2);
+}
 let nav; try { nav = await chromium.launch(); } catch { nav = await chromium.launch({executablePath:'/opt/pw-browsers/chromium-1194/chrome-linux/chrome'}); }
 const page = await nav.newPage();
 const b64 = fs.readFileSync(fichier).toString('base64');
