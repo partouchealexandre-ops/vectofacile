@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "note": "ETAT REEL AU 19/08/2026. Presque aucun critere ne sert encore, et ce fichier le dit au lieu de le cacher. Les valeurs presentes portent leur etat : seuls SOURCE et ARBITRE ALEX produisent un verdict, tout le reste rend « nous ne savons pas encore ». Les seuils arriveront quand P0.1, P0.2 et P0.3 seront tranches et quand les agregats seront repris en arbitrage.",
-  "regle": "Une valeur absente n'est PAS une autorisation. Aucun critere ne passe par defaut.",
+  "note": "ETAT REEL AU 19/08/2026, deuxieme version du jour. Presque aucun critere ne sert encore, et ce fichier le dit au lieu de le cacher. Les valeurs presentes portent leur etat : seuls SOURCE et ARBITRE ALEX produisent un verdict, tout le reste rend « nous ne savons pas encore ». P0.1 (hauteur de capitale en mm), P0.2 (rapport negatif sur positif de 2,0) et P0.3 (une source qui ne nomme aucun support ne peut pas alimenter un seuil) ONT ETE TRANCHES le 19/08. Ils ne suffisent pas : il manque P0.7, la regle qui transforme N valeurs sourcees en UN seuil. Vingt-trois valeurs admissibles en serigraphie, de 0,13 a 1,00 mm, ne deviennent pas un chiffre toutes seules. Tant que P0.7 n'est pas rendu, aucun trait_minimal n'entre ici.",
+  "regle": "Une valeur absente n'est PAS une autorisation. Aucun critere ne passe par defaut. Le rapport negatif sur positif de 2,0 est ARBITRE ALEX du 19/08 : il s'applique a toutes les techniques, mais il ne sert a rien tant qu'aucun trait minimal positif n'est arbitre, puisqu'il multiplie une valeur qui n'existe pas encore.",
   "techniques": {
     "serigraphie": {
       "libelle": "Sérigraphie",

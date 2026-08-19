@@ -49,6 +49,33 @@ function ligne(intitule, valeur, precision = '') {
     + '</div>';
 }
 
+/**
+ * La palette, lisible et copiable.
+ *
+ * Un carre de couleur avec une infobulle ne sert a rien : il ne se lit pas au
+ * doigt sur un telephone, et il ne se copie pas dans un mail au marqueur. On
+ * ecrit donc l'hexadecimal et le RVB en clair.
+ *
+ * Ces deux valeurs sont des FAITS du fichier, elles ne demandent aucun
+ * arbitrage. La reference Pantone, elle, n'en est pas un : la correspondance
+ * depend de l'encre, du support et de l'eclairage. On ne l'affiche pas, et on
+ * dit pourquoi plutot que de la passer sous silence.
+ */
+function rendrePalette(palette) {
+  if (!palette.length) return '';
+  const lignes = palette.map((c) => `<li class="teinte">
+      <span class="pastille" style="background:${c.hex}"></span>
+      <code class="hex">${c.hex.toUpperCase()}</code>
+      <span class="rvb">R ${c.rvb[0]} V ${c.rvb[1]} B ${c.rvb[2]}</span>
+      <span class="part">${(100 * c.part).toFixed(1)} % de l'encre</span>
+    </li>`).join('');
+  return `<h3>Vos couleurs, à donner à votre marqueur</h3>
+    <ul class="palette">${lignes}</ul>
+    <p class="note">Ces codes sont ceux de votre fichier, tels que nous les y avons
+    lus. Nous ne les traduisons pas en référence Pantone : la correspondance
+    dépend de l'encre et du support, et c'est votre marqueur qui la choisit.</p>`;
+}
+
 function afficherMesures(m, image) {
   const palette = m.m2Couleurs.palette
     .map((c) => `<span class="pastille" style="background:${c.hex}" title="${c.hex} : ${(100 * c.part).toFixed(1)} %"></span>`)
@@ -83,6 +110,7 @@ function afficherMesures(m, image) {
         : `${(100 * m.m10IndicesExport.partInterieurVariable).toFixed(1)} % de l'intérieur`)}
     ${ligne('Transparence partielle', m.m4Transparence.aTransparencePartielle
         ? `oui, ${m.m4Transparence.pixelsSemiTransparents} pixels` : 'non')}
+    ${rendrePalette(m.m2Couleurs.palette)}
   `;
   $('mesures').hidden = false;
 }

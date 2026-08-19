@@ -400,6 +400,58 @@ console.log('');
   console.log('');
 }
 
+// ---------------------------------------------------------------------------
+// LA PALETTE SE LIT ET SE COPIE, ET ELLE N'INVENTE PAS DE PANTONE.
+//
+// Une pastille de couleur avec une infobulle ne se lit pas au doigt et ne se
+// colle pas dans un mail. Les codes doivent donc etre du TEXTE dans la page.
+//
+// Le deuxieme controle est une assertion de propriete, pas de contenu : on ne
+// peut pas verifier la formulation exacte d'une phrase, mais on peut verifier
+// qu'un numero Pantone n'apparait JAMAIS. La correspondance RVB vers Pantone
+// depend de l'encre, du support et de l'eclairage : ce serait une valeur
+// inferee servie comme un fait, et la doctrine l'interdit. Citer le mot pour
+// dire qu'on ne le traduit pas est permis, publier « Pantone 186 C » ne l'est
+// pas. Ce controle echouera le jour ou quelqu'un ajoutera une table de
+// correspondance en croyant bien faire.
+{
+  const page = await navigateur.newPage();
+  await page.goto(`http://127.0.0.1:${PORT}/`, { waitUntil: 'networkidle' });
+  await page.waitForTimeout(900);
+  const octets = fs.readFileSync(path.join(IMAGES, 'couleurs_09_plat.png'));
+  const constat = await page.evaluate(async (b64) => {
+    const fichier = new File(
+      [Uint8Array.from(atob(b64), (c) => c.charCodeAt(0))], 'plat.png', { type: 'image/png' });
+    await globalThis.vecto.traiter(fichier);
+    const hex = [...document.querySelectorAll('.teinte .hex')].map((e) => e.textContent.trim());
+    const rvb = [...document.querySelectorAll('.teinte .rvb')].map((e) => e.textContent.trim());
+    const reelles = globalThis.vecto.etat().mesures.m2Couleurs.couleursReelles;
+    return {
+      nombre: hex.length,
+      reelles,
+      tousValides: hex.length > 0 && hex.every((h) => /^#[0-9A-F]{6}$/.test(h)),
+      rvbLisible: rvb.length === hex.length && rvb.every((t) => /^R \d+ V \d+ B \d+$/.test(t)),
+      pantone: /PANTONE\s*\d|PMS\s*\d/i.test(document.body.innerText),
+    };
+  }, octets.toString('base64'));
+  await page.close();
+
+  console.log('');
+  console.log('  LA PALETTE SE LIT, SE COPIE, ET N\'INVENTE PAS DE PANTONE');
+  console.log('  ' + '-'.repeat(66));
+  for (const [libelle, ok] of [
+    ['un code par couleur reelle mesuree', constat.nombre === constat.reelles],
+    ['les codes sont du texte hexadecimal valide', constat.tousValides === true],
+    ['le RVB est ecrit en clair a cote', constat.rvbLisible === true],
+    ['aucun numero Pantone n\'est publie', constat.pantone === false],
+  ]) {
+    console.log(`  ${ok ? 'ok   ' : 'ECHEC'} ${libelle}`);
+    if (!ok) echecs++;
+  }
+  console.log('  ' + '-'.repeat(66));
+  console.log('');
+}
+
 await navigateur.close();
 serveur.close();
 process.exit(echecs === 0 ? 0 : 1);

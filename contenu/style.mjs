@@ -123,6 +123,20 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
   .precision { color: var(--gris); font-size: 13px; }
   .pastille { display: inline-block; width: 13px; height: 13px; border-radius: 3px; margin-left: 3px;
               vertical-align: -1px; border: 1px solid rgba(0,0,0,.15); }
+  .palette { list-style: none; padding: 0; margin: 12px 0 0; }
+  .teinte { display: flex; align-items: center; gap: 12px; padding: 6px 0;
+            border-bottom: 1px solid var(--trait); }
+  .teinte .pastille { width: 22px; height: 22px; margin-left: 0; flex: 0 0 22px; }
+  .teinte .hex { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 14px;
+                 font-weight: 600; letter-spacing: .02em; user-select: all; }
+  .teinte .rvb { color: var(--gris); font-size: 13.5px; font-variant-numeric: tabular-nums;
+                 user-select: all; }
+  .teinte .part { margin-left: auto; color: var(--gris); font-size: 13px;
+                  font-variant-numeric: tabular-nums; }
+  @media (max-width: 520px) {
+    .teinte { flex-wrap: wrap; gap: 8px 10px; }
+    .teinte .part { margin-left: 0; flex-basis: 100%; }
+  }
   .note { color: var(--gris); font-size: 13.5px; margin: 10px 0; }
   .gris { background: var(--gris-clair); border-left: 3px solid var(--trait); padding: 14px 16px;
           color: var(--gris); font-size: 14px; border-radius: 0 6px 6px 0; }
