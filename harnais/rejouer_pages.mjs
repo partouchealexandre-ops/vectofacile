@@ -112,6 +112,10 @@ console.log('  ' + '-'.repeat(66));
 
 let echecs = 0;
 const liensVus = new Map();
+// La navigation de la premiere page lue fait reference pour toutes les
+// suivantes. Peu importe laquelle est « juste » : ce qui compte est qu'elles
+// soient identiques, et une divergence se voit alors immediatement.
+let navAttendue = null;
 
 for (const url of URLS) {
   const fautes = [];
@@ -189,6 +193,22 @@ for (const url of URLS) {
     if (seuils.length > 0) {
       fautes.push(`seuil de marquage publie : ${[...new Set(seuils)].join(', ')}`);
     }
+  }
+
+  // LA NAVIGATION EST LA MEME SUR TOUTES LES PAGES, accueil compris.
+  //
+  // Controle ajoute apres l'incident du 19/08 : la rubrique /guide/ manquait
+  // sur l'accueil et sur l'accueil seulement, parce que sa navigation etait
+  // ecrite a la main. Le defaut est passe en production, il est reste
+  // invisible aux quatre autres harnais, et c'est Alex qui l'a vu en ouvrant
+  // le site. Un controle de coherence entre pages l'aurait attrape avant.
+  const nav = await page.evaluate(() =>
+    [...document.querySelectorAll('.nav-site a')].map((a) => a.getAttribute('href')));
+  if (navAttendue === null) {
+    navAttendue = nav;
+  } else if (nav.join('|') !== navAttendue.join('|')) {
+    fautes.push(`navigation differente des autres pages : ${nav.join(', ')} `
+      + `au lieu de ${navAttendue.join(', ')}`);
   }
 
   if (erreursConsole.length > 0) fautes.push(`console : ${erreursConsole[0]}`);

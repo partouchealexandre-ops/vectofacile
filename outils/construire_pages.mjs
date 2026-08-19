@@ -316,6 +316,30 @@ for (const lien of [...RUBRIQUES, ...PIED.flatMap((c) => c.liens)]) {
 
 // ------------------------------------------------------------------ ecriture
 
+/**
+ * L'accueil devient une page GENEREE, comme les autres.
+ *
+ * Elle etait le dernier fichier HTML ecrit a la main, et le 19/08 elle a
+ * produit exactement le defaut que le generateur existe pour empecher : la
+ * rubrique /guide/ a ete ajoutee dans contenu/pages.mjs, les dix-sept pages
+ * generees l'ont affichee, et l'accueil ne l'a pas affichee. En production,
+ * sur la page la plus vue du site.
+ *
+ * Le gabarit vit desormais dans contenu/accueil.html et ne contient plus la
+ * navigation : elle est injectee entre deux reperes, depuis la meme source que
+ * partout ailleurs. Une seule verite par sujet.
+ */
+const accueil = fs.readFileSync(path.join(RACINE, 'contenu', 'accueil.html'), 'utf-8');
+const REPERES = /<!-- nav-site:debut[\s\S]*?nav-site:fin -->/;
+if (!REPERES.test(accueil)) {
+  console.error('  contenu/accueil.html ne porte plus ses reperes de navigation.');
+  console.error('  Sans eux, l\'accueil garderait une navigation figee.');
+  process.exit(1);
+}
+fs.writeFileSync(path.join(PUBLIC, 'index.html'),
+  accueil.replace(REPERES, entete('/', publiees)
+    .match(/<nav class="nav-site">[\s\S]*?<\/nav>/)[0]));
+
 fs.writeFileSync(path.join(PUBLIC, 'vecto.css'), STYLE);
 fs.writeFileSync(path.join(PUBLIC, 'favicon.svg'), symbole + '\n');
 
