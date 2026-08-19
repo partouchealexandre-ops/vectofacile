@@ -36,7 +36,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
         Vos fichiers restent chez vous
       </span>
-      <a class="cta-entete" href="#depot" id="retour_outil">Vectoriser mon logo</a>
+      <a class="cta-entete" href="#depot" id="retour_outil">Diagnostiquer mon logo</a>
     </div>
   </header>
 
@@ -48,18 +48,19 @@
     <div class="bandeau-texte">
       <h1>Votre logo est-il bon à marquer ?</h1>
       <p class="accroche">
-        Déposez votre logo. Il est vectorisé et mesuré dans votre navigateur, sans
-        aucun envoi : ni le fichier, ni son nom, ni une vignette ne quittent votre
-        machine. Vous repartez avec un fichier vectoriel prêt pour un marqueur.
+        Déposez votre logo, quel que soit son format. Une image est vectorisée puis
+        mesurée ; un PDF ou un fichier Illustrator est mesuré directement, sans être
+        retracé. Tout se passe dans votre navigateur : ni le fichier, ni son nom, ni
+        une vignette ne quittent votre machine.
       </p>
     </div>
 
     <div id="depot">
       <strong>Déposez votre logo ici</strong>
-      <span>PNG, JPEG, GIF, WEBP. Ou cliquez pour choisir un fichier.</span>
+      <span>PNG, JPEG, GIF, WEBP, PDF, AI. Ou cliquez pour choisir un fichier.</span>
     </div>
   </div>
-  <input type="file" id="fichier" accept="image/*">
+  <input type="file" id="fichier" accept="image/*,.pdf,.ai,application/pdf">
 
   <div id="travail" hidden></div>
   <div id="erreur" hidden></div>
@@ -78,6 +79,10 @@
        Le balisage est STATIQUE, comme celui des boutons de telechargement :
        l'ecouteur est branche une fois, et la remise a zero masque ce bloc sans
        jamais toucher a son contenu. -->
+  <!-- La fiche d'un fichier DEJA vectoriel. Elle precede les mesures : « votre
+       PDF ne contient qu'une image » rend tout le reste secondaire. -->
+  <section id="fiche" hidden></section>
+
   <section id="largeur" hidden>
     <h2>Sur quelle largeur allez-vous marquer ce logo ?</h2>
     <p class="note">Un atelier raisonne en millimètres, votre fichier est en pixels.
@@ -108,14 +113,19 @@
        bloc dit ce que l'outil fait, ce qu'il mesure et ce qu'il ne fait pas,
        sans repeter les pages du guide, qui traitent des procedes. -->
   <section class="explication">
-    <h2>Ce que fait cet outil, en trois temps</h2>
+    <h2>Ce que fait cet outil</h2>
     <ol>
       <li><b>Il mesure votre fichier.</b> Nombre réel de couleurs, épaisseur du trait le
       plus fin, écart le plus étroit entre deux formes, hauteur des capitales, présence
       d'un dégradé ou d'un halo de compression. Ce sont des faits, pas des avis.</li>
-      <li><b>Il le vectorise.</b> Les contours sont retracés et vous récupérez un
-      <b>.eps</b> pour votre marqueur et un <b>.pdf</b> que vous pouvez ouvrir vous-même
-      pour vérifier avant d'envoyer.</li>
+      <li><b>Il vectorise, mais seulement si c'est utile.</b> Une image en pixels est
+      retracée et vous récupérez un <b>.eps</b> pour votre marqueur et un <b>.pdf</b> que
+      vous pouvez ouvrir vous-même. Un <b>PDF</b> ou un fichier <b>Illustrator</b> est déjà
+      vectoriel : on ne le retrace pas, on le mesure tel quel, parce que le retracer
+      donnerait une approximation de ce que vous avez déjà d'exact.</li>
+      <li><b>Il reconnaît un faux vectoriel.</b> Un PDF qui ne contient qu'une image
+      collée dedans porte la bonne extension, s'ouvre normalement, et sera refusé par
+      l'atelier. Nous comptons les tracés : s'il n'y en a aucun, nous vous le disons.</li>
       <li><b>Il vous dit ce qui est fragile.</b> Un trait trop fin, un texte trop petit,
       une image de départ trop réduite : vous le savez avant le devis, pas après.</li>
     </ol>

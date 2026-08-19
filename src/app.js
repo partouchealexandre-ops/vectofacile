@@ -13,6 +13,7 @@
  */
 
 import { lireImage, telecharger, FichierNonSupporte } from './adaptateurs/image_navigateur.js';
+import { lireVectoriel, reconnaitre, FichierVectorielNonLu } from './adaptateurs/pdf_navigateur.js';
 import { mesurer } from './moteur/mesures.js';
 import { juger } from './verdict/juger.js';
 import { rendreVerdict } from './verdict/rendu.js';
@@ -26,7 +27,7 @@ import { initialiser, vectorize_rgba } from './vectorisation/vtracer_web.js';
 
 const $ = (id) => document.getElementById(id);
 
-let etat = { nom: null, image: null, mesures: null, programme: null, avertissements: [] };
+let etat = { nom: null, image: null, fiche: null, mesures: null, programme: null, avertissements: [] };
 
 function texte(valeur, unite = '') {
   if (valeur === null || valeur === undefined) return 'non mesuré';
@@ -256,10 +257,12 @@ function reinitialiser() {
   // Meme raison pour la largeur de marquage : son champ et son ecouteur sont
   // poses une seule fois au demarrage. On masque la section, on ne la vide pas.
   $('largeur').hidden = true;
+  $('fiche').hidden = true;
+  $('fiche').innerHTML = '';
   $('conseils').hidden = true;
   $('conseils').innerHTML = '';
   $('apercu').innerHTML = '';
-  etat = { nom: null, image: null, mesures: null, programme: null, svg: null, avertissements: [] };
+  etat = { nom: null, image: null, fiche: null, mesures: null, programme: null, svg: null, avertissements: [] };
 }
 
 /**
@@ -286,8 +289,52 @@ function remesurer() {
   const mesures = mesurer(etat.image, { largeurImprimeeMm: largeurDeMarquage() });
   etat.mesures = mesures;
   afficherMesures(mesures, etat.image);
-  afficherConseils(mesures);
+  afficherConseils(mesures, etat.fiche);
   afficherVerdict(mesures);
+}
+
+/**
+ * LA FICHE D'UN FICHIER DEJA VECTORIEL.
+ *
+ * Un PDF sait des choses qu'une image ignore : combien il mesure en
+ * millimetres, et de quoi il est fait. On les affiche AVANT les mesures,
+ * parce que « votre PDF ne contient qu'une image » rend toutes les mesures
+ * suivantes secondaires.
+ */
+function afficherFiche(fiche) {
+  if (!fiche) { $('fiche').hidden = true; return; }
+  const pluriel = (n, singulier, plur) => `${nb(n)} ${n > 1 ? plur : singulier}`;
+  const compo = fiche.traces === null
+    ? ''
+    : ligne('Contenu',
+        `${pluriel(fiche.traces, 'tracé', 'tracés')}, ${pluriel(fiche.images, 'image', 'images')}`
+        + (fiche.texte ? `, ${pluriel(fiche.texte, 'bloc de texte', 'blocs de texte')}` : ''),
+        fiche.texte ? 'du texte non vectorisé demande la police au marqueur' : '');
+  // Le titre ne peut pas annoncer « deja vectoriel » sur un fichier qui ne
+  // l'est pas : ce serait exactement le mensonge que la carte est la pour
+  // defaire.
+  const titre = fiche.faux_vectoriel
+    ? 'Votre fichier a l\'extension d\'un vectoriel'
+    : 'Votre fichier est déjà vectoriel';
+  $('fiche').innerHTML = `
+    <h2>${titre}</h2>
+    <p class="note">Nous ne le vectorisons pas : ${fiche.faux_vectoriel
+      ? 'notre vectoriseur ne ferait que retracer l\'image qu\'il contient, et vous auriez une approximation de plus'
+      : 'il n\'y a rien à tracer'}. Nous le mesurons et nous le
+    diagnostiquons, ce qui est l'autre moitié du travail.</p>
+    ${ligne('Format', 'PDF' + (fiche.pages > 1 ? `, ${nb(fiche.pages)} pages, la première est mesurée` : ''))}
+    ${ligne('Taille réelle du dessin',
+        `${nb(fiche.largeurMm, 1)} × ${nb(fiche.hauteurMm, 1)} mm`,
+        'écrite dans le fichier, contrairement à une image')}
+    ${compo}
+    ${fiche.faux_vectoriel ? `<div class="alerte grave">
+      <b>Attention, ce fichier n'est pas réellement vectoriel.</b>
+      Il porte l'extension d'un vectoriel, il s'ouvre comme un vectoriel, mais
+      il ne contient aucun tracé : seulement une image posée dedans. Agrandi, il
+      pixellisera exactement comme un JPEG. Un atelier vous le refusera, ou le
+      retracera à la main et vous le facturera.</div>` : ''}
+  `;
+  $('fiche').hidden = false;
 }
 
 /**
@@ -295,8 +342,8 @@ function remesurer() {
  * Ils ne dependent d'AUCUN seuil arbitre, c'est pour cela qu'ils peuvent
  * s'afficher aujourd'hui alors que le verdict, lui, attend encore.
  */
-function afficherConseils(mesures) {
-  const liste = conseiller(mesures);
+function afficherConseils(mesures, fiche) {
+  const liste = conseiller(mesures, fiche);
   if (!liste.length) { $('conseils').hidden = true; return; }
   $('conseils').innerHTML = `
     <h2>Ce que votre fichier implique au marquage</h2>
@@ -323,7 +370,33 @@ async function traiter(fichier) {
   $('travail').textContent = 'Lecture du fichier';
 
   try {
-    const image = await lireImage(fichier);
+    // DEUX CHEMINS, ET LE VISITEUR N'A PAS A CHOISIR.
+    //
+    // On lit les premiers octets du fichier, pas son extension ni son type
+    // MIME : le systeme d'Alex annonce un .ai comme `application/postscript`
+    // alors que son contenu commence par %PDF. Se fier a l'etiquette aurait
+    // refuse le fichier pour la raison exactement inverse de la vraie.
+    //
+    // Fichier deja vectoriel : on l'audite, on ne le vectorise pas. Il n'y a
+    // rien a tracer, et le tracer degraderait un dessin exact.
+    const nature = reconnaitre(await fichier.slice(0, 1024).arrayBuffer());
+
+    let image;
+    if (nature === 'pdf') {
+      etape = 'lecture du fichier vectoriel';
+      $('travail').textContent = 'Lecture du fichier vectoriel';
+      const lu = await lireVectoriel(fichier);
+      image = lu.image;
+      etat.fiche = lu.fiche;
+    } else if (nature === 'postscript') {
+      throw new FichierVectorielNonLu(
+        'ce fichier est un EPS, c\'est à dire du PostScript. Nous savons lire les '
+        + 'PDF et les fichiers Illustrator enregistrés avec l\'option « Créer un '
+        + 'fichier compatible PDF », qui est le réglage par défaut. Réenregistrez '
+        + 'votre logo en PDF depuis votre logiciel, le diagnostic sera le même.');
+    } else {
+      image = await lireImage(fichier);
+    }
 
     etape = 'mesure';
     $('travail').textContent = 'Mesure';
@@ -332,9 +405,20 @@ async function traiter(fichier) {
     etat.mesures = mesures;
     etat.nom = (fichier.name || 'logo').replace(/\.[^.]+$/, '');
     $('largeur').hidden = false;
+    afficherFiche(etat.fiche);
     afficherMesures(mesures, image);
-    afficherConseils(mesures);
+    afficherConseils(mesures, etat.fiche);
     await afficherVerdict(mesures);
+
+    // UN FICHIER DEJA VECTORIEL S'ARRETE ICI, et c'est le coeur de la
+    // separation des deux metiers. Il a ete mesure, situe, conseille. On ne
+    // lui propose aucun telechargement : lui rendre une version tracee de son
+    // propre vectoriel serait lui rendre une copie degradee de ce qu'il a
+    // deja.
+    if (nature === 'pdf') {
+      $('travail').hidden = true;
+      return;
+    }
 
     // Le refus se decide sur les MESURES, avant de charger le vectoriseur et
     // avant de lui donner un seul pixel. Un fichier qui ne sera pas vectorise
@@ -393,7 +477,7 @@ async function traiter(fichier) {
   } catch (e) {
     $('travail').hidden = true;
     $('erreur').hidden = false;
-    if (e instanceof FichierNonSupporte) {
+    if (e instanceof FichierNonSupporte || e instanceof FichierVectorielNonLu) {
       $('erreur').textContent = e.message;
     } else {
       // On montre l'etape ET la pile. Un visiteur qui rapporte un probleme nous
@@ -404,7 +488,13 @@ async function traiter(fichier) {
         + `${etape} | ${(e && e.message) || e}\n${((e && e.stack) || '').split('\n').slice(0, 4).join('\n')}`
         + `</pre>`;
     }
-    console.error('[vecto] etape', etape, e);
+    // Un format qu'on ne lit pas N'EST PAS une erreur de programme : c'est une
+    // reponse, et elle est deja affichee au visiteur. La journaliser en
+    // console.error salit le journal de bord et, plus concretement, faisait
+    // echouer le harnais sur un comportement correct.
+    if (!(e instanceof FichierNonSupporte) && !(e instanceof FichierVectorielNonLu)) {
+      console.error('[vecto] etape', etape, e);
+    }
   }
 }
 

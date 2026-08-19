@@ -47,9 +47,39 @@ export const HALO_NEGLIGEABLE = 0.005;
  * PROCEDE, parce que les deux n'ont pas la meme force et que le visiteur a le
  * droit de savoir laquelle il lit.
  */
-export function conseiller(mesures) {
+export function conseiller(mesures, fiche = null) {
   const conseils = [];
   if (!mesures) return conseils;
+
+  // 0. LE FAUX VECTORIEL. Il passe AVANT tout le reste, parce qu'il rend le
+  //    reste secondaire : mesurer finement un dessin qui n'existe pas comme
+  //    dessin n'a pas de sens.
+  if (fiche?.faux_vectoriel) {
+    conseils.push({
+      cle: 'faux_vectoriel',
+      titre: 'Votre fichier porte une extension de vectoriel, mais il n\'en est pas un',
+      fait: `Il ne contient aucun tracé, seulement ${fiche.images} image${fiche.images > 1 ? 's' : ''} posée${fiche.images > 1 ? 's' : ''} dedans.`,
+      mecanique: 'Un atelier ouvre ce fichier, l\'agrandit à la taille du marquage, '
+        + 'et découvre des pixels. Il vous le refusera, ou le retracera à la main et '
+        + 'vous le facturera. La version d\'origine, celle du logiciel de dessin, '
+        + 'existe forcément quelque part : c\'est elle qu\'il faut demander.',
+    });
+  }
+
+  // 0 bis. LE TEXTE NON VECTORISE. Un PDF peut appeler une police que
+  //        l'atelier n'a pas, et la substitution change le dessin sans
+  //        prevenir personne.
+  if (fiche?.texte) {
+    conseils.push({
+      cle: 'texte_vivant',
+      titre: 'Votre fichier contient du texte non vectorisé',
+      fait: `${fiche.texte} bloc${fiche.texte > 1 ? 's' : ''} de texte ${fiche.texte > 1 ? 'sont' : 'est'} encore ${fiche.texte > 1 ? 'des textes' : 'un texte'}, pas ${fiche.texte > 1 ? 'des dessins' : 'un dessin'}.`,
+      mecanique: 'Si l\'atelier n\'a pas votre police, son logiciel en substitue une '
+        + 'autre, et le dessin change sans que personne ne s\'en aperçoive avant '
+        + 'l\'impression. Dans votre logiciel, la commande s\'appelle « vectoriser le '
+        + 'texte » ou « créer des contours ».',
+    });
+  }
 
   // 1. LE FOND. C'est le conseil le plus rentable de la liste : un logo livre
   //    sur un rectangle blanc marque un rectangle blanc, et le visiteur ne

@@ -17,6 +17,7 @@ dist/
 # npm run site:construire, rien ici n'est ecrit a la main.
 public/src/
 public/vtracer_wasm_bg.wasm
+public/pdfjs/
 src/vectorisation/vtracer_web.js
 public/_headers
 public/robots.txt

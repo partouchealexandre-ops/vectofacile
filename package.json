@@ -7,19 +7,22 @@
   "scripts": {
     "corpus:generer": "python3 harnais/corpus_synthetique/generer.py",
     "vtracer:web": "node outils/construire_vtracer_web.mjs",
-    "site:construire": "npm run vtracer:web && node outils/construire_site.mjs && node outils/construire_pages.mjs",
+    "site:construire": "npm run vtracer:web && npm run pdfjs:copier && node outils/construire_site.mjs && node outils/construire_pages.mjs",
     "harnais:moteur": "node harnais/rejouer_synthetique.mjs",
     "harnais:vectorisation": "node harnais/rejouer_vectorisation.mjs",
     "harnais:navigateur": "node harnais/rejouer_navigateur.mjs",
-    "verifier": "npm run corpus:generer && npm run harnais:moteur && npm run harnais:vectorisation && npm run harnais:verdict && npm run site:construire && npm run harnais:seo && npm run harnais:navigateur && npm run harnais:pages",
+    "verifier": "npm run corpus:generer && npm run harnais:moteur && npm run harnais:vectorisation && npm run harnais:verdict && npm run site:construire && npm run harnais:seo && npm run harnais:navigateur && npm run harnais:vectoriel && npm run harnais:pages",
     "servir": "python3 -m http.server 8123 --directory public",
     "harnais:pages": "node harnais/rejouer_pages.mjs",
     "harnais:verdict": "node harnais/rejouer_verdict.mjs",
-    "harnais:seo": "node harnais/rejouer_seo.mjs"
+    "harnais:seo": "node harnais/rejouer_seo.mjs",
+    "pdfjs:copier": "node outils/construire_pdfjs.mjs",
+    "harnais:vectoriel": "node harnais/rejouer_vectoriel.mjs"
   },
   "license": "UNLICENSED",
   "dependencies": {
-    "@visioncortex/vtracer": "^1.0.0-alpha.3"
+    "@visioncortex/vtracer": "^1.0.0-alpha.3",
+    "pdfjs-dist": "^6.2.108"
   },
   "devDependencies": {
     "playwright": "^1.62.1"

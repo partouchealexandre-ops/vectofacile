@@ -43,16 +43,17 @@ export async function lireImage(fichier, options = {}) {
 
   if (fichier.type === TYPE_SVG || /\.svg$/i.test(fichier.name || '')) {
     throw new FichierNonSupporte(
-      "votre fichier est deja vectoriel : un SVG n'a rien a se faire vectoriser. "
-      + "Le diagnostic de marquabilite sur fichier vectoriel arrivera, il demande "
-      + "un autre chemin de lecture que celui d'une image."
+      "votre fichier est déjà vectoriel : un SVG n'a rien à se faire vectoriser. "
+      + "Pour le faire diagnostiquer, exportez-le en PDF depuis votre logiciel de "
+      + "dessin et redéposez-le : nous lisons les PDF et les fichiers Illustrator."
     );
   }
 
   if (fichier.type && !TYPES_ADMIS.has(fichier.type)) {
     throw new FichierNonSupporte(
-      `format non gere : ${fichier.type}. Les fichiers PDF, AI et EPS demandent `
-      + 'un autre chemin, ils ne sont pas des images matricielles.'
+      `format non géré : ${fichier.type}. Nous lisons les images PNG, JPEG, GIF et `
+      + 'WEBP, ainsi que les PDF et les fichiers Illustrator enregistrés avec '
+      + 'l\'option de compatibilité PDF.'
     );
   }
 
