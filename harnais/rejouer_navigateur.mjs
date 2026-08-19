@@ -452,6 +452,143 @@ console.log('');
   console.log('');
 }
 
+// ---------------------------------------------------------------------------
+// LES MILLIMETRES ARRIVENT PAR LE VISITEUR, ET LE CALCUL EST JUSTE.
+//
+// Defaut trouve le 19/08, et il valait plus cher que tous les autres : le
+// moteur savait convertir en millimetres depuis le debut, mais RIEN ne lui
+// donnait jamais la largeur de marquage. Toutes les mesures en mm valaient
+// donc null en production, et le verdict repondait « nous ne savons pas
+// encore » sur chaque critere, y compris ceux qui auraient eu un seuil.
+//
+// Le harnais du verdict etait vert pendant ce temps, parce qu'il fabrique ses
+// propres objets de mesures avec des millimetres dedans. Il testait la regle,
+// pas le chemin. Meme famille de faute que la police livree avec son garde-fou.
+//
+// Ce controle passe par le VRAI chemin : on depose un fichier, on tape une
+// largeur dans le champ, et on verifie que le millimetre obtenu est celui de
+// la regle de trois. Aucun seuil de marquage n'intervient ici.
+{
+  const page = await navigateur.newPage();
+  await page.goto(`http://127.0.0.1:${PORT}/`, { waitUntil: 'networkidle' });
+  await page.waitForTimeout(900);
+  const octets = fs.readFileSync(path.join(IMAGES, 'trait_09px.png'));
+  const constat = await page.evaluate(async (b64) => {
+    const fichier = new File(
+      [Uint8Array.from(atob(b64), (c) => c.charCodeAt(0))], 'trait.png', { type: 'image/png' });
+    await globalThis.vecto.traiter(fichier);
+    const avant = globalThis.vecto.etat().mesures;
+    const champ = document.getElementById('largeur_mm');
+    const visible = document.getElementById('largeur').offsetParent !== null;
+    champ.value = '40';
+    champ.dispatchEvent(new Event('input', { bubbles: true }));
+    const apres = globalThis.vecto.etat().mesures;
+    return {
+      visible,
+      mmAvant: avant.m5TraitLePlusFin.encadrementMm,
+      mmApres: apres.m5TraitLePlusFin.encadrementMm,
+      pxApres: apres.m5TraitLePlusFin.encadrementPx,
+      largeurPx: apres.m1Dimensions.largeurPx,
+      texteAffiche: document.getElementById('mesures').innerText,
+    };
+  }, octets.toString('base64'));
+  await page.close();
+
+  const attendu = constat.pxApres && constat.largeurPx
+    ? (constat.pxApres.basse * 40) / constat.largeurPx : null;
+  const obtenu = constat.mmApres ? constat.mmApres.basse : null;
+  const justeAuMillieme = attendu !== null && obtenu !== null
+    && Math.abs(attendu - obtenu) < 1e-9;
+
+  console.log('');
+  console.log('  LES MILLIMETRES ARRIVENT PAR LE VISITEUR');
+  console.log('  ' + '-'.repeat(66));
+  for (const [libelle, ok] of [
+    ['le champ de largeur apparait des qu\'un fichier est mesure', constat.visible === true],
+    ['sans largeur donnee, les millimetres valent null', constat.mmAvant === null],
+    ['une largeur saisie produit des millimetres', obtenu !== null],
+    ['et le calcul est exactement la regle de trois', justeAuMillieme],
+    ['la page affiche bien des mm apres saisie', /\bmm\b/.test(constat.texteAffiche)],
+    // Assertion de propriete sur le FORMAT. Le 19/08 la meme page ecrivait
+    // « 0.34 mm » dans les mesures et « 1,18 % » dans les conseils. On ne peut
+    // pas assertionner qu'un texte est bien redige, on peut assertionner qu'il
+    // ne contient jamais de point decimal anglais.
+    ['aucun point decimal anglais dans les mesures',
+      !/\d[.]\d/.test(constat.texteAffiche)],
+  ]) {
+    console.log(`  ${ok ? 'ok   ' : 'ECHEC'} ${libelle}`);
+    if (!ok) echecs++;
+  }
+  if (obtenu !== null) {
+    console.log(`         trait ${constat.pxApres.basse} px sur ${constat.largeurPx} px de large,`
+      + ` marque sur 40 mm : ${obtenu.toFixed(3)} mm`);
+  }
+  console.log('  ' + '-'.repeat(66));
+  console.log('');
+}
+
+
+// ---------------------------------------------------------------------------
+// LES CONSEILS N'ONT BESOIN D'AUCUN SEUIL, ET N'EN CONTIENNENT AUCUN.
+//
+// Les conseils croisent un fait mesure avec une mecanique de procede. Ni l'un
+// ni l'autre ne demande d'arbitrage, c'est pourquoi ils s'affichent alors que
+// le verdict attend encore P0.7.
+//
+// Le deuxieme controle est l'assertion de propriete qui garde le module
+// honnete : un conseil ne doit JAMAIS porter une valeur de marquage en
+// millimetres. Le jour ou quelqu'un ecrit « il faut au moins 0,3 mm » dans
+// conseils.js, il a fabrique un seuil sans arbitrage, et ce controle tombe.
+{
+  const page = await navigateur.newPage();
+  await page.goto(`http://127.0.0.1:${PORT}/`, { waitUntil: 'networkidle' });
+  await page.waitForTimeout(900);
+  const octets = fs.readFileSync(path.join(IMAGES, 'couleurs_09_jpeg.jpg'));
+  const constat = await page.evaluate(async (b64) => {
+    const fichier = new File(
+      [Uint8Array.from(atob(b64), (c) => c.charCodeAt(0))], 'jpeg.jpg', { type: 'image/jpeg' });
+    await globalThis.vecto.traiter(fichier);
+    const bloc = document.getElementById('conseils');
+    return {
+      visible: bloc.offsetParent !== null,
+      nombre: bloc.querySelectorAll('.conseil').length,
+      titres: [...bloc.querySelectorAll('.conseil h3')].map((e) => e.textContent.trim()),
+      // On assertionne sur les CONSEILS eux memes, pas sur le chapeau. Le
+      // chapeau contient la phrase « nous ne vous disons pas encore si votre
+      // logo passe », et il doit la contenir : c'est la mise en garde. La
+      // premiere version de ce controle lisait tout le bloc et tombait sur
+      // cette phrase la, ce qui aurait pousse a supprimer un avertissement
+      // utile pour faire plaisir a un test.
+      texte: [...bloc.querySelectorAll('.conseil')].map((e) => e.innerText).join('\n'),
+    };
+  }, octets.toString('base64'));
+  await page.close();
+
+  const porteUnSeuil = /\d+([.,]\d+)?\s?(mm|cm|pt)\b/.test(constat.texte);
+  // Bornes de mot obligatoires : sans elles, « passages a caler » declenchait
+  // le controle sur le mot « passe ». Une premiere version de ce harnais est
+  // tombee sur son propre faux positif, ce qui est la bonne facon de decouvrir
+  // qu'une regex trop large ne prouve rien.
+  const porteUnVerdict = /\b(passe|passera|impossible|infaisable|refus\w*|interdit\w*)\b/i
+    .test(constat.texte);
+
+  console.log('');
+  console.log('  LES CONSEILS S\'AFFICHENT, ET NE PORTENT AUCUN SEUIL');
+  console.log('  ' + '-'.repeat(66));
+  for (const [libelle, ok] of [
+    ['des conseils sont affiches sur un fichier reel', constat.visible === true],
+    ['chacun croise un fait et une mecanique', constat.nombre >= 2],
+    ['aucune valeur de marquage en mm, cm ou pt', porteUnSeuil === false],
+    ['aucun verdict deguise en conseil', porteUnVerdict === false],
+  ]) {
+    console.log(`  ${ok ? 'ok   ' : 'ECHEC'} ${libelle}`);
+    if (!ok) echecs++;
+  }
+  for (const t of constat.titres) console.log(`         ${t}`);
+  console.log('  ' + '-'.repeat(66));
+  console.log('');
+}
+
 await navigateur.close();
 serveur.close();
 process.exit(echecs === 0 ? 0 : 1);

@@ -68,7 +68,30 @@
        avertissement, c'est une note de bas de page. -->
   <div id="avertissements" hidden></div>
 
+  <!-- LA LARGEUR DE MARQUAGE.
+       Le moteur mesure en pixels, et un atelier parle en millimetres. La
+       conversion est une simple regle de trois, mais elle demande une donnee
+       que le fichier ne contient pas : la largeur a laquelle le logo sera
+       marque. Tant que le visiteur ne la donne pas, tout reste en pixels et
+       la page le dit, plutot que d'inventer une taille par defaut.
+
+       Le balisage est STATIQUE, comme celui des boutons de telechargement :
+       l'ecouteur est branche une fois, et la remise a zero masque ce bloc sans
+       jamais toucher a son contenu. -->
+  <section id="largeur" hidden>
+    <h2>Sur quelle largeur allez-vous marquer ce logo ?</h2>
+    <p class="note">Un atelier raisonne en millimètres, votre fichier est en pixels.
+    Donnez la largeur du marquage et toutes les mesures ci-dessous se convertissent.
+    Sans cette information, elles restent en pixels : nous préférons ça à une taille
+    inventée.</p>
+    <label for="largeur_mm">Largeur du marquage</label>
+    <input type="number" id="largeur_mm" min="1" max="1000" step="1" inputmode="numeric"
+           placeholder="par exemple 40">
+    <span class="unite">mm</span>
+  </section>
+
   <section id="mesures" hidden></section>
+  <section id="conseils" hidden></section>
   <section id="verdict" hidden></section>
 
   <section id="resultat" hidden></section>

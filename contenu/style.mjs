@@ -123,6 +123,15 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
   .precision { color: var(--gris); font-size: 13px; }
   .pastille { display: inline-block; width: 13px; height: 13px; border-radius: 3px; margin-left: 3px;
               vertical-align: -1px; border: 1px solid rgba(0,0,0,.15); }
+  .secondaire { color: var(--gris); font-weight: 400; font-size: 13px; }
+  #largeur label { display: inline-block; color: var(--gris); font-size: 14px; margin-right: 10px; }
+  #largeur input { width: 110px; padding: 9px 12px; font: inherit; font-size: 16px;
+                   border: 1px solid var(--trait); border-radius: 6px; background: #fff; }
+  #largeur .unite { margin-left: 8px; color: var(--gris); font-size: 14px; }
+  .conseil { border-left: 3px solid var(--trait); padding: 2px 0 2px 16px; margin: 16px 0; }
+  .conseil h3 { margin: 0 0 6px; font-size: 16.5px; }
+  .conseil .fait { margin: 0 0 6px; font-weight: 600; }
+  .conseil .mecanique { margin: 0; color: var(--gris); font-size: 14.5px; }
   .palette { list-style: none; padding: 0; margin: 12px 0 0; }
   .teinte { display: flex; align-items: center; gap: 12px; padding: 6px 0;
             border-bottom: 1px solid var(--trait); }

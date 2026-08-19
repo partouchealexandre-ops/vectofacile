@@ -16,6 +16,7 @@ import { lireImage, telecharger, FichierNonSupporte } from './adaptateurs/image_
 import { mesurer } from './moteur/mesures.js';
 import { juger } from './verdict/juger.js';
 import { rendreVerdict } from './verdict/rendu.js';
+import { conseiller } from './conseils/conseils.js';
 import { preparerVectorisation, FORMES_MAXIMALES } from './vectorisation/options.js';
 import { construireProgramme, inventaire } from './vectorisation/programme.js';
 import { versEps } from './vectorisation/eps.js';
@@ -25,21 +26,58 @@ import { initialiser, vectorize_rgba } from './vectorisation/vtracer_web.js';
 
 const $ = (id) => document.getElementById(id);
 
-let etat = { nom: null, mesures: null, programme: null, avertissements: [] };
+let etat = { nom: null, image: null, mesures: null, programme: null, avertissements: [] };
 
 function texte(valeur, unite = '') {
   if (valeur === null || valeur === undefined) return 'non mesuré';
   if (typeof valeur === 'number') {
-    return (Number.isInteger(valeur) ? valeur : valeur.toFixed(2)) + unite;
+    return nb(valeur, Number.isInteger(valeur) ? 0 : 2) + unite;
   }
   return String(valeur);
 }
 
+/**
+ * FORMAT FRANCAIS. Le 19/08, la page affichait « 0.34 mm » et « 23322 pixels »
+ * dans les mesures, et « 1,18 % » et « 18 607 pixels » dans les conseils, sur
+ * le meme ecran. Un outil qui n'ecrit pas ses nombres de la meme facon d'un
+ * bloc a l'autre a l'air de ne pas savoir ce qu'il mesure.
+ *
+ * Une seule regle desormais : virgule decimale, espace insecable des milliers,
+ * partout, par ces deux fonctions et pas autrement.
+ */
+function nb(valeur, decimales = 0) {
+  if (valeur === null || valeur === undefined || !Number.isFinite(valeur)) return 'non mesuré';
+  return valeur.toLocaleString('fr-FR', {
+    minimumFractionDigits: decimales, maximumFractionDigits: decimales,
+  });
+}
+
+function pourcent(part, decimales = 1) {
+  if (part === null || part === undefined || !Number.isFinite(part)) return 'non mesuré';
+  return `${nb(100 * part, decimales)} %`;
+}
+
 function encadrement(e, unite = ' px') {
   if (!e) return 'non mesuré';
+  const dec = unite.includes('mm') ? 2 : 0;
   const a = Math.round(e.basse * 100) / 100;
   const b = Math.round(e.haute * 100) / 100;
-  return a === b ? a + unite : `${a} à ${b}${unite}`;
+  return a === b ? nb(a, dec) + unite : `${nb(a, dec)} à ${nb(b, dec)}${unite}`;
+}
+
+/**
+ * Une mesure de longueur, en pixels et, quand le visiteur a donne une largeur
+ * de marquage, en millimetres. Les millimetres passent devant : c'est l'unite
+ * dans laquelle un atelier repond. Le pixel reste affiche parce que c'est lui
+ * qui a ete mesure, et qu'il ne depend d'aucune saisie.
+ */
+function longueur(encadrementPx, encadrementMm) {
+  const px = encadrement(encadrementPx, ' px');
+  if (!encadrementMm || encadrementMm.basse === null || encadrementMm.basse === undefined) {
+    return px;
+  }
+  const mm = encadrement(encadrementMm, ' mm');
+  return `${mm} <span class="secondaire">soit ${px}</span>`;
 }
 
 function ligne(intitule, valeur, precision = '') {
@@ -67,7 +105,7 @@ function rendrePalette(palette) {
       <span class="pastille" style="background:${c.hex}"></span>
       <code class="hex">${c.hex.toUpperCase()}</code>
       <span class="rvb">R ${c.rvb[0]} V ${c.rvb[1]} B ${c.rvb[2]}</span>
-      <span class="part">${(100 * c.part).toFixed(1)} % de l'encre</span>
+      <span class="part">${pourcent(c.part)} de l'encre</span>
     </li>`).join('');
   return `<h3>Vos couleurs, à donner à votre marqueur</h3>
     <ul class="palette">${lignes}</ul>
@@ -88,28 +126,33 @@ function afficherMesures(m, image) {
   $('mesures').innerHTML = `
     <h2>Ce que votre fichier contient</h2>
     ${reduction ? `<p class="note">${reduction}</p>` : ''}
-    ${ligne('Dimensions', `${m.m1Dimensions.largeurPx} × ${m.m1Dimensions.hauteurPx} px`)}
+    ${ligne('Dimensions', `${nb(m.m1Dimensions.largeurPx)} × ${nb(m.m1Dimensions.hauteurPx)} px`)}
     ${ligne('Fond', m.fond.type === 'transparent' ? 'transparent' : `couleur ${m.fond.rvb.join(', ')}`)}
-    ${ligne('Couleurs réelles', `${m.m2Couleurs.couleursReelles} ${palette}`,
-        `le fichier en contient ${m.m2Couleurs.couleursBrutes} au total`)}
-    ${ligne('Halo et salissures', `${m.m3Halo.pourcentBoite.toFixed(2)} %`,
-        `${m.m3Halo.pixelsImpurs} pixels ni fond ni couleur du logo`)}
-    ${ligne('Pixels orphelins retirés', `${m.proprete.pixelsRetires}`,
-        `${m.proprete.composantesRetirees} amas isolés`)}
-    ${ligne('Trait le plus fin', encadrement(m.m5TraitLePlusFin.encadrementPx))}
-    ${ligne('Écart le plus étroit', encadrement(m.m6ContreFormes.ecartMinimalPx))}
+    ${ligne('Couleurs réelles', `${nb(m.m2Couleurs.couleursReelles)} ${palette}`,
+        `le fichier en contient ${nb(m.m2Couleurs.couleursBrutes)} au total`)}
+    ${ligne('Halo et salissures', pourcent(m.m3Halo.partBoite, 2),
+        `${nb(m.m3Halo.pixelsImpurs)} pixels ni fond ni couleur du logo`)}
+    ${ligne('Pixels orphelins retirés', nb(m.proprete.pixelsRetires),
+        `${nb(m.proprete.composantesRetirees)} amas isolés`)}
+    ${ligne('Trait le plus fin',
+        longueur(m.m5TraitLePlusFin.encadrementPx, m.m5TraitLePlusFin.encadrementMm))}
+    ${ligne('Écart le plus étroit',
+        longueur(m.m6ContreFormes.ecartMinimalPx, m.m6ContreFormes.ecartMinimalMm))}
     ${ligne('Plus petite contre forme', encadrement(m.m6ContreFormes.plusPetiteContreFormePx),
         `${m.m6ContreFormes.nombreContreFormes} contre formes fermées`)}
     ${ligne('Hauteur de capitale', m.m7HauteurDeCapitale.hauteurPx === null
         ? `non mesurée (${m.m7HauteurDeCapitale.motif})`
-        : texte(m.m7HauteurDeCapitale.hauteurPx, ' px'))}
-    ${ligne('Plus grand aplat', `${m.m8PlusGrandAplat.airePx} px²`,
-        `${(100 * m.m8PlusGrandAplat.partDeLEncre).toFixed(0)} % de l'encre`)}
+        : (m.m7HauteurDeCapitale.hauteurMm != null
+            ? `${texte(m.m7HauteurDeCapitale.hauteurMm, ' mm')} <span class="secondaire">soit `
+              + `${texte(m.m7HauteurDeCapitale.hauteurPx, ' px')}</span>`
+            : texte(m.m7HauteurDeCapitale.hauteurPx, ' px')))}
+    ${ligne('Plus grand aplat', `${nb(m.m8PlusGrandAplat.airePx)} px²`,
+        `${pourcent(m.m8PlusGrandAplat.partDeLEncre, 0)} de l'encre`)}
     ${ligne('Dégradé ou photo', m.m10IndicesExport.partInterieurVariable === null
         ? 'non mesuré'
-        : `${(100 * m.m10IndicesExport.partInterieurVariable).toFixed(1)} % de l'intérieur`)}
+        : `${pourcent(m.m10IndicesExport.partInterieurVariable)} de l'intérieur`)}
     ${ligne('Transparence partielle', m.m4Transparence.aTransparencePartielle
-        ? `oui, ${m.m4Transparence.pixelsSemiTransparents} pixels` : 'non')}
+        ? `oui, ${nb(m.m4Transparence.pixelsSemiTransparents)} pixels` : 'non')}
     ${rendrePalette(m.m2Couleurs.palette)}
   `;
   $('mesures').hidden = false;
@@ -210,8 +253,62 @@ function reinitialiser() {
   // que l'avertissement n'etait plus au-dessus du bouton, parce qu'il n'y
   // avait plus de bouton du tout.
   $('telechargements').hidden = true;
+  // Meme raison pour la largeur de marquage : son champ et son ecouteur sont
+  // poses une seule fois au demarrage. On masque la section, on ne la vide pas.
+  $('largeur').hidden = true;
+  $('conseils').hidden = true;
+  $('conseils').innerHTML = '';
   $('apercu').innerHTML = '';
-  etat = { nom: null, mesures: null, programme: null, svg: null, avertissements: [] };
+  etat = { nom: null, image: null, mesures: null, programme: null, svg: null, avertissements: [] };
+}
+
+/**
+ * LA LARGEUR DE MARQUAGE, en millimetres.
+ *
+ * Le moteur mesure en pixels. Un seuil de marquage, lui, est en millimetres.
+ * Sans cette donnee, la conversion est impossible et TOUTES les mesures en mm
+ * valent null : c'est la raison pour laquelle le verdict repondait « nous ne
+ * savons pas encore » meme sur les criteres qui auraient eu un seuil. Le
+ * chainon manquant n'etait pas seulement dans le referentiel, il etait ici.
+ *
+ * Aucune valeur par defaut. Une taille de marquage inventee produirait des
+ * millimetres faux, qui ont l'air justes.
+ */
+function largeurDeMarquage() {
+  const brut = $('largeur_mm')?.value;
+  const n = Number.parseFloat(brut);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+/** Re-mesure a partir de l'image deja lue, sans redemander le fichier. */
+function remesurer() {
+  if (!etat.image) return;
+  const mesures = mesurer(etat.image, { largeurImprimeeMm: largeurDeMarquage() });
+  etat.mesures = mesures;
+  afficherMesures(mesures, etat.image);
+  afficherConseils(mesures);
+  afficherVerdict(mesures);
+}
+
+/**
+ * Les conseils d'impression : un fait mesure, une mecanique de procede.
+ * Ils ne dependent d'AUCUN seuil arbitre, c'est pour cela qu'ils peuvent
+ * s'afficher aujourd'hui alors que le verdict, lui, attend encore.
+ */
+function afficherConseils(mesures) {
+  const liste = conseiller(mesures);
+  if (!liste.length) { $('conseils').hidden = true; return; }
+  $('conseils').innerHTML = `
+    <h2>Ce que votre fichier implique au marquage</h2>
+    <p class="note">Chaque point ci-dessous croise une mesure de votre fichier avec
+    une mécanique de procédé. Ce ne sont pas des verdicts : nous ne vous disons pas
+    encore si votre logo passe, nous vous disons ce qu'il implique.</p>
+    ${liste.map((c) => `<div class="conseil">
+      <h3>${c.titre}</h3>
+      <p class="fait">${c.fait}</p>
+      <p class="mecanique">${c.mecanique}</p>
+    </div>`).join('')}`;
+  $('conseils').hidden = false;
 }
 
 async function traiter(fichier) {
@@ -230,10 +327,13 @@ async function traiter(fichier) {
 
     etape = 'mesure';
     $('travail').textContent = 'Mesure';
-    const mesures = mesurer(image);
+    const mesures = mesurer(image, { largeurImprimeeMm: largeurDeMarquage() });
+    etat.image = image;
     etat.mesures = mesures;
     etat.nom = (fichier.name || 'logo').replace(/\.[^.]+$/, '');
+    $('largeur').hidden = false;
     afficherMesures(mesures, image);
+    afficherConseils(mesures);
     await afficherVerdict(mesures);
 
     // Le refus se decide sur les MESURES, avant de charger le vectoriseur et
@@ -278,9 +378,9 @@ async function traiter(fichier) {
     $('apercu').innerHTML = etat.svg;
     $('resultat').innerHTML = `
       <h2>Votre fichier vectoriel</h2>
-      ${ligne('Formes', inv.formes)}
-      ${ligne('Couleurs du fichier livré', inv.couleurs)}
-      ${ligne('Segments', inv.segments)}
+      ${ligne('Formes', nb(inv.formes))}
+      ${ligne('Couleurs du fichier livré', nb(inv.couleurs))}
+      ${ligne('Segments', nb(inv.segments))}
       <p class="note">
         Les fabricants de goodies demandent du .eps ou du .ai, et refusent le
         SVG dans la plupart des cas. Le SVG reste téléchargeable, pour votre
@@ -324,6 +424,12 @@ function brancher() {
     const f = e.dataTransfer.files[0];
     if (f) traiter(f);
   });
+
+  // La largeur de marquage re-mesure a la volee. On ecoute `input` et non
+  // `change` : le visiteur voit ses millimetres bouger pendant qu'il tape, ce
+  // qui est la seule facon de comprendre du premier coup que ce champ commande
+  // toutes les valeurs en dessous.
+  $('largeur_mm').addEventListener('input', () => remesurer());
 
   $('telecharger_eps').addEventListener('click', () => {
     telecharger(versEps(etat.programme, { titre: etat.nom }), `${etat.nom}.eps`, 'application/postscript');
