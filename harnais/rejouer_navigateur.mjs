@@ -352,6 +352,54 @@ console.log('');
   console.log('');
 }
 
+
+// ---------------------------------------------------------------------------
+// UN FICHIER REFUSE NE SE TELECHARGE PAS, MEME APRES UN FICHIER REUSSI.
+//
+// C'est le defaut le plus grave trouve le 19/08, et il a produit un fichier
+// reel entre les mains d'Alex : un .eps de 5 174 formes pour un logo a
+// degrade. Le plafond de formes avait REFUSE ce fichier et l'a dit a l'ecran.
+// Les boutons de telechargement, eux, sont restes visibles et fonctionnels,
+// parce qu'une regle CSS ecrasait leur attribut hidden et que rien ne remettait
+// l'ecran a zero entre deux fichiers.
+//
+// Un outil qui affiche « pas de fichier vectoriel pour celui-ci » et laisse un
+// bouton « telecharger le .eps » juste en dessous ne refuse rien du tout.
+//
+// On enchaine donc deliberement : un fichier qui passe, puis un fichier
+// refuse, et on verifie que les boutons du premier ont disparu.
+{
+  const page = await navigateur.newPage();
+  await page.goto(`http://127.0.0.1:${PORT}/`, { waitUntil: 'networkidle' });
+  await page.waitForTimeout(900);
+  const bon = fs.readFileSync(path.join(IMAGES, 'couleurs_09_plat.png'));
+  const refuse = fs.readFileSync(path.join(IMAGES, 'bruit_photographique.png'));
+  const constat = await page.evaluate(async ([b1, b2]) => {
+    const fichier = (b64, nom) => new File(
+      [Uint8Array.from(atob(b64), (c) => c.charCodeAt(0))], nom, { type: 'image/png' });
+    await globalThis.vecto.traiter(fichier(b1, 'bon.png'));
+    const apres1 = document.getElementById('telechargements').offsetParent !== null;
+    await globalThis.vecto.traiter(fichier(b2, 'refuse.png'));
+    const apres2 = document.getElementById('telechargements').offsetParent !== null;
+    return { apres1, apres2, programme: Boolean(globalThis.vecto.etat().programme) };
+  }, [bon.toString('base64'), refuse.toString('base64')]);
+  await page.close();
+
+  console.log('');
+  console.log('  UN FICHIER REFUSE NE SE TELECHARGE PAS');
+  console.log('  ' + '-'.repeat(66));
+  for (const [libelle, ok] of [
+    ['les boutons apparaissent sur un fichier accepte', constat.apres1 === true],
+    ['ils DISPARAISSENT sur le fichier refuse suivant', constat.apres2 === false],
+    ['le trace du fichier precedent ne survit pas en memoire', constat.programme === false],
+  ]) {
+    console.log(`  ${ok ? 'ok   ' : 'ECHEC'} ${libelle}`);
+    if (!ok) echecs++;
+  }
+  console.log('  ' + '-'.repeat(66));
+  console.log('');
+}
+
 await navigateur.close();
 serveur.close();
 process.exit(echecs === 0 ? 0 : 1);

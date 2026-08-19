@@ -148,8 +148,46 @@ async function afficherVerdict(mesures) {
   $('verdict').hidden = false;
 }
 
+/**
+ * REMISE A ZERO DE L'ECRAN ET DE L'ETAT, avant chaque fichier.
+ *
+ * Elle manquait, et son absence a produit le pire defaut de la journee.
+ *
+ * Le 19/08, Alex a recupere un .eps de 5 174 formes pour un logo a degrade.
+ * Ce fichier avait ete REFUSE par le plafond de formes : le message de refus
+ * s'est bien affiche. Mais les boutons de telechargement restaient visibles,
+ * et `etat.programme` etait deja rempli au moment du refus. Le visiteur
+ * pouvait donc telecharger un fichier que l'outil venait de declarer
+ * inexploitable.
+ *
+ * Deux causes se sont additionnees : une regle CSS qui ecrasait l'attribut
+ * hidden, corrigee par ailleurs, et l'absence de toute remise a zero ici. La
+ * seconde suffisait a elle seule : apres un fichier reussi, un second fichier
+ * refuse laissait les boutons du PREMIER a l'ecran, prets a livrer le mauvais
+ * fichier sous le mauvais nom.
+ *
+ * La regle : rien de ce qui concerne le fichier precedent ne survit au depot
+ * du suivant. Ni a l'ecran, ni en memoire.
+ */
+function reinitialiser() {
+  // Ces blocs sont REMPLIS par le traitement : on les vide.
+  for (const id of ['erreur', 'avertissements', 'mesures', 'verdict', 'resultat']) {
+    const e = $(id);
+    if (e) { e.hidden = true; e.innerHTML = ''; }
+  }
+  // Celui-ci porte un balisage STATIQUE, dont les trois boutons et leurs
+  // ecouteurs poses au demarrage. Le vider les supprimerait du document, et
+  // les ecouteurs partiraient avec eux. On le masque, on n'y touche pas.
+  // Erreur commise puis corrigee dans la meme minute : le harnais a signale
+  // que l'avertissement n'etait plus au-dessus du bouton, parce qu'il n'y
+  // avait plus de bouton du tout.
+  $('telechargements').hidden = true;
+  $('apercu').innerHTML = '';
+  etat = { nom: null, mesures: null, programme: null, svg: null, avertissements: [] };
+}
+
 async function traiter(fichier) {
-  $('erreur').hidden = true;
+  reinitialiser();
   $('travail').hidden = false;
   // L'etape courante est suivie explicitement : quand quelque chose casse chez
   // un visiteur, savoir A QUEL MOMENT vaut plus que le message d'erreur lui
