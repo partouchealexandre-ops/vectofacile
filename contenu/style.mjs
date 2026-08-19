@@ -78,14 +78,39 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
   .cta-entete { font-size: 14px; font-weight: 600; padding: 9px 17px; border-radius: 8px;
                 border: 1.5px solid var(--orange); background: var(--orange); color: #fff;
                 text-decoration: none; white-space: nowrap; }
-  main { max-width: 860px; margin: 0 auto; padding: 48px 20px 96px; }
+  /* ------------------------------------------------- la largeur du site
+
+     Deux largeurs, et la distinction n'est pas cosmetique.
+
+     LE CADRE fait 1120 px : entete, pied de page, zone de depot, tableau de
+     mesures, cartes de verdict. Ce sont des objets qu'on BALAIE du regard,
+     et les etaler evite l'effet de colonne perdue au milieu d'un grand ecran.
+
+     LA COLONNE DE LECTURE fait 68 caracteres : tout ce qui se LIT ligne apres
+     ligne. Au-dela, l'oeil rate le retour a la ligne suivante ; c'est la seule
+     regle de mise en page qui repose sur une mesure et non sur un gout.
+
+     La premiere version appliquait 860 px aux deux, ce qui etait trop etroit
+     pour le cadre et a peu pres juste pour le texte. */
+  main { max-width: 1120px; margin: 0 auto; padding: 48px 24px 96px; }
   h1 { font-family: 'Poppins', var(--pile-systeme); font-weight: 700; font-size: 34px;
        line-height: 1.2; margin: 0 0 12px; letter-spacing: -0.02em; }
   h2 { font-family: 'Poppins', var(--pile-systeme); font-weight: 700; font-size: 17px;
        margin: 32px 0 12px; letter-spacing: -0.01em; }
-  .accroche { color: var(--gris); margin: 0 0 32px; max-width: 60ch; }
+  .accroche { color: var(--gris); margin: 0 0 8px; max-width: 62ch; font-size: 17px; }
+
+  /* Le bandeau d'accueil. En dessous de 1000 px, une colonne : le discours
+     puis l'action. Au-dessus, deux colonnes de meme poids, parce que la zone
+     de depot etiree sur toute la largeur d'un grand ecran devenait un vide
+     avec un titre au milieu. */
+  .bandeau { display: grid; gap: 28px; align-items: center; margin: 8px 0 20px; }
+  .bandeau h1 { margin-top: 0; }
+  @media (min-width: 1000px) {
+    .bandeau { grid-template-columns: 1fr 1fr; gap: 56px; margin: 24px 0 28px; }
+    .bandeau h1 { font-size: 40px; }
+  }
   #depot {
-    border: 2px dashed var(--trait); border-radius: 12px; padding: 48px 24px;
+    border: 2px dashed var(--trait); border-radius: 12px; padding: 56px 24px;
     text-align: center; cursor: pointer; transition: border-color .15s, background .15s;
   }
   #depot:hover, #depot.survol { border-color: var(--accent); background: var(--gris-clair); }
@@ -108,6 +133,26 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
             background: repeating-conic-gradient(#f3f4f6 0% 25%, #ffffff 0% 50%) 50% / 16px 16px; }
   #apercu svg { max-width: 100%; height: auto; display: block; margin: 0 auto; }
   #telechargements { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+
+  /* L'attribut hidden ne resiste pas a une regle display, et le navigateur ne
+     previent pas. En production, le 19/08 : les trois boutons de
+     telechargement etaient AFFICHES avant tout depot de fichier, parce que
+     « #telechargements { display: flex } » ecrasait le hidden du HTML. On
+     proposait de telecharger un fichier qui n'existait pas.
+     La regle ci-dessous met fin a la classe entiere de ce defaut, pour tous
+     les blocs du site et pas seulement celui-la. */
+  [hidden] { display: none !important; }
+
+  /* Le contenu sous l'outil. Colonne de lecture, comme partout ailleurs. */
+  .explication { margin-top: 56px; border-top: 1px solid var(--trait); padding-top: 8px; }
+  .explication h2, .explication p, .explication ul, .explication ol { max-width: 68ch; }
+  .explication h3 { font-family: 'Poppins', var(--pile-systeme); font-weight: 700;
+                    font-size: 15px; margin: 20px 0 6px; max-width: 68ch; }
+  .explication li { margin-bottom: 8px; }
+
+  /* Un apercu vide n'est pas un apercu : c'est un cadre a damier au milieu de
+     la page. Il ne se montre que quand il a quelque chose a montrer. */
+  #apercu:empty { display: none; }
   button { font: inherit; font-size: 14px; font-weight: 600; padding: 10px 18px; border-radius: 8px;
            border: 1.5px solid var(--navy); background: var(--navy); color: #fff; cursor: pointer; }
   button.second { background: #fff; color: var(--encre); }
@@ -120,7 +165,16 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
 
 /* ------------------------------------------------------ pages de contenu */
 
-.page-contenu { max-width: 760px; margin: 0 auto; padding: 0 20px 90px; }
+/* Meme doctrine sur les pages de contenu : le cadre est large, la colonne de
+   lecture ne l'est pas. Les tableaux, eux, debordent volontairement de la
+   colonne, parce qu'un tableau se balaie et ne se lit pas ligne a ligne. */
+.page-contenu { max-width: 1120px; margin: 0 auto; padding: 0 24px 90px; }
+.page-contenu > p,
+.page-contenu > ul,
+.page-contenu > ol,
+.page-contenu > h2,
+.page-contenu > h3 { max-width: 68ch; }
+.page-contenu > h1 { max-width: 24ch; }
 .page-contenu h1 { font-family: \'Poppins\', var(--pile-systeme); font-weight: 700;
   font-size: 34px; line-height: 1.18; margin: 26px 0 14px; letter-spacing: -0.02em; }
 .page-contenu .chapo { font-size: 18px; color: var(--texte); margin: 0 0 30px; line-height: 1.6; }
@@ -160,12 +214,12 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
 .nav-site a:hover, .nav-site a[aria-current] { color: var(--navy); }
 .pied-site { border-top: 1px solid var(--trait); margin-top: 60px; padding: 30px 20px 40px;
   background: var(--gris-clair); }
-.pied-site .colonnes { max-width: 900px; margin: 0 auto; display: flex; gap: 40px; flex-wrap: wrap; }
+.pied-site .colonnes { max-width: 1120px; margin: 0 auto; display: flex; gap: 40px; flex-wrap: wrap; }
 .pied-site b { display: block; font-family: \'Poppins\', var(--pile-systeme); font-weight: 600;
   color: var(--navy); font-size: 13px; margin-bottom: 8px; }
 .pied-site a { display: block; color: var(--gris); text-decoration: none; font-size: 13px; padding: 3px 0; }
 .pied-site a:hover { color: var(--navy); }
-.pied-site .mention { max-width: 900px; margin: 26px auto 0; font-size: 12.5px; color: var(--gris); }
+.pied-site .mention { max-width: 1120px; margin: 26px auto 0; font-size: 12.5px; color: var(--gris); }
 
 @media (max-width: 700px) {
   .page-contenu h1 { font-size: 27px; }
@@ -184,6 +238,12 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
    Le griser reviendrait a s'excuser de ne pas savoir, alors que le dire est
    precisement ce qui distingue ce site. */
 .techniques-verdict { display: grid; gap: 14px; margin: 18px 0 6px; }
+@media (min-width: 900px) {
+  /* Sept techniques en colonne unique font defiler pour rien. Deux colonnes
+     des qu'il y a la place : on les COMPARE, on ne les lit pas a la suite. */
+  .techniques-verdict { grid-template-columns: 1fr 1fr; }
+  div.encadre.verdict-inconnu { grid-column: 1 / -1; }
+}
 .technique { border: 1px solid #e3e6ea; border-radius: 10px; padding: 14px 16px; }
 .technique h3 { margin: 0 0 8px; font-size: 16px; display: flex;
   align-items: baseline; justify-content: space-between; gap: 12px; }

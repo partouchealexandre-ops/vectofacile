@@ -193,10 +193,9 @@ function indexTechniques(techniques) {
   ).join('');
   return {
     url: '/guide/',
-    titre: 'Les techniques de marquage, expliquées par leur mécanique',
+    titre: 'Les techniques de marquage sur objet',
     meta: "Sérigraphie, tampographie, gravure laser, broderie, numérique UV, transfert "
-      + "DTF, marquage à chaud. Ce que chaque procédé réussit, ce qu'il rate, et le "
-      + "fichier qu'il réclame.",
+      + "DTF, marquage à chaud. Ce que chaque procédé réussit, ce qu'il rate.",
     h1: 'Les techniques de marquage',
     chapo: "Sept procédés, sept mécaniques différentes. Comprendre celle qui vous "
       + "concerne évite la plupart des mauvaises surprises, et ça se comprend sans "
@@ -214,6 +213,20 @@ nous ne les afficherons qu'une fois tranchées. Nous préférons dire
 <b>nous ne savons pas encore</b> plutôt qu'un chiffre plausible.</p>`,
       },
       { h2: 'Les sept techniques', html: items },
+      {
+        h2: 'Choisir en une ligne',
+        html: `<ul>
+<li><b>Un objet bombé, creux ou irrégulier</b> oriente vers la tampographie.</li>
+<li><b>Un métal, et un marquage qui ne doit jamais s'effacer</b> orientent vers la gravure laser.</li>
+<li><b>Un textile</b> ouvre la sérigraphie, le transfert DTF et la broderie.</li>
+<li><b>Un dégradé ou une photo</b> imposent une technique numérique.</li>
+<li><b>Un effet métallisé sur du papier ou du cuir</b> appelle le marquage à chaud.</li>
+<li><b>Un grand aplat de couleur opaque</b> est le terrain de la sérigraphie.</li>
+</ul>
+<p>Votre fabricant tranche, parce qu'il connaît son parc machines. Ces fiches vous
+permettent de comprendre sa réponse, et de poser la bonne question quand elle vous
+surprend.</p>`,
+      },
     ],
     faq: [
       {
@@ -246,14 +259,29 @@ function indexQuestions(questions) {
   ).join('');
   return {
     url: '/questions/',
-    titre: 'Questions fréquentes sur la vectorisation et le marquage',
-    meta: "Les questions que se posent ceux qui doivent faire marquer un logo : fichier "
-      + "vectoriel, vectorisation d'un JPEG, nombre réel de couleurs. Réponses mesurées, "
-      + "outil gratuit sans envoi de fichier.",
+    titre: 'Questions fréquentes sur les fichiers',
+    meta: "Fichier vectoriel réclamé, vectorisation d'un JPEG, nombre réel de couleurs : "
+      + "les questions qui bloquent une commande d'objets marqués, et les réponses.",
     h1: 'Questions fréquentes',
     chapo: "Les questions qui bloquent une commande d'objets marqués, et les réponses, "
       + "vérifiables plutôt qu'affirmées.",
-    sections: [{ h2: 'Toutes les questions', html: items }],
+    sections: [
+      { h2: 'Toutes les questions', html: items },
+      {
+        h2: 'Par où commencer selon votre situation',
+        html: `<ul>
+<li><b>On vous réclame un fichier vectoriel et vous ne savez pas ce que c'est :</b>
+commencez par la première question.</li>
+<li><b>Vous n'avez qu'un JPEG et personne pour le retravailler :</b> la question sur la
+vectorisation d'un JPEG dit ce que l'automatique sait faire, et ce qu'elle rate.</li>
+<li><b>Votre devis a explosé à cause du nombre de couleurs :</b> la question sur les
+couleurs explique d'où vient l'écart entre les trois couleurs de votre charte et les
+milliers que voit la machine.</li>
+<li><b>Vous avez un PDF et vous ignorez ce qu'il contient :</b> trois vérifications de
+trente secondes suffisent à trancher.</li>
+</ul>`,
+      },
+    ],
     faq: [],
   };
 }

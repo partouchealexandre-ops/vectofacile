@@ -211,6 +211,23 @@ for (const url of URLS) {
       + `au lieu de ${navAttendue.join(', ')}`);
   }
 
+  // L'ETAT INITIAL DE L'OUTIL. Rien qui promette un resultat avant qu'il y en
+  // ait un. Trouve en production le 19/08 : les trois boutons de
+  // telechargement s'affichaient sur une page fraiche, parce qu'une regle
+  // « display: flex » ecrasait l'attribut hidden. Un visiteur pouvait cliquer
+  // sur « Telecharger le .eps » sans avoir depose quoi que ce soit.
+  if (url === '/') {
+    const premature = await page.evaluate(() =>
+      ['telechargements', 'mesures', 'verdict', 'resultat', 'erreur']
+        .filter((id) => {
+          const e = document.getElementById(id);
+          return e && e.offsetParent !== null;
+        }));
+    if (premature.length > 0) {
+      fautes.push(`visible avant tout depot de fichier : ${premature.join(', ')}`);
+    }
+  }
+
   if (erreursConsole.length > 0) fautes.push(`console : ${erreursConsole[0]}`);
   await page.close();
 

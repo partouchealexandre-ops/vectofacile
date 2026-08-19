@@ -117,7 +117,8 @@ passer les cas que nous n'avons pas prévus.</p>`,
 export const MENTIONS = {
   url: '/mentions-legales',
   titre: 'Mentions légales',
-  meta: "Mentions légales du site Vecto Facile, édité par Bytouch.",
+  meta: "Mentions légales de Vecto Facile : éditeur Bytouch SARL, hébergeur, "
+    + "responsabilité, propriété intellectuelle et droit applicable.",
   h1: 'Mentions légales',
   chapo: "Éditeur, hébergeur et responsabilité.",
   manquants: [],

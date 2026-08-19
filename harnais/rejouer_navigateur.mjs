@@ -226,6 +226,76 @@ console.log('');
 console.log(`  ${CAS.length} cas, ${echecs} echec(s).`);
 console.log('');
 
+
+// ---------------------------------------------------------------------------
+// LE CAS HORS LIGNE : la promesse du site, verifiee par la seule methode qui
+// ne demande ni terminal ni confiance.
+//
+// On charge la page, on COUPE le reseau, puis on depose un logo. Si la mesure,
+// le verdict et la vectorisation aboutissent encore, alors rien de tout cela
+// ne passe par un serveur. Ce n'est plus une promesse ecrite dans une page de
+// confidentialite, c'est une propriete observable.
+//
+// Ce controle a une deuxieme vertu : il echouera le jour ou quelqu'un ajoutera
+// un appel reseau dans la chaine, meme innocent, meme une police, meme une
+// mesure d'audience. C'est le genre d'ajout qui se fait sans mauvaise
+// intention et qui detruit la seule chose que ce site ait a vendre.
+{
+  const contexte = await navigateur.newContext();
+  const page = await contexte.newPage();
+  const erreurs = [];
+  page.on('pageerror', (e) => erreurs.push(String(e)));
+  await page.goto(`http://127.0.0.1:${PORT}/`, { waitUntil: 'networkidle' });
+  // Laisser le prechargement de fond aboutir avant de couper.
+  await page.waitForTimeout(1200);
+  await contexte.setOffline(true);
+
+  const cas = 'couleurs_09_plat';
+  const png = fs.readFileSync(path.join(IMAGES, `${cas}.png`));
+  const resultat = await page.evaluate(async (base64) => {
+    const binaire = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+    const fichier = new File([binaire], 'hors_ligne.png', { type: 'image/png' });
+    try {
+      await globalThis.vecto.traiter(fichier);
+      const e = globalThis.vecto.etat();
+      return { ok: true, couleurs: e.mesures?.m2Couleurs?.couleursReelles ?? null,
+               svg: Boolean(e.svg && e.svg.length > 100) };
+    } catch (err) {
+      return { ok: false, message: String(err && err.message || err) };
+    }
+  }, png.toString('base64'));
+  await contexte.setOffline(false);
+  await contexte.close();
+
+  console.log('');
+  console.log('  HORS LIGNE, reseau coupe apres chargement de la page');
+  console.log('  ' + '-'.repeat(66));
+  // On compare a la VERITE TERRAIN du cas, pas a un nombre recopie. Mon
+  // premier ecrit attendait 10 et le harnais a sorti 9 : 10 est le nombre de
+  // FORMES tracees (neuf aplats plus le fond), 9 le nombre de couleurs du
+  // DESSIN. Deux grandeurs voisines, un chiffre faux, et l'echec venait de
+  // l'assertion, pas du produit.
+  const attendu = verite.cas.find((c) => c.nom === cas);
+  const couleursAttendues = attendu?.attendus
+    ?.find((a) => a.chemin === 'm2Couleurs.couleursReelles')?.valeur;
+  if (couleursAttendues === undefined) {
+    console.error(`  Le cas ${cas} n'a pas de verite sur les couleurs.`);
+    process.exit(1);
+  }
+  const bon = resultat.ok && resultat.couleurs === couleursAttendues && resultat.svg;
+  if (bon) {
+    console.log(`  ok    mesure (${resultat.couleurs} couleurs, conforme a la verite`
+      + ') et vectorisation aboutissent sans reseau');
+  } else {
+    console.log(`  ECHEC attendu ${couleursAttendues} couleurs, obtenu `
+      + `${JSON.stringify(resultat)}`);
+    echecs++;
+  }
+  if (erreurs.length > 0) console.log(`  ECHEC erreur de page : ${erreurs[0]}`);
+  console.log('  ' + '-'.repeat(66));
+  console.log('');
+}
+
 await navigateur.close();
 serveur.close();
 process.exit(echecs === 0 ? 0 : 1);

@@ -45,7 +45,7 @@ votre navigateur.</p></div>`,
 export const TECHNIQUES = [
   {
     url: '/guide/serigraphie',
-    titre: 'La sérigraphie sur objet : principe, atouts, limites',
+    titre: 'La sérigraphie sur objet publicitaire',
     meta: "La sérigraphie pousse l'encre à travers un écran tendu. Ce que ce "
       + "principe permet, ce qu'il interdit, et le type de fichier qu'il réclame.",
     h1: 'La sérigraphie',
@@ -132,7 +132,7 @@ en faire trois écrans sans nettoyage préalable.
 
   {
     url: '/guide/tampographie',
-    titre: 'La tampographie : marquer une surface qui n\'est pas plate',
+    titre: 'La tampographie sur objet bombé',
     meta: "Un tampon souple prend l'encre dans un cliché gravé et la dépose sur "
       + "l'objet. C'est la technique des formes creuses, bombées et irrégulières.",
     h1: 'La tampographie',
@@ -214,7 +214,7 @@ donne en millimètres si vous indiquez la taille d'impression voulue.</p>`,
 
   {
     url: '/guide/gravure-laser',
-    titre: 'La gravure laser : marquer sans déposer d\'encre',
+    titre: 'La gravure laser sur objet',
     meta: "Le laser ne pose rien, il retire ou transforme la matière. Ce que ça "
       + "change pour votre logo, et pourquoi le résultat est monochrome.",
     h1: 'La gravure laser',
@@ -297,7 +297,7 @@ test immédiat.</p>`,
 
   {
     url: '/guide/broderie',
-    titre: 'La broderie : votre logo refait avec du fil',
+    titre: 'La broderie de logo sur textile',
     meta: "La broderie ne reproduit pas votre logo, elle le redessine en points de "
       + "fil. Pourquoi les petits détails disparaissent et ce qu'il faut prévoir.",
     h1: 'La broderie',
@@ -381,9 +381,9 @@ textile.</p>`,
 
   {
     url: '/guide/impression-numerique-uv',
-    titre: 'L\'impression numérique UV : la quadrichromie sur objet',
+    titre: 'L\'impression numérique UV sur objet',
     meta: "Des gouttes d'encre projetées puis durcies par une lampe UV. La technique "
-      + "qui accepte les dégradés et les photos, à condition que l'objet soit plat.",
+      + "qui accepte les dégradés et les photos, si l'objet est assez régulier.",
     h1: 'L\'impression numérique UV',
     chapo: "La seule famille de techniques qui imprime une photo ou un dégradé "
       + "directement sur un objet. Sa contrainte n'est pas le dessin, c'est le "
@@ -461,7 +461,7 @@ couleurs bougent si personne ne les a fixées.</p>`,
 
   {
     url: '/guide/transfert-dtf',
-    titre: 'Le transfert DTF : imprimer d\'abord, coller ensuite',
+    titre: 'Le transfert DTF sur textile',
     meta: "Le motif est imprimé sur un film, puis pressé à chaud sur le textile. "
       + "Pourquoi cette technique accepte les dégradés que la sérigraphie refuse.",
     h1: 'Le transfert DTF',
@@ -539,7 +539,7 @@ vous le dit avant que vous ne l'envoyiez.</p>`,
 
   {
     url: '/guide/marquage-a-chaud',
-    titre: 'Le marquage à chaud : la technique qui inverse les règles',
+    titre: 'Le marquage à chaud et la dorure',
     meta: "Dorure et débossage : un fer chaud presse un film métallisé. C'est la "
       + "seule technique où les grands aplats sont plus difficiles que les traits fins.",
     h1: 'Le marquage à chaud',

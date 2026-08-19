@@ -12,9 +12,8 @@ export const QUESTIONS_JPEG = [
   {
     url: '/questions/comment-vectoriser-un-jpeg',
     titre: 'Comment vectoriser un JPEG gratuitement',
-    meta: "Vectoriser un JPEG, c'est redessiner ses contours. Voici comment le faire "
-      + "gratuitement dans votre navigateur, et surtout comment savoir si le résultat "
-      + "est utilisable avant de l'envoyer à un marqueur.",
+    meta: "Vectoriser un JPEG, c'est redessiner ses contours. Comment le faire "
+      + "gratuitement dans votre navigateur, et comment juger si le résultat tient.",
     h1: 'Comment vectoriser un JPEG',
     chapo: "Déposez votre image ici : elle est vectorisée dans votre navigateur, sans compte "
       + "et sans envoi, et vous récupérez un .eps. La vraie question n'est pas comment, "

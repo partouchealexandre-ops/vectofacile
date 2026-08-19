@@ -10,9 +10,9 @@
 export const QUESTIONS = [
   {
     url: '/questions/mon-imprimeur-demande-un-fichier-vectoriel',
-    titre: "Mon imprimeur demande un fichier vectoriel : que faire ?",
-    meta: "Votre imprimeur réclame un .ai ou un .eps et vous n'avez qu'un JPEG. Voici ce "
-      + "que ça veut dire, où le chercher, et comment en obtenir un gratuitement en trente secondes.",
+    titre: "Mon imprimeur demande un fichier vectoriel",
+    meta: "Votre imprimeur réclame un .ai ou un .eps et vous n'avez qu'un JPEG. Ce que "
+      + "ça veut dire, où le chercher, comment en obtenir un gratuitement.",
     h1: "Mon imprimeur demande un fichier vectoriel",
     chapo: "Réclamez-le d'abord à qui a créé votre logo : vous y avez droit et c'est gratuit. "
       + "S'il est introuvable, cet outil en fabrique un depuis votre image, sans compte.",

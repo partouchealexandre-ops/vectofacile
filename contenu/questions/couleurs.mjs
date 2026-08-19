@@ -13,9 +13,8 @@ export const QUESTIONS_COULEURS = [
   {
     url: '/questions/combien-de-couleurs-a-mon-logo',
     titre: "Combien de couleurs a vraiment mon logo ?",
-    meta: "Votre logo a trois couleurs sur le papier et quatre mille dans le fichier. "
-      + "Voici d'où vient l'écart, pourquoi votre marqueur le facture, et comment "
-      + "compter les vraies couleurs de votre fichier gratuitement.",
+    meta: "Votre logo a trois couleurs sur le papier et des milliers dans le fichier. "
+      + "D'où vient l'écart, pourquoi votre marqueur le facture, comment les compter.",
     h1: "Combien de couleurs a vraiment mon logo ?",
     chapo: "Presque jamais le nombre que vous croyez. Un logo « à trois couleurs » exporté "
       + "en JPEG en contient couramment plusieurs milliers, et c'est ce nombre-là que "

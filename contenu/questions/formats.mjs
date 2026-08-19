@@ -110,10 +110,9 @@ donner un vectoriel propre, avant que vous n'envoyiez quoi que ce soit.</li>
   },
   {
     url: '/questions/eps-ai-pdf-svg-quelle-difference',
-    titre: 'EPS, AI, PDF, SVG : quelle différence et lequel envoyer',
-    meta: "Quatre extensions pour des fichiers vectoriels, et elles ne s'échangent pas. "
-      + "Ce que chacune contient, laquelle envoyer à un fabricant d'objets, laquelle "
-      + "garder pour votre site.",
+    titre: 'EPS, AI, PDF ou SVG : lequel envoyer',
+    meta: "Quatre extensions vectorielles qui ne s'échangent pas. Ce que chacune "
+      + "contient, laquelle envoyer à un fabricant, laquelle garder pour votre site.",
     h1: 'EPS, AI, PDF, SVG : quelle différence',
     chapo: "Pour un marquage sur objet, envoyez un .eps ou un .pdf vectoriel. Gardez le .ai "
       + "comme fichier de travail et le .svg pour votre site web : il est pourtant "

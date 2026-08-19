@@ -93,12 +93,21 @@ function afficherMesures(m, image) {
  * n'a pas pu les lire, elle ne montre pas un diagnostic vide qui ressemblerait
  * a « rien a signaler ».
  */
+let promesseSeuils = null;
+function chargerSeuils() {
+  if (!promesseSeuils) {
+    promesseSeuils = fetch('/src/verdict/seuils.json').then((r) => {
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return r.json();
+    });
+  }
+  return promesseSeuils;
+}
+
 async function afficherVerdict(mesures) {
   let seuils;
   try {
-    const reponse = await fetch('/src/verdict/seuils.json');
-    if (!reponse.ok) throw new Error(`HTTP ${reponse.status}`);
-    seuils = await reponse.json();
+    seuils = await chargerSeuils();
   } catch (e) {
     $('verdict').innerHTML = `
       <h2>Le diagnostic par technique</h2>
@@ -149,7 +158,7 @@ async function traiter(fichier) {
 
     etape = 'chargement du vectoriseur';
     $('travail').textContent = 'Chargement du vectoriseur';
-    await initialiser(new URL('./vtracer_wasm_bg.wasm', document.baseURI));
+    await chargerVectoriseur();
 
     etape = 'vectorisation';
     $('travail').textContent = 'Vectorisation';
@@ -234,8 +243,48 @@ function brancher() {
   });
 }
 
-if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', brancher);
-else brancher();
+/**
+ * PRECHARGEMENT DE FOND, et il porte une promesse autant qu'un confort.
+ *
+ * Les seuils et le vectoriseur etaient charges au moment ou on en avait
+ * besoin, ce qui evitait 650 ko a un visiteur dont le fichier allait etre
+ * refuse. Le raisonnement etait bon et il avait un cout cache : la page
+ * dependait encore du reseau APRES son affichage.
+ *
+ * Or la promesse du site est « rien ne quitte votre machine », et la
+ * verification la plus convaincante qu'un visiteur puisse en faire ne demande
+ * aucun terminal : charger la page, COUPER SA CONNEXION, puis deposer un logo.
+ * Si tout fonctionne encore, plus rien n'est a demontrer. Ce test n'etait pas
+ * vrai tant que le vectoriseur arrivait apres le depot.
+ *
+ * On precharge donc en tache de fond, sans bloquer quoi que ce soit : la page
+ * est utilisable immediatement, et une seconde plus tard elle est autonome.
+ * Un echec de prechargement n'est pas une erreur, le chargement a la demande
+ * reprend la main.
+ */
+let promesseVectoriseur = null;
+function chargerVectoriseur() {
+  if (!promesseVectoriseur) {
+    promesseVectoriseur = initialiser(new URL('./vtracer_wasm_bg.wasm', document.baseURI));
+  }
+  return promesseVectoriseur;
+}
+
+function prechargerEnFond() {
+  const lancer = () => {
+    chargerSeuils().catch(() => { promesseSeuils = null; });
+    chargerVectoriseur().catch(() => { promesseVectoriseur = null; });
+  };
+  if (typeof requestIdleCallback === 'function') requestIdleCallback(lancer, { timeout: 2500 });
+  else setTimeout(lancer, 400);
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => { brancher(); prechargerEnFond(); });
+} else {
+  brancher();
+  prechargerEnFond();
+}
 
 // Exposé pour le test de bout en bout, qui pilote la page sans souris.
 globalThis.vecto = { traiter, etat: () => etat };
