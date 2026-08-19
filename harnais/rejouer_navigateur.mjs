@@ -44,7 +44,7 @@ import path from 'node:path';
 import http from 'node:http';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { chromium } from 'playwright';
+import { TYPES, ouvrirChromium } from './_navigateur.mjs';
 import { mesurer } from '../src/moteur/mesures.js';
 import { entetesGlobales } from '../outils/entetes.mjs';
 
@@ -58,14 +58,6 @@ const PORT = 8231;
 /** Cas retenus : un dessin a aplats, un JPEG sale, un fond transparent. */
 const CAS = ['couleurs_09_plat', 'couleurs_09_jpeg', 'transparence_bord', 'capitales_20px'];
 
-const TYPES = {
-  '.html': 'text/html; charset=utf-8',
-  '.js': 'text/javascript; charset=utf-8',
-  '.wasm': 'application/wasm',
-  '.png': 'image/png',
-  '.jpg': 'image/jpeg',
-  '.svg': 'image/svg+xml',
-};
 
 function servir() {
   return new Promise((resolve) => {
@@ -136,43 +128,7 @@ const verite = JSON.parse(fs.readFileSync(path.join(IMAGES, 'verite_terrain.json
 fs.mkdirSync(SORTIES, { recursive: true });
 
 const serveur = await servir();
-/**
- * Chromium peut venir de Playwright ou d'une installation deja presente sur la
- * machine. On essaie le chemin normal, puis on cherche : un harnais qui refuse
- * de demarrer pour une histoire de chemin d'executable ne serait pas lance, et
- * un harnais qu'on ne lance pas ne sert a rien.
- */
-async function ouvrirChromium() {
-  try {
-    return await chromium.launch();
-  } catch (premiereErreur) {
-    const racines = ['/opt/pw-browsers', process.env.PLAYWRIGHT_BROWSERS_PATH].filter(Boolean);
-    for (const racine of racines) {
-      if (!fs.existsSync(racine)) continue;
-      for (const entree of fs.readdirSync(racine)) {
-        for (const suffixe of ['chrome-linux/chrome', 'chrome-linux/headless_shell']) {
-          const chemin = path.join(racine, entree, suffixe);
-          if (fs.existsSync(chemin)) {
-            return await chromium.launch({ executablePath: chemin });
-          }
-        }
-      }
-    }
-    // Playwright installe mais SANS navigateur : c'est le cas normal apres un
-    // npm ci lance avec PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD, qui est justement ce
-    // qu'on recommande pour ne pas telecharger des centaines de mega octets a
-    // chaque construction. En local, le navigateur se pose une fois, a la main.
-    if (/Executable doesn't exist|playwright install/i.test(premiereErreur.message || '')) {
-      console.log('');
-      console.log('  HARNAIS DE BOUT EN BOUT : SAUTE, pas reussi.');
-      console.log('  Playwright est installe, mais aucun navigateur ne l\'accompagne.');
-      console.log('  Pour l\'avoir, une seule fois : npx playwright install chromium');
-      console.log('');
-      process.exit(0);
-    }
-    throw premiereErreur;
-  }
-}
+
 
 const navigateur = await ouvrirChromium();
 const page = await navigateur.newPage();

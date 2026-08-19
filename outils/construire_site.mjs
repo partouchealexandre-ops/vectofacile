@@ -44,5 +44,14 @@ if (!fs.existsSync(path.join(RACINE, 'public', 'vtracer_wasm_bg.wasm'))) {
   process.exit(1);
 }
 
+for (const attendu of ['polices/poppins-400.woff2', 'polices/poppins-700.woff2']) {
+  if (!fs.existsSync(path.join(RACINE, 'public', attendu))) {
+    console.error(`  Police manquante dans public/ : ${attendu}`);
+    console.error('  Le logotype tomberait sur une police de substitution, ce qui');
+    console.error('  contredirait l\'arbitrage de charte du master prompt §8.');
+    process.exit(1);
+  }
+}
+
 console.log(`  ${fichiers} modules copies dans public/src/`);
 console.log(`  _headers et robots.txt generes, indexation ${INDEXABLE ? 'OUVERTE' : 'FERMEE'}`);

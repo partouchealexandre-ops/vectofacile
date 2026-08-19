@@ -14,6 +14,8 @@
 
 import { lireImage, telecharger, FichierNonSupporte } from './adaptateurs/image_navigateur.js';
 import { mesurer } from './moteur/mesures.js';
+import { juger } from './verdict/juger.js';
+import { rendreVerdict } from './verdict/rendu.js';
 import { preparerVectorisation, FORMES_MAXIMALES } from './vectorisation/options.js';
 import { construireProgramme, inventaire } from './vectorisation/programme.js';
 import { versEps } from './vectorisation/eps.js';
@@ -85,21 +87,28 @@ function afficherMesures(m, image) {
   $('mesures').hidden = false;
 }
 
-function afficherVerdictAbsent() {
-  $('verdict').innerHTML = `
-    <h2>Le diagnostic par technique</h2>
-    <p class="gris">
-      Pas encore disponible. Les seuils de marquage viennent du référentiel de
-      sources du projet, et ils ne seront servis ici qu'une fois arbitrés,
-      technique par technique. Tant qu'un seuil n'est pas arbitré, cette page ne
-      montre rien plutôt qu'une valeur plausible.
-    </p>
-    <ul class="techniques">
-      <li>Sérigraphie</li><li>Tampographie</li><li>Gravure laser</li>
-      <li>Broderie</li><li>Numérique UV</li><li>Transfert DTF</li>
-      <li>Marquage à chaud</li>
-    </ul>
-  `;
+/**
+ * Le verdict. Les seuils sont charges au moment ou on en a besoin, et un
+ * echec de chargement N'EST PAS silencieux : sans seuils, la page dit qu'elle
+ * n'a pas pu les lire, elle ne montre pas un diagnostic vide qui ressemblerait
+ * a « rien a signaler ».
+ */
+async function afficherVerdict(mesures) {
+  let seuils;
+  try {
+    const reponse = await fetch('/src/verdict/seuils.json');
+    if (!reponse.ok) throw new Error(`HTTP ${reponse.status}`);
+    seuils = await reponse.json();
+  } catch (e) {
+    $('verdict').innerHTML = `
+      <h2>Le diagnostic par technique</h2>
+      <p class="gris">Nous n'avons pas pu charger nos seuils de marquage
+      (${String(e.message)}). Vos mesures ci-dessus restent valables : elles
+      décrivent votre fichier et ne dépendent d'aucun seuil.</p>`;
+    $('verdict').hidden = false;
+    return;
+  }
+  $('verdict').innerHTML = rendreVerdict(juger({ mesures, seuils }));
   $('verdict').hidden = false;
 }
 
@@ -123,7 +132,7 @@ async function traiter(fichier) {
     etat.mesures = mesures;
     etat.nom = (fichier.name || 'logo').replace(/\.[^.]+$/, '');
     afficherMesures(mesures, image);
-    afficherVerdictAbsent();
+    await afficherVerdict(mesures);
 
     // Le refus se decide sur les MESURES, avant de charger le vectoriseur et
     // avant de lui donner un seul pixel. Un fichier qui ne sera pas vectorise

@@ -1,0 +1,69 @@
+{
+  "version": 1,
+  "note": "ETAT REEL AU 19/08/2026. Presque aucun critere ne sert encore, et ce fichier le dit au lieu de le cacher. Les valeurs presentes portent leur etat : seuls SOURCE et ARBITRE ALEX produisent un verdict, tout le reste rend « nous ne savons pas encore ». Les seuils arriveront quand P0.1, P0.2 et P0.3 seront tranches et quand les agregats seront repris en arbitrage.",
+  "regle": "Une valeur absente n'est PAS une autorisation. Aucun critere ne passe par defaut.",
+  "techniques": {
+    "serigraphie": {
+      "libelle": "Sérigraphie",
+      "criteres": {
+        "couleurs": {
+          "valeur": 4,
+          "etat": "AGRÉGAT IAG",
+          "source": "source A, instantané catalogue",
+          "date": "05/08/2026",
+          "commentaire": "Valeur dominante observée. Ne sert pas : à reprendre en ARBITRÉ ALEX."
+        },
+        "trait_minimal": {
+          "valeur": null,
+          "etat": "INFÉRÉ",
+          "commentaire": "De 0,13 à 1,0 mm selon les sources. Bloqué par P0.2 et P0.3."
+        }
+      }
+    },
+    "tampographie": {
+      "libelle": "Tampographie",
+      "criteres": {
+        "couleurs": {
+          "valeur": 4,
+          "etat": "AGRÉGAT IAG",
+          "source": "source A, instantané catalogue",
+          "date": "05/08/2026"
+        }
+      }
+    },
+    "gravure_laser": {
+      "libelle": "Gravure laser",
+      "criteres": {
+        "couleurs": {
+          "valeur": 1,
+          "etat": "AGRÉGAT IAG",
+          "source": "sources A, B et C, valeur dominante",
+          "date": "05/08/2026",
+          "commentaire": "CORRIGÉ le 19/08. La monochromie du laser avait été présentée comme une convergence SANS EXCEPTION sur 2 500 positions. Le CSV source dit autre chose : valeur dominante 1, valeurs observées 1/8. Des positions déclarent donc 8 couleurs en gravure laser. Ce n'est plus une convergence parfaite, c'est une valeur dominante avec des exceptions à expliquer. Ne sert pas, et pour une raison de plus qu'avant."
+        }
+      }
+    },
+    "broderie": {
+      "libelle": "Broderie",
+      "criteres": {
+        "couleurs": {
+          "valeur": null,
+          "etat": "INFÉRÉ",
+          "commentaire": "De 8 à 12 selon l'atelier. Sur cette grandeur l'enveloppe prudente est la borne BASSE, contrairement aux minima de trait."
+        }
+      }
+    },
+    "numerique_uv": {
+      "libelle": "Impression numérique UV",
+      "criteres": {}
+    },
+    "transfert_dtf": {
+      "libelle": "Transfert DTF",
+      "criteres": {}
+    },
+    "marquage_a_chaud": {
+      "libelle": "Marquage à chaud",
+      "criteres": {}
+    }
+  }
+}

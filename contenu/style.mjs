@@ -1,0 +1,214 @@
+/**
+ * La feuille de style du site, en un seul endroit.
+ *
+ * Elle sert l'outil ET les pages de contenu. Le site en aura cinquante a
+ * quatre vingts : une palette dupliquee est une palette qui derive, et
+ * l'identite Vecto Facile a deja paye ce defaut sur ses PNG, avec trois navys
+ * differents dans une meme livraison.
+ *
+ * La construction l'ecrit dans public/vecto.css, et l'outil comme les pages la
+ * chargent depuis la. Aucune couleur n'est ecrite deux fois.
+ */
+
+export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis contenu/style.mjs.
+   Ne pas modifier ici : il est reecrit a chaque construction. */
+
+/* Poppins, SIL Open Font License 1.1, servie depuis notre propre domaine.
+     Aucun appel a un service tiers : la politique de securite du site
+     (connect-src 'self') l'interdit, et c'est voulu. Une police chargee chez
+     Google serait une requete sortante a chaque visite, donc une faille dans la
+     promesse "rien ne quitte votre machine" : la promesse doit valoir pour les
+     ressources du site autant que pour le fichier du visiteur.
+     Licence complete dans /polices/LICENCE_POPPINS.txt */
+  @font-face {
+    font-family: 'Poppins';
+    src: url('/polices/poppins-400.woff2') format('woff2');
+    font-weight: 400; font-style: normal; font-display: swap;
+  }
+  @font-face {
+    font-family: 'Poppins';
+    src: url('/polices/poppins-700.woff2') format('woff2');
+    font-weight: 700; font-style: normal; font-display: swap;
+  }
+
+
+  /* Palette validee par Alex le 18/08. L'orange ne sert qu'a la conversion :
+     un seul bouton orange par ecran, celui qui ramene a l'outil. */
+  :root {
+    --navy: #0A2D4D;
+    --orange: #FF6A00;
+    --encre: #0A2D4D;
+    --papier: #ffffff;
+    --gris: #7B8794;
+    --trait: #E3E8ED;
+    --accent: #0A2D4D;
+    --gris-clair: #F6F8FA;
+    --vert: #0E7C52;
+    /* Poppins pour le logotype et les titres, arbitrage du master prompt §8.
+       Le texte courant reste sur la pile systeme : elle est deja installee chez
+       le visiteur, donc zero octet a telecharger et zero attente. */
+    --pile-systeme: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--papier); color: var(--encre);
+    font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  /* ------------------------------------------------------------- l'entete
+     Version validee par Alex le 18/08.
+     Les rubriques de navigation (Techniques de marquage, Marquage par objet,
+     Questions frequentes) sont arretees mais PAS encore posees ici : aucune
+     des pages qu'elles designent n'existe. Un lien de navigation qui ne mene
+     nulle part est une page vide sous une autre forme, et la regle du projet
+     est qu'aucune page ne nait vide. Elles arrivent avec les premiers guides.
+     Ce qui est deja la, en revanche, c'est ce qui ne depend d'aucun contenu :
+     le retour a l'outil et la preuve de confidentialite. */
+  .entete { display: flex; align-items: center; justify-content: space-between;
+            gap: 18px; padding: 16px 0 18px; border-bottom: 1px solid var(--trait);
+            margin-bottom: 34px; flex-wrap: wrap; }
+  .lockup { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+  .lockup svg { width: 36px; height: 36px; display: block; }
+  .lockup .mot { font-family: 'Poppins', var(--pile-systeme); font-weight: 700;
+                 font-size: 18px; line-height: 1.05; color: var(--navy);
+                 letter-spacing: -0.025em; }
+  .entete .droite { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .cadenas { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--gris); }
+  .cadenas svg { width: 14px; height: 14px; color: var(--vert); flex: none; }
+  .cta-entete { font-size: 14px; font-weight: 600; padding: 9px 17px; border-radius: 8px;
+                border: 1.5px solid var(--orange); background: var(--orange); color: #fff;
+                text-decoration: none; white-space: nowrap; }
+  main { max-width: 860px; margin: 0 auto; padding: 48px 20px 96px; }
+  h1 { font-family: 'Poppins', var(--pile-systeme); font-weight: 700; font-size: 34px;
+       line-height: 1.2; margin: 0 0 12px; letter-spacing: -0.02em; }
+  h2 { font-family: 'Poppins', var(--pile-systeme); font-weight: 700; font-size: 17px;
+       margin: 32px 0 12px; letter-spacing: -0.01em; }
+  .accroche { color: var(--gris); margin: 0 0 32px; max-width: 60ch; }
+  #depot {
+    border: 2px dashed var(--trait); border-radius: 12px; padding: 48px 24px;
+    text-align: center; cursor: pointer; transition: border-color .15s, background .15s;
+  }
+  #depot:hover, #depot.survol { border-color: var(--accent); background: var(--gris-clair); }
+  #depot strong { display: block; font-size: 18px; margin-bottom: 6px; }
+  #depot span { color: var(--gris); font-size: 14px; }
+  input[type=file] { display: none; }
+  .ligne { display: flex; align-items: baseline; gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--trait); }
+  .intitule { flex: 0 0 210px; color: var(--gris); font-size: 14px; }
+  .valeur { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .precision { color: var(--gris); font-size: 13px; }
+  .pastille { display: inline-block; width: 13px; height: 13px; border-radius: 3px; margin-left: 3px;
+              vertical-align: -1px; border: 1px solid rgba(0,0,0,.15); }
+  .note { color: var(--gris); font-size: 13.5px; margin: 10px 0; }
+  .gris { background: var(--gris-clair); border-left: 3px solid var(--trait); padding: 14px 16px;
+          color: var(--gris); font-size: 14px; border-radius: 0 6px 6px 0; }
+  .techniques { list-style: none; padding: 0; margin: 14px 0 0; display: flex; flex-wrap: wrap; gap: 8px; }
+  .techniques li { font-size: 13px; color: var(--gris); background: var(--gris-clair);
+                   border: 1px solid var(--trait); border-radius: 999px; padding: 4px 12px; }
+  #apercu { margin-top: 14px; border: 1px solid var(--trait); border-radius: 8px; padding: 12px;
+            background: repeating-conic-gradient(#f3f4f6 0% 25%, #ffffff 0% 50%) 50% / 16px 16px; }
+  #apercu svg { max-width: 100%; height: auto; display: block; margin: 0 auto; }
+  #telechargements { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+  button { font: inherit; font-size: 14px; font-weight: 600; padding: 10px 18px; border-radius: 8px;
+           border: 1.5px solid var(--navy); background: var(--navy); color: #fff; cursor: pointer; }
+  button.second { background: #fff; color: var(--encre); }
+  button.tertiaire { background: #fff; color: var(--gris); border-color: var(--trait); font-weight: 500; }
+  #travail { margin-top: 20px; color: var(--gris); font-size: 14px; }
+  #erreur { margin-top: 20px; color: #b42318; background: #fef3f2; border: 1px solid #fecdca;
+            padding: 12px 14px; border-radius: 8px; font-size: 14px; }
+  footer { border-top: 1px solid var(--trait); margin-top: 56px; padding-top: 20px;
+           color: var(--gris); font-size: 13px; }
+
+/* ------------------------------------------------------ pages de contenu */
+
+.page-contenu { max-width: 760px; margin: 0 auto; padding: 0 20px 90px; }
+.page-contenu h1 { font-family: \'Poppins\', var(--pile-systeme); font-weight: 700;
+  font-size: 34px; line-height: 1.18; margin: 26px 0 14px; letter-spacing: -0.02em; }
+.page-contenu .chapo { font-size: 18px; color: var(--texte); margin: 0 0 30px; line-height: 1.6; }
+.page-contenu h2 { font-family: \'Poppins\', var(--pile-systeme); font-weight: 700;
+  font-size: 22px; margin: 40px 0 12px; letter-spacing: -0.015em; }
+.page-contenu h3 { font-family: \'Poppins\', var(--pile-systeme); font-weight: 700;
+  font-size: 17px; margin: 26px 0 8px; }
+.page-contenu p { margin: 0 0 14px; }
+.page-contenu ul { margin: 0 0 16px; padding-left: 22px; }
+.page-contenu li { margin-bottom: 7px; }
+.page-contenu a { color: var(--navy); font-weight: 500; }
+.page-contenu code { background: var(--gris-clair); border: 1px solid var(--trait);
+  border-radius: 5px; padding: 1px 6px; font-size: 13.5px; }
+.page-contenu table { width: 100%; border-collapse: collapse; margin: 18px 0 24px; font-size: 14.5px; }
+.page-contenu th, .page-contenu td { padding: 10px 12px; text-align: left;
+  border-bottom: 1px solid var(--trait); vertical-align: top; }
+.page-contenu th { background: var(--gris-clair); font-family: \'Poppins\', var(--pile-systeme);
+  font-weight: 600; color: var(--navy); font-size: 13.5px; }
+.fil { font-size: 13px; color: var(--gris); margin: 0 0 4px; }
+.fil a { color: var(--gris); text-decoration: none; }
+.fil a:hover { color: var(--navy); }
+.encadre { background: var(--gris-clair); border: 1px solid var(--trait);
+  border-left: 3px solid var(--navy); border-radius: 0 8px 8px 0; padding: 16px 18px; margin: 22px 0; }
+.encadre p:last-child { margin-bottom: 0; }
+.encadre b { font-family: \'Poppins\', var(--pile-systeme); font-weight: 600; color: var(--navy); }
+.preuve { background: #F0F7F3; border-color: #C6E3D4; border-left-color: var(--vert); }
+.preuve b { color: #0B5C3D; }
+.appel { text-align: center; margin: 40px 0 10px; }
+.appel a { display: inline-block; font-family: \'Poppins\', var(--pile-systeme); font-weight: 600;
+  font-size: 15px; padding: 13px 26px; border-radius: 9px; background: var(--orange);
+  color: #fff; text-decoration: none; }
+
+/* ----------------------------------------------- navigation et pied commun */
+
+.nav-site { display: flex; gap: 20px; font-size: 14px; font-weight: 500; flex-wrap: wrap; }
+.nav-site a { color: var(--texte); text-decoration: none; white-space: nowrap; }
+.nav-site a:hover, .nav-site a[aria-current] { color: var(--navy); }
+.pied-site { border-top: 1px solid var(--trait); margin-top: 60px; padding: 30px 20px 40px;
+  background: var(--gris-clair); }
+.pied-site .colonnes { max-width: 900px; margin: 0 auto; display: flex; gap: 40px; flex-wrap: wrap; }
+.pied-site b { display: block; font-family: \'Poppins\', var(--pile-systeme); font-weight: 600;
+  color: var(--navy); font-size: 13px; margin-bottom: 8px; }
+.pied-site a { display: block; color: var(--gris); text-decoration: none; font-size: 13px; padding: 3px 0; }
+.pied-site a:hover { color: var(--navy); }
+.pied-site .mention { max-width: 900px; margin: 26px auto 0; font-size: 12.5px; color: var(--gris); }
+
+@media (max-width: 700px) {
+  .page-contenu h1 { font-size: 27px; }
+  .pied-site .colonnes { gap: 26px; }
+}
+
+/* Bloc « A lire aussi », genere en pied de chaque question. */
+.voisines { list-style: none; padding: 0; margin: 14px 0 0; }
+.voisines li { margin: 0 0 9px; }
+.voisines a { font-weight: 600; }
+
+/* ------------------------------------------------- la couche verdict
+
+   Trois etats, TROIS TRAITEMENTS DE MEME POIDS. L'inconnu n'est ni grise ni
+   relegue : c'est un etat a part entiere, et le plus frequent au lancement.
+   Le griser reviendrait a s'excuser de ne pas savoir, alors que le dire est
+   precisement ce qui distingue ce site. */
+.techniques-verdict { display: grid; gap: 14px; margin: 18px 0 6px; }
+.technique { border: 1px solid #e3e6ea; border-radius: 10px; padding: 14px 16px; }
+.technique h3 { margin: 0 0 8px; font-size: 16px; display: flex;
+  align-items: baseline; justify-content: space-between; gap: 12px; }
+.technique .etiquette { font-size: 13px; font-weight: 600; white-space: nowrap; }
+.technique .base { margin: 0 0 8px; font-size: 14px; color: #5b6470; }
+.technique .criteres { list-style: none; padding: 0; margin: 0;
+  font-size: 14px; line-height: 1.55; }
+.technique .criteres li { padding-left: 16px; position: relative; }
+.technique .criteres li::before { position: absolute; left: 0; }
+
+.verdict-favorable { border-color: #bcd9c4; }
+.verdict-favorable > h3 .etiquette { color: #1d6b38; }
+li.verdict-favorable::before { content: "+"; color: #1d6b38; }
+
+.verdict-defavorable { border-color: #e6c3bc; }
+.verdict-defavorable > h3 .etiquette { color: #9c3722; }
+li.verdict-defavorable::before { content: "-"; color: #9c3722; }
+
+/* Ni rouge ni vert : une troisieme couleur, franche, qui ne suggere ni un
+   probleme ni une permission. */
+.verdict-inconnu { border-color: #cdd4dd; }
+.verdict-inconnu > h3 .etiquette { color: #44536b; }
+li.verdict-inconnu::before { content: "?"; color: #44536b; }
+div.encadre.verdict-inconnu { background: #f4f6f9; }
+
+#verdict .resume { font-size: 15px; margin: 10px 0 0; }
+#verdict .note { font-size: 13px; color: #5b6470; margin-top: 14px; }
+`;
