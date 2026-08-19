@@ -97,11 +97,39 @@ export function optionsDepuisMesures(mesures, reglages = {}) {
   const traitLimite = traitBasse !== null && traitBasse <= 2;
   const avertissements = [];
   if (traitLimite) {
-    avertissements.push(
-      "trait le plus fin a " + traitBasse + " pixel(s) : vectorisation en contours droits, "
-      + "sans lissage, pour ne pas deformer le detail. Le fichier d'origine est trop "
-      + "petit pour son propre dessin."
-    );
+    // L'avertissement DIT CE QU'IL FAUT FAIRE, et il le chiffre.
+    //
+    // Reecrit le 19/08 apres le premier vrai logo passe dans la chaine : une
+    // cible avec une ligne de texte, en 101 x 57 pixels. Le moteur avait
+    // parfaitement mesure, trait a 1 pixel, et l'outil a quand meme livre un
+    // .eps ou le texte etait fondu en une seule tache. L'avertissement existait
+    // et disait vrai, mais il ne disait pas quoi faire, et il s'affichait en
+    // petit gris SOUS les boutons de telechargement.
+    //
+    // A 1 pixel, un trait n'a pas d'interieur : sa ligne moyenne et son
+    // contour sont les memes pixels, donc tout trace est une supposition. Le
+    // facteur annonce est de l'arithmetique, pas un seuil : pour obtenir un
+    // trait de 4 pixels a partir d'un trait de 1, il faut une image quatre
+    // fois plus large.
+    const facteur = Math.max(2, Math.ceil(4 / Math.max(traitBasse, 1)));
+    const dimensions = mesures.m1Dimensions
+      ? `${mesures.m1Dimensions.largeurPx} par ${mesures.m1Dimensions.hauteurPx} pixels`
+      : 'de petite taille';
+    avertissements.push({
+      gravite: traitBasse <= 1 ? 'grave' : 'notable',
+      titre: traitBasse <= 1
+        ? "Votre image est trop petite pour son propre dessin"
+        : "Votre image est juste a la limite",
+      texte: `Elle mesure ${dimensions}, et son trait le plus fin y fait `
+        + `${traitBasse} pixel${traitBasse > 1 ? 's' : ''}. A cette taille, le trace ne `
+        + `peut pas restituer le detail : les petits textes se remplissent et les `
+        + `courbes deviennent anguleuses. Nous vectorisons quand meme, en contours `
+        + `droits et sans lissage pour ne rien inventer, mais le resultat sera `
+        + `decevant.`,
+      remede: `Cherchez une version au moins ${facteur} fois plus large de votre logo : `
+        + `le PDF d'une plaquette, l'export d'origine, ou le fichier de votre graphiste. `
+        + `Aucun reglage ne remplace des pixels absents.`,
+    });
   }
 
   const reglagesTrait = traitLimite

@@ -296,6 +296,62 @@ console.log('');
   console.log('');
 }
 
+
+// ---------------------------------------------------------------------------
+// L'AVERTISSEMENT ARRIVE AVANT L'ACTION.
+//
+// Cas venu du premier vrai logo passe dans la chaine, le 19/08 : une cible
+// avec une ligne de texte, en 101 par 57 pixels. Le moteur avait mesure juste,
+// trait a 1 pixel, l'avertissement disait vrai, et l'outil a quand meme livre
+// un .eps ou le texte etait fondu en une seule tache. Personne n'a lu
+// l'avertissement parce qu'il s'affichait en petit gris SOUS les boutons de
+// telechargement.
+//
+// On verifie donc deux choses, et la seconde est la vraie : que
+// l'avertissement existe, et qu'il apparaisse PLUS HAUT dans la page que le
+// bouton de telechargement. Un avertissement place apres l'action n'est pas un
+// avertissement.
+{
+  const page = await navigateur.newPage();
+  await page.goto(`http://127.0.0.1:${PORT}/`, { waitUntil: 'networkidle' });
+  await page.waitForTimeout(900);
+  const petit = fs.readFileSync(path.join(IMAGES, 'capitales_20px.png'));
+  const constat = await page.evaluate(async (base64) => {
+    // On reduit volontairement l'image pour tomber sous le seuil de 2 pixels.
+    const binaire = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+    const source = await createImageBitmap(new Blob([binaire], { type: 'image/png' }));
+    const toile = document.createElement('canvas');
+    toile.width = Math.round(source.width / 6);
+    toile.height = Math.round(source.height / 6);
+    toile.getContext('2d').drawImage(source, 0, 0, toile.width, toile.height);
+    const blob = await new Promise((ok) => toile.toBlob(ok, 'image/png'));
+    await globalThis.vecto.traiter(new File([blob], 'reduit.png', { type: 'image/png' }));
+    const alerte = document.querySelector('.alerte');
+    const bouton = document.getElementById('telecharger_eps');
+    return {
+      alerte: Boolean(alerte && alerte.offsetParent !== null),
+      remede: Boolean(document.querySelector('.alerte-remede')),
+      avantLeBouton: Boolean(alerte && bouton
+        && alerte.getBoundingClientRect().top < bouton.getBoundingClientRect().top),
+    };
+  }, petit.toString('base64'));
+  await page.close();
+
+  console.log('');
+  console.log('  IMAGE TROP PETITE : l\'avertissement precede l\'action');
+  console.log('  ' + '-'.repeat(66));
+  for (const [libelle, ok] of [
+    ['un avertissement est affiche', constat.alerte],
+    ['il dit quoi faire, pas seulement ce qui ne va pas', constat.remede],
+    ['il apparait AVANT le bouton de telechargement', constat.avantLeBouton],
+  ]) {
+    console.log(`  ${ok ? 'ok   ' : 'ECHEC'} ${libelle}`);
+    if (!ok) echecs++;
+  }
+  console.log('  ' + '-'.repeat(66));
+  console.log('');
+}
+
 await navigateur.close();
 serveur.close();
 process.exit(echecs === 0 ? 0 : 1);

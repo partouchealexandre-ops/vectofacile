@@ -104,6 +104,33 @@ function chargerSeuils() {
   return promesseSeuils;
 }
 
+/**
+ * Les avertissements s'affichent AVANT le resultat, avec le poids de ce
+ * qu'ils disent.
+ *
+ * Ils etaient rendus en petit gris SOUS les boutons de telechargement. Le
+ * 19/08, le premier vrai logo passe dans la chaine, une cible de 101 par 57
+ * pixels, a produit un .eps ou le texte etait fondu en une tache : le
+ * moteur avait mesure juste, l'avertissement disait vrai, et personne ne
+ * l'a lu parce qu'il arrivait apres l'action.
+ *
+ * Un avertissement qui arrive apres le bouton n'est pas un avertissement,
+ * c'est une note de bas de page.
+ */
+function afficherAvertissements(liste) {
+  const bloc = $('avertissements');
+  if (!liste || liste.length === 0) { bloc.hidden = true; return; }
+  bloc.innerHTML = liste.map((a) => {
+    if (typeof a === 'string') return `<div class="alerte"><p>${a}</p></div>`;
+    return `<div class="alerte alerte-${a.gravite}">
+      <p class="alerte-titre">${a.titre}</p>
+      <p>${a.texte}</p>
+      ${a.remede ? `<p class="alerte-remede">${a.remede}</p>` : ''}
+    </div>`;
+  }).join('');
+  bloc.hidden = false;
+}
+
 async function afficherVerdict(mesures) {
   let seuils;
   try {
@@ -169,6 +196,7 @@ async function traiter(fichier) {
     // des chemins que la grammaire SVG interdit. Voir vectorisation/svg.js.
     etat.svg = versSvg(etat.programme, { titre: etat.nom });
     etat.avertissements = prepare.avertissements;
+    afficherAvertissements(etat.avertissements);
 
     const inv = inventaire(etat.programme);
     if (inv.formes > FORMES_MAXIMALES) {
@@ -184,7 +212,6 @@ async function traiter(fichier) {
     $('apercu').innerHTML = etat.svg;
     $('resultat').innerHTML = `
       <h2>Votre fichier vectoriel</h2>
-      ${etat.avertissements.map((a) => `<p class="note">${a}</p>`).join('')}
       ${ligne('Formes', inv.formes)}
       ${ligne('Couleurs du fichier livré', inv.couleurs)}
       ${ligne('Segments', inv.segments)}

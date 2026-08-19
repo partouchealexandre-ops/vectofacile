@@ -150,6 +150,20 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
                     font-size: 15px; margin: 20px 0 6px; max-width: 68ch; }
   .explication li { margin-bottom: 8px; }
 
+  /* Les avertissements. Ils ont le poids de ce qu'ils disent : un fichier
+     trop petit produira un marquage rate, ce n'est pas une note de bas de
+     page. Le remede est en gras parce que c'est la seule ligne qui demande
+     une action au visiteur. */
+  .alerte { border-left: 4px solid var(--orange); background: #FFF7F0;
+            border-radius: 0 8px 8px 0; padding: 14px 18px; margin: 22px 0;
+            max-width: 68ch; }
+  .alerte-titre { font-family: 'Poppins', var(--pile-systeme); font-weight: 700;
+                  font-size: 16px; margin: 0 0 8px; }
+  .alerte p { margin: 0 0 8px; font-size: 15px; line-height: 1.55; }
+  .alerte p:last-child { margin-bottom: 0; }
+  .alerte-remede { font-weight: 600; }
+  .alerte-notable { border-left-color: #C9A227; background: #FFFBF0; }
+
   /* Un apercu vide n'est pas un apercu : c'est un cadre a damier au milieu de
      la page. Il ne se montre que quand il a quelque chose a montrer. */
   #apercu:empty { display: none; }
