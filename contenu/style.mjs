@@ -122,6 +122,19 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
   .pastille { display: inline-block; width: 13px; height: 13px; border-radius: 3px; margin-left: 3px;
               vertical-align: -1px; border: 1px solid rgba(0,0,0,.15); }
   .secondaire { color: var(--gris); font-weight: 400; font-size: 13px; }
+  .technique .situation { margin: 8px 0 10px; font-size: 14.5px; line-height: 1.55; }
+  .minimums { margin: 0 0 10px; }
+  .minimums summary { cursor: pointer; color: var(--gris); font-size: 13px; }
+  .minimums table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12.5px; }
+  .minimums th { text-align: left; font-weight: 600; color: var(--gris); font-size: 11.5px;
+                 text-transform: uppercase; letter-spacing: .04em; padding: 4px 8px 4px 0;
+                 border-bottom: 1px solid var(--trait); }
+  .minimums td { padding: 5px 8px 5px 0; border-bottom: 1px solid var(--trait);
+                 vertical-align: top; }
+  .minimums td.mm { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .minimums td.date, .minimums td.tient { color: var(--gris); white-space: nowrap; }
+  .minimums tr.ne-tient-pas td.mm, .minimums tr.ne-tient-pas td.tient { color: #b23b32; }
+  .minimums a { color: inherit; }
   #largeur label { display: inline-block; color: var(--gris); font-size: 14px; margin-right: 10px; }
   #largeur input { width: 110px; padding: 9px 12px; font: inherit; font-size: 16px;
                    border: 1px solid var(--trait); border-radius: 6px; background: #fff; }

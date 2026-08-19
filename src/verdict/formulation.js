@@ -73,3 +73,73 @@ function formater(v) {
 function majuscule(t) {
   return t.charAt(0).toUpperCase() + t.slice(1);
 }
+
+/**
+ * REGLE 4, ouverte le 19/08/2026 avec le module situer.js.
+ *
+ * Quand on situe une mesure dans des valeurs publiees, la phrase doit dire
+ * TROIS choses, et les trois sont contraignantes :
+ *   la mesure du visiteur, pour qu'il puisse la contester ;
+ *   la PLAGE publiee, pour qu'il voie qu'il n'y a pas un chiffre unique ;
+ *   les MATIERES, parce que c'est la matiere qui explique l'ecart entre les
+ *   sources, et qu'un ecart inexplique passe pour du desaccord.
+ *
+ * Ne jamais ecrire « le seuil de la serigraphie est X ». Il n'existe pas.
+ */
+export const LIBELLES_SITUATION = Object.freeze({
+  au_dessus: 'tient les minimums publiés',
+  partiel: 'tient sur une partie des matières',
+  au_dessous: 'refusé chez la plupart des fabricants',
+  sans_mesure: 'donnez une largeur de marquage',
+  sans_valeurs: 'nous ne savons pas encore',
+});
+
+/**
+ * Deux matieres a citer en exemple, choisies parmi les PLUS COURTES.
+ *
+ * Une matiere du referentiel peut s'ecrire « feutrine, canvas tissé, liège,
+ * non-tissé, nylon » : citee dans une phrase deja separee par des virgules,
+ * elle devient illisible et le lecteur ne sait plus ou commence la suivante.
+ * Les libelles courts, « métal », « gobelet », « textile », disent la meme
+ * chose et se lisent.
+ */
+const DEUX_MATIERES = (liste) => {
+  const t = [...liste].sort((a, b) => a.length - b.length).slice(0, 2);
+  if (t.length <= 1) return t.join('');
+  return `${t[0]} et ${t[1]}`;
+};
+
+export function direSituation(s, matieresQuiTiennent, matieresQuiNon) {
+  const mm = (v) => (Math.round(v * 100) / 100).toFixed(2).replace('.', ',');
+  const plage = `de ${mm(s.min)} à ${mm(s.max)} mm selon la matière`;
+  const combien = `${s.total} minimum${s.total > 1 ? 's' : ''} publié${s.total > 1 ? 's' : ''}`;
+
+  if (s.etat === 'sans_valeurs') {
+    return 'Nous n\'avons encore aucun minimum publié pour cette technique.';
+  }
+  if (s.etat === 'sans_mesure') {
+    return `Nous avons relevé ${combien} pour cette technique, ${plage}. `
+      + 'Indiquez la largeur de votre marquage plus haut pour savoir où votre logo se situe.';
+  }
+
+  const debut = `Votre trait le plus fin mesure ${mm(s.mesure)} mm à cette taille de marquage.`;
+
+  if (s.etat === 'au_dessus') {
+    return `${debut} Nous avons relevé ${combien}, ${plage} : votre trait les tient tous, `
+      + `y compris le plus exigeant, ${mm(s.max)} mm sur ${s.valeurs[s.valeurs.length - 1].support}.`;
+  }
+  if (s.etat === 'au_dessous') {
+    const bas = s.valeurs[0];
+    return `${debut} Le minimum le plus bas que nous ayons relevé pour cette technique est `
+      + `${mm(bas.mm)} mm, sur ${bas.support}. À cette taille de marquage, votre trait `
+      + `serait ${LIBELLES.defavorable}.`;
+  }
+  const tient = s.tiennent.length === 1
+    ? `un seul, ${DEUX_MATIERES(matieresQuiTiennent)}`
+    : `${s.tiennent.length} d'entre eux, dont ${DEUX_MATIERES(matieresQuiTiennent)}`;
+  const pas = s.ne_tiennent_pas.length === 1
+    ? `un seul, ${DEUX_MATIERES(matieresQuiNon)}`
+    : `${s.ne_tiennent_pas.length}, dont ${DEUX_MATIERES(matieresQuiNon)}`;
+  return `${debut} Nous avons relevé ${combien}, ${plage}. Votre trait tient sur `
+    + `${tient}. Il ne tient pas sur ${pas}.`;
+}

@@ -21,6 +21,7 @@
  */
 
 import { sert, raisonDeNePasServir } from './etats.js';
+import { situerMinimum, matieres } from './situer.js';
 
 export const VERSION_VERDICT = 1;
 
@@ -146,11 +147,31 @@ export function jugerCritere(critere, mesures, seuilBrut) {
  * coute le plus de verdicts affirmatifs, et c'est celui qui rend le site
  * croyable.
  */
-export function jugerTechnique(technique, mesures, seuilsTechnique) {
+export function jugerTechnique(technique, mesures, seuilsTechnique, valeursTechnique) {
   const criteres = CRITERES.map((c) =>
     jugerCritere(c, mesures, seuilsTechnique?.criteres?.[c.cle]));
 
-  const aDefavorable = criteres.some((c) => c.etat_verdict === 'defavorable');
+  // LA SITUATION, ajoutee le 19/08/2026.
+  //
+  // Elle ne remplace pas les criteres, elle repond a une autre question. Un
+  // critere demande « la mesure passe-t-elle LE seuil » et suppose donc qu'un
+  // seuil unique existe. La situation demande « sur quelles matieres la mesure
+  // tient-elle », et cette question a une reponse aujourd'hui, avec des
+  // valeurs SOURCEES, sans arbitrage supplementaire.
+  let situation = null;
+  if (valeursTechnique?.criteres?.trait_minimal?.valeurs?.length) {
+    const brut = situerMinimum(
+      borne(mesures?.m5TraitLePlusFin?.encadrementMm, 'basse'),
+      valeursTechnique.criteres.trait_minimal.valeurs);
+    situation = {
+      ...brut,
+      matieresQuiTiennent: matieres(brut.tiennent),
+      matieresQuiNon: matieres(brut.ne_tiennent_pas),
+    };
+  }
+
+  const aDefavorable = criteres.some((c) => c.etat_verdict === 'defavorable')
+    || situation?.etat === 'au_dessous';
   const tousFavorables = criteres.every((c) => c.etat_verdict === 'favorable');
 
   let etat = 'inconnu';
@@ -159,8 +180,9 @@ export function jugerTechnique(technique, mesures, seuilsTechnique) {
 
   return {
     technique,
-    libelle: seuilsTechnique?.libelle ?? technique,
+    libelle: seuilsTechnique?.libelle ?? valeursTechnique?.libelle ?? technique,
     etat,
+    situation,
     criteres,
     base: seuilsTechnique?.base ?? null,
     // Ce qui manque pour lever l'inconnu. C'est la matiere du journal, et la
@@ -178,25 +200,34 @@ export function jugerTechnique(technique, mesures, seuilsTechnique) {
  * dans l'ordre du fichier de seuils, avec leur etat. Choisir quoi mettre en
  * avant est une decision de produit, elle ne se cache pas dans un tri.
  */
-export function juger({ mesures, seuils }) {
+export function juger({ mesures, seuils, valeurs }) {
   if (!seuils || typeof seuils !== 'object') {
     throw new Error('juger : seuils manquants. Un verdict sans seuils serait '
       + 'une opinion.');
   }
   const techniques = Object.entries(seuils.techniques ?? {})
-    .map(([cle, st]) => jugerTechnique(cle, mesures, st));
+    .map(([cle, st]) => jugerTechnique(cle, mesures, st, valeurs?.techniques?.[cle]));
 
   const compte = (e) => techniques.filter((t) => t.etat === e).length;
+  const compteSituation = (e) => techniques.filter((t) => t.situation?.etat === e).length;
 
   return {
     version: VERSION_VERDICT,
     versionSeuils: seuils.version ?? null,
+    versionValeurs: valeurs?.version ?? null,
     techniques,
     resume: {
       favorables: compte('favorable'),
       defavorables: compte('defavorable'),
       inconnues: compte('inconnu'),
       total: techniques.length,
+      // Le resume de la SITUATION, qui est celui qu'un visiteur lit vraiment.
+      situees: techniques.filter((t) => t.situation
+        && ['au_dessus', 'partiel', 'au_dessous'].includes(t.situation.etat)).length,
+      tiennentPartout: compteSituation('au_dessus'),
+      tiennentEnPartie: compteSituation('partiel'),
+      neTiennentPas: compteSituation('au_dessous'),
+      sansMesure: compteSituation('sans_mesure'),
     },
   };
 }

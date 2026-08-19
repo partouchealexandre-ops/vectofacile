@@ -1,0 +1,893 @@
+{
+  "version": 1,
+  "genere_le": "19/08/2026",
+  "doctrine": "Valeurs SOURCEES servies au visiteur. Chaque entree porte sa source, son rang, son URL, sa date et LA MATIERE que la source nomme. Aucune n'est moyennee, aucune n'est choisie a la place d'une autre : le diagnostic situe la mesure du visiteur DANS la plage publiee, matiere par matiere. C'est pourquoi ce fichier n'a pas besoin de l'arbitrage P0.7, qui portait sur le choix d'un seuil unique.",
+  "conditions_d_entree": [
+    "contexte objet, jamais plan generique ni fabrication imprimee",
+    "etat SOURCE",
+    "grandeur : trait POSITIF minimal, jamais un negatif, jamais une hauteur de caractere",
+    "la source nomme une matiere ou une famille d'objet (arbitrage P0.3 du 19/08/2026)",
+    "support_niveau=ligne : la matiere est nommee sur la ligne meme ; support_niveau=source : elle est nommee ailleurs dans la meme fiche par la meme source, et ligne_support dit ou"
+  ],
+  "exclusions_notables": [
+    "Veoprint : sort par arbitrage P0.3, elle publie les memes chiffres pour deux techniques dont la physique differe",
+    "Atelier SerreJoint, swissQprint, Gravotech : encore a trancher, elles ne servent pas",
+    "Araco International en broderie : la source ne nomme pas de matiere de facon assez ferme, elle est ecartee. Son 0,5 mm etait la valeur la plus basse de la technique",
+    "Long Island DTF, seuil de DISPARITION a 0,75 pt : autre grandeur que le minimum de soumission, non fondue avec lui",
+    "UDS : contexte plan generique"
+  ],
+  "techniques": {
+    "serigraphie": {
+      "libelle": "Sérigraphie",
+      "fiche": 1,
+      "criteres": {
+        "trait_minimal": {
+          "unite": "mm",
+          "valeurs": [
+            {
+              "mm": 0.18,
+              "publiee": "positif 0,18 mm",
+              "support": "sac papier, carton, plastique",
+              "support_niveau": "ligne",
+              "source": "FF-Packaging",
+              "rang": 4,
+              "date": "17/08/2026",
+              "etat": "SOURCÉ",
+              "fiche": 1,
+              "ligne": 260
+            },
+            {
+              "mm": 0.2,
+              "publiee": "0,2 mm",
+              "support": "gobelet",
+              "support_niveau": "ligne",
+              "source": "Nicknack",
+              "rang": 4,
+              "date": "2022",
+              "etat": "SOURCÉ",
+              "fiche": 1,
+              "ligne": 269
+            },
+            {
+              "mm": 0.25,
+              "publiee": "0,2 à 0,25 mm",
+              "support": "métal",
+              "support_niveau": "ligne",
+              "source": "Eagle Metalcraft",
+              "rang": 2,
+              "date": "16/08/2026",
+              "etat": "SOURCÉ",
+              "fiche": 1,
+              "ligne": 257,
+              "url": "https://eaglemetalcraft.com/silk-screening-metal/"
+            },
+            {
+              "mm": 0.3,
+              "publiee": "0,13 à 0,30 mm",
+              "support": "tube plastique, surface courbe",
+              "support_niveau": "ligne",
+              "source": "Xinfly Packaging",
+              "rang": 4,
+              "date": "16/08/2026",
+              "etat": "SOURCÉ",
+              "fiche": 1,
+              "ligne": 258,
+              "url": "https://xinflypackaging.com/silk-screen-line-thickness-font-size-limits-tubes/"
+            },
+            {
+              "mm": 0.3,
+              "publiee": "0,3 mm",
+              "support": "objet publicitaire",
+              "support_niveau": "ligne",
+              "source": "Goodie Goodies",
+              "rang": 4,
+              "date": "16/08/2026",
+              "etat": "SOURCÉ",
+              "fiche": 1,
+              "ligne": 259
+            },
+            {
+              "mm": 0.3,
+              "publiee": "positif 0,3 mm",
+              "support": "gobelet réutilisable",
+              "support_niveau": "ligne",
+              "source": "Cup Concept",
+              "rang": 4,
+              "date": "06/2024",
+              "etat": "SOURCÉ",
+              "fiche": 1,
+              "ligne": 264
+            },
+            {
+              "mm": 0.3,
+              "publiee": "0,30 mm",
+              "support": "objet promotionnel, surface plate ou peu courbe",
+              "support_niveau": "ligne",
+              "source": "Intex Global",
+              "rang": 4,
+              "date": "17/08/2026",
+              "etat": "SOURCÉ",
+              "fiche": 1,
+              "ligne": 273,
+              "url": "https://www.intexglobal.com/branding-solutions/"
+            },
+            {
+              "mm": 0.35,
+              "publiee": "positif 0,35 mm",
+              "support": "coton, bambou, polyester, satin",
+              "support_niveau": "ligne",
+              "source": "FF-Packaging",
+              "rang": 4,
+              "date": "17/08/2026",
+              "etat": "SOURCÉ",
+              "fiche": 1,
+              "ligne": 261
+            },
+            {
+              "mm": 0.35,
+              "publiee": "0,35 mm",
+              "support": "textile",
+              "support_niveau": "ligne",
+              "source": "Feelgood",
+              "rang": 3,
+              "date": "17/08/2026",
+              "etat": "SOURCÉ",
+              "fiche": 1,
+              "ligne": 270
+            },
+            {
+              "mm": 0.3528,
+              "publiee": "1 pt",
+              "support": "textile",
+              "support_niveau": "ligne",
+              "source": "Oregon Screen Impressions",
+              "rang": 3,
+              "date": "16/08/2026",
+              "etat": "SOURCÉ",
+              "fiche": 1,
+              "ligne": 253,
+              "url": "https://oregonscreen.com/screen-printing-art-guidelines/"
+            },
+            {
+              "mm": 0.3528,
+              "publiee": "1 pt",
+              "support": "textile",
+              "support_niveau": "ligne",
+              "source": "Swagstore",
+              "rang": 3,
+              "date": "16/08/2026",
+              "etat": "SOURCÉ",
+              "fiche": 1,
+              "ligne": 254,
+              "url": "https://swagstore.net/blog/artwork-requirements-for-screen-printing-the-2026-professional-guide/"
+            },
+            {
+              "mm": 0.4,
+              "publiee": "0,4 mm",
+              "support": "textile promotionnel",
+              "support_niveau": "ligne",
+              "source": "Lynka",
+              "rang": 3,
+              "date": "17/08/2026",
+              "etat": "SOURCÉ",
+              "fiche": 1,
+              "ligne": 266,
+              "url": "https://lynka.eu/fr/comment-presenter-une-illustration"
+            },
+            {
+              "mm": 0.5,
+              "publiee": "1 à 1,5 pt (0,35 à 0,50 mm)",
+              "support": "textile",
+              "support_niveau": "ligne",
+              "source": "PulseMerch",
+              "rang": 3,
+              "date": "16/08/2026",
+              "etat": "SOURCÉ",
+              "fiche": 1,
+              "ligne": 251,
+              "url": "https://pulsemerch.com/designing-for-screen-printing/"
+            },
+            {
+              "mm": 0.5,
+              "publiee": "0,5 mm",
+              "support": "cadeau promotionnel, sans sous-couche",
+              "support_niveau": "ligne",
+              "source": "IKON Gifts",
+              "rang": 4,
+              "date": "17/08/2026",
+              "etat": "SOURCÉ",
+              "fiche": 1,
+              "ligne": 299,
+              "url": "https://belgorod.ikongifts.ru/tehnicheskie-trebovanija-k-original-maketam/"
+            },
+            {
+              "mm": 0.6,
+              "publiee": "0,6 mm",
+              "support": "cadeau promotionnel, avec sous-couche",
+              "support_niveau": "ligne",
+              "source": "IKON Gifts",
+              "rang": 4,
+              "date": "17/08/2026",
+              "etat": "SOURCÉ",
+              "fiche": 1,
+              "ligne": 300
+            },
+            {
+              "mm": 0.7,
+              "publiee": "positif 0,7 mm",
+              "support": "feutrine, canvas tissé, liège, non-tissé, nylon",
+              "support_niveau": "ligne",
+              "source": "FF-Packaging",
+              "rang": 4,
+              "date": "17/08/2026",
+              "etat": "SOURCÉ",
+              "fiche": 1,
+              "ligne": 262
+            },
+            {
+              "mm": 0.7056,
+              "publiee": "2 pt",
+              "support": "bouteille, pot, seau",
+              "support_niveau": "ligne",
+              "source": "Amen Printing",
+              "rang": 2,
+              "date": "17/08/2026",
+              "etat": "SOURCÉ",
+              "fiche": 1,
+              "ligne": 302,
+              "url": "https://amenprinting.com/artspecs"
+            },
+            {
+              "mm": 0.706,
+              "publiee": "2 pt (0,706 mm)",
+              "support": "sac tote en toile",
+              "support_niveau": "ligne",
+              "source": "Enviro-Tote",
+              "rang": 3,
+              "date": "16/08/2026",
+              "etat": "SOURCÉ",
+              "fiche": 1,
+              "ligne": 255,
+              "url": "https://enviro-tote.com/art-specs/"
+            },
+            {
+              "mm": 0.75,
+              "publiee": "0,75 mm",
+              "support": "support fortement texturé, toile de jute",
+              "support_niveau": "ligne",
+              "source": "PRINTEX",
+              "rang": 3,
+              "date": "17/08/2026",
+              "etat": "SOURCÉ",
+              "fiche": 1,
+              "ligne": 268
+            },
+            {
+              "mm": 1.0,
+              "publiee": "positif 1 mm",
+              "support": "jute, juca, sac de plage",
+              "support_niveau": "ligne",
+              "source": "FF-Packaging",
+              "rang": 4,
+              "date": "17/08/2026",
+              "etat": "SOURCÉ",
+              "fiche": 1,
+              "ligne": 263
+            },
+            {
+              "mm": 1.0,
+              "publiee": "1,0 mm",
+              "support": "sac en jute",
+              "support_niveau": "ligne",
+              "source": "Feelgood",
+              "rang": 3,
+              "date": "17/08/2026",
+              "etat": "SOURCÉ",
+              "fiche": 1,
+              "ligne": 271
+            }
+          ]
+        }
+      }
+    },
+    "tampographie": {
+      "libelle": "Tampographie",
+      "fiche": 2,
+      "criteres": {
+        "trait_minimal": {
+          "unite": "mm",
+          "valeurs": [
+            {
+              "mm": 0.1,
+              "publiee": "0,1 mm",
+              "support": "cadeau promotionnel",
+              "support_niveau": "ligne",
+              "source": "IKON Gifts",
+              "rang": 4,
+              "date": "17/08/2026",
+              "etat": "SOURCÉ",
+              "fiche": 2,
+              "ligne": 194,
+              "url": "https://belgorod.ikongifts.ru/tehnicheskie-trebovanija-k-original-maketam/"
+            },
+            {
+              "mm": 0.15,
+              "publiee": "0,15 mm",
+              "support": "papier design, simili, tissu, bois non poncé",
+              "support_niveau": "source",
+              "source": "AST Print",
+              "rang": 2,
+              "date": "16/08/2026",
+              "etat": "SOURCÉ",
+              "fiche": 2,
+              "ligne": 183,
+              "ligne_support": 308,
+              "url": "https://astprintspb.ru/technicalrequirementspad"
+            },
+            {
+              "mm": 0.2,
+              "publiee": "0,20 mm",
+              "support": "petit objet courbe",
+              "support_niveau": "ligne",
+              "source": "Goodiesland",
+              "rang": 4,
+              "date": "22/04/2024",
+              "etat": "SOURCÉ",
+              "fiche": 2,
+              "ligne": 185,
+              "url": "https://www.goodiesland.com/adapter-un-visuel-complexe-aux-contraintes-techniques-de-l-objet/"
+            },
+            {
+              "mm": 0.3,
+              "publiee": "0,30 mm",
+              "support": "vaisselle réutilisable",
+              "support_niveau": "ligne",
+              "source": "Cup Concept",
+              "rang": 4,
+              "date": "06/2024",
+              "etat": "SOURCÉ",
+              "fiche": 2,
+              "ligne": 188
+            },
+            {
+              "mm": 0.3,
+              "publiee": "0,3 mm",
+              "support": "composant et pièce à surface courbe",
+              "support_niveau": "ligne",
+              "source": "UK UGI",
+              "rang": 2,
+              "date": "09/06/2026",
+              "etat": "SOURCÉ",
+              "fiche": 2,
+              "ligne": 195,
+              "url": "https://ukugi.com/docs/screen-pad-printing-technical-specification-overview/"
+            }
+          ]
+        }
+      }
+    },
+    "gravure_laser": {
+      "libelle": "Gravure laser",
+      "fiche": 3,
+      "criteres": {
+        "trait_minimal": {
+          "unite": "mm",
+          "valeurs": [
+            {
+              "mm": 0.076,
+              "publiee": "0,076 mm",
+              "support": "métal",
+              "support_niveau": "ligne",
+              "source": "SpiroPrint",
+              "rang": 4,
+              "date": "17/08/2026",
+              "etat": "SOURCÉ",
+              "fiche": 3,
+              "ligne": 241,
+              "url": "https://spiroprint.com/information-on-projects"
+            },
+            {
+              "mm": 0.12,
+              "publiee": "0,12 mm, ligne horizontale",
+              "support": "métal",
+              "support_niveau": "ligne",
+              "source": "IKON Gifts",
+              "rang": 4,
+              "date": "17/08/2026",
+              "etat": "SOURCÉ",
+              "fiche": 3,
+              "ligne": 249,
+              "url": "https://belgorod.ikongifts.ru/tehnicheskie-trebovanija-k-original-maketam/"
+            },
+            {
+              "mm": 0.15,
+              "publiee": "0,15 mm, ligne verticale",
+              "support": "métal",
+              "support_niveau": "ligne",
+              "source": "IKON Gifts",
+              "rang": 4,
+              "date": "17/08/2026",
+              "etat": "SOURCÉ",
+              "fiche": 3,
+              "ligne": 250
+            },
+            {
+              "mm": 0.2,
+              "publiee": "0,2 mm",
+              "support": "bois",
+              "support_niveau": "ligne",
+              "source": "SpiroPrint",
+              "rang": 4,
+              "date": "17/08/2026",
+              "etat": "SOURCÉ",
+              "fiche": 3,
+              "ligne": 243,
+              "url": "https://spiroprint.com/information-on-projects"
+            },
+            {
+              "mm": 0.2,
+              "publiee": "0,2 mm",
+              "support": "verre",
+              "support_niveau": "ligne",
+              "source": "SpiroPrint",
+              "rang": 4,
+              "date": "17/08/2026",
+              "etat": "SOURCÉ",
+              "fiche": 3,
+              "ligne": 245,
+              "url": "https://spiroprint.com/information-on-projects"
+            },
+            {
+              "mm": 0.2,
+              "publiee": "0,2 mm",
+              "support": "bois et métal",
+              "support_niveau": "source",
+              "source": "Atelier Grav'Art Lyon",
+              "rang": 2,
+              "date": "16/08/2026",
+              "etat": "SOURCÉ",
+              "fiche": 3,
+              "ligne": 177,
+              "ligne_support": 333,
+              "url": "https://ateliergravart.com/blog/comment-fonctionne-gravure-laser/"
+            },
+            {
+              "mm": 0.25,
+              "publiee": "0,25 mm",
+              "support": "cuir",
+              "support_niveau": "ligne",
+              "source": "SpiroPrint",
+              "rang": 4,
+              "date": "17/08/2026",
+              "etat": "SOURCÉ",
+              "fiche": 3,
+              "ligne": 247,
+              "url": "https://spiroprint.com/information-on-projects"
+            },
+            {
+              "mm": 0.3,
+              "publiee": "0,3 mm",
+              "support": "hors métal : verre, bois, cuir, plastique, surface vernie",
+              "support_niveau": "ligne",
+              "source": "IKON Gifts",
+              "rang": 4,
+              "date": "17/08/2026",
+              "etat": "SOURCÉ",
+              "fiche": 3,
+              "ligne": 253
+            },
+            {
+              "mm": 0.3528,
+              "publiee": "1 pt",
+              "support": "tumbler métallique, verre",
+              "support_niveau": "ligne",
+              "source": "My Metal Tumblers",
+              "rang": 4,
+              "date": "17/08/2026",
+              "etat": "SOURCÉ",
+              "fiche": 3,
+              "ligne": 255,
+              "url": "https://www.mymetaltumblers.com/page/contact/art-requirements"
+            }
+          ]
+        }
+      }
+    },
+    "broderie": {
+      "libelle": "Broderie",
+      "fiche": 4,
+      "criteres": {
+        "trait_minimal": {
+          "unite": "mm",
+          "valeurs": [
+            {
+              "mm": 1.0,
+              "publiee": "1,0 mm",
+              "support": "maille",
+              "support_niveau": "ligne",
+              "source": "Youtex",
+              "rang": 3,
+              "date": "17/08/2026",
+              "etat": "SOURCÉ",
+              "fiche": 4,
+              "ligne": 166,
+              "url": "https://youtex.fr/broderie-de-logo-sur-textile-les-contraintes-techniques/"
+            },
+            {
+              "mm": 1.0,
+              "publiee": "1,0 mm",
+              "support": "vêtement, casquette, polo, veste, sac, maille piquée",
+              "support_niveau": "source",
+              "source": "Melco",
+              "rang": 1,
+              "date": "16/08/2026",
+              "etat": "SOURCÉ",
+              "fiche": 4,
+              "ligne": 165,
+              "ligne_support": 191,
+              "url": "https://melco.zendesk.com/hc/en-us/articles/10706046938381-Embroidery-Design-Guidelines"
+            },
+            {
+              "mm": 1.27,
+              "publiee": "1,27 mm",
+              "support": "t-shirt épais, sweat, casquette, bonnet, visière",
+              "support_niveau": "ligne",
+              "source": "Fourthwall",
+              "rang": 4,
+              "date": "17/08/2026",
+              "etat": "SOURCÉ",
+              "fiche": 4,
+              "ligne": 176,
+              "url": "https://help.fourthwall.com/create-and-sell-products/best-practices/embroidery-best-practices"
+            },
+            {
+              "mm": 1.27,
+              "publiee": "1,27 mm",
+              "support": "casquette",
+              "support_niveau": "source",
+              "source": "Printful",
+              "rang": 4,
+              "date": "17/08/2026",
+              "etat": "SOURCÉ",
+              "fiche": 4,
+              "ligne": 174,
+              "ligne_support": 187,
+              "url": "https://help.printful.com/hc/en-us/articles/28727397325340-How-should-I-prepare-my-design-for-embroidery"
+            },
+            {
+              "mm": 1.6,
+              "publiee": "1,6 mm",
+              "support": "polo, sweat, doudoune, bonnet, casquette",
+              "support_niveau": "source",
+              "source": "MAINGAUCHE",
+              "rang": 3,
+              "date": "17/08/2026",
+              "etat": "SOURCÉ",
+              "fiche": 4,
+              "ligne": 180,
+              "ligne_support": 417,
+              "url": "https://main-gauche.com/marquages/broderie"
+            },
+            {
+              "mm": 2.0,
+              "publiee": "2 mm",
+              "support": "casquette",
+              "support_niveau": "ligne",
+              "source": "Casquette Print",
+              "rang": 4,
+              "date": "16/08/2026",
+              "etat": "SOURCÉ",
+              "fiche": 4,
+              "ligne": 195,
+              "url": "https://www.casquette-print.fr/placement-et-taille-du-logo-sur-casquette/"
+            },
+            {
+              "mm": 4.0,
+              "publiee": "3 à 4 mm",
+              "support": "t-shirt, polo, sweat, veste, tote, serviette éponge, casquette",
+              "support_niveau": "source",
+              "source": "Azency Studio",
+              "rang": 2,
+              "date": "16/08/2026",
+              "etat": "SOURCÉ",
+              "fiche": 4,
+              "ligne": 181,
+              "ligne_support": 181,
+              "url": "https://www.azencystudio.com/post/broderie-textile-personnalisee"
+            }
+          ]
+        }
+      }
+    },
+    "numerique_uv": {
+      "libelle": "Impression numérique UV",
+      "fiche": 5,
+      "criteres": {
+        "trait_minimal": {
+          "unite": "mm",
+          "valeurs": [
+            {
+              "mm": 0.1,
+              "publiee": "environ 0,1 mm",
+              "support": "boîte papier, objet transparent ou coloré",
+              "support_niveau": "ligne",
+              "source": "Artikul",
+              "rang": 2,
+              "date": "17/08/2026",
+              "etat": "SOURCÉ",
+              "fiche": 5,
+              "ligne": 273,
+              "url": "https://m.artikul.ru/trebovaniya-k-fajlam/pechat-na-uf-printere-mimaki-ujf-3042-hg.html"
+            },
+            {
+              "mm": 0.15,
+              "publiee": "0,15 mm",
+              "support": "objet promotionnel fini",
+              "support_niveau": "ligne",
+              "source": "Gifts.ru",
+              "rang": 4,
+              "date": "17/08/2026",
+              "etat": "SOURCÉ",
+              "fiche": 5,
+              "ligne": 267,
+              "url": "https://gifts.ru/nanesenie-logotipa/specifications"
+            },
+            {
+              "mm": 0.15,
+              "publiee": "0,15 mm, variante cylindrique",
+              "support": "objet cylindrique promotionnel",
+              "support_niveau": "ligne",
+              "source": "Gifts.ru",
+              "rang": 4,
+              "date": "17/08/2026",
+              "etat": "SOURCÉ",
+              "fiche": 5,
+              "ligne": 269
+            },
+            {
+              "mm": 0.15,
+              "publiee": "0,15 mm",
+              "support": "produit souvenir, matière colorée, transparente ou noire",
+              "support_niveau": "ligne",
+              "source": "FastColor",
+              "rang": 2,
+              "date": "31/10/2024",
+              "etat": "SOURCÉ",
+              "fiche": 5,
+              "ligne": 271,
+              "url": "https://fastcolor.ru/klientam/technical_requirements/suvenirnaya-produkcziya-na-uf-printere-mimaki/"
+            },
+            {
+              "mm": 0.15,
+              "publiee": "0,15 mm",
+              "support": "cadeau promotionnel",
+              "support_niveau": "ligne",
+              "source": "IKON Gifts",
+              "rang": 4,
+              "date": "17/08/2026",
+              "etat": "SOURCÉ",
+              "fiche": 5,
+              "ligne": 272,
+              "url": "https://belgorod.ikongifts.ru/tehnicheskie-trebovanija-k-original-maketam/"
+            },
+            {
+              "mm": 0.25,
+              "publiee": "0,25 mm",
+              "support": "produit à boîtier coloré",
+              "support_niveau": "ligne",
+              "source": "Promotional IT Solutions",
+              "rang": 4,
+              "date": "17/08/2026",
+              "etat": "SOURCÉ",
+              "fiche": 5,
+              "ligne": 274,
+              "url": "https://www.promotional-it-solutions.com.au/faq/"
+            },
+            {
+              "mm": 0.5,
+              "publiee": "0,5 mm",
+              "support": "revêtement soft-touch",
+              "support_niveau": "ligne",
+              "source": "Gifts.ru",
+              "rang": 4,
+              "date": "17/08/2026",
+              "etat": "SOURCÉ",
+              "fiche": 5,
+              "ligne": 275
+            }
+          ]
+        }
+      }
+    },
+    "transfert_dtf": {
+      "libelle": "Transfert DTF",
+      "fiche": 6,
+      "criteres": {
+        "trait_minimal": {
+          "unite": "mm",
+          "valeurs": [
+            {
+              "mm": 0.35,
+              "publiee": "1 pt, soit 0,35 mm",
+              "support": "vêtement foncé, coton, polyester",
+              "support_niveau": "ligne",
+              "source": "Chamevo Support",
+              "rang": 3,
+              "date": "01/05/2026",
+              "etat": "SOURCÉ",
+              "fiche": 6,
+              "ligne": 249
+            },
+            {
+              "mm": 0.4572,
+              "publiee": "0,018 pouce",
+              "support": "vêtement et textile",
+              "support_niveau": "source",
+              "source": "Transfer Express (Stahls')",
+              "rang": 1,
+              "date": "07/04/2022",
+              "etat": "SOURCÉ",
+              "fiche": 6,
+              "ligne": 229,
+              "ligne_support": 300,
+              "url": "https://blog.transferexpress.com/art-guidelines-for-ultracolor-max-dtf-transfers/"
+            },
+            {
+              "mm": 0.5,
+              "publiee": "0,5 mm",
+              "support": "textile sombre, t-shirt, tote bag, hoodie",
+              "support_niveau": "ligne",
+              "source": "Print Impression Gisors",
+              "rang": 2,
+              "date": "17/08/2026",
+              "etat": "SOURCÉ",
+              "fiche": 6,
+              "ligne": 250
+            },
+            {
+              "mm": 0.5,
+              "publiee": "0,40 à 0,50 mm",
+              "support": "polaire, jersey côtelé",
+              "support_niveau": "source",
+              "source": "Sumo Transfers",
+              "rang": 4,
+              "date": "16/08/2026",
+              "etat": "SOURCÉ",
+              "fiche": 6,
+              "ligne": 236,
+              "ligne_support": 236
+            },
+            {
+              "mm": 0.5292,
+              "publiee": "1,5 pt à la taille finale",
+              "support": "vêtement foncé",
+              "support_niveau": "ligne",
+              "source": "Long Island DTF Printing",
+              "rang": 2,
+              "date": "17/08/2026",
+              "etat": "SOURCÉ",
+              "fiche": 6,
+              "ligne": 248,
+              "url": "https://www.longislanddtfprinting.com/technology/file-requirements"
+            },
+            {
+              "mm": 0.6,
+              "publiee": "0,60 mm",
+              "support": "textile",
+              "support_niveau": "ligne",
+              "source": "Go Transfer",
+              "rang": 2,
+              "date": "16/08/2026",
+              "etat": "SOURCÉ",
+              "fiche": 6,
+              "ligne": 244,
+              "url": "https://www.go-transfer.fr/boutique/transferts-dtf-personnalises/impression-dtf-par-taille-ou-au-metre/"
+            },
+            {
+              "mm": 1.0,
+              "publiee": "1 mm",
+              "support": "tissu, vêtement foncé",
+              "support_niveau": "ligne",
+              "source": "DTF Owl",
+              "rang": 3,
+              "date": "17/08/2026",
+              "etat": "SOURCÉ",
+              "fiche": 6,
+              "ligne": 251,
+              "url": "https://dtfowl.com/guides/dtf-design-tips"
+            }
+          ]
+        }
+      }
+    },
+    "marquage_a_chaud": {
+      "libelle": "Marquage à chaud",
+      "fiche": 7,
+      "criteres": {
+        "trait_minimal": {
+          "unite": "mm",
+          "valeurs": [
+            {
+              "mm": 0.3528,
+              "publiee": "1 pt",
+              "support": "carnet et journal personnalisé",
+              "support_niveau": "ligne",
+              "source": "Branded Notebooks",
+              "rang": 4,
+              "date": "17/08/2026",
+              "etat": "SOURCÉ",
+              "fiche": 7,
+              "ligne": 340,
+              "url": "https://brandednotebooks.com/decoration-methods/foil-stamping/"
+            },
+            {
+              "mm": 0.3528,
+              "publiee": "supérieur à 1 pt",
+              "support": "carnet à couverture texturée",
+              "support_niveau": "ligne",
+              "source": "MOO",
+              "rang": 3,
+              "date": "17/08/2026",
+              "etat": "SOURCÉ",
+              "fiche": 7,
+              "ligne": 356,
+              "url": "https://support.moo.com/hc/en-us/articles/28729822657044-Custom-MOO-Softcover-Notebook-Specifications"
+            },
+            {
+              "mm": 0.3528,
+              "publiee": "1 pt",
+              "support": "carnet PU, cuir vegan, toile",
+              "support_niveau": "ligne",
+              "source": "Bookblock",
+              "rang": 3,
+              "date": "17/08/2026",
+              "etat": "SOURCÉ",
+              "fiche": 7,
+              "ligne": 357,
+              "url": "https://business.bookblock.com/resource/notebook-resources/notebook-artwork-setup/cover-artwork/foiling/"
+            },
+            {
+              "mm": 0.5,
+              "publiee": "0,5 mm",
+              "support": "cadeau promotionnel, avec feuille",
+              "support_niveau": "ligne",
+              "source": "IKON Gifts",
+              "rang": 4,
+              "date": "17/08/2026",
+              "etat": "SOURCÉ",
+              "fiche": 7,
+              "ligne": 352,
+              "url": "https://belgorod.ikongifts.ru/tehnicheskie-trebovanija-k-original-maketam/"
+            },
+            {
+              "mm": 0.5,
+              "publiee": "0,5 mm",
+              "support": "cuir véritable et PU",
+              "support_niveau": "ligne",
+              "source": "Ithuba Branding",
+              "rang": 2,
+              "date": "17/08/2026",
+              "etat": "SOURCÉ",
+              "fiche": 7,
+              "ligne": 358,
+              "url": "https://www.ithubabranding.co.za/branding-techniques"
+            },
+            {
+              "mm": 1.0,
+              "publiee": "1 mm",
+              "support": "agenda et portefeuille en cuir ou similicuir",
+              "support_niveau": "ligne",
+              "source": "Design-Print",
+              "rang": 3,
+              "date": "17/08/2026",
+              "etat": "SOURCÉ",
+              "fiche": 7,
+              "ligne": 354,
+              "url": "https://dsprint.ru/info/press.php"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

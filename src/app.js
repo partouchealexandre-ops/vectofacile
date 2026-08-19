@@ -177,6 +177,31 @@ function chargerSeuils() {
 }
 
 /**
+ * Les VALEURS SOURCEES, distinctes des seuils et chargees a part.
+ *
+ * Deux fichiers, deux statuts, et le melange serait une faute :
+ *   seuils.json          un seuil UNIQUE par technique, arbitre par Alex.
+ *                        Vide aujourd'hui, il attend P0.7.
+ *   valeurs_sourcees.json les valeurs PUBLIEES par des fabricants, chacune
+ *                        avec sa matiere, sa source, sa date et son URL.
+ *                        Elles servent depuis l'arbitrage P0.3 du 19/08.
+ *
+ * Le deuxieme ne remplace pas le premier : il repond a une autre question. Un
+ * seuil dit « la limite est X ». Les valeurs disent « voici ce que publient
+ * vingt-et-un fabricants, et voici ou vous vous situez parmi eux ».
+ */
+let promesseValeurs = null;
+function chargerValeurs() {
+  if (!promesseValeurs) {
+    promesseValeurs = fetch('/src/verdict/valeurs_sourcees.json').then((r) => {
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return r.json();
+    });
+  }
+  return promesseValeurs;
+}
+
+/**
  * Les avertissements s'affichent AVANT le resultat, avec le poids de ce
  * qu'ils disent.
  *
@@ -205,8 +230,13 @@ function afficherAvertissements(liste) {
 
 async function afficherVerdict(mesures) {
   let seuils;
+  let valeurs = null;
   try {
     seuils = await chargerSeuils();
+    // Un echec de chargement des valeurs n'est PAS silencieux non plus, mais
+    // il n'empeche pas le reste : sans elles la page retombe sur son ancien
+    // comportement, qui dit qu'il ne sait pas. Elle ne fabrique rien.
+    valeurs = await chargerValeurs().catch(() => null);
   } catch (e) {
     $('verdict').innerHTML = `
       <h2>Le diagnostic par technique</h2>
@@ -216,7 +246,7 @@ async function afficherVerdict(mesures) {
     $('verdict').hidden = false;
     return;
   }
-  $('verdict').innerHTML = rendreVerdict(juger({ mesures, seuils }));
+  $('verdict').innerHTML = rendreVerdict(juger({ mesures, seuils, valeurs }));
   $('verdict').hidden = false;
 }
 

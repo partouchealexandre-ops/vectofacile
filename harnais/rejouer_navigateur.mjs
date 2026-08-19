@@ -589,6 +589,69 @@ console.log('');
   console.log('');
 }
 
+// ---------------------------------------------------------------------------
+// LE DIAGNOSTIC DIT ENFIN QUELQUE CHOSE, ET IL LE DIT AVEC SES SOURCES.
+//
+// Pendant deux jours ce bloc affichait sept fois « nous ne savons pas encore ».
+// La cause supposee etait l'absence d'un seuil arbitre par technique. C'etait
+// une hypothese, et elle etait fausse : la doctrine sert aussi les valeurs
+// SOURCEES, il y en a soixante-deux, et elles n'attendaient qu'une question
+// mieux posee. Pas « quel est LE seuil », qui n'a pas de reponse honnete, mais
+// « sur quelles matieres ce trait tient-il ».
+//
+// Ce controle passe par le vrai chemin, celui du visiteur : on depose un
+// fichier, on donne une largeur de marquage, et on verifie que le bloc nomme
+// des matieres et pointe vers des sources verifiables.
+{
+  const page = await navigateur.newPage();
+  await page.goto(`http://127.0.0.1:${PORT}/`, { waitUntil: 'networkidle' });
+  await page.waitForTimeout(900);
+  const octets = fs.readFileSync(path.join(IMAGES, 'trait_09px.png'));
+  const constat = await page.evaluate(async (b64) => {
+    const fichier = new File(
+      [Uint8Array.from(atob(b64), (c) => c.charCodeAt(0))], 'trait.png', { type: 'image/png' });
+    await globalThis.vecto.traiter(fichier);
+    const avant = document.getElementById('verdict').innerText;
+    const champ = document.getElementById('largeur_mm');
+    champ.value = '30';
+    champ.dispatchEvent(new Event('input', { bubbles: true }));
+    await new Promise((r) => setTimeout(r, 400));
+    const bloc = document.getElementById('verdict');
+    return {
+      avant,
+      apres: bloc.innerText,
+      cartes: bloc.querySelectorAll('article.technique').length,
+      etiquettes: [...bloc.querySelectorAll('.etiquette')].map((e) => e.textContent.trim()),
+      liens: bloc.querySelectorAll('.minimums a[href^="https://"]').length,
+      lignes: bloc.querySelectorAll('.minimums tbody tr').length,
+    };
+  }, octets.toString('base64'));
+  await page.close();
+
+  const toutesIdentiques = new Set(constat.etiquettes).size === 1;
+
+  console.log('');
+  console.log('  LE DIAGNOSTIC DIT QUELQUE CHOSE, AVEC SES SOURCES');
+  console.log('  ' + '-'.repeat(66));
+  for (const [libelle, ok] of [
+    ['sans largeur, le bloc invite a en donner une',
+      /largeur/i.test(constat.avant) && !/sur aucune matière/.test(constat.avant)],
+    ['avec une largeur, les sept techniques sont situees', constat.cartes === 7],
+    ['elles ne disent PAS toutes la meme chose', toutesIdentiques === false],
+    ['aucune ne dit plus « nous ne savons pas encore »',
+      !constat.etiquettes.includes('nous ne savons pas encore')],
+    ['les minimums publies sont dans la page, ligne par ligne', constat.lignes >= 50],
+    ['chaque minimum pointe vers une source verifiable', constat.liens >= 20],
+  ]) {
+    console.log(`  ${ok ? 'ok   ' : 'ECHEC'} ${libelle}`);
+    if (!ok) echecs++;
+  }
+  console.log(`         ${constat.lignes} minimums affiches, ${constat.liens} liens de source`);
+  for (const e of [...new Set(constat.etiquettes)]) console.log(`         ${e}`);
+  console.log('  ' + '-'.repeat(66));
+  console.log('');
+}
+
 await navigateur.close();
 serveur.close();
 process.exit(echecs === 0 ? 0 : 1);
