@@ -31,7 +31,80 @@ import { QUESTIONS } from '../contenu/questions/vectoriel.mjs';
 import { QUESTIONS_JPEG } from '../contenu/questions/jpeg.mjs';
 import { QUESTIONS_COULEURS } from '../contenu/questions/couleurs.mjs';
 import { QUESTIONS_FORMATS } from '../contenu/questions/formats.mjs';
+import { QUESTIONS_OUVERTURE } from '../contenu/questions/ouverture.mjs';
 import { TECHNIQUES } from '../contenu/guide/techniques.mjs';
+
+/**
+ * LES MINIMUMS SOURCES ENTRENT DANS LES GUIDES, 20/08/2026.
+ *
+ * Le plan contenu du Fil meta a pose le constat : les guides etaient
+ * entierement en prose, sans un chiffre, alors que la these GEO du projet est
+ * que les moteurs de reponse citent la donnee factuelle et ignorent la prose.
+ * Il n'y avait rien a citer.
+ *
+ * Ce qui a change depuis que cette regle avait ete posee : P0.3 est arbitre,
+ * et les valeurs SOURCEES servent deja le diagnostic de l'outil. Les publier
+ * dans les guides n'est donc pas une nouvelle decision, c'est la MEME donnee,
+ * affichee au deuxieme endroit ou on la cherche.
+ *
+ * UNE SEULE SOURCE DE VERITE : le tableau est genere depuis
+ * src/verdict/valeurs_sourcees.json, le fichier exact que le diagnostic lit.
+ * Une valeur corrigee la-bas se corrige ici a la construction suivante. Un
+ * tableau recopie a la main aurait diverge a la premiere correction.
+ *
+ * CE QUE CE N'EST PAS : un seuil par technique. Chaque ligne porte SA matiere
+ * et SA source, l'intro le dit, et le harnais interdit toujours un millimetre
+ * hors de ce tableau.
+ */
+import { fileURLToPath as _furl } from 'node:url';
+const VALEURS = JSON.parse(fs.readFileSync(
+  path.join(path.dirname(_furl(import.meta.url)), '..', 'src', 'verdict', 'valeurs_sourcees.json'),
+  'utf-8'));
+
+const CLE_PAR_URL = {
+  '/guide/serigraphie': 'serigraphie',
+  '/guide/tampographie': 'tampographie',
+  '/guide/gravure-laser': 'gravure_laser',
+  '/guide/broderie': 'broderie',
+  '/guide/impression-numerique-uv': 'numerique_uv',
+  '/guide/transfert-dtf': 'transfert_dtf',
+  '/guide/marquage-a-chaud': 'marquage_a_chaud',
+};
+
+const mmTexte = (v) => (Math.round(v * 100) / 100).toFixed(2).replace('.', ',');
+
+function sectionMinimums(url) {
+  const cle = CLE_PAR_URL[url];
+  const t = cle && VALEURS.techniques[cle];
+  const valeurs = t?.criteres?.trait_minimal?.valeurs;
+  if (!valeurs?.length) return null;
+  const lignes = valeurs.map((v) => `<tr>
+<td>${mmTexte(v.mm)}&nbsp;mm</td>
+<td>${echapper(v.support)}</td>
+<td>${v.url ? `<a href="${echapper(v.url)}" rel="nofollow noopener">${echapper(v.source)}</a>` : echapper(v.source)}</td>
+<td>${echapper(v.date)}</td>
+</tr>`).join('\n');
+  const min = mmTexte(valeurs[0].mm);
+  const max = mmTexte(valeurs[valeurs.length - 1].mm);
+  return {
+    h2: 'Les épaisseurs minimales que publient les fabricants',
+    html: `
+<p>Il n'existe pas UN seuil pour cette technique, et ce tableau le montre : les
+minimums publiés vont de <b>${min} à ${max}&nbsp;mm selon la matière</b>. Chaque ligne
+vient d'un fabricant ou d'un atelier qui la publie, avec le support qu'il nomme, et le
+lien pour vérifier sans nous croire. <a href="/">Déposez votre logo</a> pour savoir où
+son trait le plus fin se situe dans ces valeurs.</p>
+<table class="minimums-sources">
+<thead><tr><th>trait minimal</th><th>matière nommée par la source</th><th>source</th><th>relevé le</th></tr></thead>
+<tbody>
+${lignes}
+</tbody>
+</table>
+<p class="note">Relevé du référentiel Vecto Facile. Une valeur dont la source ne nomme
+aucun support n'entre pas dans ce tableau, quelle que soit sa notoriété : une règle de
+préparation de fichier d'imprimerie n'est pas une contrainte de marquage d'objet.</p>`,
+  };
+}
 
 const RACINE = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PUBLIC = path.join(RACINE, 'public');
@@ -180,7 +253,7 @@ ${pied(publiees)}
 
 // -------------------------------------------------- assemblage et controles
 
-const QUESTIONS_TOUTES = [...QUESTIONS, ...QUESTIONS_JPEG, ...QUESTIONS_COULEURS, ...QUESTIONS_FORMATS];
+const QUESTIONS_TOUTES = [...QUESTIONS, ...QUESTIONS_JPEG, ...QUESTIONS_COULEURS, ...QUESTIONS_FORMATS, ...QUESTIONS_OUVERTURE];
 
 /**
  * L'index de rubrique est GENERE depuis les pages qu'il liste, jamais ecrit a
@@ -289,7 +362,15 @@ trente secondes suffisent à trancher.</li>
 const candidates = [
   CONFIDENTIALITE,
   indexTechniques(TECHNIQUES),
-  ...TECHNIQUES,
+  ...TECHNIQUES.map((t) => {
+    const minimums = sectionMinimums(t.url);
+    if (!minimums) return t;
+    // Le tableau s'insere AVANT la derniere section, qui est la note « ce que
+    // nous ne publions pas encore » : les faits d'abord, la doctrine ensuite.
+    const sections = [...t.sections];
+    sections.splice(Math.max(sections.length - 1, 0), 0, minimums);
+    return { ...t, sections };
+  }),
   indexQuestions(QUESTIONS_TOUTES),
   ...QUESTIONS_TOUTES,
   QUI_SOMMES_NOUS,

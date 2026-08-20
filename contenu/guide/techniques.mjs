@@ -23,17 +23,27 @@
  * arriveront. Elles s'enrichiront d'un bloc, a URL constante.
  */
 
+/*
+ * REECRIT le 20/08 : la version precedente promettait « ni epaisseur de trait
+ * minimale sur cette page », et c'etait vrai jusqu'a ce que P0.3 soit arbitre
+ * et que les valeurs SOURCEES aient le droit de servir. Le tableau des
+ * minimums publies vit desormais juste au-dessus de cette section : la
+ * promesse a ete mise a jour le meme jour, une page qui se contredit a trois
+ * paragraphes d'ecart vaut moins qu'une page muette.
+ */
 const NON_PUBLIE = {
-  h2: 'Ce que nous ne publions pas encore',
+  h2: 'Ce que nous ne publions toujours pas, et pourquoi',
   html: `
-<p>Vous ne trouverez sur cette page ni taille maximale de marquage, ni nombre
-de couleurs admis, ni épaisseur de trait minimale. Ce n'est pas un oubli.</p>
-<p>Ces valeurs varient d'un atelier à l'autre, et les sources publiées se
-contredisent plus souvent qu'elles ne s'accordent. Nous les rassemblons une par
-une, avec leur source et leur date, et nous ne les afficherons qu'une fois
-tranchées. En attendant, notre diagnostic vous dit <b>nous ne savons pas
-encore</b> plutôt qu'un chiffre plausible. Un seuil inventé se recopie, et il se
-recopie longtemps.</p>
+<p>Cette page donne les minimums que les fabricants publient, chacun avec sa
+matière et sa source. Ce que vous ne trouverez nulle part sur ce site,
+c'est <b>un seuil unique</b> présenté comme LA limite de la technique : il
+n'existe pas, les sources honnêtes le montrent, et un seuil inventé se recopie
+longtemps.</p>
+<p>Manquent encore la taille maximale de marquage et le nombre de couleurs
+admis : ces valeurs dépendent de l'objet autant que de la technique, et notre
+référentiel ne les publiera qu'une fois ce croisement établi. En attendant,
+notre diagnostic vous dit <b>nous ne savons pas encore</b> plutôt qu'un chiffre
+plausible.</p>
 <div class="encadre"><p><b>Ce que nous mesurons déjà, en revanche, ce sont des
 faits</b> : le nombre réel de couleurs de votre fichier, l'épaisseur de son trait
 le plus fin, l'écart le plus étroit entre deux formes, la hauteur de ses

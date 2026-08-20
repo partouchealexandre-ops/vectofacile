@@ -174,7 +174,11 @@ d'envoyer. Les deux sont écrits par notre propre code plutôt que repris tels q
 bibliothèque, ce qui nous permet de garantir qu'ils décrivent exactement les mêmes formes,
 et c'est vérifié à chaque modification de l'outil.</p>
 <p>Nous ne produisons pas de .ai, qui est un format de travail propriétaire, ni de .svg :
-il ne vous servirait pas là où vous allez.</p>`,
+il ne vous servirait pas là où vous allez.</p>
+<p>Et si votre problème est dans l'autre sens, un fichier reçu que rien n'ouvre chez
+vous : <a href="/questions/comment-ouvrir-un-fichier-ai">comment ouvrir un .ai sans
+Illustrator</a> et <a href="/questions/comment-ouvrir-un-fichier-eps">comment ouvrir un
+.eps gratuitement</a>.</p>`,
       },
     ],
     faq: [

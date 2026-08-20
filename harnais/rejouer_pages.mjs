@@ -186,13 +186,41 @@ for (const url of URLS) {
   if (!SANS_CONTROLE_DE_SEUIL.has(url)) {
     const corps = await page.evaluate(() => {
       const c = document.querySelector('.page-contenu');
-      return c ? c.innerText : '';
+      if (!c) return '';
+      // Le tableau des minimums SOURCES est la seule zone ou un millimetre a
+      // le droit d'exister : chaque ligne y porte sa matiere, sa source et
+      // son URL, et il est genere depuis le meme fichier que le diagnostic.
+      // Tout millimetre HORS de ce tableau reste une faute : ce serait un
+      // chiffre sans provenance, exactement ce que ce controle existe pour
+      // interdire. On retire donc le tableau du texte examine, ainsi que le
+      // paragraphe d'introduction qui annonce sa plage.
+      const copie = c.cloneNode(true);
+      for (const table of copie.querySelectorAll('.minimums-sources')) {
+        const intro = table.previousElementSibling;
+        if (intro && intro.tagName === 'P') intro.remove();
+        table.remove();
+      }
+      return copie.innerText;
     });
     const seuils = [...corps.matchAll(/(\d+(?:[.,]\d+)?)\s?(mm|cm)\b/gi)]
       .map((m) => m[0]);
     if (seuils.length > 0) {
       fautes.push(`seuil de marquage publie : ${[...new Set(seuils)].join(', ')}`);
     }
+  }
+
+  // CHAQUE GUIDE TECHNIQUE PORTE SON TABLEAU DE MINIMUMS SOURCES : c'est la
+  // these GEO du projet, la donnee citable, et une page de guide qui la perd
+  // regresse vers la prose que les moteurs de reponse ignorent.
+  if (/^\/guide\/[a-z-]+$/.test(url)) {
+    const table = await page.evaluate(() => {
+      const t = document.querySelector('.minimums-sources');
+      return t ? { lignes: t.querySelectorAll('tbody tr').length,
+                   liens: t.querySelectorAll('a[href^="https://"]').length } : null;
+    });
+    if (!table) fautes.push('le tableau des minimums sources manque');
+    else if (table.lignes < 5) fautes.push(`tableau des minimums trop court : ${table.lignes} lignes`);
+    else if (table.liens < 3) fautes.push(`tableau des minimums sans sources cliquables : ${table.liens} liens`);
   }
 
   // LA NAVIGATION EST LA MEME SUR TOUTES LES PAGES, accueil compris.
