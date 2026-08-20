@@ -135,6 +135,30 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
   /* Le bandeau du fichier, 20/08 : la premiere question est le fichier. */
   .etat-fichier.fichier-ok { border-left-color: #1d6b38; }
   .etat-fichier.fichier-refus { border-left-color: #9c3722; }
+  /* LA GRILLE DE PRODUITS, pivot du 20/08. Des cartes qui se lisent en une
+     seconde : une silhouette, un nom, un verdict, une phrase. */
+  .grille-produits { display: grid; gap: 14px; margin: 16px 0 18px;
+    grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); }
+  .produit { border: 1px solid #e3e6ea; border-radius: 10px; padding: 16px 18px;
+    background: #fff; display: grid; grid-template-columns: 46px 1fr;
+    grid-column-gap: 16px; grid-row-gap: 8px; align-content: start; }
+  .produit-image { grid-row: 1 / span 3; color: var(--navy); opacity: .7; }
+  .produit .silhouette { width: 46px; height: 46px; }
+  .produit-tete { min-width: 0; }
+  .produit h3 { margin: 2px 0 0; font-size: 15.5px; line-height: 1.35; }
+  .produit-verdict { display: inline-block; font-size: 11.5px; font-weight: 700;
+    letter-spacing: .03em; text-transform: uppercase; padding: 2px 8px;
+    border-radius: 20px; background: var(--gris-clair); }
+  .produit-phrase { margin: 0; font-size: 14.5px; line-height: 1.5; }
+  .produit-autres { margin: 0; font-size: 12.5px; color: var(--gris); }
+  .appel-grille { margin: 14px 0 2px; }
+  .produit-oui { border-left: 3px solid #1d6b38; }
+  .produit-oui .produit-verdict { color: #12522a; background: #e8f3ec; }
+  .produit-si { border-left: 3px solid var(--orange); }
+  .produit-si .produit-verdict { color: #8f3d08; background: #fdf0e6; }
+  .produit-non { border-left: 3px solid #9c3722; background: #fcfaf9; }
+  .produit-non .produit-verdict { color: #9c3722; background: #f8ebe8; }
+  .produit-non .produit-image { opacity: .3; }
   /* La vue produit, 20/08 : le menu deroulant et la carte du produit choisi. */
   .choix-produit { margin: 14px 0 16px; display: flex; gap: 14px; flex-wrap: wrap;
     align-items: flex-end; }

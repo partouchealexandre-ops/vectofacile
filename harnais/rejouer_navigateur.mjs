@@ -598,140 +598,82 @@ console.log('');
 }
 
 // ---------------------------------------------------------------------------
-// LE DIAGNOSTIC REPOND EN LANGAGE D'USAGE, SANS RIEN DEMANDER.
+// L'ECRAN DE RESULTAT EST UNE GRILLE DE PRODUITS REELS.
 //
-// Inversion du 20/08 : la version precedente attendait que le visiteur donne
-// une largeur de marquage pour situer son trait. Alex a tranche : il ne la
-// connait presque jamais. Desormais les tailles minimales par matiere sont
-// CALCULEES pour le logo depose, des le depot, sans aucune saisie, et la
-// saisie ne fait plus qu'affiner.
+// Pivot du 20/08 : l'axe n'est plus la technique, c'est le produit. Personne
+// n'arrive en se demandant s'il peut faire de la tampographie ; on arrive en
+// se demandant si son logo passe sur un mug.
 //
-// Ce controle passe par le vrai chemin, celui du visiteur : on depose un
-// fichier, on ne saisit RIEN, et on verifie que le bloc repond deja avec des
-// tailles, des matieres et des sources verifiables. Puis on saisit une taille
-// et on verifie qu'elle affine au lieu d'etre une condition.
+// Ce bloc remplace celui qui pilotait le menu deroulant et lisait des tailles
+// calculees sur les minimums publies : cet ecran n'existe plus. Il passe par
+// le vrai chemin, celui du visiteur, et il verifie ce que la page MONTRE,
+// jamais ce que le module calcule : le harnais du verdict s'en charge.
 {
   const page = await navigateur.newPage();
   await page.goto(`http://127.0.0.1:${PORT}/`, { waitUntil: 'networkidle' });
   await page.waitForTimeout(900);
-  const octets = fs.readFileSync(path.join(IMAGES, 'trait_09px.png'));
+  const octets = fs.readFileSync(path.join(IMAGES, 'couleurs_09_plat.png'));
   const constat = await page.evaluate(async (b64) => {
     const fichier = new File(
-      [Uint8Array.from(atob(b64), (c) => c.charCodeAt(0))], 'trait.png', { type: 'image/png' });
+      [Uint8Array.from(atob(b64), (c) => c.charCodeAt(0))], 'logo.png', { type: 'image/png' });
     await globalThis.vecto.traiter(fichier);
     const bloc = document.getElementById('verdict');
-    const avant = {
-      texte: bloc.innerText,
-      cartes: bloc.querySelectorAll('article.technique').length,
-      etiquettes: [...bloc.querySelectorAll('.etiquette')].map((e) => e.textContent.trim()),
-      liens: bloc.querySelectorAll('.minimums a[href^="https://"]').length,
-      lignes: bloc.querySelectorAll('.minimums tbody tr').length,
-    };
-    // LE MENU DEROULANT DES PRODUITS, par le vrai chemin : on choisit un
-    // mug, puis son type, comme le ferait un visiteur. Les ecouteurs sont en
-    // delegation sur #verdict, donc la reconstruction du HTML ne doit rien
-    // casser.
-    const choisir = (id, valeur) => {
-      const s = document.getElementById(id);
-      if (!s) return false;
-      s.value = valeur;
-      s.dispatchEvent(new Event('change', { bubbles: true }));
-      return true;
-    };
-    const menuExiste = Boolean(document.getElementById('choix_produit'));
-    choisir('choix_produit', 'mug');
-    await new Promise((r) => setTimeout(r, 100));
-    const varianteApparue = Boolean(document.getElementById('choix_variante'));
-    choisir('choix_variante', 'mug_inox');
-    await new Promise((r) => setTimeout(r, 100));
-    const carte = document.querySelector('#verdict .produit-verdict');
-    const produit = {
-      menuExiste,
-      varianteApparue,
-      carteTexte: carte ? carte.innerText : '',
-      carteLiens: carte ? carte.querySelectorAll('a').length : -1,
-      // Les sources ne s'affichent qu'a la demande : chaque lien externe vit
-      // dans un repli FERME. On teste l'appartenance au repli plutot que
-      // offsetParent, que Chrome ne rend plus null dans un details ferme
-      // depuis le passage a content-visibility.
-      liensHorsRepli: [...document.querySelectorAll('#verdict a[href^="https://"]')]
-        .filter((a) => a.closest('details:not([open])') === null).length,
-      selectionGardee: document.getElementById('choix_produit')?.value,
-    };
-    const champ = document.getElementById('largeur_mm');
-    champ.value = '30';
-    champ.dispatchEvent(new Event('input', { bubbles: true }));
-    await new Promise((r) => setTimeout(r, 400));
+    const cartes = [...bloc.querySelectorAll('.produit')];
     return {
-      avant,
-      produit,
-      apres: document.getElementById('verdict').innerText,
-      // La selection du produit doit survivre a la re-mesure declenchee par
-      // la saisie d'une largeur.
-      carteApresSaisie: document.querySelector('#verdict .produit-verdict')?.innerText ?? '',
+      texte: bloc.innerText,
+      cartes: cartes.length,
+      verdicts: [...new Set(cartes.map((c) => c.querySelector('.produit-verdict').textContent.trim()))],
+      // Chaque carte doit porter une phrase qui dit quelque chose. Une carte
+      // muette serait pire qu'une carte absente.
+      phrasesVides: cartes.filter((c) => !c.querySelector('.produit-phrase')?.textContent.trim()).length,
+      silhouettes: bloc.querySelectorAll('.produit .silhouette').length,
+      liensExternes: bloc.querySelectorAll('a[href^="https://"], a[href^="http://"]').length,
+      appels: bloc.querySelectorAll('.cta-entete').length,
+      // Ce qui ne doit PLUS exister sur cet ecran.
+      menuDeroulant: bloc.querySelector('#choix_produit') !== null,
+      cartesTechniques: bloc.querySelectorAll('article.technique').length,
+      blocSources: bloc.querySelector('.sources-verdict') !== null,
     };
   }, octets.toString('base64'));
   await page.close();
 
-  const av = constat.avant;
-  const toutesIdentiques = new Set(av.etiquettes).size === 1;
-  // Le jargon du 19/08 est interdit de retour, et le detecteur est verifie par
-  // un temoin : une chaine qui le contient DOIT etre attrapee. Lecon des deux
-  // controles negatifs rates : on prouve l'injection avant de conclure.
-  const JARGON = /tient les minimums publiés|tient sur une partie des matières|donnez une largeur de marquage/i;
-  const temoinAttrape = JARGON.test(av.texte + ' tient les minimums publiés');
+  // Le jeu de test porte neuf couleurs : le stylo ne peut donc pas passer, et
+  // les autres produits si. Deux verdicts distincts au moins, donc, et c'est
+  // le signe que la grille juge au lieu d'afficher.
+  const JARGON = /tient les minimums publiés|tient sur une partie des matières|donnez une largeur/i;
 
   console.log('');
-  console.log('  LE DIAGNOSTIC REPOND EN LANGAGE D\'USAGE, SANS RIEN DEMANDER');
+  console.log('  L\'ECRAN DE RESULTAT EST UNE GRILLE DE PRODUITS REELS');
   console.log('  ' + '-'.repeat(66));
   for (const [libelle, ok] of [
-    ['sans aucune saisie, les sept techniques ont deja leur carte', av.cartes === 7],
-    ['sans aucune saisie, le bloc invite a choisir un produit',
-      /[Cc]hoisissez un produit/.test(av.texte)],
-    // La premiere question est le FICHIER (arbitrage Alex 20/08) : une image
-    // deposee est prevenue que les fabricants exigent un vectoriel, et la
-    // sortie est le .eps que la page vient de fabriquer. Le depot du harnais
-    // est vectorise avec succes avant que traiter() ne rende la main, donc le
-    // bandeau doit etre a l'etat « deja vectorisee ».
-    ['le bandeau du fichier ouvre le diagnostic : sans vectoriel, oubliez les trois grands',
-      /Sans fichier vectoriel, oubliez la tampographie/.test(av.texte)
-        && /objet publicitaire/.test(av.texte) && /refusée en l'état/.test(av.texte)],
-    ['et il finit sur la sortie : le .eps deja fabrique, en bas de page',
-      /Téléchargez\s+le \.eps/.test(av.texte.replace(/\n/g, ' '))],
-    ['le bloc ne reclame plus de largeur au visiteur',
-      !/donnez une largeur|indiquez la largeur/i.test(av.texte)],
-    ['aucune etiquette jargon du 19/08', !JARGON.test(av.texte)],
-    ['(temoin) le detecteur de jargon detecte bien', temoinAttrape],
-    ['les cartes ne disent PAS toutes la meme chose', toutesIdentiques === false],
-    ['aucune ne dit plus « nous ne savons pas encore »',
-      !av.etiquettes.includes('nous ne savons pas encore')],
-    // 56 matieres distinctes portent chacune leur ligne : une par matiere, la
-    // source la plus exigeante. Le compte exact vit dans le harnais du
-    // verdict ; ici on controle que la page les affiche bien.
-    ['les tailles par matiere sont dans la page, ligne par ligne', av.lignes >= 40],
-    ['chaque ligne pointe vers une source verifiable', av.liens >= 20],
-    // La saisie AFFINE : a 30 mm, ce logo est sous la taille calculee d'au
-    // moins une technique, et la page le dit en langage d'usage.
-    ['une taille saisie affine la reponse au lieu d\'etre une condition',
-      /À 30 mm/.test(constat.apres)],
-    // La vue produit, arbitrage Alex du 20/08 : un menu deroulant, le type
-    // ensuite, une carte sans fouillis et sans sources en ligne.
-    ['le menu deroulant des produits est la', constat.produit.menuExiste === true],
-    ['choisir le mug fait apparaitre le choix du type', constat.produit.varianteApparue === true],
-    ['la carte du mug inox repond « dès NN mm de large »',
-      /dès \d+ mm de large/.test(constat.produit.carteTexte)],
-    ['la carte produit ne porte aucun lien de source', constat.produit.carteLiens === 0],
-    ['aucun lien de source hors d\'un repli ferme',
-      constat.produit.liensHorsRepli === 0],
-    ['la selection du produit survit au re-rendu', constat.produit.selectionGardee === 'mug'],
-    ['et elle survit aussi a la saisie d\'une largeur',
-      constat.carteApresSaisie.includes('Mug en inox')],
+    ['huit produits reels sont affiches', constat.cartes === 8],
+    ['chacun porte sa silhouette', constat.silhouettes === 8],
+    ['chacun porte une phrase qui dit quelque chose', constat.phrasesVides === 0],
+    ['les verdicts ne sont pas tous les memes', constat.verdicts.length > 1],
+    ['la page dit sur quels objets le logo passe',
+      /Sur quels objets votre logo passe/i.test(constat.texte)],
+    ['elle nomme un emplacement et une technique en clair',
+      /en (sérigraphie|tampographie|impression numérique|broderie|transfert|sublimation|gravure)/i.test(constat.texte)],
+    ['elle donne une taille de marquage en millimetres',
+      /\d+ × \d+ mm/.test(constat.texte)],
+    // Ce que le pivot a RETIRE. Un ecran se juge autant sur ce qu'il ne
+    // montre plus que sur ce qu'il montre.
+    ['plus aucune carte par technique', constat.cartesTechniques === 0],
+    ['plus de menu deroulant de produits', constat.menuDeroulant === false],
+    ['plus de rubrique « d\'ou viennent ces chiffres »', constat.blocSources === false],
+    ['aucune source citee a l\'ecran',
+      !/(relevé le|d'où viennent ces chiffres)/i.test(constat.texte)],
+    ['aucun lien externe dans le resultat', constat.liensExternes === 0],
+    ['aucune etiquette jargon du 19/08', !JARGON.test(constat.texte)],
+    ['(temoin) le detecteur de jargon detecte bien',
+      JARGON.test(`${constat.texte} tient les minimums publiés`)],
+    // Charte : un seul appel a l'action par ecran, et c'est celui qui rapporte.
+    ['un seul appel a l\'action, celui de la vectorisation', constat.appels <= 1],
   ]) {
     console.log(`  ${ok ? 'ok   ' : 'ECHEC'} ${libelle}`);
     if (!ok) echecs++;
   }
-  console.log(`         ${av.lignes} lignes affichees, ${av.liens} liens de source`);
-  for (const e of [...new Set(av.etiquettes)]) console.log(`         ${e}`);
+  console.log(`         verdicts rendus : ${constat.verdicts.join(' | ')}`);
   console.log('  ' + '-'.repeat(66));
   console.log('');
 }

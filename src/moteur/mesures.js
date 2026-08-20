@@ -827,6 +827,18 @@ export function mesurer(image, options = {}) {
       aireMinimale,
     },
     m1Dimensions: m1,
+    // LA BOITE DE L'ENCRE, exposee depuis le pivot produit du 20/08/2026.
+    //
+    // Le rapport de m1 est celui de l'IMAGE, marges comprises. Un logo tres
+    // large centre dans un PNG carre donnerait un rapport de 1, et la grille
+    // produits en deduirait une taille de marquage fausse. Ce qu'on inscrit
+    // dans une zone, c'est le dessin, pas le fichier : c'est donc la boite
+    // englobante de l'encre qui porte le rapport utile.
+    boiteEncre: boite ? {
+      largeurPx: boite.largeur,
+      hauteurPx: boite.hauteur,
+      rapport: boite.hauteur ? boite.largeur / boite.hauteur : null,
+    } : null,
     m2Couleurs: {
       couleursBrutes: m2.couleursBrutes,
       couleursReelles: m2.couleursReelles,

@@ -35,6 +35,8 @@ const VALEURS = JSON.parse(fs.readFileSync(
   path.join(ICI, '..', 'src', 'verdict', 'valeurs_sourcees.json'), 'utf-8'));
 const PRODUITS = JSON.parse(fs.readFileSync(
   path.join(ICI, '..', 'src', 'verdict', 'produits.json'), 'utf-8'));
+const CHEMIN_GRILLE = path.join(ICI, '..', 'src', 'verdict', 'produits_grille.json');
+const GRILLE = JSON.parse(fs.readFileSync(CHEMIN_GRILLE, 'utf-8'));
 
 /**
  * Un jeu de mesures propre, celui d'un logo qui n'a aucun probleme.
@@ -227,29 +229,32 @@ const controle = (libelle, ok, detail) => resultats.push({ libelle, ok, detail }
 }
 
 // ----------------------------------------------------------------------- 12
-// Le RENDU aussi respecte les regles de mots, et l'inconnu y est un etat
-// dessine, pas un vide.
+// LE RENDU respecte les regles de mots, et il n'affiche plus aucune source.
+//
+// Pivot du 20/08 : l'ecran de resultat ne montre plus de carte par technique
+// ni de rubrique de sources. Les controles qui les visaient sont partis avec
+// elles ; ceux de la grille produits les remplacent, plus bas. Restent ici
+// ceux qui ne dependent pas de la mise en page : les mots, et l'echappement.
 {
-  const { rendreVerdict, rendreEntete } = await import('../src/verdict/rendu.js');
+  const { rendreVerdict } = await import('../src/verdict/rendu.js');
+  const { rendreGrille } = await import('../src/verdict/rendu_grille.js');
+  const { jugerGrille } = await import('../src/verdict/grille.js');
   const v = juger({ mesures: mesuresImpeccables(), seuils: SEUILS });
-  const html = rendreVerdict(v);
+  const html = rendreVerdict(v, [], { origine: 'vectoriel' });
   const bas = html.toLowerCase();
   const fautif = MOTS_INTERDITS.find((mot) => bas.includes(mot));
   controle('le rendu ne contient aucun mot interdit', !fautif, fautif || 'aucun');
   controle('le rendu ne contient ni pourcentage ni confiance',
            !MOTIF_CONFIANCE.test(bas), (bas.match(MOTIF_CONFIANCE) || ['aucun'])[0]);
-  controle('l\'inconnu est un etat dessine, avec sa classe propre',
-           html.includes('verdict-inconnu'));
-  controle('quand tout est inconnu, le bandeau l\'explique au lieu de laisser vide',
-           /Nous ne savons pas encore/.test(rendreEntete(v))
-           && /valeur plausible/.test(rendreEntete(v)));
-  controle('le rendu rappelle qu\'il decrit le commercial, pas le physique',
-           /pas les limites physiques/.test(html));
-  // Aucune injection : un libelle de technique hostile ne doit pas passer.
-  const hostile = juger({ mesures: {}, seuils: { version: 1, techniques: {
-    x: { libelle: '<img src=x onerror=alert(1)>', criteres: {} } } } });
-  controle('un libelle hostile est echappe dans le rendu',
-           !rendreVerdict(hostile).includes('<img src=x'));
+  // Un libelle de produit hostile ne doit pas passer. Le controle verifie
+  // l'echappement ET son effet : la chaine doit etre la, echappee.
+  const hostile = rendreGrille(jugerGrille(
+    { produits: [{ famille: 'X', libelle: '<img src=x onerror=alert(1)>', silhouette: 'sac',
+                   zones: [{ libelle: 'la face avant', largeurMm: 100, hauteurMm: 100,
+                             techniques: [{ technique: 'Sérigraphie', couleursMax: 4 }] }] }] },
+    { nCouleurs: 2, ratio: 1, fichierVectoriel: true }));
+  controle('un libelle de produit hostile est echappe dans le rendu',
+           !hostile.includes('<img src=x') && hostile.includes('&lt;img'));
 }
 
 // ------------------------------------------------------------------------
@@ -377,174 +382,17 @@ const controle = (libelle, ok, detail) => resultats.push({ libelle, ok, detail }
            tailles.every((t, i) => i === 0 || tailles[i - 1] <= t)
              && v.resume.parTaille.length === v.resume.situees);
 
-  // Les phrases produites restent soumises a la charte.
-  const { rendreVerdict, rendreTechnique } = await import('../src/verdict/rendu.js');
-  const html = rendreVerdict(v);
-  controle('aucun mot interdit dans les phrases de tailles',
-           !MOTS_INTERDITS.some((m) => html.toLowerCase().includes(m)));
-  controle('aucun pourcentage ni confiance dans les phrases de tailles',
-           !MOTIF_CONFIANCE.test(html.replace(/<[^>]+>/g, ' ')));
-  controle('le rendu jamais ne parle DU seuil d\'une technique',
-           !/\ble seuil de (la|l\'|le)/i.test(html));
-
-  // LE JARGON EST INTERDIT DE SEJOUR, arbitrage Alex du 20/08 : « tient les
-  // minimums publiés » et « tient sur une partie des matières » decrivaient
-  // notre comparaison, pas la decision du visiteur. S'ils reviennent, c'est
-  // une regression.
-  const jargon = ['tient les minimums publiés', 'tient sur une partie des matières',
-                  'donnez une largeur de marquage', 'tient sur une partie des matieres'];
-  const jargonTrouve = jargon.find((j) => html.toLowerCase().includes(j.toLowerCase()));
-  controle('aucune etiquette jargon du 19/08 dans le rendu', !jargonTrouve,
-           jargonTrouve || 'aucun');
-  // CONTROLE NEGATIF du controle precedent : la detection detecte bien. Un
-  // rendu qui contiendrait l'etiquette doit etre attrape. Lecon des deux
-  // controles negatifs rates : on verifie l'INJECTION avant de conclure.
-  const temoin = html + ' tient les minimums publiés';
-  controle('(temoin) le detecteur de jargon detecte',
-           jargon.some((j) => temoin.toLowerCase().includes(j.toLowerCase())));
-
-  // Chaque carte repond en langage d'usage : une etiquette « dès NN mm de
-  // large » et une phrase « Marquez ce logo à NN mm ». Attendu par
-  // construction pour la serigraphie : dès 15 mm.
-  const carteSeri = rendreTechnique(parCle.serigraphie);
-  controle('la carte dit « dès NN mm de large » avec la taille calculee',
-           carteSeri.includes('dès 15 mm de large')
-             && /Marquez ce logo à 15 mm de large ou plus/.test(carteSeri));
-  // Et elle dit les couleurs par la MECANIQUE, avec le compte du logo : deux
-  // couleurs mesurees, donc deux ecrans en serigraphie. Aucun maximum
-  // n'etant sourcé, aucun chiffre limite ne doit apparaitre.
-  controle('la carte dit la mecanique des couleurs avec le compte mesure',
-           /2 couleurs = 2 écrans/.test(carteSeri));
-  // Les sources ont quitte les cartes le 20/08 (second arbitrage Alex) pour
-  // la rubrique unique « D'où viennent ces chiffres ? ». Chaque technique
-  // situee y a son tableau, avec la colonne du minimum publie.
-  const nbSituees = v.techniques.filter((t) => t.situation?.etat === 'tailles').length;
-  controle('chaque technique situee a son tableau dans la rubrique des sources',
-           (html.match(/<h4>/g) || []).length === nbSituees
-             && html.includes('trait minimal publié'),
-           `${(html.match(/<h4>/g) || []).length} tableaux pour ${nbSituees} techniques`);
-
-  // Une carte ne doit pas se contredire : elle donne une taille calculee sur
-  // vingt-et-une valeurs, puis annonce qu'AUCUN critere n'est documente.
-  // C'etait le premier rendu du 19/08, garde comme regression.
-  controle('une carte qui donne une taille ne dit pas qu\'elle ne sait rien',
-           v.techniques.filter((t) => t.situation?.etat === 'tailles')
-             .every((t) => !/Aucun de nos \d+ critères/.test(rendreTechnique(t))));
-  // Le repli « autres criteres pas documentes » ne vaut que si TOUS les
-  // criteres hors trait sont inconnus. Depuis le seuil tampo du 20/08, la
-  // tampographie juge son critere couleurs : sa carte liste les criteres un
-  // par un au lieu du repli, et c'est le comportement voulu.
-  controle('elle nomme en revanche les criteres qui manquent encore',
-           v.techniques.filter((t) => t.situation?.etat === 'tailles'
-               && t.criteres.filter((c) => c.cle !== 'trait_minimal')
-                            .every((c) => c.etat_verdict === 'inconnu'))
-             .every((t) => /autres critères ne sont pas encore documentés/.test(rendreTechnique(t))));
-  controle('une technique dont un critere est juge liste ses criteres un a un',
-           /Nombre de couleurs/.test(rendreTechnique(
-             v.techniques.find((t) => t.technique === 'tampographie'))));
-  controle('le tableau des tailles porte des liens verifiables',
-           (html.match(/<a href="https?:\/\//g) || []).length >= 20,
-           `${(html.match(/<a href="https?:\/\//g) || []).length} liens`);
-}
-
-// LA VUE PRODUIT NE DOIT NI DERIVER DE SA DONNEE, NI RAMENER LE FOUILLIS.
-//
-// Second retour d'Alex sur les captures du 0025 : trop de choses, des supports
-// hors objet publicitaire, des sources a chaque ligne. La vue produit repond
-// par une taxonomie fermee (produits.json), des correspondances en lecture
-// directe, et des sources dans UNE rubrique repliee.
-{
-  // 1. CHAQUE REFERENCE RESOUT EXACTEMENT UNE LIGNE de valeurs_sourcees.json.
-  // Verification independante du code servi : le harnais refait la resolution
-  // sur les fichiers. Une valeur corrigee la bas doit casser ici, pas servir
-  // une correspondance perimee en silence.
-  const lignesDe = (technique) =>
-    VALEURS.techniques[technique]?.criteres?.trait_minimal?.valeurs ?? [];
-  const toutesRefs = [];
-  const collecter = (cle, techniques) => {
-    for (const [tk, spec] of Object.entries(techniques ?? {})) {
-      for (const r of spec.refs ?? []) toutesRefs.push({ ou: `${cle}/${tk}`, tk, r });
-    }
-  };
-  for (const p of PRODUITS.produits) {
-    if (p.variantes) for (const v of p.variantes) collecter(v.cle, v.techniques);
-    else collecter(p.cle, p.techniques);
-  }
-  const orphelines = toutesRefs.filter(({ tk, r }) =>
-    lignesDe(tk).filter((v) => v.source === r.source && v.support === r.support
-      && v.mm === r.mm).length !== 1);
-  controle(`les ${toutesRefs.length} references produit resolvent chacune une ligne sourcee`,
-           orphelines.length === 0,
-           orphelines.map((o) => o.ou).join(', ') || 'aucune orpheline');
-  // CONTROLE NEGATIF : une reference fabriquee pour ne rien matcher doit etre
-  // vue comme orpheline. Prouve que la resolution resout vraiment.
-  const fausse = { tk: 'serigraphie', r: { source: 'Inexistante', support: 'x', mm: 9 } };
-  controle('(temoin) une reference inexistante serait attrapee',
-           lignesDe(fausse.tk).filter((v) => v.source === fausse.r.source).length === 0);
-
-  // 2. LES SUPPORTS HORS OBJET PUBLICITAIRE NE NOURRISSENT AUCUN PRODUIT.
-  // Le packaging (sac papier, boite) et les lignes generiques par catalogue
-  // entier decrivent autre chose que le produit choisi.
-  const interdits = ['sac papier, carton, plastique', 'boîte papier, objet transparent ou coloré',
-                     'objet publicitaire', 'cadeau promotionnel', 'objet promotionnel fini',
-                     'produit souvenir, matière colorée, transparente ou noire'];
-  const fautifs = toutesRefs.filter(({ r }) => interdits.includes(r.support));
-  controle('aucun support packaging ou generique ne nourrit un produit',
-           fautifs.length === 0, fautifs.map((f) => f.ou).join(', ') || 'aucun');
-
-  // 3. ATTENDUS PAR CONSTRUCTION, calcules a la main sur le jeu impeccable
-  // (trait 12 px, image 1000 px). Mug inox en gravure laser : la ligne la
-  // plus exigeante referencee est 0,3528 mm (tumbler metallique), donc
-  // ceil(352,8 / 12) = 30 mm. Si le code prenait la plus accessible
-  // (0,076 mm), il dirait 7 mm : un conseil quatre fois trop optimiste.
-  const v = juger({ mesures: mesuresImpeccables(), seuils: SEUILS,
-                    valeurs: VALEURS, produits: PRODUITS });
-  const par = Object.fromEntries(v.produits.produits.map((p) => [p.cle, p]));
-  const mugInox = par.mug.variantes.find((x) => x.cle === 'mug_inox');
-  const laserInox = mugInox.techniques.find((t) => t.technique === 'gravure_laser');
-  controle('mug inox, gravure laser : la ligne la plus exigeante est retenue, 30 mm',
-           laserInox.tailleMinMm === 30 && laserInox.retenue.mm === 0.3528,
-           `taille=${laserInox.tailleMinMm} retenue=${laserInox.retenue.mm}`);
-  // T-shirt en serigraphie : la plus exigeante des lignes textile referencees
-  // est 0,5 mm, donc ceil(500 / 12) = 42 mm.
-  const tShirt = par.t_shirt.techniques.find((t) => t.technique === 'serigraphie');
-  controle('t-shirt, serigraphie : 0,5 mm retenu, soit 42 mm',
-           tShirt.tailleMinMm === 42 && tShirt.retenue.mm === 0.5,
-           `taille=${tShirt.tailleMinMm} retenue=${tShirt.retenue.mm}`);
-
-  // 4. LE RENDU : le choix d'abord, la carte ensuite, les sources dans UNE
-  // rubrique repliee et nulle part ailleurs.
-  const { rendreVerdict } = await import('../src/verdict/rendu.js');
-  const sansChoix = rendreVerdict(v, {});
-  controle('sans choix, le menu invite et aucune carte produit ne s\'affiche',
-           sansChoix.includes('Choisissez un produit…')
-             && !sansChoix.includes('produit-verdict'));
-  const mug = rendreVerdict(v, { produit: 'mug' });
-  controle('choisir le mug demande son type avant de repondre',
-           mug.includes('Quel type ?') && !mug.includes('produit-verdict'));
-  const inox = rendreVerdict(v, { produit: 'mug', variante: 'mug_inox' });
-  const carte = inox.match(/<article class="produit-verdict">[\s\S]*?<\/article>/)?.[0] ?? '';
-  controle('la carte mug inox donne la taille calculee, 30 mm',
-           carte.includes('dès 30 mm de large'));
-  controle('la carte produit ne porte aucun lien de source',
-           carte.length > 0 && !carte.includes('<a href'));
-  controle('les sources vivent dans la rubrique « D\'où viennent ces chiffres ? »',
-           inox.includes('D\'où viennent ces chiffres ?')
-             && /<details class="minimums sources-verdict">[\s\S]*<a href="https/.test(inox));
-  // En dehors de cette rubrique et des cartes techniques repliees, aucun lien
-  // externe : les sources se donnent a qui les demande.
-  const horsReplis = inox.replace(/<details[\s\S]*?<\/details>/g, '');
-  controle('aucun lien de source hors des rubriques repliees',
-           !horsReplis.includes('<a href="https'));
-  // Le jeu impeccable porte 100 mm saisis : le mug inox (des 30 mm) passe, la
-  // casquette en broderie (ceil(4000/12) = 334 mm) ne passe pas, et la carte
-  // le dit en langage d'usage.
-  controle('a 100 mm saisis, la carte mug inox dit que ca passe',
-           carte.includes('À 100 mm : ça passe.'));
-  const casquette = rendreVerdict(v, { produit: 'casquette' })
-    .match(/<article class="produit-verdict">[\s\S]*?<\/article>/)?.[0] ?? '';
-  controle('a 100 mm saisis, la casquette en broderie dit trop petit, 334 mm',
-           casquette.includes('trop petit') && casquette.includes('334 mm'));
+  // LE CALCUL DES TAILLES DORT, IL N'EST PLUS AFFICHE.
+  //
+  // Pivot du 20/08 : la page de resultat ne montre plus les tailles calculees
+  // sur les minimums publies, ni leurs sources. Le calcul reste ici, teste,
+  // parce qu'il reviendra le jour ou les seuils P0 seront rendus ; ce qui a
+  // disparu, ce sont les controles de SON RENDU, avec l'ecran qu'ils
+  // decrivaient. Ne pas confondre « le code n'est plus appele » et « le code
+  // est faux » : les controles ci-dessus portent sur le calcul et tiennent.
+  controle('les tailles restent calculees meme si la page ne les montre plus',
+           v.techniques.every((t) => t.situation?.etat === 'tailles'
+             && Number.isInteger(t.situation.des)));
 }
 
 // LA PREMIERE QUESTION EST LE FICHIER, PAS LA TAILLE (arbitrage Alex 20/08),
@@ -628,6 +476,120 @@ const controle = (libelle, ok, detail) => resultats.push({ libelle, ok, detail }
   // ferment ni la serigraphie ni l'UV, aucun maximum n'y est arbitre.
   controle('le seuil de 4 ne deborde pas sur les autres techniques',
            neuf.techniques.filter((t) => t.etat === 'defavorable').length === 1);
+}
+
+// LA GRILLE DE PRODUITS : le verdict que le visiteur lit, et la cloison.
+//
+// Pivot du 20/08. Deux familles de controles, et la seconde compte autant que
+// la premiere :
+//
+//   le VERDICT doit etre juste sur des cas calcules a la main, pas recopies
+//   d'une sortie ;
+//   la CLOISON doit tenir : la base de travail fournisseurs reste hors du
+//   depot, et le fichier derive ne doit porter aucune trace de sa source.
+{
+  const { jugerGrille, jugerProduit, tailleDansZone } = await import('../src/verdict/grille.js');
+  const { rendreGrille, direProduit } = await import('../src/verdict/rendu_grille.js');
+  const par = (juges) => Object.fromEntries(juges.map((p) => [p.famille, p]));
+
+  // 1. LA CLOISON, verifiee sur le FICHIER SERVI et pas sur une intention.
+  const brutGrille = fs.readFileSync(CHEMIN_GRILLE, 'utf-8');
+  const donnees = JSON.stringify(GRILLE.produits);
+  const traces = ['midocean', 'cdn.', 'http', 'code_interne', 'MO2', 'print-template'];
+  const fuite = traces.find((t) => donnees.toLowerCase().includes(t.toLowerCase()));
+  controle('la grille derivee ne porte aucune trace de son fournisseur',
+           !fuite, fuite ? `trouve : ${fuite}` : 'aucune');
+  // CONTROLE NEGATIF : la detection detecte. Sans lui, une garde qui ne
+  // regarde pas au bon endroit passe au vert en ne trouvant rien.
+  controle('(temoin) le detecteur de trace fournisseur detecte',
+           traces.some((t) => (donnees + ' https://cdn.exemple').toLowerCase().includes(t)));
+  controle('la base de travail brute n\'est pas dans le depot',
+           !fs.existsSync(path.join(ICI, '..', 'referentiel')));
+
+  // 2. LA QUADRICHROMIE NE VAUT JAMAIS ZERO COULEUR. La source code la quadri
+  // par 0 ; un « 0 couleur » a l'ecran serait la bourde qui coute la
+  // credibilite. La derivation la traduit en null, une fois.
+  const tousPlafonds = GRILLE.produits.flatMap((p) => p.zones.flatMap(
+    (z) => z.techniques.map((t) => t.couleursMax)));
+  controle('aucun plafond de couleurs ne vaut 0 dans la grille',
+           !tousPlafonds.includes(0),
+           `${tousPlafonds.filter((n) => n === null).length} quadri sur ${tousPlafonds.length}`);
+
+  // 3. LA TAILLE DANS UNE ZONE, calculee a la main. Un logo au rapport 2,5
+  // dans une zone de 300 x 300 : la largeur gagne, 300 x 120. Dans une zone
+  // de 60 x 7, c'est la hauteur qui decide, donc 17,5 arrondi a 18 x 7.
+  const large = tailleDansZone({ largeurMm: 300, hauteurMm: 300 }, 2.5);
+  controle('dans une zone carree, un logo large est limite par la largeur',
+           large.largeurMm === 300 && large.hauteurMm === 120 && large.limitePar === 'largeur',
+           JSON.stringify(large));
+  const clip = tailleDansZone({ largeurMm: 60, hauteurMm: 7 }, 2.5);
+  controle('dans une zone basse, c\'est la hauteur qui decide',
+           clip.largeurMm === 18 && clip.hauteurMm === 7 && clip.limitePar === 'hauteur',
+           JSON.stringify(clip));
+
+  // 4. LE CAS DU GOBELET, celui qui a motive le pivot. Sa plus grande zone
+  // fait le tour et n'accepte QU'UNE couleur ; un logo a deux couleurs n'y
+  // passe pas, mais passe sur la face avant, en tampographie. Le verdict doit
+  // donc etre « oui », et la phrase doit dire « pas la, mais la ».
+  const deux = par(jugerGrille(GRILLE, { nCouleurs: 2, ratio: 2.5, fichierVectoriel: true }));
+  const mug = deux.Mug;
+  controle('un logo a deux couleurs passe sur le gobelet, mais pas n\'importe ou',
+           mug.etat === 'oui' && mug.refusee?.zone === 'tout le tour du gobelet'
+             && mug.meilleure.zone === 'la face avant, en haut'
+             && mug.meilleure.technique === 'Tampographie',
+           `${mug.etat} / ${mug.meilleure?.zone} / ${mug.meilleure?.technique}`);
+  controle('et la phrase dit « pas la, mais la »',
+           /^Pas sur tout le tour du gobelet, qui n'accepte qu'une seule couleur\. Mais oui sur la face avant, en haut/
+             .test(direProduit(mug)), direProduit(mug));
+
+  // 5. LE STYLO, contrainte geometrique de famille : ses cinq emplacements
+  // font 7 mm de haut, aucune exception. Neuf couleurs n'y passent pas, et le
+  // refus doit porter son palier : a quatre couleurs, tout se rouvre.
+  const neuf = par(jugerGrille(GRILLE, { nCouleurs: 9, ratio: 2.5, fichierVectoriel: true }));
+  const stylo = neuf.Stylo;
+  controle('neuf couleurs ne passent sur aucun emplacement du stylo',
+           stylo.etat === 'non' && stylo.plafond === 4, `${stylo.etat} / plafond ${stylo.plafond}`);
+  controle('et le refus dit a combien de couleurs ca se rouvre',
+           /En 4 couleurs, 5 emplacements s'ouvrent\./.test(direProduit(stylo)),
+           direProduit(stylo));
+
+  // 6. UN REFUS NE SE DIT QU'APRES AVOIR ESSAYE TOUTES LES ZONES. Le controle
+  // le verifie par construction : aucun produit declare « non » ne doit avoir
+  // la moindre offre acceptante, toutes zones et techniques confondues.
+  const menteurs = [...jugerGrille(GRILLE, { nCouleurs: 9, ratio: 2.5, fichierVectoriel: true }),
+                    ...jugerGrille(GRILLE, { nCouleurs: 2, ratio: 1, fichierVectoriel: true })]
+    .filter((p) => p.etat === 'non' && p.zonesQuiPassent > 0);
+  controle('aucun « ca ne passe pas » ne cache un emplacement qui passe',
+           menteurs.length === 0, menteurs.map((p) => p.famille).join(', ') || 'aucun');
+
+  // 7. LE TROISIEME ETAT, celui qui vaut de l'argent : une image passe, mais
+  // seulement une fois vectorisee. Le meme logo, deja vectoriel, passe tout
+  // court. Rien d'autre ne change entre les deux.
+  const image = par(jugerGrille(GRILLE, { nCouleurs: 2, ratio: 2.5, fichierVectoriel: false }));
+  controle('une image donne « oui, apres vectorisation » la ou un vectoriel donne « oui »',
+           image['T-shirt'].etat === 'si' && deux['T-shirt'].etat === 'oui'
+             && image['T-shirt'].meilleure.zone === deux['T-shirt'].meilleure.zone);
+
+  // 8. LE RENDU ne cite plus aucune source et ne porte plus un seul lien
+  // externe : decision d'Alex du 20/08, le visiteur n'a pas besoin de savoir
+  // d'ou vient un chiffre, il a besoin de savoir si ca passe.
+  const html = rendreGrille(jugerGrille(GRILLE, { nCouleurs: 2, ratio: 2.5, fichierVectoriel: true }));
+  controle('la grille ne porte aucun lien externe', !/<a href="https?:/.test(html));
+  controle('la grille ne cite aucune source',
+           !/(source|relevé le|d'où viennent)/i.test(html.replace(/<[^>]+>/g, ' ')));
+  controle('elle affiche une carte par produit',
+           (html.match(/<article class="produit /g) || []).length === GRILLE.produits.length);
+  controle('un seul appel a l\'action sur l\'ecran, celui de la vectorisation',
+           (html.match(/cta-entete/g) || []).length <= 1);
+  controle('aucun mot interdit dans la grille',
+           !MOTS_INTERDITS.some((m) => html.toLowerCase().includes(m)));
+  controle('aucun pourcentage ni confiance dans la grille',
+           !MOTIF_CONFIANCE.test(html.replace(/<[^>]+>/g, ' ')));
+  // Le nom d'origine des zones ne sort jamais a l'ecran : il est en anglais et
+  // il ne veut rien dire pour un acheteur.
+  const anglais = ['ROUNDSCREEN', 'FRONT UPPER', 'BARREL', 'CHEST', 'LID TOP', 'TD1', ' PD'];
+  const anglicisme = anglais.find((z) => html.includes(z));
+  controle('aucun nom de zone d\'origine ne sort a l\'ecran', !anglicisme, anglicisme || 'aucun');
 }
 
 // ------------------------------------------------------------------------

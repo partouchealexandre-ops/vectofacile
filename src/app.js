@@ -16,6 +16,7 @@ import { lireImage, telecharger, FichierNonSupporte } from './adaptateurs/image_
 import { lireVectoriel, reconnaitre, FichierVectorielNonLu } from './adaptateurs/pdf_navigateur.js';
 import { mesurer } from './moteur/mesures.js';
 import { juger } from './verdict/juger.js';
+import { jugerGrille } from './verdict/grille.js';
 import { rendreVerdict } from './verdict/rendu.js';
 import { conseiller } from './conseils/conseils.js';
 import { preparerVectorisation, FORMES_MAXIMALES } from './vectorisation/options.js';
@@ -44,7 +45,8 @@ const $ = (id) => document.getElementById(id);
 const modeVectoriser = () => document.body?.dataset?.mode === 'vectoriser';
 
 let etat = { nom: null, image: null, fiche: null, mesures: null, programme: null, svg: null,
-             verdict: null, selection: null, fichierEtat: null, avertissements: [] };
+             verdict: null, selection: null, fichierEtat: null, grille: null,
+             avertissements: [] };
 
 function texte(valeur, unite = '') {
   if (valeur === null || valeur === undefined) return 'non mesuré';
@@ -253,6 +255,26 @@ function chargerProduits() {
 }
 
 /**
+ * LA GRILLE DE PRODUITS, source principale depuis le pivot du 20/08/2026.
+ *
+ * Elle est DERIVEE de la base de travail fournisseurs par
+ * outils/deriver_grille_produits.py : la base brute reste hors du depot, seul
+ * ce fichier y entre, sans code interne ni nom de grossiste. Elle decrit des
+ * objets publicitaires reels avec leurs emplacements de marquage reels, ce
+ * qu'aucune page d'atelier ne donne.
+ */
+let promesseGrille = null;
+function chargerGrille() {
+  if (!promesseGrille) {
+    promesseGrille = fetch('/src/verdict/produits_grille.json').then((r) => {
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return r.json();
+    });
+  }
+  return promesseGrille;
+}
+
+/**
  * Les avertissements s'affichent AVANT le resultat, avec le poids de ce
  * qu'ils disent.
  *
@@ -283,6 +305,7 @@ async function afficherVerdict(mesures) {
   let seuils;
   let valeurs = null;
   let produits = null;
+  let grille = null;
   try {
     seuils = await chargerSeuils();
     // Un echec de chargement des valeurs ou des produits n'est PAS silencieux
@@ -290,6 +313,7 @@ async function afficherVerdict(mesures) {
     // une vue plus pauvre, qui reste juste. Elle ne fabrique rien.
     valeurs = await chargerValeurs().catch(() => null);
     produits = await chargerProduits().catch(() => null);
+    grille = await chargerGrille().catch(() => null);
   } catch (e) {
     $('verdict').innerHTML = `
       <h2>Sur quoi marquer ce logo ?</h2>
@@ -300,6 +324,7 @@ async function afficherVerdict(mesures) {
     return;
   }
   etat.verdict = juger({ mesures, seuils, valeurs, produits });
+  etat.grille = grille;
   rendreLeVerdict();
 }
 
@@ -310,7 +335,22 @@ async function afficherVerdict(mesures) {
  */
 function rendreLeVerdict() {
   if (!etat.verdict) return;
-  $('verdict').innerHTML = rendreVerdict(etat.verdict, etat.selection ?? {}, etat.fichierEtat);
+  const m = etat.mesures;
+  // Le RAPPORT du dessin, pas celui du fichier : c'est le logo qu'on inscrit
+  // dans une zone, pas ses marges. La boite de l'encre le donne ; on retombe
+  // sur les dimensions de l'image si elle manque, ce qui n'arrive que sur un
+  // fichier sans aucune encre.
+  const rapport = m?.boiteEncre?.rapport ?? m?.m1Dimensions?.rapport ?? 1;
+  const juges = etat.grille
+    ? jugerGrille(etat.grille, {
+        nCouleurs: m?.m2Couleurs?.couleursReelles ?? null,
+        ratio: rapport,
+        // Un fichier deja vectoriel passe ; une image ne passe qu'une fois
+        // vectorisee, et nous savons le faire, gratuitement.
+        fichierVectoriel: etat.fichierEtat?.origine === 'vectoriel',
+      })
+    : [];
+  $('verdict').innerHTML = rendreVerdict(etat.verdict, juges, etat.fichierEtat);
   $('verdict').hidden = false;
 }
 
