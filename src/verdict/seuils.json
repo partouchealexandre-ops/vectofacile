@@ -25,9 +25,10 @@
       "criteres": {
         "couleurs": {
           "valeur": 4,
-          "etat": "AGRÉGAT IAG",
-          "source": "source A, instantané catalogue",
-          "date": "05/08/2026"
+          "etat": "ARBITRÉ ALEX",
+          "source": "Arbitrage Alex",
+          "date": "20/08/2026",
+          "commentaire": "PREMIER SEUIL QUI SERT. Arbitré par Alex le 20/08/2026 : 4 couleurs maximum en tampographie ; au-delà, faire retravailler le logo. La valeur agrégée du 05/08 (dominante 4, ne servait pas) est confirmée par l'arbitrage et remplacée par lui."
         }
       }
     },

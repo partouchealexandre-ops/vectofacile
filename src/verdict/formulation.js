@@ -216,6 +216,14 @@ const COULEURS_PAR_TECHNIQUE = Object.freeze({
 const TECHNIQUES_A_PASSAGES = new Set(['serigraphie', 'tampographie', 'broderie', 'marquage_a_chaud']);
 const COULEURS_A_REDUIRE = 4;
 
+/**
+ * LE MAXIMUM TAMPOGRAPHIE : 4 COULEURS, ARBITRÉ ALEX 20/08/2026, le premier
+ * seuil de couleurs qui SERT (il vit dans seuils.json, ou le critere le juge
+ * aussi). Au-dela, la reponse n'est pas un mur : c'est « faites retravailler
+ * le logo », ou une technique numerique qui imprime tout en un passage.
+ */
+const MAX_COULEURS_TAMPOGRAPHIE = 4;
+
 export function direCouleurs(technique, nCouleurs) {
   const dire = COULEURS_PAR_TECHNIQUE[technique];
   if (!dire) return null;
@@ -223,6 +231,12 @@ export function direCouleurs(technique, nCouleurs) {
   // Une seule couleur : la mecanique « N couleurs = N ecrans » deviendrait du
   // bruit. On dit juste que c'est le cas le plus simple partout.
   if (n === 1) return 'Votre logo est en une seule couleur : c\'est le cas le plus simple pour toutes les techniques.';
+  if (technique === 'tampographie' && n !== null && n > MAX_COULEURS_TAMPOGRAPHIE) {
+    return `Vos ${n} couleurs dépassent le maximum en tampographie : `
+      + `${MAX_COULEURS_TAMPOGRAPHIE}, chaque couleur demandant son propre cliché. `
+      + 'Faites retravailler votre logo en 4 couleurs ou moins, ou passez sur une '
+      + 'technique numérique, qui imprime tout en un seul passage.';
+  }
   let phrase = dire(n);
   if (n !== null && n >= COULEURS_A_REDUIRE && TECHNIQUES_A_PASSAGES.has(technique)) {
     phrase += ` À ${n} couleurs, la facture grimpe vite : demandez à votre graphiste`
@@ -248,13 +262,18 @@ export function direCouleurs(technique, nCouleurs) {
  */
 export function direEtatFichier(fichier) {
   if (!fichier) return null;
-  const exigence = 'Avant la taille, le fichier : les fabricants exigent un fichier '
-    + 'vectoriel, .eps ou .ai, et refusent une image, même en haute définition. '
-    + 'La gravure laser ne travaille qu\'en vectoriel.';
+  // LES TROIS GRANDS SONT NOMMES, arbitrage Alex du 20/08 : sans vectoriel,
+  // ce ne sont pas « des techniques » qui sautent, ce sont la tampographie,
+  // la serigraphie et la gravure laser, les trois grandes techniques de
+  // l'objet publicitaire, le secteur que cet outil vise.
+  const exigence = 'Avant la taille, le fichier. Sans fichier vectoriel, oubliez la '
+    + 'tampographie, la sérigraphie et la gravure laser : les trois grandes techniques '
+    + 'de l\'objet publicitaire. Les fabricants exigent un .eps ou un .ai, et refusent '
+    + 'une image, même en haute définition.';
   if (fichier.origine === 'vectoriel') {
     return { ton: 'ok', texte: 'Le fichier, d\'abord : le vôtre est déjà vectoriel, '
-      + 'exactement ce que les fabricants exigent. C\'est lui qu\'il faut envoyer '
-      + 'à votre marqueur.' };
+      + 'exactement ce que la tampographie, la sérigraphie et la gravure laser '
+      + 'exigent. C\'est lui qu\'il faut envoyer à votre marqueur.' };
   }
   if (fichier.origine === 'faux_vectoriel') {
     return { ton: 'refus', texte: `${exigence} Le vôtre porte l'extension d'un vectoriel `
@@ -267,11 +286,11 @@ export function direEtatFichier(fichier) {
   }
   if (fichier.vectorise === true) {
     return { ton: 'ok', texte: `${exigence} Votre image serait donc refusée en l'état. `
-      + 'Bonne nouvelle : nous l\'avons déjà vectorisée, gratuitement. Téléchargez '
-      + 'le .eps en bas de page : c\'est lui qu\'il faut envoyer à votre marqueur, '
-      + 'pas votre image de départ.' };
+      + 'Bonne nouvelle : nous l\'avons déjà vectorisée, gratuitement, ça ne vous '
+      + 'coûte rien. Téléchargez le .eps en bas de page : c\'est lui qu\'il faut '
+      + 'envoyer à votre marqueur, pas votre image de départ.' };
   }
   return { ton: 'attente', texte: `${exigence} Votre image serait donc refusée en l'état. `
-    + 'Bonne nouvelle : nous la vectorisons gratuitement, le fichier arrive en bas '
-    + 'de page.' };
+    + 'Bonne nouvelle : nous la vectorisons gratuitement, ça ne vous coûte rien, '
+    + 'le fichier arrive en bas de page.' };
 }

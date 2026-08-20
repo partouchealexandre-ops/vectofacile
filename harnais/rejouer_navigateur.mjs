@@ -693,8 +693,9 @@ console.log('');
     // sortie est le .eps que la page vient de fabriquer. Le depot du harnais
     // est vectorise avec succes avant que traiter() ne rende la main, donc le
     // bandeau doit etre a l'etat « deja vectorisee ».
-    ['le bandeau du fichier ouvre le diagnostic : vectoriel exige, image refusee en l\'etat',
-      /exigent un fichier vectoriel/.test(av.texte) && /refusée en l'état/.test(av.texte)],
+    ['le bandeau du fichier ouvre le diagnostic : sans vectoriel, oubliez les trois grands',
+      /Sans fichier vectoriel, oubliez la tampographie/.test(av.texte)
+        && /objet publicitaire/.test(av.texte) && /refusée en l'état/.test(av.texte)],
     ['et il finit sur la sortie : le .eps deja fabrique, en bas de page',
       /Téléchargez\s+le \.eps/.test(av.texte.replace(/\n/g, ' '))],
     ['le bloc ne reclame plus de largeur au visiteur',

@@ -430,9 +430,18 @@ const controle = (libelle, ok, detail) => resultats.push({ libelle, ok, detail }
   controle('une carte qui donne une taille ne dit pas qu\'elle ne sait rien',
            v.techniques.filter((t) => t.situation?.etat === 'tailles')
              .every((t) => !/Aucun de nos \d+ critères/.test(rendreTechnique(t))));
+  // Le repli « autres criteres pas documentes » ne vaut que si TOUS les
+  // criteres hors trait sont inconnus. Depuis le seuil tampo du 20/08, la
+  // tampographie juge son critere couleurs : sa carte liste les criteres un
+  // par un au lieu du repli, et c'est le comportement voulu.
   controle('elle nomme en revanche les criteres qui manquent encore',
-           v.techniques.filter((t) => t.situation?.etat === 'tailles')
+           v.techniques.filter((t) => t.situation?.etat === 'tailles'
+               && t.criteres.filter((c) => c.cle !== 'trait_minimal')
+                            .every((c) => c.etat_verdict === 'inconnu'))
              .every((t) => /autres critères ne sont pas encore documentés/.test(rendreTechnique(t))));
+  controle('une technique dont un critere est juge liste ses criteres un a un',
+           /Nombre de couleurs/.test(rendreTechnique(
+             v.techniques.find((t) => t.technique === 'tampographie'))));
   controle('le tableau des tailles porte des liens verifiables',
            (html.match(/<a href="https?:\/\//g) || []).length >= 20,
            `${(html.match(/<a href="https?:\/\//g) || []).length} liens`);
@@ -550,10 +559,14 @@ const controle = (libelle, ok, detail) => resultats.push({ libelle, ok, detail }
   // un refus sans sortie est un mur.
   const imageOk = rendreVerdict(v, {}, { origine: 'image', vectorise: true });
   controle('image vectorisee : exigence du vectoriel, refus en l\'etat, et le .eps en sortie',
-           imageOk.includes('exigent un fichier vectoriel')
+           imageOk.includes('Sans fichier vectoriel, oubliez la tampographie, la sérigraphie et la gravure laser')
              && imageOk.includes('refusée en l\'état')
-             && imageOk.includes('gravure laser ne travaille qu\'en vectoriel')
              && imageOk.includes('Téléchargez'));
+  // Les trois grands sont NOMMES et le secteur est dit : l'outil vise l'objet
+  // publicitaire, arbitrage Alex du 20/08. Et la bascule est gratuite.
+  controle('le bandeau nomme l\'objet publicitaire et la gratuite de la bascule',
+           imageOk.includes('objet publicitaire')
+             && imageOk.includes('ça ne vous coûte rien'));
   const imageRefus = rendreVerdict(v, {}, { origine: 'image', vectorise: false });
   controle('image non vectorisable : la sortie est le graphiste',
            imageRefus.includes('graphiste')
@@ -587,6 +600,34 @@ const controle = (libelle, ok, detail) => resultats.push({ libelle, ok, detail }
   controle('la recommandation reste une affaire de facture, pas de refus',
            !MOTS_INTERDITS.some((m) => direCouleurs('serigraphie', 9).toLowerCase().includes(m))
              && !/refus/i.test(direCouleurs('serigraphie', 9)));
+
+  // LE PREMIER SEUIL QUI SERT : tampographie, 4 couleurs maximum, ARBITRÉ
+  // ALEX 20/08. Au-dela, la technique ferme ET la carte dit la sortie :
+  // retravailler le logo. En dessous, le critere passe au vert mais la
+  // technique reste inconnue, la regle d'agregation ne bouge pas.
+  const neuf = juger({ mesures: { ...mesuresImpeccables(), m2Couleurs: { couleursReelles: 9 } },
+                       seuils: SEUILS, valeurs: VALEURS, produits: PRODUITS });
+  const tampoNeuf = neuf.techniques.find((t) => t.technique === 'tampographie');
+  const critNeuf = tampoNeuf.criteres.find((c) => c.cle === 'couleurs');
+  controle('9 couleurs ferment la tampographie sur le seuil arbitre de 4',
+           critNeuf.etat_verdict === 'defavorable' && critNeuf.seuil === 4
+             && critNeuf.etat === 'ARBITRÉ ALEX' && tampoNeuf.etat === 'defavorable',
+           `critere=${critNeuf.etat_verdict} seuil=${critNeuf.seuil} technique=${tampoNeuf.etat}`);
+  const trois = juger({ mesures: { ...mesuresImpeccables(), m2Couleurs: { couleursReelles: 3 } },
+                        seuils: SEUILS, valeurs: VALEURS, produits: PRODUITS });
+  const tampoTrois = trois.techniques.find((t) => t.technique === 'tampographie');
+  controle('3 couleurs passent le critere sans ouvrir la technique',
+           tampoTrois.criteres.find((c) => c.cle === 'couleurs').etat_verdict === 'favorable'
+             && tampoTrois.etat === 'inconnu');
+  controle('au dela de 4, la carte tampo dit la sortie : retravailler le logo',
+           /retravailler votre logo/.test(direCouleurs('tampographie', 9))
+             && /maximum en tampographie : 4/.test(direCouleurs('tampographie', 9)));
+  controle('a 3 couleurs, pas de sermon : la mecanique des cliches, rien d\'autre',
+           !/retravailler/.test(direCouleurs('tampographie', 3)));
+  // Les autres techniques ne heritent PAS du seuil tampo : 9 couleurs ne
+  // ferment ni la serigraphie ni l'UV, aucun maximum n'y est arbitre.
+  controle('le seuil de 4 ne deborde pas sur les autres techniques',
+           neuf.techniques.filter((t) => t.etat === 'defavorable').length === 1);
 }
 
 // ------------------------------------------------------------------------
