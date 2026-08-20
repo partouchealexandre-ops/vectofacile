@@ -44,7 +44,7 @@ const $ = (id) => document.getElementById(id);
 const modeVectoriser = () => document.body?.dataset?.mode === 'vectoriser';
 
 let etat = { nom: null, image: null, fiche: null, mesures: null, programme: null, svg: null,
-             verdict: null, selection: null, avertissements: [] };
+             verdict: null, selection: null, fichierEtat: null, avertissements: [] };
 
 function texte(valeur, unite = '') {
   if (valeur === null || valeur === undefined) return 'non mesuré';
@@ -310,7 +310,7 @@ async function afficherVerdict(mesures) {
  */
 function rendreLeVerdict() {
   if (!etat.verdict) return;
-  $('verdict').innerHTML = rendreVerdict(etat.verdict, etat.selection ?? {});
+  $('verdict').innerHTML = rendreVerdict(etat.verdict, etat.selection ?? {}, etat.fichierEtat);
   $('verdict').hidden = false;
 }
 
@@ -358,7 +358,7 @@ function reinitialiser() {
   const apercu = $('apercu');
   if (apercu) apercu.innerHTML = '';
   etat = { nom: null, image: null, fiche: null, mesures: null, programme: null, svg: null,
-           verdict: null, selection: null, avertissements: [] };
+           verdict: null, selection: null, fichierEtat: null, avertissements: [] };
 }
 
 /**
@@ -501,6 +501,13 @@ async function traiter(fichier) {
     etat.image = image;
     etat.mesures = mesures;
     etat.nom = (fichier.name || 'logo').replace(/\.[^.]+$/, '');
+    // LA PREMIERE QUESTION DU DIAGNOSTIC : ce fichier passe-t-il, en l'etat ?
+    // (arbitrage Alex du 20/08). L'origine se connait ici ; pour une image, le
+    // sort de la vectorisation se connait plus bas, et le bandeau est re-rendu
+    // a ce moment la.
+    etat.fichierEtat = nature === 'pdf'
+      ? { origine: etat.fiche?.faux_vectoriel ? 'faux_vectoriel' : 'vectoriel' }
+      : { origine: 'image', vectorise: null };
 
     // SUR /VECTORISER, PAS DE DIAGNOSTIC. La page promet une seule chose,
     // vectoriser, et elle ne fait que ca. Les mesures ont quand meme eu lieu :
@@ -547,6 +554,8 @@ async function traiter(fichier) {
         <p class="gris">${prepare.refus.texte}</p>`;
       $('resultat').hidden = false;
       $('travail').hidden = true;
+      etat.fichierEtat = { origine: 'image', vectorise: false };
+      rendreLeVerdict();
       return;
     }
 
@@ -574,6 +583,8 @@ async function traiter(fichier) {
         le fichier. Le diagnostic ci-dessus reste valable, il décrit bien votre fichier.</p>`;
       $('resultat').hidden = false;
       $('travail').hidden = true;
+      etat.fichierEtat = { origine: 'image', vectorise: false };
+      rendreLeVerdict();
       return;
     }
     $('apercu').innerHTML = etat.svg;
@@ -591,6 +602,10 @@ async function traiter(fichier) {
     $('resultat').hidden = false;
     $('telechargements').hidden = false;
     $('travail').hidden = true;
+    // Le .eps existe desormais : le bandeau du fichier peut le promettre au
+    // passe, et pointer vers le bas de page.
+    etat.fichierEtat = { origine: 'image', vectorise: true };
+    rendreLeVerdict();
   } catch (e) {
     $('travail').hidden = true;
     $('erreur').hidden = false;

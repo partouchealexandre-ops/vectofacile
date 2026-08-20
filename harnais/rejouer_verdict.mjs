@@ -538,6 +538,57 @@ const controle = (libelle, ok, detail) => resultats.push({ libelle, ok, detail }
            casquette.includes('trop petit') && casquette.includes('334 mm'));
 }
 
+// LA PREMIERE QUESTION EST LE FICHIER, PAS LA TAILLE (arbitrage Alex 20/08),
+// ET LES COULEURS EN TROP COUTENT DE L'ARGENT, PAS UN REFUS.
+{
+  const { rendreVerdict } = await import('../src/verdict/rendu.js');
+  const { direCouleurs } = await import('../src/verdict/formulation.js');
+  const v = juger({ mesures: mesuresImpeccables(), seuils: SEUILS,
+                    valeurs: VALEURS, produits: PRODUITS });
+
+  // Le bandeau selon l'origine du depot. Chaque variante porte sa SORTIE :
+  // un refus sans sortie est un mur.
+  const imageOk = rendreVerdict(v, {}, { origine: 'image', vectorise: true });
+  controle('image vectorisee : exigence du vectoriel, refus en l\'etat, et le .eps en sortie',
+           imageOk.includes('exigent un fichier vectoriel')
+             && imageOk.includes('refusée en l\'état')
+             && imageOk.includes('gravure laser ne travaille qu\'en vectoriel')
+             && imageOk.includes('Téléchargez'));
+  const imageRefus = rendreVerdict(v, {}, { origine: 'image', vectorise: false });
+  controle('image non vectorisable : la sortie est le graphiste',
+           imageRefus.includes('graphiste')
+             && imageRefus.includes('comment-vectoriser-un-jpeg'));
+  const vrai = rendreVerdict(v, {}, { origine: 'vectoriel' });
+  controle('un vrai vectoriel est felicite, pas sermonne',
+           vrai.includes('déjà vectoriel') && !vrai.includes('refusé en l\'état'));
+  const faux = rendreVerdict(v, {}, { origine: 'faux_vectoriel' });
+  controle('un faux vectoriel est refuse en l\'etat, avec la page vectoriser en sortie',
+           faux.includes('sera refusé')
+             && /href="\/vectoriser"/.test(faux));
+  // P0.5 tient sur TOUTES les variantes du bandeau, « impossible » compris,
+  // alors meme que la demande d'origine employait ce mot.
+  const toutes = [imageOk, imageRefus, vrai, faux].join(' ').toLowerCase();
+  const fautif = MOTS_INTERDITS.find((m) => toutes.includes(m));
+  controle('aucun mot interdit dans les bandeaux du fichier', !fautif, fautif || 'aucun');
+  // Sans etat de fichier fourni (harnais, anciens appels), aucun bandeau :
+  // pas de mensonge par defaut.
+  controle('sans origine connue, aucun bandeau de fichier',
+           !rendreVerdict(v, {}).includes('etat-fichier'));
+
+  // LES COULEURS : au dela de 3 couleurs sur une technique a passages, la
+  // carte recommande l'economie. Jamais sur les techniques a passage unique,
+  // ou reduire n'economise rien : la recommandation y serait un mensonge.
+  controle('9 couleurs en serigraphie declenchent la recommandation d\'economie',
+           /version en 1 ou 2 couleurs/.test(direCouleurs('serigraphie', 9))
+             && /économie/.test(direCouleurs('serigraphie', 9)));
+  controle('2 couleurs ne declenchent rien', !/économie/.test(direCouleurs('serigraphie', 2)));
+  controle('9 couleurs en numerique UV ne declenchent rien : un seul passage',
+           !/économie/.test(direCouleurs('numerique_uv', 9)));
+  controle('la recommandation reste une affaire de facture, pas de refus',
+           !MOTS_INTERDITS.some((m) => direCouleurs('serigraphie', 9).toLowerCase().includes(m))
+             && !/refus/i.test(direCouleurs('serigraphie', 9)));
+}
+
 // ------------------------------------------------------------------------
 console.log('');
 console.log('  HARNAIS DE LA COUCHE VERDICT');

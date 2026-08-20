@@ -132,6 +132,9 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
   .technique .situation { margin: 8px 0 10px; font-size: 14.5px; line-height: 1.55; }
   .technique .couleurs-technique { margin: 0 0 10px; font-size: 13.5px; line-height: 1.5;
     color: #5b6470; }
+  /* Le bandeau du fichier, 20/08 : la premiere question est le fichier. */
+  .etat-fichier.fichier-ok { border-left-color: #1d6b38; }
+  .etat-fichier.fichier-refus { border-left-color: #9c3722; }
   /* La vue produit, 20/08 : le menu deroulant et la carte du produit choisi. */
   .choix-produit { margin: 14px 0 16px; display: flex; gap: 14px; flex-wrap: wrap;
     align-items: flex-end; }

@@ -17,8 +17,8 @@
  * et il dit CE QUI MANQUE, pas seulement qu'il manque quelque chose.
  */
 
-import { LIBELLES, direCritere, direBase, direTailles, direCouleurs, etiquetteTailles }
-  from './formulation.js';
+import { LIBELLES, direCritere, direBase, direTailles, direCouleurs, etiquetteTailles,
+         direEtatFichier } from './formulation.js';
 
 const CLASSE = {
   favorable: 'verdict-favorable',
@@ -273,14 +273,41 @@ export function rendreEntete(verdict) {
 }
 
 /**
- * L'assemblage. L'ordre est celui de la lecture d'un client : le choix du
- * produit, la reponse pour CE produit, puis, replies parce qu'ils repondent a
- * d'autres questions : le detail par technique, et les sources.
- *
- * `selection` est l'etat du menu deroulant, tenu par app.js et repasse a
- * chaque rendu : la fonction reste pure et se teste dans node.
+ * LE BANDEAU DU FICHIER, avant tout le reste. Arbitrage Alex du 20/08 : la
+ * premiere question n'est pas la taille, c'est « est-ce que ce fichier passe,
+ * en l'etat ? ». La reponse porte toujours sa sortie : le .eps deja fabrique
+ * en bas de page, la page Vectoriser mon logo, ou le graphiste.
  */
-export function rendreVerdict(verdict, selection = {}) {
+function rendreEtatFichier(fichier) {
+  const etat = direEtatFichier(fichier);
+  if (!etat) return '';
+  let sortie = '';
+  if (etat.sortie === 'faux_vectoriel') {
+    sortie = ` <a href="/vectoriser">Déposez l'image d'origine de votre logo sur
+    Vectoriser mon logo</a>, ou réclamez le fichier source à votre graphiste.`;
+  } else if (etat.sortie === 'graphiste') {
+    sortie = ` Faites établir un fichier vectoriel par un graphiste, ou repartez de la
+    plus grande version disponible de votre logo :
+    <a href="/questions/comment-vectoriser-un-jpeg">pourquoi la taille de départ décide
+    de tout</a>.`;
+  }
+  const classe = etat.ton === 'ok' ? 'fichier-ok' : etat.ton === 'refus' ? 'fichier-refus' : '';
+  return `<div class="encadre etat-fichier ${classe}">
+  <p>${echapper(etat.texte)}${sortie}</p>
+</div>`;
+}
+
+/**
+ * L'assemblage. L'ordre est celui de la lecture d'un client : le fichier
+ * (passe-t-il, en l'etat ?), le choix du produit, la reponse pour CE produit,
+ * puis, replies parce qu'ils repondent a d'autres questions : le detail par
+ * technique, et les sources.
+ *
+ * `selection` est l'etat du menu deroulant, `fichier` l'origine du depot ;
+ * les deux sont tenus par app.js et repasses a chaque rendu : la fonction
+ * reste pure et se teste dans node.
+ */
+export function rendreVerdict(verdict, selection = {}, fichier = null) {
   const vue = verdict.produits;
   const aProduits = Boolean(vue?.produits?.length) && verdict.resume.situees > 0;
   const techniquesRendues = verdict.techniques.map(rendreTechnique).join('\n');
@@ -298,6 +325,7 @@ ${techniquesRendues}
 ${techniquesRendues}
 </div>`;
   return `<h2>Sur quoi marquer ce logo ?</h2>
+${rendreEtatFichier(fichier)}
 ${rendreEntete(verdict)}
 ${aProduits ? rendreChoixProduit(vue, selection) : ''}
 ${aProduits ? rendreProduitChoisi(vue, selection, verdict) : ''}

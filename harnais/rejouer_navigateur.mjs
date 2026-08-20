@@ -688,6 +688,15 @@ console.log('');
     ['sans aucune saisie, les sept techniques ont deja leur carte', av.cartes === 7],
     ['sans aucune saisie, le bloc invite a choisir un produit',
       /[Cc]hoisissez un produit/.test(av.texte)],
+    // La premiere question est le FICHIER (arbitrage Alex 20/08) : une image
+    // deposee est prevenue que les fabricants exigent un vectoriel, et la
+    // sortie est le .eps que la page vient de fabriquer. Le depot du harnais
+    // est vectorise avec succes avant que traiter() ne rende la main, donc le
+    // bandeau doit etre a l'etat « deja vectorisee ».
+    ['le bandeau du fichier ouvre le diagnostic : vectoriel exige, image refusee en l\'etat',
+      /exigent un fichier vectoriel/.test(av.texte) && /refusée en l'état/.test(av.texte)],
+    ['et il finit sur la sortie : le .eps deja fabrique, en bas de page',
+      /Téléchargez\s+le \.eps/.test(av.texte.replace(/\n/g, ' '))],
     ['le bloc ne reclame plus de largeur au visiteur',
       !/donnez une largeur|indiquez la largeur/i.test(av.texte)],
     ['aucune etiquette jargon du 19/08', !JARGON.test(av.texte)],

@@ -138,6 +138,7 @@ async function deposer(page, octets, nom, type) {
       titreFiche: document.querySelector('#fiche h2')?.textContent ?? null,
       conseils: [...document.querySelectorAll('#conseils .conseil h3')].map((x) => x.textContent),
       verdict: document.getElementById('verdict').offsetParent !== null,
+      bandeauFichier: document.querySelector('#verdict .etat-fichier')?.innerText ?? '',
     };
   }, [octets.toString('base64'), nom, type]);
 }
@@ -175,6 +176,10 @@ await page.waitForTimeout(900);
     ['aucun bouton de telechargement n\'apparait', r.telechargements === false],
     ['aucun trace n\'a ete produit en memoire', r.programme === false],
     ['le diagnostic par technique s\'affiche quand meme', r.verdict === true],
+    // Le bandeau du fichier (20/08) : un vrai vectoriel est felicite, la
+    // premiere question du diagnostic est deja reglee.
+    ['le bandeau du fichier le felicite : deja vectoriel, bon pour envoi',
+      /déjà vectoriel/.test(r.bandeauFichier) && !/refusé/.test(r.bandeauFichier)],
   ], [`${r.fiche?.largeurMm} x ${r.fiche?.hauteurMm} mm, ${r.fiche?.traces} traces, `
       + `${r.fiche?.images} image(s), ${r.couleurs} couleur(s)`]);
 }
@@ -191,6 +196,10 @@ await page.waitForTimeout(900);
     ['un conseil le dit en clair',
       r.conseils.some((c) => /n'en est pas un/.test(c))],
     ['aucun bouton de telechargement n\'apparait', r.telechargements === false],
+    // Le bandeau du fichier (20/08) : refuse en l'etat, et la SORTIE est la
+    // page Vectoriser mon logo, avec l'image d'origine.
+    ['le bandeau du fichier le refuse en l\'etat et donne la sortie',
+      /sera refusé/.test(r.bandeauFichier) && /Vectoriser mon logo/.test(r.bandeauFichier)],
   ], [r.titreFiche, ...r.conseils]);
 }
 

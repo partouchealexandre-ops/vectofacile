@@ -198,6 +198,24 @@ const COULEURS_PAR_TECHNIQUE = Object.freeze({
     : 'Une feuille par couleur : ce marquage se fait le plus souvent en une seule couleur.'),
 });
 
+/**
+ * LA RECOMMANDATION D'ECONOMIE, ARBITRÉ ALEX 20/08/2026 : « jamais personne
+ * ne va faire 9 couleurs en sérigraphie, il faut recommander un changement
+ * pour faire des économies. »
+ *
+ * Elle ne s'applique qu'aux techniques A PASSAGES, celles ou chaque couleur
+ * ajoute un ecran, un cliche, un fil ou une pose, donc un cout. En numerique
+ * UV et en DTF, toutes les couleurs partent en un seul passage : reduire n'y
+ * economise rien, la recommandation y serait un mensonge. Le laser est
+ * monochrome par nature, sa phrase le dit deja.
+ *
+ * Ce n'est PAS un seuil de faisabilite : on ne dit pas que ca ne passe pas,
+ * on dit ce que ca coute et comment payer moins. P0.5 tient : ni
+ * « impossible », ni « jamais » : une facture, et le moyen de la reduire.
+ */
+const TECHNIQUES_A_PASSAGES = new Set(['serigraphie', 'tampographie', 'broderie', 'marquage_a_chaud']);
+const COULEURS_A_REDUIRE = 4;
+
 export function direCouleurs(technique, nCouleurs) {
   const dire = COULEURS_PAR_TECHNIQUE[technique];
   if (!dire) return null;
@@ -205,5 +223,55 @@ export function direCouleurs(technique, nCouleurs) {
   // Une seule couleur : la mecanique « N couleurs = N ecrans » deviendrait du
   // bruit. On dit juste que c'est le cas le plus simple partout.
   if (n === 1) return 'Votre logo est en une seule couleur : c\'est le cas le plus simple pour toutes les techniques.';
-  return dire(n);
+  let phrase = dire(n);
+  if (n !== null && n >= COULEURS_A_REDUIRE && TECHNIQUES_A_PASSAGES.has(technique)) {
+    phrase += ` À ${n} couleurs, la facture grimpe vite : demandez à votre graphiste`
+      + ' une version en 1 ou 2 couleurs, c\'est l\'économie la plus simple de votre marquage.';
+  }
+  return phrase;
+}
+
+/**
+ * LA PREMIERE QUESTION N'EST PAS LA TAILLE, C'EST LE FICHIER.
+ * ARBITRÉ ALEX 20/08/2026 : les fabricants exigent un fichier vectoriel,
+ * .eps ou .ai, et refusent une image meme en haute definition ; la gravure
+ * laser ne travaille qu'en vectoriel. Ce fait rejoint l'arbitrage du 17/08
+ * sur le livrable (.eps ou .ai, jamais le SVG seul).
+ *
+ * Le mot « impossible » reste interdit (P0.5) : on ecrit ce qui se passe,
+ * « refusé en l'état », et surtout la SORTIE : la vectorisation est deja
+ * faite, ou bien elle est gratuite a un clic, ou bien il faut un graphiste.
+ * Un refus sans sortie est un mur ; avec la sortie, c'est un chemin.
+ *
+ * `fichier` : { origine: 'image' | 'vectoriel' | 'faux_vectoriel',
+ *               vectorise: true | false | null }  (null = en cours)
+ */
+export function direEtatFichier(fichier) {
+  if (!fichier) return null;
+  const exigence = 'Avant la taille, le fichier : les fabricants exigent un fichier '
+    + 'vectoriel, .eps ou .ai, et refusent une image, même en haute définition. '
+    + 'La gravure laser ne travaille qu\'en vectoriel.';
+  if (fichier.origine === 'vectoriel') {
+    return { ton: 'ok', texte: 'Le fichier, d\'abord : le vôtre est déjà vectoriel, '
+      + 'exactement ce que les fabricants exigent. C\'est lui qu\'il faut envoyer '
+      + 'à votre marqueur.' };
+  }
+  if (fichier.origine === 'faux_vectoriel') {
+    return { ton: 'refus', texte: `${exigence} Le vôtre porte l'extension d'un vectoriel `
+      + 'mais n\'en est pas un : il ne contient qu\'une image, et il sera refusé '
+      + 'en l\'état.', sortie: 'faux_vectoriel' };
+  }
+  if (fichier.vectorise === false) {
+    return { ton: 'refus', texte: `${exigence} Votre image serait donc refusée en l'état, `
+      + 'et elle ne se vectorise pas automatiquement.', sortie: 'graphiste' };
+  }
+  if (fichier.vectorise === true) {
+    return { ton: 'ok', texte: `${exigence} Votre image serait donc refusée en l'état. `
+      + 'Bonne nouvelle : nous l\'avons déjà vectorisée, gratuitement. Téléchargez '
+      + 'le .eps en bas de page : c\'est lui qu\'il faut envoyer à votre marqueur, '
+      + 'pas votre image de départ.' };
+  }
+  return { ton: 'attente', texte: `${exigence} Votre image serait donc refusée en l'état. `
+    + 'Bonne nouvelle : nous la vectorisons gratuitement, le fichier arrive en bas '
+    + 'de page.' };
 }
