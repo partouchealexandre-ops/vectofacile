@@ -241,6 +241,59 @@ for (const url of URLS) {
 }
 
 console.log('  ' + '-'.repeat(66));
+
+// ---------------------------------------------------------------------------
+// DEUX PROMESSES QUI SE SURVEILLENT ELLES MEMES.
+//
+// 1. L'EN-TETE NE REPETE PAS SA PROMESSE. Il portait a la fois la rubrique
+//    « Votre logo reste chez vous » et un cadenas « Vos fichiers restent chez
+//    vous », a dix centimetres l'un de l'autre. Repeter une promesse
+//    l'affaiblit, et surtout ca occupait la place de ce que le visiteur vient
+//    faire. Ce controle empechera de la remettre par reflexe.
+//
+// 2. LA PAGE QUI PROMET LE TEST HORS LIGNE DOIT NOMMER SON EXCEPTION.
+//    Le jour ou le site a su lire les PDF, la promesse « coupez votre
+//    connexion, deposez un logo » est devenue fausse pour les PDF : leur
+//    lecteur se telecharge au premier depot. Une promesse qu'un visiteur peut
+//    prendre en defaut en dix secondes, sur la page meme qui la porte, est
+//    pire que pas de promesse. Ce controle tombera si quelqu'un raccourcit la
+//    page en supprimant la nuance.
+{
+  const page = await navigateur.newPage();
+  const fautes = [];
+
+  // ON LIT LE FICHIER SERVI, PAS LE DOM.
+  //
+  // La premiere version passait par le navigateur, et son controle negatif a
+  // echoue deux fois de suite : le HTML contenait bien deux promesses, et la
+  // lecture par le DOM n'en rapportait qu'une. Plutot que de continuer a
+  // chercher pourquoi, on lit l'artefact lui meme, celui qui part chez le
+  // visiteur. C'est plus simple, c'est deterministe, et un controle qu'on ne
+  // sait pas expliquer ne protege personne.
+  const html = fs.readFileSync(path.join(PUBLIC, 'index.html'), 'utf-8');
+  const blocEntete = (html.match(/<header[\s\S]*?<\/header>/) || [''])[0];
+  const promesses = (blocEntete.match(/restent? chez vous/gi) || []).length;
+  if (promesses > 1) fautes.push(`l'en-tete repete sa promesse ${promesses} fois`);
+
+  const vieP = fs.readFileSync(path.join(PUBLIC, 'confidentialite', 'index.html'), 'utf-8');
+  if (/coupez votre connexion/i.test(vieP) && !/\bPDF\b/.test(vieP)) {
+    fautes.push('la page promet le test hors ligne sans nommer l\'exception des PDF');
+  }
+  await page.close();
+
+  console.log('');
+  console.log('  LES PROMESSES DE L\'EN-TETE ET DE LA PAGE VIE PRIVEE');
+  console.log('  ' + '-'.repeat(66));
+  for (const [libelle, ok] of [
+    ['l\'en-tete ne repete pas sa promesse', promesses === 1 || promesses === 0],
+    ['le test hors ligne nomme l\'exception des PDF', !fautes.some((f) => /exception/.test(f))],
+  ]) {
+    console.log(`  ${ok ? 'ok   ' : 'ECHEC'} ${libelle}`);
+    if (!ok) echecs++;
+  }
+  console.log('  ' + '-'.repeat(66));
+}
+
 console.log('');
 console.log(`  ${URLS.length} pages, ${echecs} echec(s). ${liensVus.size} liens internes distincts controles.`);
 console.log('');

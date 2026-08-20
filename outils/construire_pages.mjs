@@ -52,7 +52,7 @@ function entete(urlCourante, publiees) {
   return `<header class="entete">
   <a class="lockup" href="/">${symbole}<span class="mot">Vecto<br>Facile</span></a>
   <nav class="nav-site">${liens}</nav>
-  <div class="droite"><a class="cta-entete" href="/">Diagnostiquer mon logo</a></div>
+  <div class="droite"><a class="cta-entete" href="/">Évaluer votre logo</a></div>
 </header>`;
 }
 

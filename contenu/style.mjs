@@ -73,8 +73,6 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
                  font-size: 18px; line-height: 1.05; color: var(--navy);
                  letter-spacing: -0.025em; }
   .entete .droite { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-  .cadenas { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--gris); }
-  .cadenas svg { width: 14px; height: 14px; color: var(--vert); flex: none; }
   .cta-entete { font-size: 14px; font-weight: 600; padding: 9px 17px; border-radius: 8px;
                 border: 1.5px solid var(--orange); background: var(--orange); color: #fff;
                 text-decoration: none; white-space: nowrap; }
@@ -146,6 +144,9 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
     .teinte { flex-wrap: wrap; gap: 8px 10px; }
     .teinte .part { margin-left: 0; flex-basis: 100%; }
   }
+  .preuves { margin: 10px 0 0; }
+  .preuves summary { cursor: pointer; color: var(--gris); font-size: 14px; padding: 6px 0; }
+  .preuves > *:not(summary) { margin-left: 2px; }
   .note { color: var(--gris); font-size: 13.5px; margin: 10px 0; }
   .gris { background: var(--gris-clair); border-left: 3px solid var(--trait); padding: 14px 16px;
           color: var(--gris); font-size: 14px; border-radius: 0 6px 6px 0; }
