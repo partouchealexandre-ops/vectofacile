@@ -94,3 +94,68 @@ export function situerTechniques(mesures, valeursSourcees, critere = 'trait_mini
   }
   return sortie;
 }
+
+/**
+ * L'INVERSION D'USAGE, 20/08/2026.
+ *
+ * `situerMinimum` repondait a « mon trait tient-il a CETTE taille ? », et la
+ * question supposait que le visiteur connaisse sa taille de marquage. Alex a
+ * tranche : il ne la connait presque jamais. La bonne question est l'inverse :
+ * « a partir de QUELLE taille ce logo passe-t-il, et sur quoi ? », et elle se
+ * calcule sans rien demander.
+ *
+ * Le calcul est une regle de trois, et chaque choix y est le choix PRUDENT :
+ *
+ *   L_min = ceil( minimum_publie_mm × largeur_image_px / trait_px )
+ *
+ *   le trait en pixels est la borne BASSE de l'encadrement : on dimensionne
+ *   pour le trait le plus fin que le fichier puisse contenir ;
+ *   l'arrondi est SUPERIEUR, au millimetre entier : on ne conseille jamais
+ *   une taille qui mettrait le trait un centieme sous le minimum ;
+ *   pour une meme matiere citee par plusieurs sources, on garde la PLUS
+ *   EXIGEANTE : conseiller la plus laxiste reviendrait a choisir sa source
+ *   au confort.
+ *
+ * Rien n'est moyenne, chaque ligne du resultat garde sa source et sa date :
+ * c'est la meme donnee sourcee qu'avant, lue dans l'autre sens.
+ */
+export function taillesMinimales(traitPx, largeurImagePx, valeurs) {
+  const liste = Array.isArray(valeurs) ? valeurs : [];
+  if (!liste.length) return { etat: 'sans_valeurs', parSupport: [], total: 0 };
+
+  if (!Number.isFinite(traitPx) || traitPx <= 0
+      || !Number.isFinite(largeurImagePx) || largeurImagePx <= 0) {
+    // Pas de trait fin mesurable : un logo fait d'aplats. Les minimums
+    // d'epaisseur ne le contraignent pas, a aucune taille.
+    return { etat: 'sans_trait', parSupport: [], total: liste.length };
+  }
+
+  const parMatiere = new Map();
+  for (const v of liste) {
+    const support = (v.support || '').trim();
+    if (!support || !Number.isFinite(v.mm) || v.mm <= 0) continue;
+    const actuel = parMatiere.get(support);
+    if (!actuel || v.mm > actuel.mm) parMatiere.set(support, v);
+  }
+  if (!parMatiere.size) return { etat: 'sans_valeurs', parSupport: [], total: liste.length };
+
+  const parSupport = [...parMatiere.values()]
+    .map((v) => ({
+      support: v.support,
+      mm: v.mm,
+      source: v.source,
+      date: v.date,
+      url: v.url ?? null,
+      tailleMinMm: Math.ceil((v.mm * largeurImagePx) / traitPx),
+    }))
+    .sort((a, b) => a.tailleMinMm - b.tailleMinMm
+      || a.support.localeCompare(b.support, 'fr'));
+
+  return {
+    etat: 'tailles',
+    parSupport,
+    total: liste.length,
+    des: parSupport[0].tailleMinMm,
+    jusqu_a: parSupport[parSupport.length - 1].tailleMinMm,
+  };
+}

@@ -17,7 +17,8 @@
  * et il dit CE QUI MANQUE, pas seulement qu'il manque quelque chose.
  */
 
-import { LIBELLES, LIBELLES_SITUATION, direCritere, direBase, direSituation } from './formulation.js';
+import { LIBELLES, direCritere, direBase, direTailles, direCouleurs, etiquetteTailles }
+  from './formulation.js';
 
 const CLASSE = {
   favorable: 'verdict-favorable',
@@ -42,12 +43,12 @@ const echapper = (t) => String(t)
  * qu'on voie ce qui a ete pese a cote de ce qui ne l'a pas ete.
  */
 function rendreCriteres(t) {
-  // Quand une SITUATION existe, le trait est deja traite juste au dessus, avec
-  // ses sources. Le repli ne doit donc plus le compter parmi les inconnus,
-  // sinon la carte se contredit en trois lignes : elle situe le trait sur
-  // vingt-et-une matieres, puis annonce qu'aucun critere n'est documente.
-  // C'est exactement ce qu'elle faisait le 19/08 au premier essai.
-  const situe = Boolean(t.situation?.valeurs?.length);
+  // Quand une TAILLE est calculee, le trait est deja traite juste au dessus,
+  // avec ses sources. Le repli ne doit donc plus le compter parmi les
+  // inconnus, sinon la carte se contredit en trois lignes : elle donne une
+  // taille calculee sur vingt-et-une matieres, puis annonce qu'aucun critere
+  // n'est documente. C'est ce qu'elle faisait le 19/08 au premier essai.
+  const situe = ['tailles', 'sans_trait'].includes(t.situation?.etat);
   const restants = situe ? t.criteres.filter((c) => c.cle !== 'trait_minimal') : t.criteres;
 
   const tousInconnus = restants.every((c) => c.etat_verdict === 'inconnu');
@@ -68,36 +69,39 @@ function rendreCriteres(t) {
 }
 
 /**
- * LE TABLEAU DES MINIMUMS PUBLIES.
+ * LE TABLEAU DES TAILLES PAR MATIERE.
  *
  * Il est replie par defaut, et c'est un arbitrage de lecture, pas un moyen de
- * cacher. Un visiteur veut d'abord savoir ou il se situe ; celui qui veut
- * verifier, ou envoyer la ligne a son marqueur, deplie et trouve la matiere,
- * la source, la date et le lien. C'est la definition d'une valeur SOURCEE :
- * elle se re-verifie sans nous.
+ * cacher. Un visiteur veut d'abord la reponse ; celui qui veut verifier, ou
+ * envoyer la ligne a son marqueur, deplie et trouve la matiere, le minimum
+ * publie qui a servi au calcul, la source, la date et le lien. C'est la
+ * definition d'une valeur SOURCEE : elle se re-verifie sans nous.
+ *
+ * La colonne de tete est la TAILLE CALCULEE POUR CE LOGO, pas le minimum
+ * publie : c'est elle que le visiteur cherche. Le minimum publie reste dans sa
+ * colonne, parce que c'est lui qui se verifie chez la source.
  */
 function rendreMinimums(s) {
-  if (!s?.valeurs?.length) return '';
-  const lignes = s.valeurs.map((v) => {
-    const tient = s.mesure !== null && s.mesure !== undefined && Number.isFinite(s.mesure)
-      ? (s.mesure >= v.mm ? 'oui' : 'non') : '';
+  if (s?.etat !== 'tailles' || !s.parSupport?.length) return '';
+  const lignes = s.parSupport.map((v) => {
     const source = v.url
       ? `<a href="${echapper(v.url)}" rel="nofollow noopener" target="_blank">${echapper(v.source)}</a>`
       : echapper(v.source);
-    return `<tr${tient === 'non' ? ' class="ne-tient-pas"' : ''}>
-      <td class="mm">${echapper(mmTexte(v.mm))}</td>
+    return `<tr>
       <td>${echapper(v.support)}</td>
+      <td class="mm">dès ${echapper(String(v.tailleMinMm))} mm de large</td>
+      <td class="mm">${echapper(mmTexte(v.mm))}</td>
       <td>${source}</td>
       <td class="date">${echapper(v.date)}</td>
-      ${tient ? `<td class="tient">${tient}</td>` : ''}
     </tr>`;
   }).join('');
-  const enTeteTient = s.mesure !== null && s.mesure !== undefined && Number.isFinite(s.mesure)
-    ? '<th>votre trait tient</th>' : '';
   return `<details class="minimums">
-  <summary>Voir les ${s.total} minimums publiés, avec leurs sources</summary>
-  <table><thead><tr><th>minimum</th><th>matière nommée par la source</th>
-    <th>source</th><th>relevé le</th>${enTeteTient}</tr></thead>
+  <summary>Le détail par matière, avec les sources (${s.parSupport.length} matières)</summary>
+  <p class="note-calcul">La taille « dès NN mm » est calculée pour VOTRE logo : c'est la
+  largeur de marquage à partir de laquelle son trait le plus fin atteint le minimum
+  publié par la source.</p>
+  <table><thead><tr><th>matière</th><th>marquez ce logo</th>
+    <th>trait minimal publié</th><th>source</th><th>relevé le</th></tr></thead>
   <tbody>${lignes}</tbody></table>
 </details>`;
 }
@@ -110,16 +114,19 @@ export function rendreTechnique(t) {
   const criteres = rendreCriteres(t);
   const base = direBase(t.base);
   const s = t.situation;
-  // L'etiquette dit ce qu'on SAIT. Tant qu'aucune valeur ne servait, c'etait
-  // « nous ne savons pas encore » sept fois de suite, et un visiteur en
-  // concluait que l'outil ne savait rien alors qu'il venait de mesurer son
-  // fichier au centieme. Des qu'une situation existe, c'est elle qui parle.
-  const etiquette = s ? LIBELLES_SITUATION[s.etat] : LIBELLES[t.etat];
-  const phrase = s ? direSituation(s, s.matieresQuiTiennent, s.matieresQuiNon) : null;
+  // L'etiquette repond en quatre mots : « dès 19 mm de large ». Les anciennes
+  // etiquettes, « tient les minimums publiés », « tient sur une partie des
+  // matières », decrivaient notre comparaison au lieu de la decision du
+  // visiteur ; Alex les a retirees le 20/08.
+  const etiquette = s ? etiquetteTailles(s, t.verdictLargeur, t.largeurDonneeMm)
+                      : LIBELLES[t.etat];
+  const phrase = s ? direTailles(s, t.verdictLargeur, t.largeurDonneeMm) : null;
+  const couleurs = s ? direCouleurs(t.technique, t.nCouleurs) : null;
   return `<article class="technique ${CLASSE[t.etat]}">
   <h3>${echapper(t.libelle)}<span class="etiquette">${echapper(etiquette)}</span></h3>
   ${base ? `<p class="base">${echapper(base)}</p>` : ''}
   ${phrase ? `<p class="situation">${echapper(phrase)}</p>` : ''}
+  ${couleurs ? `<p class="couleurs-technique">${echapper(couleurs)}</p>` : ''}
   ${rendreMinimums(s)}
   <ul class="criteres">${criteres}</ul>
 </article>`;
@@ -131,29 +138,37 @@ export function rendreTechnique(t) {
  * explication conclut que l'outil est casse, alors qu'il est honnete.
  */
 export function rendreEntete(verdict) {
-  const { favorables, defavorables, inconnues, total, situees,
-          tiennentPartout, tiennentEnPartie, neTiennentPas, sansMesure } = verdict.resume;
+  const { favorables, defavorables, inconnues, total, situees, sansTrait,
+          parTaille } = verdict.resume;
 
-  // Le bandeau depuis que les valeurs sourcees servent. Il annonce ce que la
-  // page va dire, et il dit d'ou ca vient, parce qu'un chiffre de marquage
-  // sans provenance est exactement ce que ce site existe pour ne pas faire.
-  if (situees) {
-    if (sansMesure === total) {
-      return `<div class="encadre">
-  <p><b>Voici ce que publient les marqueurs.</b> Nous avons relevé les épaisseurs
-  minimales publiées par des fabricants et des ateliers, technique par technique
-  et matière par matière. Chaque valeur porte sa source et sa date.</p>
-  <p>Indiquez plus haut la largeur à laquelle vous comptez marquer votre logo,
-  et nous vous dirons où votre trait se situe dans ces valeurs.</p>
-</div>`;
-    }
+  // Le bandeau depuis l'inversion du 20/08. Il donne la reponse d'usage tout
+  // de suite : les techniques les plus accessibles avec LEUR taille, calculee
+  // pour ce logo, puis la plus exigeante. Chaque chiffre vient d'une valeur
+  // sourcee, la provenance est dans les cartes.
+  if (situees && parTaille?.length) {
+    const dire = (e) => `${echapper(e.libelle)} dès ${e.des} mm`;
+    const accessibles = parTaille.slice(0, 3).map(dire);
+    const exigeante = parTaille[parTaille.length - 1];
+    const suite = parTaille.length > 3
+      ? ` La plus exigeante pour ce logo : ${dire(exigeante).toLowerCase()},`
+        + ` sur ${echapper(String(exigeante.support).split(',')[0].trim())}.`
+      : '';
     return `<div class="encadre">
-  <p><b>Votre trait tient partout sur ${tiennentPartout} technique${tiennentPartout > 1 ? 's' : ''},
-  en partie sur ${tiennentEnPartie}, et sur aucune matière relevée pour ${neTiennentPas}.</b></p>
-  <p>Nous ne vous donnons pas un seuil unique par technique, parce qu'il n'en existe pas :
-  une sérigraphie ne demande pas la même finesse sur un sac plastique et sur de la toile
-  de jute. Nous comparons donc matière par matière, avec les valeurs publiées par les
-  fabricants eux mêmes. Dépliez le tableau d'une technique pour voir qui publie quoi.</p>
+  <p><b>Voici à quelle taille, et sur quoi, marquer ce logo.</b>
+  Les plus accessibles : ${accessibles.join(', ')} de large.${suite}</p>
+  <p>Ces tailles sont calculées pour votre logo, à partir de son trait le plus fin
+  et des minimums publiés par les fabricants, matière par matière. Chaque carte
+  ci-dessous donne le détail, avec les sources.</p>
+</div>`;
+  }
+
+  // Un logo fait d'aplats : aucune taille a calculer, et c'est une bonne
+  // nouvelle qu'il faut dire comme telle.
+  if (sansTrait === total && total > 0) {
+    return `<div class="encadre">
+  <p><b>Votre logo est fait d'aplats, sans trait fin.</b> Les finesses minimales
+  publiées par les fabricants ne le limitent pas : côté épaisseur de trait, il
+  passe à toutes les tailles, sur toutes les techniques relevées.</p>
 </div>`;
   }
 
@@ -173,7 +188,7 @@ export function rendreEntete(verdict) {
 }
 
 export function rendreVerdict(verdict) {
-  return `<h2>Le diagnostic par technique</h2>
+  return `<h2>Sur quoi marquer ce logo, et à partir de quelle taille</h2>
 ${rendreEntete(verdict)}
 <div class="techniques-verdict">
 ${verdict.techniques.map(rendreTechnique).join('\n')}

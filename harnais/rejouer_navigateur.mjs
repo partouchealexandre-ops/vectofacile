@@ -79,9 +79,13 @@ function servir() {
       // harnais qui depend d'un etat local n'est pas un harnais, c'est une
       // habitude. Il lit maintenant le dossier que le generateur ecrit, celui
       // la meme que les deux autres harnais utilisent.
+      // Une URL de dossier sert son index.html, comme le ferait l'hebergeur.
+      // Necessaire depuis que /vectoriser/ existe a cote de /.
+      let chemin = url === '/' ? 'index.html' : url;
+      if (chemin.endsWith('/')) chemin += 'index.html';
       const fichier = url.startsWith('/apercus/')
         ? path.join(IMAGES, url.slice('/apercus/'.length))
-        : path.join(PUBLIC, url === '/' ? 'index.html' : url);
+        : path.join(PUBLIC, chemin);
       const autorise = fichier.startsWith(PUBLIC) || fichier.startsWith(IMAGES);
       if (!autorise || !fs.existsSync(fichier) || fs.statSync(fichier).isDirectory()) {
         // Un 404 sur une ressource du harnais est une faute du harnais, pas un
@@ -594,18 +598,18 @@ console.log('');
 }
 
 // ---------------------------------------------------------------------------
-// LE DIAGNOSTIC DIT ENFIN QUELQUE CHOSE, ET IL LE DIT AVEC SES SOURCES.
+// LE DIAGNOSTIC REPOND EN LANGAGE D'USAGE, SANS RIEN DEMANDER.
 //
-// Pendant deux jours ce bloc affichait sept fois « nous ne savons pas encore ».
-// La cause supposee etait l'absence d'un seuil arbitre par technique. C'etait
-// une hypothese, et elle etait fausse : la doctrine sert aussi les valeurs
-// SOURCEES, il y en a soixante-deux, et elles n'attendaient qu'une question
-// mieux posee. Pas « quel est LE seuil », qui n'a pas de reponse honnete, mais
-// « sur quelles matieres ce trait tient-il ».
+// Inversion du 20/08 : la version precedente attendait que le visiteur donne
+// une largeur de marquage pour situer son trait. Alex a tranche : il ne la
+// connait presque jamais. Desormais les tailles minimales par matiere sont
+// CALCULEES pour le logo depose, des le depot, sans aucune saisie, et la
+// saisie ne fait plus qu'affiner.
 //
 // Ce controle passe par le vrai chemin, celui du visiteur : on depose un
-// fichier, on donne une largeur de marquage, et on verifie que le bloc nomme
-// des matieres et pointe vers des sources verifiables.
+// fichier, on ne saisit RIEN, et on verifie que le bloc repond deja avec des
+// tailles, des matieres et des sources verifiables. Puis on saisit une taille
+// et on verifie qu'elle affine au lieu d'etre une condition.
 {
   const page = await navigateur.newPage();
   await page.goto(`http://127.0.0.1:${PORT}/`, { waitUntil: 'networkidle' });
@@ -615,43 +619,111 @@ console.log('');
     const fichier = new File(
       [Uint8Array.from(atob(b64), (c) => c.charCodeAt(0))], 'trait.png', { type: 'image/png' });
     await globalThis.vecto.traiter(fichier);
-    const avant = document.getElementById('verdict').innerText;
-    const champ = document.getElementById('largeur_mm');
-    champ.value = '30';
-    champ.dispatchEvent(new Event('input', { bubbles: true }));
-    await new Promise((r) => setTimeout(r, 400));
     const bloc = document.getElementById('verdict');
-    return {
-      avant,
-      apres: bloc.innerText,
+    const avant = {
+      texte: bloc.innerText,
       cartes: bloc.querySelectorAll('article.technique').length,
       etiquettes: [...bloc.querySelectorAll('.etiquette')].map((e) => e.textContent.trim()),
       liens: bloc.querySelectorAll('.minimums a[href^="https://"]').length,
       lignes: bloc.querySelectorAll('.minimums tbody tr').length,
     };
+    const champ = document.getElementById('largeur_mm');
+    champ.value = '30';
+    champ.dispatchEvent(new Event('input', { bubbles: true }));
+    await new Promise((r) => setTimeout(r, 400));
+    return {
+      avant,
+      apres: document.getElementById('verdict').innerText,
+    };
   }, octets.toString('base64'));
   await page.close();
 
-  const toutesIdentiques = new Set(constat.etiquettes).size === 1;
+  const av = constat.avant;
+  const toutesIdentiques = new Set(av.etiquettes).size === 1;
+  // Le jargon du 19/08 est interdit de retour, et le detecteur est verifie par
+  // un temoin : une chaine qui le contient DOIT etre attrapee. Lecon des deux
+  // controles negatifs rates : on prouve l'injection avant de conclure.
+  const JARGON = /tient les minimums publiés|tient sur une partie des matières|donnez une largeur de marquage/i;
+  const temoinAttrape = JARGON.test(av.texte + ' tient les minimums publiés');
 
   console.log('');
-  console.log('  LE DIAGNOSTIC DIT QUELQUE CHOSE, AVEC SES SOURCES');
+  console.log('  LE DIAGNOSTIC REPOND EN LANGAGE D\'USAGE, SANS RIEN DEMANDER');
   console.log('  ' + '-'.repeat(66));
   for (const [libelle, ok] of [
-    ['sans largeur, le bloc invite a en donner une',
-      /largeur/i.test(constat.avant) && !/sur aucune matière/.test(constat.avant)],
-    ['avec une largeur, les sept techniques sont situees', constat.cartes === 7],
-    ['elles ne disent PAS toutes la meme chose', toutesIdentiques === false],
+    ['sans aucune saisie, les sept techniques ont deja leur carte', av.cartes === 7],
+    ['sans aucune saisie, des tailles « dès NN mm » sont affichees',
+      /dès \d+ mm de large/.test(av.texte)],
+    ['le bloc ne reclame plus de largeur au visiteur',
+      !/donnez une largeur|indiquez la largeur/i.test(av.texte)],
+    ['aucune etiquette jargon du 19/08', !JARGON.test(av.texte)],
+    ['(temoin) le detecteur de jargon detecte bien', temoinAttrape],
+    ['les cartes ne disent PAS toutes la meme chose', toutesIdentiques === false],
     ['aucune ne dit plus « nous ne savons pas encore »',
-      !constat.etiquettes.includes('nous ne savons pas encore')],
-    ['les minimums publies sont dans la page, ligne par ligne', constat.lignes >= 50],
-    ['chaque minimum pointe vers une source verifiable', constat.liens >= 20],
+      !av.etiquettes.includes('nous ne savons pas encore')],
+    // 56 matieres distinctes portent chacune leur ligne : une par matiere, la
+    // source la plus exigeante. Le compte exact vit dans le harnais du
+    // verdict ; ici on controle que la page les affiche bien.
+    ['les tailles par matiere sont dans la page, ligne par ligne', av.lignes >= 40],
+    ['chaque ligne pointe vers une source verifiable', av.liens >= 20],
+    // La saisie AFFINE : a 30 mm, ce logo est sous la taille calculee d'au
+    // moins une technique, et la page le dit en langage d'usage.
+    ['une taille saisie affine la reponse au lieu d\'etre une condition',
+      /À 30 mm/.test(constat.apres)],
   ]) {
     console.log(`  ${ok ? 'ok   ' : 'ECHEC'} ${libelle}`);
     if (!ok) echecs++;
   }
-  console.log(`         ${constat.lignes} minimums affiches, ${constat.liens} liens de source`);
-  for (const e of [...new Set(constat.etiquettes)]) console.log(`         ${e}`);
+  console.log(`         ${av.lignes} lignes affichees, ${av.liens} liens de source`);
+  for (const e of [...new Set(av.etiquettes)]) console.log(`         ${e}`);
+  console.log('  ' + '-'.repeat(66));
+  console.log('');
+}
+
+// ---------------------------------------------------------------------------
+// LA PAGE /VECTORISER NE FAIT QU'UNE CHOSE, ET ELLE LA FAIT.
+//
+// Arbitrage Alex du 20/08 : « la page vectoriser mon logo doit être épurée et
+// délivrer juste son but ». On depose une image sur /vectoriser : les
+// telechargements apparaissent, et RIEN du diagnostic n'existe dans la page,
+// ni fiche, ni couleurs, ni verdict, ni mesures. Pas seulement caches :
+// absents du document.
+{
+  const page = await navigateur.newPage();
+  await page.goto(`http://127.0.0.1:${PORT}/vectoriser/`, { waitUntil: 'networkidle' });
+  await page.waitForTimeout(900);
+  const octets = fs.readFileSync(path.join(IMAGES, 'trait_09px.png'));
+  const constat = await page.evaluate(async (b64) => {
+    const fichier = new File(
+      [Uint8Array.from(atob(b64), (c) => c.charCodeAt(0))], 'trait.png', { type: 'image/png' });
+    await globalThis.vecto.traiter(fichier);
+    return {
+      mode: document.body.dataset.mode,
+      telechargements: document.getElementById('telechargements').hidden === false,
+      apercu: document.getElementById('apercu').querySelector('svg') !== null,
+      blocsDiagnostic: ['fiche', 'couleurs', 'verdict', 'conseils', 'mesures', 'largeur']
+        .filter((id) => document.getElementById(id) !== null),
+      programme: globalThis.vecto.etat().programme !== null,
+    };
+  }, octets.toString('base64'));
+  await page.close();
+
+  console.log('');
+  console.log('  LA PAGE /VECTORISER NE FAIT QU\'UNE CHOSE');
+  console.log('  ' + '-'.repeat(66));
+  for (const [libelle, ok] of [
+    ['la page porte son mode vectoriser', constat.mode === 'vectoriser'],
+    ['une image deposee est vectorisee et les telechargements apparaissent',
+      constat.telechargements === true && constat.programme === true],
+    ['l\'apercu du trace est affiche', constat.apercu === true],
+    ['aucun bloc de diagnostic n\'existe dans le document',
+      constat.blocsDiagnostic.length === 0],
+  ]) {
+    console.log(`  ${ok ? 'ok   ' : 'ECHEC'} ${libelle}`);
+    if (!ok) echecs++;
+  }
+  if (constat.blocsDiagnostic.length) {
+    console.log(`         blocs trouves : ${constat.blocsDiagnostic.join(', ')}`);
+  }
   console.log('  ' + '-'.repeat(66));
   console.log('');
 }

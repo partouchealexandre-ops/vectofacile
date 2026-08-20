@@ -44,12 +44,13 @@
          celui des autres pages, alors que c'etait le seul different. -->
     <!-- DEUX ACTIONS, PAS UNE, arbitrage Alex du 20/08 : vectoriser et
          evaluer sont deux choses differentes, et la vectorisation gratuite
-         est l'appat qui amene au diagnostic. Les deux menent au meme depot,
-         parce que le visiteur n'a pas a choisir un mode : c'est le fichier
-         qui decide du chemin. -->
+         est l'appat qui amene au diagnostic. DEUX PAGES aussi, depuis le
+         second arbitrage du meme jour : les ancres #depot faisaient atterrir
+         le visiteur au milieu de la page. Chaque bouton mene en HAUT de la
+         page qui tient sa promesse, et une seule. -->
     <div class="droite">
-      <a class="cta-secondaire" href="#depot">Évaluer votre logo</a>
-      <a class="cta-entete" href="#depot" id="retour_outil">Vectoriser mon logo</a>
+      <a class="cta-secondaire" href="/">Évaluer votre logo</a>
+      <a class="cta-entete" href="/vectoriser" id="retour_outil">Vectoriser mon logo</a>
     </div>
   </header>
 
@@ -82,31 +83,9 @@
        avertissement, c'est une note de bas de page. -->
   <div id="avertissements" hidden></div>
 
-  <!-- LA LARGEUR DE MARQUAGE.
-       Le moteur mesure en pixels, et un atelier parle en millimetres. La
-       conversion est une simple regle de trois, mais elle demande une donnee
-       que le fichier ne contient pas : la largeur a laquelle le logo sera
-       marque. Tant que le visiteur ne la donne pas, tout reste en pixels et
-       la page le dit, plutot que d'inventer une taille par defaut.
-
-       Le balisage est STATIQUE, comme celui des boutons de telechargement :
-       l'ecouteur est branche une fois, et la remise a zero masque ce bloc sans
-       jamais toucher a son contenu. -->
   <!-- La fiche d'un fichier DEJA vectoriel. Elle precede les mesures : « votre
        PDF ne contient qu'une image » rend tout le reste secondaire. -->
   <section id="fiche" hidden></section>
-
-  <section id="largeur" hidden>
-    <h2>Sur quelle largeur allez-vous marquer ce logo ?</h2>
-    <p class="note">Un atelier raisonne en millimètres, votre fichier est en pixels.
-    Donnez la largeur du marquage et toutes les mesures ci-dessous se convertissent.
-    Sans cette information, elles restent en pixels : nous préférons ça à une taille
-    inventée.</p>
-    <label for="largeur_mm">Largeur du marquage</label>
-    <input type="number" id="largeur_mm" min="1" max="1000" step="1" inputmode="numeric"
-           placeholder="par exemple 40">
-    <span class="unite">mm</span>
-  </section>
 
   <!-- L'ORDRE DE LECTURE, arbitrage Alex du 20/08. D'abord ce que le
        visiteur vient chercher : ses couleurs, le verdict par technique, les
@@ -115,6 +94,28 @@
        entier pour qui le cherche, il ne barre plus la route a personne. -->
   <section id="couleurs" hidden></section>
   <section id="verdict" hidden></section>
+
+  <!-- LA LARGEUR DE MARQUAGE, RETROGRADEE EN FACULTATIF, 20/08.
+       Elle etait posee AVANT le verdict, comme une condition : le visiteur
+       devait donner une taille qu'il ne connait presque jamais. Depuis
+       l'inversion, c'est l'outil qui calcule a partir de quelle taille le
+       logo passe, sans rien demander. Le champ reste, APRES le verdict,
+       pour qui connait sa taille : il affine alors les cartes du diagnostic.
+
+       Le balisage est STATIQUE, comme celui des boutons de telechargement :
+       l'ecouteur est branche une fois, et la remise a zero masque ce bloc sans
+       jamais toucher a son contenu. -->
+  <section id="largeur" hidden>
+    <h2>Vous connaissez la taille de votre marquage ? (facultatif)</h2>
+    <p class="note">Pas besoin de la connaître : chaque technique affiche déjà la taille
+    calculée pour votre logo. Mais si vous la connaissez, donnez-la, et nous vous
+    dirons directement si ça passe à cette taille, matière par matière.</p>
+    <label for="largeur_mm">Largeur du marquage</label>
+    <input type="number" id="largeur_mm" min="1" max="1000" step="1" inputmode="numeric"
+           placeholder="par exemple 40">
+    <span class="unite">mm</span>
+  </section>
+
   <section id="conseils" hidden></section>
 
   <section id="resultat" hidden></section>

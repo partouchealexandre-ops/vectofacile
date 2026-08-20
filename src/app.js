@@ -27,6 +27,22 @@ import { initialiser, vectorize_rgba } from './vectorisation/vtracer_web.js';
 
 const $ = (id) => document.getElementById(id);
 
+/**
+ * DEUX PAGES, UN SEUL SCRIPT, arbitrage Alex du 20/08.
+ *
+ * « Vectoriser mon logo » et « Évaluer votre logo » sont deux promesses
+ * differentes, donc deux pages. La page /vectoriser porte
+ * data-mode="vectoriser" sur son body : elle depose, vectorise, livre les
+ * fichiers, et RIEN d'autre. Pas de fiche, pas de couleurs, pas de verdict,
+ * pas de mesures : ce serait re-melanger ce qu'on vient de separer.
+ *
+ * Le script reste unique parce que la chaine de traitement est la meme ; seule
+ * la restitution change. Les blocs de diagnostic n'existent pas dans le HTML
+ * de /vectoriser, et chaque acces a un bloc est donc garde : un identifiant
+ * absent est un choix de page, pas une erreur.
+ */
+const modeVectoriser = () => document.body?.dataset?.mode === 'vectoriser';
+
 let etat = { nom: null, image: null, fiche: null, mesures: null, programme: null, avertissements: [] };
 
 function texte(valeur, unite = '') {
@@ -256,7 +272,7 @@ async function afficherVerdict(mesures) {
     valeurs = await chargerValeurs().catch(() => null);
   } catch (e) {
     $('verdict').innerHTML = `
-      <h2>Le diagnostic par technique</h2>
+      <h2>Sur quoi marquer ce logo, et à partir de quelle taille</h2>
       <p class="gris">Nous n'avons pas pu charger nos seuils de marquage
       (${String(e.message)}). Vos mesures ci-dessus restent valables : elles
       décrivent votre fichier et ne dépendent d'aucun seuil.</p>`;
@@ -289,8 +305,11 @@ async function afficherVerdict(mesures) {
  * du suivant. Ni a l'ecran, ni en memoire.
  */
 function reinitialiser() {
-  // Ces blocs sont REMPLIS par le traitement : on les vide.
-  for (const id of ['erreur', 'avertissements', 'mesures', 'verdict', 'resultat']) {
+  // Ces blocs sont REMPLIS par le traitement : on les vide. Ceux qui
+  // n'existent pas sur la page courante (/vectoriser n'a pas de diagnostic)
+  // sont simplement ignores.
+  for (const id of ['erreur', 'avertissements', 'mesures', 'verdict', 'resultat',
+                    'couleurs', 'fiche', 'conseils']) {
     const e = $(id);
     if (e) { e.hidden = true; e.innerHTML = ''; }
   }
@@ -303,14 +322,10 @@ function reinitialiser() {
   $('telechargements').hidden = true;
   // Meme raison pour la largeur de marquage : son champ et son ecouteur sont
   // poses une seule fois au demarrage. On masque la section, on ne la vide pas.
-  $('largeur').hidden = true;
-  $('couleurs').hidden = true;
-  $('couleurs').innerHTML = '';
-  $('fiche').hidden = true;
-  $('fiche').innerHTML = '';
-  $('conseils').hidden = true;
-  $('conseils').innerHTML = '';
-  $('apercu').innerHTML = '';
+  const largeur = $('largeur');
+  if (largeur) largeur.hidden = true;
+  const apercu = $('apercu');
+  if (apercu) apercu.innerHTML = '';
   etat = { nom: null, image: null, fiche: null, mesures: null, programme: null, svg: null, avertissements: [] };
 }
 
@@ -454,12 +469,20 @@ async function traiter(fichier) {
     etat.image = image;
     etat.mesures = mesures;
     etat.nom = (fichier.name || 'logo').replace(/\.[^.]+$/, '');
-    $('largeur').hidden = false;
-    afficherFiche(etat.fiche);
-    afficherCouleurs(mesures);
-    afficherMesures(mesures, image);
-    afficherConseils(mesures, etat.fiche);
-    await afficherVerdict(mesures);
+
+    // SUR /VECTORISER, PAS DE DIAGNOSTIC. La page promet une seule chose,
+    // vectoriser, et elle ne fait que ca. Les mesures ont quand meme eu lieu :
+    // la vectorisation en a besoin pour choisir ses options et pour refuser ce
+    // qui doit l'etre.
+    if (!modeVectoriser()) {
+      const largeur = $('largeur');
+      if (largeur) largeur.hidden = false;
+      afficherFiche(etat.fiche);
+      afficherCouleurs(mesures);
+      afficherMesures(mesures, image);
+      afficherConseils(mesures, etat.fiche);
+      await afficherVerdict(mesures);
+    }
 
     // UN FICHIER DEJA VECTORIEL S'ARRETE ICI, et c'est le coeur de la
     // separation des deux metiers. Il a ete mesure, situe, conseille. On ne
@@ -467,6 +490,17 @@ async function traiter(fichier) {
     // propre vectoriel serait lui rendre une copie degradee de ce qu'il a
     // deja.
     if (nature === 'pdf') {
+      // Sur /vectoriser, il faut le DIRE : la page n'affiche pas de fiche, et
+      // un depot qui ne produit rien ressemblerait a une panne. Ce fichier n'a
+      // pas besoin d'etre vectorise, et c'est une bonne nouvelle.
+      if (modeVectoriser()) {
+        $('resultat').innerHTML = `
+          <h2>Ce fichier est déjà vectoriel</h2>
+          <p class="gris">Il n'y a rien à vectoriser : vous avez déjà ce que cette page
+          fabrique. Pour savoir sur quoi et à quelle taille le marquer,
+          <a href="/">évaluez votre logo</a>.</p>`;
+        $('resultat').hidden = false;
+      }
       $('travail').hidden = true;
       return;
     }
@@ -569,8 +603,8 @@ function brancher() {
   // La largeur de marquage re-mesure a la volee. On ecoute `input` et non
   // `change` : le visiteur voit ses millimetres bouger pendant qu'il tape, ce
   // qui est la seule facon de comprendre du premier coup que ce champ commande
-  // toutes les valeurs en dessous.
-  $('largeur_mm').addEventListener('input', () => remesurer());
+  // toutes les valeurs en dessous. Le champ n'existe pas sur /vectoriser.
+  $('largeur_mm')?.addEventListener('input', () => remesurer());
 
   $('telecharger_eps').addEventListener('click', () => {
     telecharger(versEps(etat.programme, { titre: etat.nom }), `${etat.nom}.eps`, 'application/postscript');
@@ -605,7 +639,10 @@ function brancher() {
 let promesseVectoriseur = null;
 function chargerVectoriseur() {
   if (!promesseVectoriseur) {
-    promesseVectoriseur = initialiser(new URL('./vtracer_wasm_bg.wasm', document.baseURI));
+    // Chemin ABSOLU : avec `document.baseURI`, la page /vectoriser/ demandait
+    // /vectoriser/vtracer_wasm_bg.wasm, qui n'existe pas. Le fichier est
+    // unique et vit a la racine, l'URL doit le dire.
+    promesseVectoriseur = initialiser(new URL('/vtracer_wasm_bg.wasm', document.baseURI));
   }
   return promesseVectoriseur;
 }

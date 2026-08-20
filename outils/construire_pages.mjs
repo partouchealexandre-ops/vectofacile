@@ -122,10 +122,13 @@ function entete(urlCourante, publiees) {
   const liens = RUBRIQUES.filter((r) => publiees.has(r.url)).map((r) =>
     `<a href="${r.url}"${urlCourante.startsWith(r.url) && r.url !== '/' ? ' aria-current="page"' : ''}>${r.titre}</a>`
   ).join('');
+  // DEUX ACTIONS, DEUX PAGES, arbitrage Alex du 20/08 : evaluer et vectoriser
+  // sont deux promesses differentes. Chaque bouton mene en HAUT de sa page,
+  // jamais vers une ancre qui ferait atterrir au milieu.
   return `<header class="entete">
   <a class="lockup" href="/">${symbole}<span class="mot">Vecto<br>Facile</span></a>
   <nav class="nav-site">${liens}</nav>
-  <div class="droite"><a class="cta-entete" href="/">Évaluer votre logo</a></div>
+  <div class="droite"><a class="cta-secondaire" href="/">Évaluer votre logo</a><a class="cta-entete" href="/vectoriser">Vectoriser mon logo</a></div>
 </header>`;
 }
 
@@ -401,7 +404,10 @@ for (const p of pages) {
   }
 }
 
-const publiees = new Set([...vues, '/']);
+// /vectoriser est, comme l'accueil, une page d'outil : elle a son gabarit dans
+// contenu/ et n'entre pas dans `pages`, mais elle est bien publiee, et les
+// liens qui pointent vers elle sont legitimes.
+const publiees = new Set([...vues, '/', '/vectoriser']);
 
 // Integrite des liens de navigation. Un lien d'entete ou de pied vers une 404
 // est la faute la plus visible d'un site. On tolere le lien vers une page non
@@ -447,6 +453,30 @@ if (!REPERES.test(accueil)) {
 }
 fs.writeFileSync(path.join(PUBLIC, 'index.html'),
   accueil.replace(REPERES, entete('/', publiees)
+    .match(/<nav class="nav-site">[\s\S]*?<\/nav>/)[0]));
+
+/**
+ * LA PAGE /VECTORISER, seconde page d'outil, generee comme l'accueil.
+ *
+ * Arbitrage Alex du 20/08 : vectoriser et evaluer sont deux promesses
+ * differentes, donc deux pages. Celle-ci est epuree, elle ne fait que
+ * vectoriser ; c'est son body data-mode="vectoriser" que src/app.js lit pour
+ * ne pas afficher le diagnostic. Meme discipline que l'accueil : la
+ * navigation est injectee entre les memes reperes, depuis la meme source.
+ */
+const vectoriser = fs.readFileSync(path.join(RACINE, 'contenu', 'vectoriser.html'), 'utf-8');
+if (!REPERES.test(vectoriser)) {
+  console.error('  contenu/vectoriser.html ne porte plus ses reperes de navigation.');
+  process.exit(1);
+}
+if (!/data-mode="vectoriser"/.test(vectoriser)) {
+  console.error('  contenu/vectoriser.html a perdu son data-mode="vectoriser" :');
+  console.error('  la page afficherait le diagnostic complet qu\'elle promet de ne pas faire.');
+  process.exit(1);
+}
+fs.mkdirSync(path.join(PUBLIC, 'vectoriser'), { recursive: true });
+fs.writeFileSync(path.join(PUBLIC, 'vectoriser', 'index.html'),
+  vectoriser.replace(REPERES, entete('/vectoriser', publiees)
     .match(/<nav class="nav-site">[\s\S]*?<\/nav>/)[0]));
 
 fs.writeFileSync(path.join(PUBLIC, 'vecto.css'), STYLE);
@@ -524,6 +554,7 @@ if (nonIgnorees.length > 0) {
 const sitemap = ['<?xml version="1.0" encoding="UTF-8"?>',
   '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
   `<url><loc>${DOMAINE}/</loc></url>`,
+  `<url><loc>${DOMAINE}/vectoriser</loc></url>`,
   ...pages.map((p) => `<url><loc>${DOMAINE}${p.url}</loc></url>`),
   '</urlset>', ''].join('\n');
 fs.writeFileSync(path.join(PUBLIC, 'sitemap.xml'), sitemap);

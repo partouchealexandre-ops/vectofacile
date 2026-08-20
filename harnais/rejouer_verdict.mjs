@@ -34,11 +34,21 @@ const SEUILS = JSON.parse(fs.readFileSync(
 const VALEURS = JSON.parse(fs.readFileSync(
   path.join(ICI, '..', 'src', 'verdict', 'valeurs_sourcees.json'), 'utf-8'));
 
-/** Un jeu de mesures propre, celui d'un logo qui n'a aucun probleme. */
+/**
+ * Un jeu de mesures propre, celui d'un logo qui n'a aucun probleme.
+ *
+ * Depuis l'inversion du 20/08, il porte AUSSI les pixels : le calcul des
+ * tailles minimales n'utilise que le trait en pixels et la largeur de
+ * l'image, jamais une taille saisie. Les millimetres restent la pour les
+ * criteres a seuil, et ils sont COHERENTS avec les pixels : 1,2 mm pour
+ * 12 px sur 1000 px de large, c'est un marquage saisi de 100 mm.
+ */
 function mesuresImpeccables() {
   return {
+    m1Dimensions: { largeurPx: 1000, hauteurPx: 1000 },
     m2Couleurs: { couleursReelles: 2 },
-    m5TraitLePlusFin: { encadrementMm: { basse: 1.2, haute: 1.4 } },
+    m5TraitLePlusFin: { encadrementPx: { basse: 12, haute: 14 },
+                        encadrementMm: { basse: 1.2, haute: 1.4 } },
     m6ContreFormes: { ecartMinimalMm: { basse: 1.5, haute: 1.7 } },
     m7HauteurDeCapitale: { hauteurMm: 6.0 },
   };
@@ -274,61 +284,150 @@ const controle = (libelle, ok, detail) => resultats.push({ libelle, ok, detail }
                  .every((v) => Number.isInteger(v.ligne_support)));
 }
 
-// LA SITUATION NE DOIT PAS DEVENIR UNE AUTORISATION.
+// L'INVERSION D'USAGE NE DOIT NI MENTIR NI DEVENIR UNE AUTORISATION.
 {
   const impeccable = mesuresImpeccables();
   const v = juger({ mesures: impeccable, seuils: SEUILS, valeurs: VALEURS });
   const parCle = Object.fromEntries(v.techniques.map((t) => [t.technique, t]));
 
-  controle('une situation est calculee pour chaque technique',
-           v.techniques.every((t) => t.situation !== null));
+  controle('une taille est calculee pour chaque technique, sans rien demander',
+           v.techniques.every((t) => t.situation?.etat === 'tailles'));
 
-  // 1,2 mm tient partout en serigraphie (max publie 1,00 mm) mais les trois
-  // autres criteres restent inconnus : la technique NE DOIT PAS passer au vert.
-  controle('un trait qui tient partout ne rend pas la technique favorable',
-           parCle.serigraphie.situation.etat === 'au_dessus'
-             && parCle.serigraphie.etat !== 'favorable');
+  // ATTENDU PAR CONSTRUCTION, calcule a la main et pas recopie d'une sortie :
+  // le minimum le plus accessible publie en serigraphie est 0,18 mm ; avec un
+  // trait de 12 px (borne BASSE de {12, 14}) sur 1000 px de large,
+  // 0,18 × 1000 / 12 = 15 mm tout rond. Si le code retenait la borne haute,
+  // il dirait ceil(180/14) = 13 mm, un conseil trop optimiste de 2 mm.
+  controle('la taille la plus accessible est calculee sur la borne basse du trait',
+           parCle.serigraphie.situation.des === 15,
+           `des=${parCle.serigraphie.situation.des}, attendu 15`);
+  // Le plus exigeant en serigraphie est 1,00 mm (toile de jute) :
+  // 1,00 × 1000 / 12 = 83,33, et l'arrondi doit etre SUPERIEUR : 84. Un
+  // arrondi au plus proche (83) conseillerait une taille ou le trait est
+  // encore sous le minimum publie.
+  controle('l\'arrondi de la taille est superieur, jamais au plus proche',
+           parCle.serigraphie.situation.jusqu_a === 84,
+           `jusqu_a=${parCle.serigraphie.situation.jusqu_a}, attendu 84`);
+  // Pour une meme matiere citee par plusieurs sources, la ligne servie est la
+  // PLUS EXIGEANTE. Invariant verifie sur le fichier reel, pas sur un attendu
+  // recopie : aucune valeur du fichier ne doit etre plus severe que la ligne
+  // retenue pour sa matiere.
+  const plusExigeantes = v.techniques.every((t) => {
+    const valeurs = VALEURS.techniques[t.technique]?.criteres?.trait_minimal?.valeurs ?? [];
+    return t.situation.parSupport.every((ligne) =>
+      valeurs.filter((x) => x.support.trim() === ligne.support.trim())
+             .every((x) => x.mm <= ligne.mm));
+  });
+  controle('pour une meme matiere, la source la plus exigeante est retenue', plusExigeantes);
 
-  // Un trait sous TOUS les minimums publies ferme la technique. C'est le
-  // premier verdict defavorable que ce site sait produire, et il repose
-  // uniquement sur des valeurs sourcees.
+  // Le jeu impeccable porte des millimetres coherents avec 100 mm saisis :
+  // 100 mm >= 84 mm, la taille saisie passe partout en serigraphie… et la
+  // technique NE DOIT PAS passer au vert pour autant, ses trois autres
+  // criteres restent inconnus.
+  controle('une taille saisie qui passe partout ne rend pas la technique favorable',
+           parCle.serigraphie.verdictLargeur === 'passe_partout'
+             && parCle.serigraphie.etat !== 'favorable',
+           `verdictLargeur=${parCle.serigraphie.verdictLargeur}`);
+
+  // Une taille saisie SOUS la plus accessible ferme la technique : c'est le
+  // seul verdict defavorable que l'inversion sait produire, et il repose
+  // uniquement sur des valeurs sourcees. 12 px sur 1000 px avec 0,12 mm de
+  // trait, c'est un marquage saisi de 10 mm, sous les 15 mm calcules.
   const fin = juger({
-    mesures: { ...impeccable, m5TraitLePlusFin: { encadrementMm: { basse: 0.05, haute: 0.06 } } },
+    mesures: { ...impeccable,
+               m5TraitLePlusFin: { encadrementPx: { basse: 12, haute: 14 },
+                                   encadrementMm: { basse: 0.12, haute: 0.14 } } },
     seuils: SEUILS, valeurs: VALEURS });
   const serFin = fin.techniques.find((t) => t.technique === 'serigraphie');
-  controle('un trait sous tous les minimums publies ferme la technique',
-           serFin.situation.etat === 'au_dessous' && serFin.etat === 'defavorable');
+  controle('une taille saisie sous la plus accessible ferme la technique',
+           serFin.verdictLargeur === 'trop_petit' && serFin.etat === 'defavorable',
+           `verdictLargeur=${serFin.verdictLargeur} etat=${serFin.etat}`);
 
-  // Sans largeur de marquage, il n'y a pas de millimetre, donc pas de
-  // situation : la page montre la plage publiee et ne juge rien.
-  const sansMm = juger({ mesures: { m5TraitLePlusFin: { encadrementPx: { basse: 9, haute: 9 } } },
-                         seuils: SEUILS, valeurs: VALEURS });
-  controle('sans largeur de marquage, aucune technique n\'est jugee',
-           sansMm.techniques.every((t) => t.situation.etat === 'sans_mesure')
-             && sansMm.resume.defavorables === 0);
+  // SANS AUCUNE SAISIE, les tailles s'affichent quand meme : c'est tout
+  // l'objet de l'inversion. Et sans saisie, rien n'est defavorable : une
+  // taille minimale n'est pas un refus, c'est un conseil.
+  const sansSaisie = juger({
+    mesures: { m1Dimensions: { largeurPx: 1000 },
+               m5TraitLePlusFin: { encadrementPx: { basse: 12, haute: 14 } } },
+    seuils: SEUILS, valeurs: VALEURS });
+  controle('sans taille saisie, les tailles sont calculees et rien n\'est refuse',
+           sansSaisie.techniques.every((t) => t.situation.etat === 'tailles'
+             && t.verdictLargeur === null)
+             && sansSaisie.resume.defavorables === 0);
+
+  // Un logo fait d'aplats, sans trait fin : pas de taille a calculer, et
+  // surtout pas de message qui reclamerait une saisie. Le badge du 20/08 a
+  // affiche « donnez une largeur » avec le champ deja rempli ; cet etat
+  // distinct existe pour que ca ne se reproduise pas.
+  const aplats = juger({
+    mesures: { m1Dimensions: { largeurPx: 1000 },
+               m5TraitLePlusFin: { encadrementPx: { basse: null, haute: null } } },
+    seuils: SEUILS, valeurs: VALEURS });
+  controle('un logo d\'aplats est sans_trait, jamais defavorable',
+           aplats.techniques.every((t) => t.situation.etat === 'sans_trait')
+             && aplats.resume.defavorables === 0
+             && aplats.resume.sansTrait === aplats.resume.total);
+
+  // Le resume trie les techniques de la plus accessible a la plus exigeante :
+  // c'est l'ordre que l'en-tete annonce au visiteur.
+  const tailles = v.resume.parTaille.map((t) => t.des);
+  controle('le resume trie les techniques par taille croissante',
+           tailles.every((t, i) => i === 0 || tailles[i - 1] <= t)
+             && v.resume.parTaille.length === v.resume.situees);
 
   // Les phrases produites restent soumises a la charte.
   const { rendreVerdict, rendreTechnique } = await import('../src/verdict/rendu.js');
   const html = rendreVerdict(v);
-  controle('aucun mot interdit dans les phrases de situation',
+  controle('aucun mot interdit dans les phrases de tailles',
            !MOTS_INTERDITS.some((m) => html.toLowerCase().includes(m)));
-  controle('aucun pourcentage ni confiance dans les phrases de situation',
+  controle('aucun pourcentage ni confiance dans les phrases de tailles',
            !MOTIF_CONFIANCE.test(html.replace(/<[^>]+>/g, ' ')));
   controle('le rendu jamais ne parle DU seuil d\'une technique',
            !/\ble seuil de (la|l\'|le)/i.test(html));
-  controle('chaque technique situee montre ses sources',
-           v.techniques.every((t) => !t.situation?.total
-             || rendreTechnique(t).includes('minimums publiés')));
-  // Une carte ne doit pas se contredire : elle situe le trait sur vingt-et-une
-  // matieres, puis annonce qu'AUCUN critere n'est documente. C'etait le premier
-  // rendu du 19/08, et un visiteur qui lit ca ne croit plus ni l'un ni l'autre.
-  controle('une carte qui situe le trait ne dit pas qu\'elle ne sait rien',
-           v.techniques.filter((t) => t.situation?.valeurs?.length)
+
+  // LE JARGON EST INTERDIT DE SEJOUR, arbitrage Alex du 20/08 : « tient les
+  // minimums publiés » et « tient sur une partie des matières » decrivaient
+  // notre comparaison, pas la decision du visiteur. S'ils reviennent, c'est
+  // une regression.
+  const jargon = ['tient les minimums publiés', 'tient sur une partie des matières',
+                  'donnez une largeur de marquage', 'tient sur une partie des matieres'];
+  const jargonTrouve = jargon.find((j) => html.toLowerCase().includes(j.toLowerCase()));
+  controle('aucune etiquette jargon du 19/08 dans le rendu', !jargonTrouve,
+           jargonTrouve || 'aucun');
+  // CONTROLE NEGATIF du controle precedent : la detection detecte bien. Un
+  // rendu qui contiendrait l'etiquette doit etre attrape. Lecon des deux
+  // controles negatifs rates : on verifie l'INJECTION avant de conclure.
+  const temoin = html + ' tient les minimums publiés';
+  controle('(temoin) le detecteur de jargon detecte',
+           jargon.some((j) => temoin.toLowerCase().includes(j.toLowerCase())));
+
+  // Chaque carte repond en langage d'usage : une etiquette « dès NN mm de
+  // large » et une phrase « Marquez ce logo à NN mm ». Attendu par
+  // construction pour la serigraphie : dès 15 mm.
+  const carteSeri = rendreTechnique(parCle.serigraphie);
+  controle('la carte dit « dès NN mm de large » avec la taille calculee',
+           carteSeri.includes('dès 15 mm de large')
+             && /Marquez ce logo à 15 mm de large ou plus/.test(carteSeri));
+  // Et elle dit les couleurs par la MECANIQUE, avec le compte du logo : deux
+  // couleurs mesurees, donc deux ecrans en serigraphie. Aucun maximum
+  // n'etant sourcé, aucun chiffre limite ne doit apparaitre.
+  controle('la carte dit la mecanique des couleurs avec le compte mesure',
+           /2 couleurs = 2 écrans/.test(carteSeri));
+  controle('chaque technique situee montre ses sources dans un tableau',
+           v.techniques.every((t) => t.situation?.etat !== 'tailles'
+             || (rendreTechnique(t).includes('trait minimal publié')
+                 && rendreTechnique(t).includes('avec les sources'))));
+
+  // Une carte ne doit pas se contredire : elle donne une taille calculee sur
+  // vingt-et-une valeurs, puis annonce qu'AUCUN critere n'est documente.
+  // C'etait le premier rendu du 19/08, garde comme regression.
+  controle('une carte qui donne une taille ne dit pas qu\'elle ne sait rien',
+           v.techniques.filter((t) => t.situation?.etat === 'tailles')
              .every((t) => !/Aucun de nos \d+ critères/.test(rendreTechnique(t))));
   controle('elle nomme en revanche les criteres qui manquent encore',
-           v.techniques.filter((t) => t.situation?.valeurs?.length)
+           v.techniques.filter((t) => t.situation?.etat === 'tailles')
              .every((t) => /autres critères ne sont pas encore documentés/.test(rendreTechnique(t))));
-  controle('le tableau des minimums porte des liens verifiables',
+  controle('le tableau des tailles porte des liens verifiables',
            (html.match(/<a href="https?:\/\//g) || []).length >= 20,
            `${(html.match(/<a href="https?:\/\//g) || []).length} liens`);
 }
@@ -353,9 +452,8 @@ const total = Object.values(VALEURS.techniques)
   .reduce((n, t) => n + (t.criteres?.trait_minimal?.valeurs?.length ?? 0), 0);
 console.log(`  Valeurs SOURCEES servies : ${total} minimums de trait, sur `
   + `${Object.keys(VALEURS.techniques).length} techniques.`);
-console.log(`  Sur un trait de 1,2 mm : ${v.resume.tiennentPartout} technique(s) ou il tient `
-  + `partout, ${v.resume.tiennentEnPartie} en partie, ${v.resume.neTiennentPas} sur aucune `
-  + `matiere relevee.`);
+console.log(`  Tailles calculees (trait 12 px sur 1000 px) : `
+  + v.resume.parTaille.map((t) => `${t.libelle} des ${t.des} mm`).join(', ') + '.');
 console.log('');
 console.log(`  ${resultats.length} controles, ${echecs} echec(s).`);
 console.log('');

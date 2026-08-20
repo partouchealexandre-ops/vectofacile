@@ -130,6 +130,10 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
               vertical-align: -1px; border: 1px solid rgba(0,0,0,.15); }
   .secondaire { color: var(--gris); font-weight: 400; font-size: 13px; }
   .technique .situation { margin: 8px 0 10px; font-size: 14.5px; line-height: 1.55; }
+  .technique .couleurs-technique { margin: 0 0 10px; font-size: 13.5px; line-height: 1.5;
+    color: #5b6470; }
+  .minimums .note-calcul { margin: 8px 0 0; font-size: 12.5px; color: var(--gris);
+    line-height: 1.5; }
   .minimums { margin: 0 0 10px; }
   .minimums summary { cursor: pointer; color: var(--gris); font-size: 13px; }
   .minimums table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12.5px; }

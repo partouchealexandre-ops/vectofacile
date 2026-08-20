@@ -21,7 +21,7 @@
  */
 
 import { sert, raisonDeNePasServir } from './etats.js';
-import { situerMinimum, matieres } from './situer.js';
+import { taillesMinimales } from './situer.js';
 
 export const VERSION_VERDICT = 1;
 
@@ -151,37 +151,44 @@ export function jugerTechnique(technique, mesures, seuilsTechnique, valeursTechn
   const criteres = CRITERES.map((c) =>
     jugerCritere(c, mesures, seuilsTechnique?.criteres?.[c.cle]));
 
-  // LA SITUATION, ajoutee le 19/08/2026.
+  // L'INVERSION D'USAGE, 20/08/2026, qui remplace la situation du 19/08.
   //
-  // Elle ne remplace pas les criteres, elle repond a une autre question. Un
-  // critere demande « la mesure passe-t-elle LE seuil » et suppose donc qu'un
-  // seuil unique existe. La situation demande « sur quelles matieres la mesure
-  // tient-elle », et cette question a une reponse aujourd'hui, avec des
-  // valeurs SOURCEES, sans arbitrage supplementaire.
+  // La situation demandait au visiteur sa taille de marquage pour comparer son
+  // trait en millimetres aux minimums publies. Alex a tranche : le visiteur ne
+  // connait presque jamais cette taille. On repond donc dans l'autre sens, et
+  // SANS RIEN DEMANDER : a partir de quelle taille de marquage ce logo
+  // passe-t-il, matiere par matiere ? Le calcul n'utilise que ce que le
+  // fichier contient deja, le trait en pixels et la largeur de l'image.
   let situation = null;
   if (valeursTechnique?.criteres?.trait_minimal?.valeurs?.length) {
-    const brut = situerMinimum(
-      borne(mesures?.m5TraitLePlusFin?.encadrementMm, 'basse'),
+    situation = taillesMinimales(
+      borne(mesures?.m5TraitLePlusFin?.encadrementPx, 'basse'),
+      mesures?.m1Dimensions?.largeurPx ?? null,
       valeursTechnique.criteres.trait_minimal.valeurs);
-    // DEUX ABSENCES QUI N'ONT RIEN A VOIR, et la page les confondait : pas de
-    // millimetres parce que le visiteur n'a pas donne de largeur, et pas de
-    // millimetres parce que le logo n'a AUCUN trait fin, il est fait
-    // d'aplats. La premiere se corrige en tapant un nombre ; dire « indiquez
-    // la largeur » face a la seconde est un mensonge, le badge du 20/08 l'a
-    // affiche a Alex avec le champ deja rempli.
-    if (brut.etat === 'sans_mesure'
-        && borne(mesures?.m5TraitLePlusFin?.encadrementPx, 'basse') === null) {
-      brut.etat = 'sans_trait';
+  }
+
+  // SI le visiteur a donne une taille, on raffine : sa taille se compare aux
+  // tailles minimales calculees. Elle se retrouve depuis les mesures elles
+  // memes, sans canal supplementaire : quand une largeur de marquage a ete
+  // saisie, le moteur a produit des millimetres, et le rapport mm/px du trait
+  // multiplie par la largeur en pixels redonne la largeur saisie.
+  let largeurDonneeMm = null;
+  let verdictLargeur = null;
+  {
+    const mmBasse = borne(mesures?.m5TraitLePlusFin?.encadrementMm, 'basse');
+    const pxBasse = borne(mesures?.m5TraitLePlusFin?.encadrementPx, 'basse');
+    const largeurPx = mesures?.m1Dimensions?.largeurPx;
+    if (Number.isFinite(mmBasse) && Number.isFinite(pxBasse) && pxBasse > 0
+        && Number.isFinite(largeurPx) && situation?.etat === 'tailles') {
+      largeurDonneeMm = Math.round((mmBasse / pxBasse) * largeurPx);
+      if (largeurDonneeMm < situation.des) verdictLargeur = 'trop_petit';
+      else if (largeurDonneeMm >= situation.jusqu_a) verdictLargeur = 'passe_partout';
+      else verdictLargeur = 'passe_en_partie';
     }
-    situation = {
-      ...brut,
-      matieresQuiTiennent: matieres(brut.tiennent),
-      matieresQuiNon: matieres(brut.ne_tiennent_pas),
-    };
   }
 
   const aDefavorable = criteres.some((c) => c.etat_verdict === 'defavorable')
-    || situation?.etat === 'au_dessous';
+    || verdictLargeur === 'trop_petit';
   const tousFavorables = criteres.every((c) => c.etat_verdict === 'favorable');
 
   let etat = 'inconnu';
@@ -193,6 +200,11 @@ export function jugerTechnique(technique, mesures, seuilsTechnique, valeursTechn
     libelle: seuilsTechnique?.libelle ?? valeursTechnique?.libelle ?? technique,
     etat,
     situation,
+    largeurDonneeMm,
+    verdictLargeur,
+    // Le nombre de couleurs mesure, transmis pour que la carte puisse dire la
+    // mecanique du procede avec LE chiffre de ce logo.
+    nCouleurs: mesures?.m2Couleurs?.couleursReelles ?? null,
     criteres,
     base: seuilsTechnique?.base ?? null,
     // Ce qui manque pour lever l'inconnu. C'est la matiere du journal, et la
@@ -231,13 +243,17 @@ export function juger({ mesures, seuils, valeurs }) {
       defavorables: compte('defavorable'),
       inconnues: compte('inconnu'),
       total: techniques.length,
-      // Le resume de la SITUATION, qui est celui qu'un visiteur lit vraiment.
-      situees: techniques.filter((t) => t.situation
-        && ['au_dessus', 'partiel', 'au_dessous'].includes(t.situation.etat)).length,
-      tiennentPartout: compteSituation('au_dessus'),
-      tiennentEnPartie: compteSituation('partiel'),
-      neTiennentPas: compteSituation('au_dessous'),
-      sansMesure: compteSituation('sans_mesure'),
+      // Le resume de l'INVERSION, celui qu'un visiteur lit vraiment : combien
+      // de techniques ont une taille calculee, et lesquelles sont les plus
+      // accessibles. `parTaille` est trie de la plus accessible a la plus
+      // exigeante, c'est l'ordre de l'en-tete de la page.
+      situees: compteSituation('tailles'),
+      sansTrait: compteSituation('sans_trait'),
+      parTaille: techniques
+        .filter((t) => t.situation?.etat === 'tailles')
+        .map((t) => ({ technique: t.technique, libelle: t.libelle,
+                       des: t.situation.des, support: t.situation.parSupport[0].support }))
+        .sort((a, b) => a.des - b.des),
     },
   };
 }

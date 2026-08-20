@@ -75,77 +75,135 @@ function majuscule(t) {
 }
 
 /**
- * REGLE 4, ouverte le 19/08/2026 avec le module situer.js.
+ * REGLE 4, reecrite le 20/08/2026 : ON PARLE USAGE, PAS INSTRUMENT.
  *
- * Quand on situe une mesure dans des valeurs publiees, la phrase doit dire
- * TROIS choses, et les trois sont contraignantes :
- *   la mesure du visiteur, pour qu'il puisse la contester ;
- *   la PLAGE publiee, pour qu'il voie qu'il n'y a pas un chiffre unique ;
- *   les MATIERES, parce que c'est la matiere qui explique l'ecart entre les
- *   sources, et qu'un ecart inexplique passe pour du desaccord.
+ * La premiere version disait « tient les minimums publiés » et « tient sur une
+ * partie des matières ». C'etait exact, et illisible : ces phrases decrivent
+ * notre comparaison, pas la decision du visiteur. Alex a fixe la question a
+ * laquelle chaque carte doit repondre, et c'est la seule : sur quoi puis-je
+ * marquer ce logo, a partir de quelle taille, et en combien de couleurs ?
  *
- * Ne jamais ecrire « le seuil de la serigraphie est X ». Il n'existe pas.
+ * Trois disciplines d'ecriture, et chacune protege d'un mensonge :
+ *   le millimetre affiche est CALCULE POUR CE LOGO, jamais un seuil general —
+ *   on ecrit « marquez ce logo dès 33 mm », jamais « le minimum est 0,20 mm » ;
+ *   la matiere accompagne toujours le chiffre, parce que c'est elle qui
+ *   l'explique ; un chiffre sans matiere redeviendrait LE seuil qui n'existe
+ *   pas ;
+ *   les regles 1 et 2 tiennent : « refusé chez la plupart des fabricants »,
+ *   jamais « impossible », jamais un pourcentage.
  */
-export const LIBELLES_SITUATION = Object.freeze({
-  au_dessus: 'tient les minimums publiés',
-  partiel: 'tient sur une partie des matières',
-  au_dessous: 'refusé chez la plupart des fabricants',
-  sans_mesure: 'donnez une largeur de marquage',
-  sans_trait: 'aucun trait fin à contraindre',
+export const LIBELLES_TAILLES = Object.freeze({
   sans_valeurs: 'nous ne savons pas encore',
+  sans_trait: 'passe à toutes les tailles',
 });
 
+/** Un entier de millimetres, en francais. */
+const entier = (v) => String(Math.round(v)).replace('.', ',');
+
 /**
- * Deux matieres a citer en exemple, choisies parmi les PLUS COURTES.
+ * Une matiere CITEE DANS UNE PHRASE se raccourcit a son premier terme.
  *
- * Une matiere du referentiel peut s'ecrire « feutrine, canvas tissé, liège,
- * non-tissé, nylon » : citee dans une phrase deja separee par des virgules,
- * elle devient illisible et le lecteur ne sait plus ou commence la suivante.
- * Les libelles courts, « métal », « gobelet », « textile », disent la meme
- * chose et se lisent.
+ * Une source peut nommer « t-shirt, polo, sweat, veste, tote, serviette
+ * éponge, casquette » : dans une phrase deja rythmee par des virgules, le
+ * lecteur ne sait plus ou une matiere s'arrete et ou la suivante commence.
+ * Le premier terme suffit a situer ; le libelle complet reste dans le
+ * tableau depliable, avec sa source. Meme lecon que DEUX_MATIERES le 19/08.
  */
-const DEUX_MATIERES = (liste) => {
-  const t = [...liste].sort((a, b) => a.length - b.length).slice(0, 2);
-  if (t.length <= 1) return t.join('');
-  return `${t[0]} et ${t[1]}`;
-};
+const courte = (support) => String(support).split(',')[0].trim();
 
-export function direSituation(s, matieresQuiTiennent, matieresQuiNon) {
-  const mm = (v) => (Math.round(v * 100) / 100).toFixed(2).replace('.', ',');
-  const plage = `de ${mm(s.min)} à ${mm(s.max)} mm selon la matière`;
-  const combien = `${s.total} minimum${s.total > 1 ? 's' : ''} publié${s.total > 1 ? 's' : ''}`;
+/**
+ * L'etiquette d'une carte : la reponse en quatre mots.
+ * `verdictLargeur` n'existe que si le visiteur a donne une taille.
+ */
+export function etiquetteTailles(s, verdictLargeur, largeurDonneeMm) {
+  if (!s || s.etat === 'sans_valeurs') return LIBELLES_TAILLES.sans_valeurs;
+  if (s.etat === 'sans_trait') return LIBELLES_TAILLES.sans_trait;
+  if (verdictLargeur === 'trop_petit' && Number.isFinite(largeurDonneeMm)) {
+    return `trop petit à ${entier(largeurDonneeMm)} mm`;
+  }
+  return `dès ${entier(s.des)} mm de large`;
+}
 
-  if (s.etat === 'sans_valeurs') {
+/**
+ * La phrase d'une carte. Elle donne la taille la plus accessible, une matiere
+ * du milieu et la plus exigeante : trois points suffisent a voir l'etendue,
+ * la table depliable porte le reste.
+ */
+export function direTailles(s, verdictLargeur, largeurDonneeMm) {
+  if (!s || s.etat === 'sans_valeurs') {
     return 'Nous n\'avons encore aucun minimum publié pour cette technique.';
   }
-  if (s.etat === 'sans_mesure') {
-    return `Nous avons relevé ${combien} pour cette technique, ${plage}. `
-      + 'Indiquez la largeur de votre marquage plus haut pour savoir où votre logo se situe.';
-  }
   if (s.etat === 'sans_trait') {
-    return `Votre logo ne porte aucun trait fin mesurable : il est fait d'aplats. `
-      + `Les minimums d'épaisseur publiés pour cette technique, ${plage}, ne le `
-      + 'limitent donc pas.';
+    return 'Votre logo est fait d\'aplats, sans trait fin : les finesses minimales '
+      + 'publiées pour cette technique ne le limitent pas, quelle que soit la taille.';
   }
 
-  const debut = `Votre trait le plus fin mesure ${mm(s.mesure)} mm à cette taille de marquage.`;
+  const liste = s.parSupport;
+  const premier = liste[0];
+  const dernier = liste[liste.length - 1];
+  let phrase = `Marquez ce logo à ${entier(premier.tailleMinMm)} mm de large ou plus `
+    + `sur ${courte(premier.support)}.`;
+  if (liste.length >= 3) {
+    const milieu = liste[Math.floor(liste.length / 2)];
+    phrase += ` Comptez ${entier(milieu.tailleMinMm)} mm sur ${courte(milieu.support)}, `
+      + `et ${entier(dernier.tailleMinMm)} mm sur ${courte(dernier.support)}.`;
+  } else if (liste.length === 2) {
+    phrase += ` Comptez ${entier(dernier.tailleMinMm)} mm sur ${courte(dernier.support)}.`;
+  }
 
-  if (s.etat === 'au_dessus') {
-    return `${debut} Nous avons relevé ${combien}, ${plage} : votre trait les tient tous, `
-      + `y compris le plus exigeant, ${mm(s.max)} mm sur ${s.valeurs[s.valeurs.length - 1].support}.`;
+  if (Number.isFinite(largeurDonneeMm) && verdictLargeur) {
+    const l = entier(largeurDonneeMm);
+    if (verdictLargeur === 'trop_petit') {
+      phrase += ` À ${l} mm, ce serait ${LIBELLES.defavorable} : `
+        + `passez à ${entier(s.des)} mm ou plus.`;
+    } else if (verdictLargeur === 'passe_partout') {
+      phrase += ` À ${l} mm, ça passe sur toutes les matières relevées.`;
+    } else {
+      const passent = liste.filter((v) => largeurDonneeMm >= v.tailleMinMm);
+      const refusent = liste.filter((v) => largeurDonneeMm < v.tailleMinMm);
+      phrase += ` À ${l} mm, ça passe sur ${passent.length} des ${liste.length} matières `
+        + `relevées, mais pas sur ${courte(refusent[0].support)} (dès ${entier(refusent[0].tailleMinMm)} mm).`;
+    }
   }
-  if (s.etat === 'au_dessous') {
-    const bas = s.valeurs[0];
-    return `${debut} Le minimum le plus bas que nous ayons relevé pour cette technique est `
-      + `${mm(bas.mm)} mm, sur ${bas.support}. À cette taille de marquage, votre trait `
-      + `serait ${LIBELLES.defavorable}.`;
-  }
-  const tient = s.tiennent.length === 1
-    ? `un seul, ${DEUX_MATIERES(matieresQuiTiennent)}`
-    : `${s.tiennent.length} d'entre eux, dont ${DEUX_MATIERES(matieresQuiTiennent)}`;
-  const pas = s.ne_tiennent_pas.length === 1
-    ? `un seul, ${DEUX_MATIERES(matieresQuiNon)}`
-    : `${s.ne_tiennent_pas.length}, dont ${DEUX_MATIERES(matieresQuiNon)}`;
-  return `${debut} Nous avons relevé ${combien}, ${plage}. Votre trait tient sur `
-    + `${tient}. Il ne tient pas sur ${pas}.`;
+  return phrase;
+}
+
+/**
+ * COMBIEN DE COULEURS, dit par la MECANIQUE du procede, jamais par un seuil.
+ *
+ * Aucune source n'a encore ete depouillee sur les maxima de couleurs par
+ * technique : on ne cite donc aucun chiffre limite. Mais la mecanique, elle,
+ * est un fait de procede qui ne demande aucune source commerciale : une
+ * serigraphie passe un ecran par couleur, une broderie un fil par couleur, un
+ * laser n'a pas d'encre du tout. Dire cette mecanique avec LE nombre de
+ * couleurs du logo mesure repond a la question du visiteur sans rien inventer.
+ */
+const COULEURS_PAR_TECHNIQUE = Object.freeze({
+  serigraphie: (n) => (n
+    ? `Vos ${n} couleurs = ${n} écrans : chaque couleur est imprimée par son propre écran, souvent facturé à part.`
+    : 'Chaque couleur est imprimée par son propre écran, souvent facturé à part.'),
+  tampographie: (n) => (n
+    ? `Vos ${n} couleurs = ${n} clichés : chaque couleur demande son propre cliché.`
+    : 'Chaque couleur demande son propre cliché.'),
+  gravure_laser: (n) => (n && n > 1
+    ? `Le laser grave sans encre : vos ${n} couleurs deviendront une seule, la teinte de la matière gravée.`
+    : 'Le laser grave sans encre : le résultat est monochrome, dans la teinte de la matière gravée.'),
+  broderie: (n) => (n
+    ? `Vos ${n} couleurs = ${n} fils : chaque couleur est brodée avec son propre fil.`
+    : 'Chaque couleur est brodée avec son propre fil.'),
+  numerique_uv: () => 'Toutes les couleurs partent en un seul passage : le nombre de couleurs ne change rien au procédé.',
+  transfert_dtf: () => 'Toutes les couleurs partent en un seul passage : le nombre de couleurs ne change rien au procédé.',
+  marquage_a_chaud: (n) => (n
+    ? `Vos ${n} couleurs = ${n} poses de feuille : une feuille par couleur. Ce marquage se fait le plus souvent en une seule couleur.`
+    : 'Une feuille par couleur : ce marquage se fait le plus souvent en une seule couleur.'),
+});
+
+export function direCouleurs(technique, nCouleurs) {
+  const dire = COULEURS_PAR_TECHNIQUE[technique];
+  if (!dire) return null;
+  const n = Number.isInteger(nCouleurs) && nCouleurs > 0 ? nCouleurs : null;
+  // Une seule couleur : la mecanique « N couleurs = N ecrans » deviendrait du
+  // bruit. On dit juste que c'est le cas le plus simple partout.
+  if (n === 1) return 'Votre logo est en une seule couleur : c\'est le cas le plus simple pour toutes les techniques.';
+  return dire(n);
 }
