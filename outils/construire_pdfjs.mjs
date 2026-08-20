@@ -54,7 +54,27 @@ function exiger(condition, message) {
   }
 }
 
-exiger(fs.existsSync(PAQUET), `paquet introuvable : ${PAQUET}`);
+/**
+ * LE PAQUET ABSENT N'EST PAS UNE ANOMALIE, C'EST UN OUBLI DE npm install.
+ *
+ * Alex l'a rencontre le 20/08 : le patch apportait la dependance dans
+ * package.json, mais pas les fichiers, et le script repondait « pdf.js a change
+ * de forme ». C'est faux et ca envoie chercher au mauvais endroit. Un message
+ * d'erreur qui designe la mauvaise cause coute plus cher que pas de message.
+ */
+if (!fs.existsSync(PAQUET)) {
+  console.error('');
+  console.error('  pdfjs-dist n\'est pas installe.');
+  console.error('');
+  console.error('  Ce n\'est pas une anomalie : la dependance vient d\'arriver dans');
+  console.error('  package.json, et les fichiers ne sont pas encore la. Une commande suffit :');
+  console.error('');
+  console.error('      npm install');
+  console.error('');
+  console.error('  puis relancer npm run verifier.');
+  console.error('');
+  process.exit(1);
+}
 const version = JSON.parse(fs.readFileSync(path.join(PAQUET, 'package.json'), 'utf-8')).version;
 
 fs.rmSync(CIBLE, { recursive: true, force: true });
