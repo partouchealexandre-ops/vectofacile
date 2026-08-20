@@ -163,6 +163,16 @@ export function jugerTechnique(technique, mesures, seuilsTechnique, valeursTechn
     const brut = situerMinimum(
       borne(mesures?.m5TraitLePlusFin?.encadrementMm, 'basse'),
       valeursTechnique.criteres.trait_minimal.valeurs);
+    // DEUX ABSENCES QUI N'ONT RIEN A VOIR, et la page les confondait : pas de
+    // millimetres parce que le visiteur n'a pas donne de largeur, et pas de
+    // millimetres parce que le logo n'a AUCUN trait fin, il est fait
+    // d'aplats. La premiere se corrige en tapant un nombre ; dire « indiquez
+    // la largeur » face a la seconde est un mensonge, le badge du 20/08 l'a
+    // affiche a Alex avec le champ deja rempli.
+    if (brut.etat === 'sans_mesure'
+        && borne(mesures?.m5TraitLePlusFin?.encadrementPx, 'basse') === null) {
+      brut.etat = 'sans_trait';
+    }
     situation = {
       ...brut,
       matieresQuiTiennent: matieres(brut.tiennent),

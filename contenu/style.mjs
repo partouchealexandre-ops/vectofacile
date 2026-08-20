@@ -76,6 +76,13 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
   .cta-entete { font-size: 14px; font-weight: 600; padding: 9px 17px; border-radius: 8px;
                 border: 1.5px solid var(--orange); background: var(--orange); color: #fff;
                 text-decoration: none; white-space: nowrap; }
+  .cta-secondaire { display: inline-block; padding: 10px 18px; border-radius: 8px;
+                    border: 1.5px solid var(--trait); color: var(--encre); font-weight: 600;
+                    font-size: 14.5px; text-decoration: none; white-space: nowrap; }
+  .cta-secondaire:hover { border-color: var(--gris); }
+  .mesures-detail summary { cursor: pointer; color: var(--gris); font-size: 14px;
+                            padding: 8px 0; font-weight: 600; }
+  #couleurs h2, #verdict h2 { margin-top: 26px; }
   /* ------------------------------------------------- la largeur du site
 
      Deux largeurs, et la distinction n'est pas cosmetique.

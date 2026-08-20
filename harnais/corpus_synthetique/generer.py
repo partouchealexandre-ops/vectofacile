@@ -253,9 +253,58 @@ enregistrer(
         # Le revers du controle de bruit : sur un dessin a aplats francs, la
         # part hors palette doit etre nulle. Les deux bornes se tiennent.
         au_plus("m2Couleurs.partHorsPalette", 0.02),
+        # Par construction : bandes de 36 px, une couleur par ecran.
+        entre("m5TraitLePlusFin.encadrementPx.basse", 35, 36),
     ],
     "Neuf aplats francs, en PNG. Couleurs reelles et couleurs brutes doivent "
     "coincider : c'est le cas ou le fichier est deja propre.",
+)
+
+
+# ------------------------------------------------- le logo sur aplat
+#
+# Le cas qui a revele l'angle mort du moteur, reconstruit en synthetique : un
+# badge reel portait son texte creme SUR un disque orange, et le moteur
+# repondait « trait non mesure », parce que toutes les couleurs fondues dans
+# le masque d'encre ne formaient qu'un seul disque plein. Chaque couleur est
+# un ecran : le trait d'un motif pose sur un aplat doit se mesurer comme s'il
+# etait pose sur le fond.
+
+img = Image.new("RGB", (300, 300), BLANC)
+d = ImageDraw.Draw(img)
+d.rectangle([20, 20, 279, 279], fill=(0, 104, 178))          # l'aplat bleu
+d.rectangle([60, 40, 64, 260], fill=(198, 32, 38))           # barre verticale 5 px
+d.rectangle([150, 150, 270, 154], fill=(198, 32, 38))        # barre horizontale 5 px
+enregistrer(
+    "trait_05px_sur_aplat", img,
+    [
+        egal("m2Couleurs.couleursReelles", 2),
+        # Verite par construction : les barres rouges font 5 px d'epaisseur.
+        # Epaisseur impaire, la borne basse tombe juste.
+        egal("m5TraitLePlusFin.encadrementPx.basse", 5),
+        egal("m5TraitLePlusFin.encadrementPx.haute", 6),
+    ],
+    "Deux barres rouges de 5 px posees SUR un aplat bleu, pas sur le fond. "
+    "L'union des encres est un rectangle plein : seul le plan rouge voit les "
+    "barres. Ce cas garde la mesure par plan de couleur.",
+)
+
+img = Image.new("RGB", (300, 300), BLANC)
+d = ImageDraw.Draw(img)
+d.rectangle([20, 20, 279, 279], fill=(0, 104, 178))
+d.rectangle([60, 60, 99, 239], fill=(198, 32, 38))           # colonnes 60 a 99
+d.rectangle([105, 60, 144, 239], fill=(198, 32, 38))         # colonnes 105 a 144
+# Entre les deux blocs rouges : les colonnes 100 a 104, cinq pixels de BLEU.
+enregistrer(
+    "ecart_05px_sur_aplat", img,
+    [
+        egal("m2Couleurs.couleursReelles", 2),
+        # Verite par construction : cinq colonnes exactement entre les blocs.
+        egal("m6ContreFormes.ecartMinimalPx.basse", 5),
+    ],
+    "Deux blocs rouges separes par cinq colonnes de bleu, le tout sur un "
+    "aplat. Sur l'ecran rouge, ces cinq colonnes sont un ecart reel, meme si "
+    "leur fond est de l'encre bleue et non du blanc.",
 )
 
 img = bandes_neuf_couleurs()
@@ -269,14 +318,17 @@ enregistrer(
         # observe ne testerait plus rien, il enregistrerait le bug du jour.
         au_moins("m2Couleurs.couleursBrutes", 9 * 100),
         au_plus("m10IndicesExport.partInterieurVariable", 0.05),
-        # Verite par construction : les neuf bandes forment un seul bloc
-        # d'encre de 324 x 300 px, dont le trait est donc de 300 px. Le
-        # crenelage du JPEG depose autour du bloc des amas de quatre a dix
-        # pixels, epais d'un ou deux : sans seuil de salissure RELATIF a la
-        # quantite d'encre, le moteur rendait "trait de 1 px" pour ce bloc.
-        # Toute image compressee, c'est a dire la quasi totalite des logos
-        # qu'un client depose, tombait dans ce piege.
-        au_moins("m5TraitLePlusFin.encadrementPx.basse", 250),
+        # Verite par construction, REVISee le 20/08 avec la mesure par plan
+        # de couleur : chaque bande fait 36 px de large, et chaque couleur est
+        # un ecran. Le trait le plus fin d'un ecran est donc la largeur d'une
+        # bande, 36 px, sous-estimee d'au plus un pixel (epaisseur paire).
+        # L'ancien attendu, 250 px, decrivait l'union des encres : cette
+        # semantique a ete abandonnee le jour ou un badge reel, texte creme
+        # sur disque orange, a rendu « trait non mesure » avec des lettres
+        # plein l'image.
+        # Ce controle garde AUSSI le piege du crenelage : les franges JPEG
+        # rattachees a un plan donneraient 1 a 3 px, tres loin de 35.
+        entre("m5TraitLePlusFin.encadrementPx.basse", 35, 36),
     ],
     "Les MEMES neuf aplats, passes en JPEG qualite 75. Le fichier porte "
     "desormais plusieurs milliers de teintes, le client en a toujours dessine "

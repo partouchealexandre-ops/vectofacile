@@ -91,6 +91,7 @@ export const LIBELLES_SITUATION = Object.freeze({
   partiel: 'tient sur une partie des matières',
   au_dessous: 'refusé chez la plupart des fabricants',
   sans_mesure: 'donnez une largeur de marquage',
+  sans_trait: 'aucun trait fin à contraindre',
   sans_valeurs: 'nous ne savons pas encore',
 });
 
@@ -120,6 +121,11 @@ export function direSituation(s, matieresQuiTiennent, matieresQuiNon) {
   if (s.etat === 'sans_mesure') {
     return `Nous avons relevé ${combien} pour cette technique, ${plage}. `
       + 'Indiquez la largeur de votre marquage plus haut pour savoir où votre logo se situe.';
+  }
+  if (s.etat === 'sans_trait') {
+    return `Votre logo ne porte aucun trait fin mesurable : il est fait d'aplats. `
+      + `Les minimums d'épaisseur publiés pour cette technique, ${plage}, ne le `
+      + 'limitent donc pas.';
   }
 
   const debut = `Votre trait le plus fin mesure ${mm(s.mesure)} mm à cette taille de marquage.`;

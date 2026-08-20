@@ -483,6 +483,10 @@ console.log('');
     champ.value = '40';
     champ.dispatchEvent(new Event('input', { bubbles: true }));
     const apres = globalThis.vecto.etat().mesures;
+    // Le tableau des mesures vit derriere un repli depuis le 20/08. On
+    // l'ouvre comme le ferait un visiteur : innerText d'un details ferme est
+    // vide, et un controle qui lit du texte invisible ne controle rien.
+    for (const d of document.querySelectorAll('#mesures details')) d.open = true;
     return {
       visible,
       mmAvant: avant.m5TraitLePlusFin.encadrementMm,

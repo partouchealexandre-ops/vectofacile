@@ -411,7 +411,16 @@ export function m8PlusGrandAplat(image, masque, palette, largeur, hauteur, lab) 
       const d = ecartLab(teinte, palette[k].lab);
       if (d < meilleureDistance) { meilleureDistance = d; meilleur = k; }
     }
-    affectation[i] = meilleur;
+    // Un pixel qui n'est PROCHE d'aucune couleur reelle est un pixel de
+    // lisere ou de bruit JPEG : il n'entre dans aucun plan. Sans ce filtre,
+    // les franges de compression entre deux aplats se rattachent au plan le
+    // plus proche et y dessinent des rubans d'un pixel, que la mesure prend
+    // pour des traits. C'est le bug numero 9 de la table des pieges, revenu
+    // par une autre porte : le harnais l'a signale sur couleurs_09_jpeg a la
+    // premiere execution. ECART_FUSION est deja LE rayon en deca duquel le
+    // moteur considere qu'une teinte EST une couleur : meme regle ici, une
+    // seule definition de la proximite dans tout le moteur.
+    affectation[i] = meilleureDistance < ECART_FUSION ? meilleur : -1;
   }
 
   let resultat = { airePx: 0, indexCouleur: null, boite: null };
@@ -529,6 +538,218 @@ export function m10VariationInterne(image, masque, distanceEncre, lab) {
   };
 }
 
+/* ------------------------------------------------- plans de couleur */
+
+/**
+ * LE LOGO SUR APLAT, ou pourquoi la mesure par plan de couleur existe.
+ *
+ * Trouve le 20/08 par Alex, sur un logo reel : un badge rond dont le texte
+ * creme est pose sur un disque orange. Le moteur repondait « trait le plus fin
+ * non mesure » alors que le logo est plein de lettres fines.
+ *
+ * La cause : toutes les mesures de geometrie travaillaient sur le masque
+ * d'ENCRE, c'est a dire l'union de toutes les couleurs contre le fond. Sur ce
+ * badge, l'union est un disque plein : les lettres n'y existent pas, puisque
+ * creme et orange sont tous deux de l'encre. Le moteur etait aveugle a tout
+ * trait pose sur un aplat, soit une part enorme des logos reels.
+ *
+ * La correction est aussi la semantique du METIER : en serigraphie comme en
+ * tampographie, CHAQUE COULEUR EST UN ECRAN. Le trait le plus fin qui compte
+ * est le plus fin de chaque plan de couleur, pas celui de l'union. Un ecart
+ * entre deux lettres creme est un vrai ecart sur l'ecran creme, meme si le
+ * fond de cet ecart est de l'encre orange.
+ *
+ * Chaque pixel d'encre est rattache a la couleur reelle la plus proche, les
+ * pixels de lisere compris : un lisere n'est jamais un plan a lui seul.
+ */
+export function affectationParCouleur(image, masque, palette, lab) {
+  const { donnees } = image;
+  const affectation = new Int32Array(masque.length).fill(-1);
+  for (let i = 0; i < masque.length; i++) {
+    if (!masque[i]) continue;
+    const p = i * 4;
+    const teinte = lab(donnees[p], donnees[p + 1], donnees[p + 2]);
+    let meilleur = -1, meilleureDistance = Infinity;
+    for (let k = 0; k < palette.length; k++) {
+      const d = ecartLab(teinte, palette[k].lab);
+      if (d < meilleureDistance) { meilleureDistance = d; meilleur = k; }
+    }
+    affectation[i] = meilleur;
+  }
+  return affectation;
+}
+
+/**
+ * OUVERTURE MORPHOLOGIQUE d'un plan : une erosion puis une dilatation, en
+ * 4-voisinage.
+ *
+ * Pourquoi elle est indispensable ici et pas sur le masque global : les
+ * franges de compression JPEG entre deux aplats restent parfois assez proches
+ * de la couleur voisine pour passer le filtre ECART_FUSION. Elles se
+ * rattachent alors au plan en rubans d'un ou deux pixels le long de la
+ * frontiere, et la mesure les prend pour des traits. Le harnais l'a montre
+ * sur couleurs_09_jpeg : neuf aplats sans aucun trait, annonces porteurs d'un
+ * trait d'un pixel. C'est le piege numero 9 de la table, revenu par la porte
+ * des plans.
+ *
+ * L'ouverture supprime tout ce qui a moins de trois pixels d'epaisseur, et
+ * RECONSTRUIT a l'identique tout ce qui en a trois ou plus : un trait reel de
+ * 3 px ressort a 3 px, un ruban de frange disparait. Consequence assumee et
+ * documentee : un trait reel de MOINS de trois pixels pose sur un aplat n'est
+ * pas mesurable par les plans. Le masque global le voit encore quand il borde
+ * le fond ; pose sur un aplat, il est sous la resolution de l'instrument.
+ *
+ * PARAMETRE D'INSTRUMENT, comme ECART_FUSION : dit comment on mesure, jamais
+ * ce qui est marquable.
+ */
+function ouvrir(masque, largeur, hauteur) {
+  const n = masque.length;
+  const erode = new Uint8Array(n);
+  for (let y = 0; y < hauteur; y++) {
+    for (let x = 0; x < largeur; x++) {
+      const i = y * largeur + x;
+      if (!masque[i]) continue;
+      erode[i] = (x > 0 && masque[i - 1] && x < largeur - 1 && masque[i + 1]
+        && y > 0 && masque[i - largeur] && y < hauteur - 1 && masque[i + largeur]) ? 1 : 0;
+    }
+  }
+  const ouvert = new Uint8Array(n);
+  for (let y = 0; y < hauteur; y++) {
+    for (let x = 0; x < largeur; x++) {
+      const i = y * largeur + x;
+      if (erode[i]
+        || (x > 0 && erode[i - 1]) || (x < largeur - 1 && erode[i + 1])
+        || (y > 0 && erode[i - largeur]) || (y < hauteur - 1 && erode[i + largeur])) {
+        // La dilatation ne recree jamais un pixel qui n'etait pas de l'encre.
+        if (masque[i]) ouvert[i] = 1;
+      }
+    }
+  }
+  return ouvert;
+}
+
+/**
+ * FERMETURE MORPHOLOGIQUE : une dilatation puis une erosion. Le pendant de
+ * l'ouverture, pour les CREUX. L'ouverture nettoie ce qui depasse, la
+ * fermeture comble ce qui s'enfonce : les couloirs et les encoches de moins
+ * de trois pixels, la ou l'exclusion du lisere a grignote le bord d'une
+ * forme. Sans elle, l'ecart minimal d'un plan mesurait ces encoches, 1 a
+ * 2 px, au lieu des vrais ecarts entre elements. Un ecart reel de 3 px ou
+ * plus traverse la fermeture inchange. Meme statut : parametre d'instrument.
+ */
+function fermer(masque, largeur, hauteur) {
+  const n = masque.length;
+  const dilate = new Uint8Array(n);
+  for (let y = 0; y < hauteur; y++) {
+    for (let x = 0; x < largeur; x++) {
+      const i = y * largeur + x;
+      if (masque[i]
+        || (x > 0 && masque[i - 1]) || (x < largeur - 1 && masque[i + 1])
+        || (y > 0 && masque[i - largeur]) || (y < hauteur - 1 && masque[i + largeur])) {
+        dilate[i] = 1;
+      }
+    }
+  }
+  const ferme = new Uint8Array(n);
+  for (let y = 0; y < hauteur; y++) {
+    for (let x = 0; x < largeur; x++) {
+      const i = y * largeur + x;
+      if (!dilate[i]) continue;
+      ferme[i] = (x > 0 && dilate[i - 1] && x < largeur - 1 && dilate[i + 1]
+        && y > 0 && dilate[i - largeur] && y < hauteur - 1 && dilate[i + largeur]) ? 1 : 0;
+    }
+  }
+  return ferme;
+}
+
+/** La borne basse d'un encadrement, ou +Infini s'il n'y en a pas. */
+function basseOuInfini(encadrement) {
+  return encadrement && encadrement.basse !== null && encadrement.basse !== undefined
+    ? encadrement.basse : Infinity;
+}
+
+/**
+ * Mesure la geometrie plan par plan et rend, pour le trait comme pour
+ * l'ecart, le PIRE des plans : c'est lui que l'atelier rencontrera.
+ * Rend null si moins de deux couleurs, le masque global suffit alors.
+ */
+export function mesurerParPlans(image, masque, palette, lab, largeur, hauteur, boite) {
+  if (!palette || palette.length < 2) return null;
+  const affectation = affectationParCouleur(image, masque, palette, lab);
+
+  const plans = [];
+  for (let k = 0; k < palette.length; k++) {
+    const brut = new Uint8Array(masque.length);
+    for (let i = 0; i < masque.length; i++) {
+      if (affectation[i] === k) brut[i] = 1;
+    }
+    const plan = ouvrir(brut, largeur, hauteur);
+    let aire = 0;
+    for (let i = 0; i < plan.length; i++) aire += plan[i];
+    if (aire === 0) continue;
+    plans.push({ index: k, rvb: palette[k].rvb, masque: plan, aire });
+  }
+
+  let trait = null;
+  let ecart = null;
+  let contreFormes = 0;
+  let plusPetiteContreForme = null;
+  const parCouleur = [];
+
+  for (const plan of plans) {
+    const m5 = m5TraitLePlusFin(plan.masque, largeur, hauteur);
+    // L'ecart se mesure sur le plan FERME : l'ouverture a nettoye ce qui
+    // depasse, la fermeture comble les encoches que l'exclusion du lisere a
+    // laissees au bord des formes. Voir fermer().
+    const m6 = m6ContreFormesEtEcarts(fermer(plan.masque, largeur, hauteur), largeur, hauteur, boite);
+    parCouleur.push({
+      rvb: plan.rvb,
+      traitPx: m5.encadrementPx,
+      ecartPx: m6.ecartMinimalPx,
+      contreFormes: m6.nombreContreFormes,
+    });
+    if (basseOuInfini(m5.encadrementPx) < basseOuInfini(trait?.encadrementPx)) {
+      trait = { encadrementPx: m5.encadrementPx, rvb: plan.rvb };
+    }
+    // LA RESOLUTION DE L'INSTRUMENT SUR LES PLANS EST DE TROIS PIXELS, dans
+    // les deux sens. Sous trois pixels, un couloir entre deux zones d'un plan
+    // est indiscernable du lisere que l'affectation a exclu : le badge reel
+    // du 20/08 annoncait un ecart de 1 px sur son plan orange, la ou deux
+    // encres se touchent. On ne rend pas une mesure qu'on ne sait pas
+    // distinguer d'un artefact. Consequence honnete : sur un logo de
+    // plusieurs couleurs, un ecart reel de moins de trois pixels n'est pas
+    // mesure, exactement comme un trait de moins de trois pixels pose sur un
+    // aplat.
+    if (basseOuInfini(m6.ecartMinimalPx) >= 3
+        && basseOuInfini(m6.ecartMinimalPx) < basseOuInfini(ecart?.ecartMinimalPx)) {
+      ecart = { ecartMinimalPx: m6.ecartMinimalPx, rvb: plan.rvb };
+    }
+    contreFormes += m6.nombreContreFormes ?? 0;
+    if (basseOuInfini(m6.plusPetiteContreFormePx) < basseOuInfini(plusPetiteContreForme)) {
+      plusPetiteContreForme = m6.plusPetiteContreFormePx;
+    }
+  }
+
+  // La hauteur de capitale, par plan aussi : sur le badge, les lettres sont
+  // des composantes du plan creme, jamais du masque global. On essaie les
+  // plans dans l'ordre du nombre de composantes, le texte en a beaucoup.
+  // Si aucun plan n'y arrive, on garde le MOTIF du plan le plus prometteur :
+  // « trop peu de composantes » etait un mensonge sur un badge couvert de
+  // lettres, la vraie raison etait « aucune ligne de pied commune », le texte
+  // courait sur un arc de cercle.
+  let capitale = null;
+  const candidats = plans
+    .map((plan) => ({ plan, composantes: composantesConnexes(plan.masque, largeur, hauteur).composantes }))
+    .sort((a, b) => b.composantes.length - a.composantes.length);
+  for (const { plan, composantes } of candidats) {
+    const essai = m7HauteurDeCapitale(composantes, boite);
+    if (essai.hauteurPx !== null) { capitale = { ...essai, rvb: plan.rvb }; break; }
+    if (!capitale) capitale = { ...essai, rvb: plan.rvb };
+  }
+
+  return { trait, ecart, contreFormes, plusPetiteContreForme, capitale, parCouleur };
+}
+
 /* ----------------------------------------------------------- assemblage */
 
 export function mesurer(image, options = {}) {
@@ -553,6 +774,37 @@ export function mesurer(image, options = {}) {
   const m4 = m4Transparence(image);
   const m6 = m6ContreFormesEtEcarts(masque, largeur, hauteur, boite);
   const m7 = m7HauteurDeCapitale(nettoye.composantes, boite);
+
+  // Les plans de couleur corrigent les mesures globales quand le logo a
+  // plusieurs couleurs. Le masque global reste calcule : sa transformee de
+  // distance sert a la purete et a la variation interne, et son trait reste
+  // valable quand il est le plus fin. Voir le commentaire de
+  // affectationParCouleur pour le pourquoi.
+  const plans = mesurerParPlans(image, masque, m2._interne, lab, largeur, hauteur, boite);
+  if (plans) {
+    // LE TRAIT : le pire des deux mondes, et c'est voulu. Les plans voient ce
+    // que l'union ne voit pas, un motif pose sur un aplat ; l'union voit ce
+    // que les plans, ouverts a 3 px, ne voient plus, un trait de 1 ou 2 px
+    // borde par le fond. On retient le plus fin des deux.
+    if (basseOuInfini(plans.trait?.encadrementPx) < basseOuInfini(m5.encadrementPx)) {
+      m5.encadrementPx = plans.trait.encadrementPx;
+      m5.couleurPorteuse = plans.trait.rvb;
+    }
+    // L'ECART ET LES CONTRE-FORMES : les plans SEULS. Sur un logo de
+    // plusieurs couleurs, l'ecart du masque global mesure le lisere
+    // d'antialiasing entre deux couleurs qui se touchent, un pixel qui
+    // n'existe sur aucun ecran. Le badge reel du 20/08 annoncait « ecart de
+    // 0,04 mm » entre son texte et son disque : cet ecart n'existe pas, les
+    // deux encres se touchent. Deux elements de MEME couleur a moins de 3 px
+    // ne sont plus mesurables, c'est la resolution de l'instrument.
+    m6.ecartMinimalPx = plans.ecart?.ecartMinimalPx ?? null;
+    m6.couleurPorteuse = plans.ecart?.rvb ?? null;
+    m6.nombreContreFormes = plans.contreFormes;
+    m6.plusPetiteContreFormePx = plans.plusPetiteContreForme;
+    if (m7.hauteurPx === null && plans.capitale) {
+      Object.assign(m7, plans.capitale);
+    }
+  }
   const m8 = m8PlusGrandAplat(image, masque, m2._interne, largeur, hauteur, lab);
   const m10 = m10VariationInterne(image, masque, m5.distanceEncre, lab);
 
@@ -597,6 +849,7 @@ export function mesurer(image, options = {}) {
     m5TraitLePlusFin: {
       encadrementPx: m5.encadrementPx,
       encadrementMm: enMm(m5.encadrementPx),
+      couleurPorteuse: m5.couleurPorteuse ?? null,
     },
     m6ContreFormes: {
       plusPetiteContreFormePx: m6.plusPetiteContreFormePx,

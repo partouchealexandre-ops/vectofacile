@@ -115,22 +115,39 @@ function rendrePalette(palette) {
     dépend de l'encre et du support, et c'est votre marqueur qui la choisit.</p>`;
 }
 
+/**
+ * LES COULEURS, EN PREMIER ET REGROUPEES. Arbitrage Alex du 20/08 : le compte
+ * de couleurs vivait dans le tableau des mesures et les codes dans une autre
+ * section, alors que c'est UNE information, et l'une des deux que le visiteur
+ * vient chercher. Une seule section desormais : combien, lesquelles, quoi en
+ * faire.
+ */
+function afficherCouleurs(m) {
+  const n = m.m2Couleurs.couleursReelles;
+  $('couleurs').innerHTML = `
+    <h2>${nb(n)} couleur${n > 1 ? 's' : ''} réelle${n > 1 ? 's' : ''}, à donner à votre marqueur</h2>
+    <p class="note">Le fichier contient ${nb(m.m2Couleurs.couleursBrutes)} teintes au total,
+    mais ${n > 1 ? `ces ${nb(n)} couleurs portent` : 'cette couleur porte'} le dessin :
+    le reste est du lissage de bord. En sérigraphie et en tampographie, chaque couleur
+    est un écran et un passage de machine à part.</p>
+    ${rendrePalette(m.m2Couleurs.palette)}`;
+  $('couleurs').hidden = false;
+}
+
 function afficherMesures(m, image) {
-  const palette = m.m2Couleurs.palette
-    .map((c) => `<span class="pastille" style="background:${c.hex}" title="${c.hex} : ${(100 * c.part).toFixed(1)} %"></span>`)
-    .join('');
 
   const reduction = image.reduction < 1
     ? `mesuré sur une version réduite à ${image.largeur} px de large, l'original fait ${image.largeurOrigine} px`
     : '';
 
   $('mesures').innerHTML = `
-    <h2>Ce que votre fichier contient</h2>
+    <details class="mesures-detail">
+    <summary>Plus de détails : toutes les mesures de votre fichier</summary>
     ${reduction ? `<p class="note">${reduction}</p>` : ''}
     ${ligne('Dimensions', `${nb(m.m1Dimensions.largeurPx)} × ${nb(m.m1Dimensions.hauteurPx)} px`)}
     ${ligne('Fond', m.fond.type === 'transparent' ? 'transparent' : `couleur ${m.fond.rvb.join(', ')}`)}
-    ${ligne('Couleurs réelles', `${nb(m.m2Couleurs.couleursReelles)} ${palette}`,
-        `le fichier en contient ${nb(m.m2Couleurs.couleursBrutes)} au total`)}
+    ${ligne('Couleurs réelles', nb(m.m2Couleurs.couleursReelles),
+        `le fichier en contient ${nb(m.m2Couleurs.couleursBrutes)} au total ; le détail est dans la section couleurs`)}
     ${ligne('Halo et salissures', pourcent(m.m3Halo.partBoite, 2),
         `${nb(m.m3Halo.pixelsImpurs)} pixels ni fond ni couleur du logo`)}
     ${ligne('Pixels orphelins retirés', nb(m.proprete.pixelsRetires),
@@ -154,7 +171,7 @@ function afficherMesures(m, image) {
         : `${pourcent(m.m10IndicesExport.partInterieurVariable)} de l'intérieur`)}
     ${ligne('Transparence partielle', m.m4Transparence.aTransparencePartielle
         ? `oui, ${nb(m.m4Transparence.pixelsSemiTransparents)} pixels` : 'non')}
-    ${rendrePalette(m.m2Couleurs.palette)}
+    </details>
   `;
   $('mesures').hidden = false;
 }
@@ -287,6 +304,8 @@ function reinitialiser() {
   // Meme raison pour la largeur de marquage : son champ et son ecouteur sont
   // poses une seule fois au demarrage. On masque la section, on ne la vide pas.
   $('largeur').hidden = true;
+  $('couleurs').hidden = true;
+  $('couleurs').innerHTML = '';
   $('fiche').hidden = true;
   $('fiche').innerHTML = '';
   $('conseils').hidden = true;
@@ -318,6 +337,7 @@ function remesurer() {
   if (!etat.image) return;
   const mesures = mesurer(etat.image, { largeurImprimeeMm: largeurDeMarquage() });
   etat.mesures = mesures;
+  afficherCouleurs(mesures);
   afficherMesures(mesures, etat.image);
   afficherConseils(mesures, etat.fiche);
   afficherVerdict(mesures);
@@ -436,6 +456,7 @@ async function traiter(fichier) {
     etat.nom = (fichier.name || 'logo').replace(/\.[^.]+$/, '');
     $('largeur').hidden = false;
     afficherFiche(etat.fiche);
+    afficherCouleurs(mesures);
     afficherMesures(mesures, image);
     afficherConseils(mesures, etat.fiche);
     await afficherVerdict(mesures);
