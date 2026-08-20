@@ -43,7 +43,8 @@ const $ = (id) => document.getElementById(id);
  */
 const modeVectoriser = () => document.body?.dataset?.mode === 'vectoriser';
 
-let etat = { nom: null, image: null, fiche: null, mesures: null, programme: null, avertissements: [] };
+let etat = { nom: null, image: null, fiche: null, mesures: null, programme: null, svg: null,
+             verdict: null, selection: null, avertissements: [] };
 
 function texte(valeur, unite = '') {
   if (valeur === null || valeur === undefined) return 'non mesuré';
@@ -235,6 +236,23 @@ function chargerValeurs() {
 }
 
 /**
+ * LA TAXONOMIE PRODUITS, arbitrage Alex du 20/08 : le client part d'un
+ * produit, pas d'une technique. Chargee a part, comme les valeurs, et son
+ * echec n'est pas bloquant : sans elle, la page retombe sur la vue par
+ * technique, qui reste juste.
+ */
+let promesseProduits = null;
+function chargerProduits() {
+  if (!promesseProduits) {
+    promesseProduits = fetch('/src/verdict/produits.json').then((r) => {
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return r.json();
+    });
+  }
+  return promesseProduits;
+}
+
+/**
  * Les avertissements s'affichent AVANT le resultat, avec le poids de ce
  * qu'ils disent.
  *
@@ -264,22 +282,35 @@ function afficherAvertissements(liste) {
 async function afficherVerdict(mesures) {
   let seuils;
   let valeurs = null;
+  let produits = null;
   try {
     seuils = await chargerSeuils();
-    // Un echec de chargement des valeurs n'est PAS silencieux non plus, mais
-    // il n'empeche pas le reste : sans elles la page retombe sur son ancien
-    // comportement, qui dit qu'il ne sait pas. Elle ne fabrique rien.
+    // Un echec de chargement des valeurs ou des produits n'est PAS silencieux
+    // non plus, mais il n'empeche pas le reste : sans eux la page retombe sur
+    // une vue plus pauvre, qui reste juste. Elle ne fabrique rien.
     valeurs = await chargerValeurs().catch(() => null);
+    produits = await chargerProduits().catch(() => null);
   } catch (e) {
     $('verdict').innerHTML = `
-      <h2>Sur quoi marquer ce logo, et à partir de quelle taille</h2>
+      <h2>Sur quoi marquer ce logo ?</h2>
       <p class="gris">Nous n'avons pas pu charger nos seuils de marquage
       (${String(e.message)}). Vos mesures ci-dessus restent valables : elles
       décrivent votre fichier et ne dépendent d'aucun seuil.</p>`;
     $('verdict').hidden = false;
     return;
   }
-  $('verdict').innerHTML = rendreVerdict(juger({ mesures, seuils, valeurs }));
+  etat.verdict = juger({ mesures, seuils, valeurs, produits });
+  rendreLeVerdict();
+}
+
+/**
+ * Le rendu du verdict avec la selection courante du menu produits. La
+ * selection SURVIT a une re-mesure (le visiteur qui tape une largeur garde
+ * son mug a l'ecran) et se remet a zero avec le reste au fichier suivant.
+ */
+function rendreLeVerdict() {
+  if (!etat.verdict) return;
+  $('verdict').innerHTML = rendreVerdict(etat.verdict, etat.selection ?? {});
   $('verdict').hidden = false;
 }
 
@@ -326,7 +357,8 @@ function reinitialiser() {
   if (largeur) largeur.hidden = true;
   const apercu = $('apercu');
   if (apercu) apercu.innerHTML = '';
-  etat = { nom: null, image: null, fiche: null, mesures: null, programme: null, svg: null, avertissements: [] };
+  etat = { nom: null, image: null, fiche: null, mesures: null, programme: null, svg: null,
+           verdict: null, selection: null, avertissements: [] };
 }
 
 /**
@@ -605,6 +637,19 @@ function brancher() {
   // qui est la seule facon de comprendre du premier coup que ce champ commande
   // toutes les valeurs en dessous. Le champ n'existe pas sur /vectoriser.
   $('largeur_mm')?.addEventListener('input', () => remesurer());
+
+  // Le menu deroulant des produits, en DELEGATION sur le conteneur : le HTML
+  // du verdict est reconstruit a chaque rendu, un ecouteur pose sur le select
+  // lui meme partirait avec lui. L'ecouteur vit sur #verdict, qui est statique.
+  $('verdict')?.addEventListener('change', (e) => {
+    if (e.target?.id === 'choix_produit') {
+      etat.selection = { produit: e.target.value || null, variante: null };
+      rendreLeVerdict();
+    } else if (e.target?.id === 'choix_variante') {
+      etat.selection = { ...(etat.selection ?? {}), variante: e.target.value || null };
+      rendreLeVerdict();
+    }
+  });
 
   $('telecharger_eps').addEventListener('click', () => {
     telecharger(versEps(etat.programme, { titre: etat.nom }), `${etat.nom}.eps`, 'application/postscript');

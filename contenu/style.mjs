@@ -132,6 +132,29 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
   .technique .situation { margin: 8px 0 10px; font-size: 14.5px; line-height: 1.55; }
   .technique .couleurs-technique { margin: 0 0 10px; font-size: 13.5px; line-height: 1.5;
     color: #5b6470; }
+  /* La vue produit, 20/08 : le menu deroulant et la carte du produit choisi. */
+  .choix-produit { margin: 14px 0 16px; display: flex; gap: 14px; flex-wrap: wrap;
+    align-items: flex-end; }
+  .choix-produit label { display: block; font-weight: 600; font-size: 14px;
+    margin: 0 0 6px; }
+  .choix-produit select { font: inherit; font-size: 15px; padding: 9px 12px;
+    border: 1px solid #c9ced6; border-radius: 8px; background: #fff; min-width: 260px;
+    max-width: 100%; }
+  .produit-verdict { border: 1px solid #e3e6ea; border-radius: 10px;
+    padding: 16px 18px; margin: 0 0 16px; background: #fff; }
+  .produit-verdict h3 { margin: 0 0 10px; font-size: 17px; }
+  .produit-techniques { list-style: none; padding: 0; margin: 0; display: grid;
+    gap: 12px; }
+  .produit-techniques li { font-size: 15px; line-height: 1.55; }
+  .produit-techniques .couleurs-technique { display: block; font-size: 13px;
+    color: #5b6470; margin-top: 2px; }
+  .produit-techniques .note-produit { color: #5b6470; font-weight: 400; }
+  .produit-techniques .ligne-ok { color: #1d6b38; font-weight: 600; }
+  .produit-techniques .ligne-ko { color: #9c3722; font-weight: 600; }
+  .par-technique { margin: 6px 0 14px; }
+  .par-technique > summary { cursor: pointer; color: var(--gris); font-size: 14px;
+    margin-bottom: 10px; }
+  .sources-verdict h4 { margin: 14px 0 4px; font-size: 13.5px; }
   .minimums .note-calcul { margin: 8px 0 0; font-size: 12.5px; color: var(--gris);
     line-height: 1.5; }
   .minimums { margin: 0 0 10px; }

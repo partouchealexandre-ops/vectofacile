@@ -33,6 +33,8 @@ const SEUILS = JSON.parse(fs.readFileSync(
   path.join(ICI, '..', 'src', 'verdict', 'seuils.json'), 'utf-8'));
 const VALEURS = JSON.parse(fs.readFileSync(
   path.join(ICI, '..', 'src', 'verdict', 'valeurs_sourcees.json'), 'utf-8'));
+const PRODUITS = JSON.parse(fs.readFileSync(
+  path.join(ICI, '..', 'src', 'verdict', 'produits.json'), 'utf-8'));
 
 /**
  * Un jeu de mesures propre, celui d'un logo qui n'a aucun probleme.
@@ -413,10 +415,14 @@ const controle = (libelle, ok, detail) => resultats.push({ libelle, ok, detail }
   // n'etant sourcé, aucun chiffre limite ne doit apparaitre.
   controle('la carte dit la mecanique des couleurs avec le compte mesure',
            /2 couleurs = 2 écrans/.test(carteSeri));
-  controle('chaque technique situee montre ses sources dans un tableau',
-           v.techniques.every((t) => t.situation?.etat !== 'tailles'
-             || (rendreTechnique(t).includes('trait minimal publié')
-                 && rendreTechnique(t).includes('avec les sources'))));
+  // Les sources ont quitte les cartes le 20/08 (second arbitrage Alex) pour
+  // la rubrique unique « D'où viennent ces chiffres ? ». Chaque technique
+  // situee y a son tableau, avec la colonne du minimum publie.
+  const nbSituees = v.techniques.filter((t) => t.situation?.etat === 'tailles').length;
+  controle('chaque technique situee a son tableau dans la rubrique des sources',
+           (html.match(/<h4>/g) || []).length === nbSituees
+             && html.includes('trait minimal publié'),
+           `${(html.match(/<h4>/g) || []).length} tableaux pour ${nbSituees} techniques`);
 
   // Une carte ne doit pas se contredire : elle donne une taille calculee sur
   // vingt-et-une valeurs, puis annonce qu'AUCUN critere n'est documente.
@@ -430,6 +436,106 @@ const controle = (libelle, ok, detail) => resultats.push({ libelle, ok, detail }
   controle('le tableau des tailles porte des liens verifiables',
            (html.match(/<a href="https?:\/\//g) || []).length >= 20,
            `${(html.match(/<a href="https?:\/\//g) || []).length} liens`);
+}
+
+// LA VUE PRODUIT NE DOIT NI DERIVER DE SA DONNEE, NI RAMENER LE FOUILLIS.
+//
+// Second retour d'Alex sur les captures du 0025 : trop de choses, des supports
+// hors objet publicitaire, des sources a chaque ligne. La vue produit repond
+// par une taxonomie fermee (produits.json), des correspondances en lecture
+// directe, et des sources dans UNE rubrique repliee.
+{
+  // 1. CHAQUE REFERENCE RESOUT EXACTEMENT UNE LIGNE de valeurs_sourcees.json.
+  // Verification independante du code servi : le harnais refait la resolution
+  // sur les fichiers. Une valeur corrigee la bas doit casser ici, pas servir
+  // une correspondance perimee en silence.
+  const lignesDe = (technique) =>
+    VALEURS.techniques[technique]?.criteres?.trait_minimal?.valeurs ?? [];
+  const toutesRefs = [];
+  const collecter = (cle, techniques) => {
+    for (const [tk, spec] of Object.entries(techniques ?? {})) {
+      for (const r of spec.refs ?? []) toutesRefs.push({ ou: `${cle}/${tk}`, tk, r });
+    }
+  };
+  for (const p of PRODUITS.produits) {
+    if (p.variantes) for (const v of p.variantes) collecter(v.cle, v.techniques);
+    else collecter(p.cle, p.techniques);
+  }
+  const orphelines = toutesRefs.filter(({ tk, r }) =>
+    lignesDe(tk).filter((v) => v.source === r.source && v.support === r.support
+      && v.mm === r.mm).length !== 1);
+  controle(`les ${toutesRefs.length} references produit resolvent chacune une ligne sourcee`,
+           orphelines.length === 0,
+           orphelines.map((o) => o.ou).join(', ') || 'aucune orpheline');
+  // CONTROLE NEGATIF : une reference fabriquee pour ne rien matcher doit etre
+  // vue comme orpheline. Prouve que la resolution resout vraiment.
+  const fausse = { tk: 'serigraphie', r: { source: 'Inexistante', support: 'x', mm: 9 } };
+  controle('(temoin) une reference inexistante serait attrapee',
+           lignesDe(fausse.tk).filter((v) => v.source === fausse.r.source).length === 0);
+
+  // 2. LES SUPPORTS HORS OBJET PUBLICITAIRE NE NOURRISSENT AUCUN PRODUIT.
+  // Le packaging (sac papier, boite) et les lignes generiques par catalogue
+  // entier decrivent autre chose que le produit choisi.
+  const interdits = ['sac papier, carton, plastique', 'boîte papier, objet transparent ou coloré',
+                     'objet publicitaire', 'cadeau promotionnel', 'objet promotionnel fini',
+                     'produit souvenir, matière colorée, transparente ou noire'];
+  const fautifs = toutesRefs.filter(({ r }) => interdits.includes(r.support));
+  controle('aucun support packaging ou generique ne nourrit un produit',
+           fautifs.length === 0, fautifs.map((f) => f.ou).join(', ') || 'aucun');
+
+  // 3. ATTENDUS PAR CONSTRUCTION, calcules a la main sur le jeu impeccable
+  // (trait 12 px, image 1000 px). Mug inox en gravure laser : la ligne la
+  // plus exigeante referencee est 0,3528 mm (tumbler metallique), donc
+  // ceil(352,8 / 12) = 30 mm. Si le code prenait la plus accessible
+  // (0,076 mm), il dirait 7 mm : un conseil quatre fois trop optimiste.
+  const v = juger({ mesures: mesuresImpeccables(), seuils: SEUILS,
+                    valeurs: VALEURS, produits: PRODUITS });
+  const par = Object.fromEntries(v.produits.produits.map((p) => [p.cle, p]));
+  const mugInox = par.mug.variantes.find((x) => x.cle === 'mug_inox');
+  const laserInox = mugInox.techniques.find((t) => t.technique === 'gravure_laser');
+  controle('mug inox, gravure laser : la ligne la plus exigeante est retenue, 30 mm',
+           laserInox.tailleMinMm === 30 && laserInox.retenue.mm === 0.3528,
+           `taille=${laserInox.tailleMinMm} retenue=${laserInox.retenue.mm}`);
+  // T-shirt en serigraphie : la plus exigeante des lignes textile referencees
+  // est 0,5 mm, donc ceil(500 / 12) = 42 mm.
+  const tShirt = par.t_shirt.techniques.find((t) => t.technique === 'serigraphie');
+  controle('t-shirt, serigraphie : 0,5 mm retenu, soit 42 mm',
+           tShirt.tailleMinMm === 42 && tShirt.retenue.mm === 0.5,
+           `taille=${tShirt.tailleMinMm} retenue=${tShirt.retenue.mm}`);
+
+  // 4. LE RENDU : le choix d'abord, la carte ensuite, les sources dans UNE
+  // rubrique repliee et nulle part ailleurs.
+  const { rendreVerdict } = await import('../src/verdict/rendu.js');
+  const sansChoix = rendreVerdict(v, {});
+  controle('sans choix, le menu invite et aucune carte produit ne s\'affiche',
+           sansChoix.includes('Choisissez un produit…')
+             && !sansChoix.includes('produit-verdict'));
+  const mug = rendreVerdict(v, { produit: 'mug' });
+  controle('choisir le mug demande son type avant de repondre',
+           mug.includes('Quel type ?') && !mug.includes('produit-verdict'));
+  const inox = rendreVerdict(v, { produit: 'mug', variante: 'mug_inox' });
+  const carte = inox.match(/<article class="produit-verdict">[\s\S]*?<\/article>/)?.[0] ?? '';
+  controle('la carte mug inox donne la taille calculee, 30 mm',
+           carte.includes('dès 30 mm de large'));
+  controle('la carte produit ne porte aucun lien de source',
+           carte.length > 0 && !carte.includes('<a href'));
+  controle('les sources vivent dans la rubrique « D\'où viennent ces chiffres ? »',
+           inox.includes('D\'où viennent ces chiffres ?')
+             && /<details class="minimums sources-verdict">[\s\S]*<a href="https/.test(inox));
+  // En dehors de cette rubrique et des cartes techniques repliees, aucun lien
+  // externe : les sources se donnent a qui les demande.
+  const horsReplis = inox.replace(/<details[\s\S]*?<\/details>/g, '');
+  controle('aucun lien de source hors des rubriques repliees',
+           !horsReplis.includes('<a href="https'));
+  // Le jeu impeccable porte 100 mm saisis : le mug inox (des 30 mm) passe, la
+  // casquette en broderie (ceil(4000/12) = 334 mm) ne passe pas, et la carte
+  // le dit en langage d'usage.
+  controle('a 100 mm saisis, la carte mug inox dit que ca passe',
+           carte.includes('À 100 mm : ça passe.'));
+  const casquette = rendreVerdict(v, { produit: 'casquette' })
+    .match(/<article class="produit-verdict">[\s\S]*?<\/article>/)?.[0] ?? '';
+  controle('a 100 mm saisis, la casquette en broderie dit trop petit, 334 mm',
+           casquette.includes('trop petit') && casquette.includes('334 mm'));
 }
 
 // ------------------------------------------------------------------------

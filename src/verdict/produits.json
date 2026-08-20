@@ -1,0 +1,370 @@
+{
+  "version": 1,
+  "genere_le": "20/08/2026",
+  "doctrine": [
+    "ARBITRÉ ALEX 20/08/2026 : le diagnostic parle PRODUITS, et uniquement les produits publicitaires que l'on retrouve aux catalogues publics des grands fournisseurs européens d'objets promotionnels (rubriques type sacs, tote bag coton, sac en PET recyclé, mug inox, gourde, t-shirt). Aucune donnée commerciale n'entre ici : la taxonomie reprend des NOMS de rubriques publics, rien d'autre.",
+    "Chaque couple produit x technique référence des lignes de valeurs_sourcees.json en LECTURE DIRECTE : la source nomme le produit lui même, sa matière, ou une catégorie explicite qui le contient. Aucune correspondance devinée : un produit sans ligne directe n'a pas la technique, et un support de packaging (sac papier, boîte) ne nourrit aucun produit.",
+    "Les lignes génériques par catalogue entier (objet publicitaire, cadeau promotionnel, objet promotionnel fini, produit souvenir) ne nourrissent AUCUN produit : elles décrivent le catalogue d'un fabricant, pas ce produit-ci. Elles restent servies dans la vue par technique.",
+    "La valeur retenue pour un couple produit x technique est LA PLUS EXIGEANTE des lignes référencées : même prudence que le calcul des tailles. Toutes les lignes restent visibles dans les sources, rien n'est moyenné.",
+    "Une référence se résout par le triplet source + support + mm. Le harnais vérifie que chaque référence résout exactement une ligne : une valeur corrigée dans valeurs_sourcees.json casse bruyamment ici au lieu de servir en silence."
+  ],
+  "rubriques": ["Sacs", "Textile", "Mugs, gobelets et gourdes", "Bureau", "High-tech", "Bois et cuir"],
+  "produits": [
+    {
+      "cle": "tote_bag_coton",
+      "libelle": "Tote bag en coton",
+      "rubrique": "Sacs",
+      "techniques": {
+        "serigraphie": { "refs": [
+          { "source": "FF-Packaging", "support": "coton, bambou, polyester, satin", "mm": 0.35 },
+          { "source": "Enviro-Tote", "support": "sac tote en toile", "mm": 0.706 }
+        ] },
+        "transfert_dtf": { "refs": [
+          { "source": "Chamevo Support", "support": "vêtement foncé, coton, polyester", "mm": 0.35 },
+          { "source": "Print Impression Gisors", "support": "textile sombre, t-shirt, tote bag, hoodie", "mm": 0.5 },
+          { "source": "Go Transfer", "support": "textile", "mm": 0.6 },
+          { "source": "DTF Owl", "support": "tissu, vêtement foncé", "mm": 1.0 }
+        ] },
+        "broderie": { "refs": [
+          { "source": "Melco", "support": "vêtement, casquette, polo, veste, sac, maille piquée", "mm": 1.0 },
+          { "source": "Azency Studio", "support": "t-shirt, polo, sweat, veste, tote, serviette éponge, casquette", "mm": 4.0 }
+        ] }
+      }
+    },
+    {
+      "cle": "sac_jute",
+      "libelle": "Sac en jute",
+      "rubrique": "Sacs",
+      "techniques": {
+        "serigraphie": { "refs": [
+          { "source": "PRINTEX", "support": "support fortement texturé, toile de jute", "mm": 0.75 },
+          { "source": "FF-Packaging", "support": "jute, juca, sac de plage", "mm": 1.0 },
+          { "source": "Feelgood", "support": "sac en jute", "mm": 1.0 }
+        ] }
+      }
+    },
+    {
+      "cle": "sac_rpet",
+      "libelle": "Sac en PET recyclé",
+      "rubrique": "Sacs",
+      "techniques": {
+        "serigraphie": { "note": "le PET recyclé est un polyester", "refs": [
+          { "source": "FF-Packaging", "support": "coton, bambou, polyester, satin", "mm": 0.35 },
+          { "source": "Feelgood", "support": "textile", "mm": 0.35 },
+          { "source": "Oregon Screen Impressions", "support": "textile", "mm": 0.3528 },
+          { "source": "Swagstore", "support": "textile", "mm": 0.3528 },
+          { "source": "Lynka", "support": "textile promotionnel", "mm": 0.4 },
+          { "source": "PulseMerch", "support": "textile", "mm": 0.5 }
+        ] },
+        "transfert_dtf": { "refs": [
+          { "source": "Chamevo Support", "support": "vêtement foncé, coton, polyester", "mm": 0.35 },
+          { "source": "Go Transfer", "support": "textile", "mm": 0.6 },
+          { "source": "DTF Owl", "support": "tissu, vêtement foncé", "mm": 1.0 }
+        ] }
+      }
+    },
+    {
+      "cle": "t_shirt",
+      "libelle": "T-shirt",
+      "rubrique": "Textile",
+      "techniques": {
+        "serigraphie": { "refs": [
+          { "source": "FF-Packaging", "support": "coton, bambou, polyester, satin", "mm": 0.35 },
+          { "source": "Feelgood", "support": "textile", "mm": 0.35 },
+          { "source": "Oregon Screen Impressions", "support": "textile", "mm": 0.3528 },
+          { "source": "Swagstore", "support": "textile", "mm": 0.3528 },
+          { "source": "Lynka", "support": "textile promotionnel", "mm": 0.4 },
+          { "source": "PulseMerch", "support": "textile", "mm": 0.5 }
+        ] },
+        "transfert_dtf": { "refs": [
+          { "source": "Chamevo Support", "support": "vêtement foncé, coton, polyester", "mm": 0.35 },
+          { "source": "Transfer Express (Stahls')", "support": "vêtement et textile", "mm": 0.4572 },
+          { "source": "Print Impression Gisors", "support": "textile sombre, t-shirt, tote bag, hoodie", "mm": 0.5 },
+          { "source": "Go Transfer", "support": "textile", "mm": 0.6 },
+          { "source": "DTF Owl", "support": "tissu, vêtement foncé", "mm": 1.0 }
+        ] },
+        "broderie": { "refs": [
+          { "source": "Fourthwall", "support": "t-shirt épais, sweat, casquette, bonnet, visière", "mm": 1.27 },
+          { "source": "Azency Studio", "support": "t-shirt, polo, sweat, veste, tote, serviette éponge, casquette", "mm": 4.0 }
+        ] }
+      }
+    },
+    {
+      "cle": "polo",
+      "libelle": "Polo",
+      "rubrique": "Textile",
+      "techniques": {
+        "serigraphie": { "refs": [
+          { "source": "FF-Packaging", "support": "coton, bambou, polyester, satin", "mm": 0.35 },
+          { "source": "Feelgood", "support": "textile", "mm": 0.35 },
+          { "source": "Oregon Screen Impressions", "support": "textile", "mm": 0.3528 },
+          { "source": "Swagstore", "support": "textile", "mm": 0.3528 },
+          { "source": "Lynka", "support": "textile promotionnel", "mm": 0.4 },
+          { "source": "PulseMerch", "support": "textile", "mm": 0.5 }
+        ] },
+        "transfert_dtf": { "refs": [
+          { "source": "Transfer Express (Stahls')", "support": "vêtement et textile", "mm": 0.4572 },
+          { "source": "Go Transfer", "support": "textile", "mm": 0.6 },
+          { "source": "DTF Owl", "support": "tissu, vêtement foncé", "mm": 1.0 }
+        ] },
+        "broderie": { "refs": [
+          { "source": "Melco", "support": "vêtement, casquette, polo, veste, sac, maille piquée", "mm": 1.0 },
+          { "source": "MAINGAUCHE", "support": "polo, sweat, doudoune, bonnet, casquette", "mm": 1.6 },
+          { "source": "Azency Studio", "support": "t-shirt, polo, sweat, veste, tote, serviette éponge, casquette", "mm": 4.0 }
+        ] }
+      }
+    },
+    {
+      "cle": "sweat",
+      "libelle": "Sweat, hoodie",
+      "rubrique": "Textile",
+      "techniques": {
+        "serigraphie": { "refs": [
+          { "source": "FF-Packaging", "support": "coton, bambou, polyester, satin", "mm": 0.35 },
+          { "source": "Feelgood", "support": "textile", "mm": 0.35 },
+          { "source": "Oregon Screen Impressions", "support": "textile", "mm": 0.3528 },
+          { "source": "Swagstore", "support": "textile", "mm": 0.3528 },
+          { "source": "Lynka", "support": "textile promotionnel", "mm": 0.4 },
+          { "source": "PulseMerch", "support": "textile", "mm": 0.5 }
+        ] },
+        "transfert_dtf": { "refs": [
+          { "source": "Transfer Express (Stahls')", "support": "vêtement et textile", "mm": 0.4572 },
+          { "source": "Print Impression Gisors", "support": "textile sombre, t-shirt, tote bag, hoodie", "mm": 0.5 },
+          { "source": "Go Transfer", "support": "textile", "mm": 0.6 },
+          { "source": "DTF Owl", "support": "tissu, vêtement foncé", "mm": 1.0 }
+        ] },
+        "broderie": { "refs": [
+          { "source": "Fourthwall", "support": "t-shirt épais, sweat, casquette, bonnet, visière", "mm": 1.27 },
+          { "source": "MAINGAUCHE", "support": "polo, sweat, doudoune, bonnet, casquette", "mm": 1.6 },
+          { "source": "Azency Studio", "support": "t-shirt, polo, sweat, veste, tote, serviette éponge, casquette", "mm": 4.0 }
+        ] }
+      }
+    },
+    {
+      "cle": "casquette",
+      "libelle": "Casquette",
+      "rubrique": "Textile",
+      "techniques": {
+        "broderie": { "refs": [
+          { "source": "Melco", "support": "vêtement, casquette, polo, veste, sac, maille piquée", "mm": 1.0 },
+          { "source": "Fourthwall", "support": "t-shirt épais, sweat, casquette, bonnet, visière", "mm": 1.27 },
+          { "source": "Printful", "support": "casquette", "mm": 1.27 },
+          { "source": "MAINGAUCHE", "support": "polo, sweat, doudoune, bonnet, casquette", "mm": 1.6 },
+          { "source": "Casquette Print", "support": "casquette", "mm": 2.0 },
+          { "source": "Azency Studio", "support": "t-shirt, polo, sweat, veste, tote, serviette éponge, casquette", "mm": 4.0 }
+        ] }
+      }
+    },
+    {
+      "cle": "bonnet",
+      "libelle": "Bonnet",
+      "rubrique": "Textile",
+      "techniques": {
+        "broderie": { "refs": [
+          { "source": "Youtex", "support": "maille", "mm": 1.0 },
+          { "source": "Fourthwall", "support": "t-shirt épais, sweat, casquette, bonnet, visière", "mm": 1.27 },
+          { "source": "MAINGAUCHE", "support": "polo, sweat, doudoune, bonnet, casquette", "mm": 1.6 }
+        ] }
+      }
+    },
+    {
+      "cle": "veste",
+      "libelle": "Veste, doudoune",
+      "rubrique": "Textile",
+      "techniques": {
+        "broderie": { "refs": [
+          { "source": "Melco", "support": "vêtement, casquette, polo, veste, sac, maille piquée", "mm": 1.0 },
+          { "source": "MAINGAUCHE", "support": "polo, sweat, doudoune, bonnet, casquette", "mm": 1.6 },
+          { "source": "Azency Studio", "support": "t-shirt, polo, sweat, veste, tote, serviette éponge, casquette", "mm": 4.0 }
+        ] },
+        "transfert_dtf": { "refs": [
+          { "source": "Transfer Express (Stahls')", "support": "vêtement et textile", "mm": 0.4572 },
+          { "source": "DTF Owl", "support": "tissu, vêtement foncé", "mm": 1.0 }
+        ] }
+      }
+    },
+    {
+      "cle": "mug",
+      "libelle": "Mug",
+      "rubrique": "Mugs, gobelets et gourdes",
+      "variantes": [
+        {
+          "cle": "mug_ceramique",
+          "libelle": "Mug en céramique",
+          "techniques": {
+            "tampographie": { "refs": [
+              { "source": "Cup Concept", "support": "vaisselle réutilisable", "mm": 0.3 }
+            ] },
+            "numerique_uv": { "refs": [
+              { "source": "Gifts.ru", "support": "objet cylindrique promotionnel", "mm": 0.15 }
+            ] }
+          }
+        },
+        {
+          "cle": "mug_inox",
+          "libelle": "Mug en inox ou en acier",
+          "techniques": {
+            "gravure_laser": { "refs": [
+              { "source": "SpiroPrint", "support": "métal", "mm": 0.076 },
+              { "source": "IKON Gifts", "support": "métal", "mm": 0.12 },
+              { "source": "IKON Gifts", "support": "métal", "mm": 0.15 },
+              { "source": "My Metal Tumblers", "support": "tumbler métallique, verre", "mm": 0.3528 }
+            ] },
+            "serigraphie": { "refs": [
+              { "source": "Eagle Metalcraft", "support": "métal", "mm": 0.25 }
+            ] },
+            "numerique_uv": { "refs": [
+              { "source": "Gifts.ru", "support": "objet cylindrique promotionnel", "mm": 0.15 }
+            ] }
+          }
+        }
+      ]
+    },
+    {
+      "cle": "gourde",
+      "libelle": "Gourde inox ou aluminium",
+      "rubrique": "Mugs, gobelets et gourdes",
+      "techniques": {
+        "gravure_laser": { "refs": [
+          { "source": "SpiroPrint", "support": "métal", "mm": 0.076 },
+          { "source": "IKON Gifts", "support": "métal", "mm": 0.12 },
+          { "source": "IKON Gifts", "support": "métal", "mm": 0.15 }
+        ] },
+        "serigraphie": { "refs": [
+          { "source": "Eagle Metalcraft", "support": "métal", "mm": 0.25 },
+          { "source": "Amen Printing", "support": "bouteille, pot, seau", "mm": 0.7056 }
+        ] },
+        "numerique_uv": { "refs": [
+          { "source": "Gifts.ru", "support": "objet cylindrique promotionnel", "mm": 0.15 }
+        ] }
+      }
+    },
+    {
+      "cle": "gobelet_reutilisable",
+      "libelle": "Gobelet réutilisable",
+      "rubrique": "Mugs, gobelets et gourdes",
+      "techniques": {
+        "serigraphie": { "refs": [
+          { "source": "Nicknack", "support": "gobelet", "mm": 0.2 },
+          { "source": "Cup Concept", "support": "gobelet réutilisable", "mm": 0.3 }
+        ] },
+        "tampographie": { "refs": [
+          { "source": "Cup Concept", "support": "vaisselle réutilisable", "mm": 0.3 }
+        ] }
+      }
+    },
+    {
+      "cle": "carnet",
+      "libelle": "Carnet",
+      "rubrique": "Bureau",
+      "techniques": {
+        "marquage_a_chaud": { "refs": [
+          { "source": "Branded Notebooks", "support": "carnet et journal personnalisé", "mm": 0.3528 },
+          { "source": "MOO", "support": "carnet à couverture texturée", "mm": 0.3528 },
+          { "source": "Bookblock", "support": "carnet PU, cuir vegan, toile", "mm": 0.3528 }
+        ] },
+        "tampographie": { "refs": [
+          { "source": "AST Print", "support": "papier design, simili, tissu, bois non poncé", "mm": 0.15 }
+        ] }
+      }
+    },
+    {
+      "cle": "agenda",
+      "libelle": "Agenda, portefeuille",
+      "rubrique": "Bureau",
+      "techniques": {
+        "marquage_a_chaud": { "refs": [
+          { "source": "Ithuba Branding", "support": "cuir véritable et PU", "mm": 0.5 },
+          { "source": "Design-Print", "support": "agenda et portefeuille en cuir ou similicuir", "mm": 1.0 }
+        ] },
+        "gravure_laser": { "note": "sur cuir", "refs": [
+          { "source": "SpiroPrint", "support": "cuir", "mm": 0.25 },
+          { "source": "IKON Gifts", "support": "hors métal : verre, bois, cuir, plastique, surface vernie", "mm": 0.3 }
+        ] }
+      }
+    },
+    {
+      "cle": "stylo",
+      "libelle": "Stylo",
+      "rubrique": "Bureau",
+      "techniques": {
+        "tampographie": { "refs": [
+          { "source": "Goodiesland", "support": "petit objet courbe", "mm": 0.2 },
+          { "source": "UK UGI", "support": "composant et pièce à surface courbe", "mm": 0.3 }
+        ] },
+        "gravure_laser": { "note": "si le stylo est en métal", "refs": [
+          { "source": "SpiroPrint", "support": "métal", "mm": 0.076 },
+          { "source": "IKON Gifts", "support": "métal", "mm": 0.12 },
+          { "source": "IKON Gifts", "support": "métal", "mm": 0.15 }
+        ] },
+        "numerique_uv": { "refs": [
+          { "source": "Gifts.ru", "support": "objet cylindrique promotionnel", "mm": 0.15 }
+        ] }
+      }
+    },
+    {
+      "cle": "cle_usb",
+      "libelle": "Clé USB",
+      "rubrique": "High-tech",
+      "techniques": {
+        "tampographie": { "refs": [
+          { "source": "Goodiesland", "support": "petit objet courbe", "mm": 0.2 },
+          { "source": "UK UGI", "support": "composant et pièce à surface courbe", "mm": 0.3 }
+        ] },
+        "numerique_uv": { "refs": [
+          { "source": "Promotional IT Solutions", "support": "produit à boîtier coloré", "mm": 0.25 }
+        ] },
+        "gravure_laser": { "note": "si la coque est en métal", "refs": [
+          { "source": "SpiroPrint", "support": "métal", "mm": 0.076 },
+          { "source": "IKON Gifts", "support": "métal", "mm": 0.12 },
+          { "source": "IKON Gifts", "support": "métal", "mm": 0.15 }
+        ] }
+      }
+    },
+    {
+      "cle": "powerbank",
+      "libelle": "Powerbank",
+      "rubrique": "High-tech",
+      "techniques": {
+        "numerique_uv": { "refs": [
+          { "source": "Promotional IT Solutions", "support": "produit à boîtier coloré", "mm": 0.25 }
+        ] },
+        "tampographie": { "refs": [
+          { "source": "UK UGI", "support": "composant et pièce à surface courbe", "mm": 0.3 }
+        ] },
+        "gravure_laser": { "note": "si le boîtier est en métal ou aluminium", "refs": [
+          { "source": "SpiroPrint", "support": "métal", "mm": 0.076 },
+          { "source": "IKON Gifts", "support": "métal", "mm": 0.12 },
+          { "source": "IKON Gifts", "support": "métal", "mm": 0.15 }
+        ] }
+      }
+    },
+    {
+      "cle": "objet_bois",
+      "libelle": "Objet en bois (planche, ustensile)",
+      "rubrique": "Bois et cuir",
+      "techniques": {
+        "gravure_laser": { "refs": [
+          { "source": "SpiroPrint", "support": "bois", "mm": 0.2 },
+          { "source": "Atelier Grav'Art Lyon", "support": "bois et métal", "mm": 0.2 },
+          { "source": "IKON Gifts", "support": "hors métal : verre, bois, cuir, plastique, surface vernie", "mm": 0.3 }
+        ] }
+      }
+    },
+    {
+      "cle": "article_cuir",
+      "libelle": "Article en cuir ou simili",
+      "rubrique": "Bois et cuir",
+      "techniques": {
+        "marquage_a_chaud": { "refs": [
+          { "source": "Ithuba Branding", "support": "cuir véritable et PU", "mm": 0.5 },
+          { "source": "Design-Print", "support": "agenda et portefeuille en cuir ou similicuir", "mm": 1.0 }
+        ] },
+        "gravure_laser": { "refs": [
+          { "source": "SpiroPrint", "support": "cuir", "mm": 0.25 },
+          { "source": "IKON Gifts", "support": "hors métal : verre, bois, cuir, plastique, surface vernie", "mm": 0.3 }
+        ] }
+      }
+    }
+  ]
+}

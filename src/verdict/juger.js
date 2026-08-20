@@ -21,7 +21,7 @@
  */
 
 import { sert, raisonDeNePasServir } from './etats.js';
-import { taillesMinimales } from './situer.js';
+import { taillesMinimales, taillesParProduit } from './situer.js';
 
 export const VERSION_VERDICT = 1;
 
@@ -222,13 +222,33 @@ export function jugerTechnique(technique, mesures, seuilsTechnique, valeursTechn
  * dans l'ordre du fichier de seuils, avec leur etat. Choisir quoi mettre en
  * avant est une decision de produit, elle ne se cache pas dans un tri.
  */
-export function juger({ mesures, seuils, valeurs }) {
+export function juger({ mesures, seuils, valeurs, produits }) {
   if (!seuils || typeof seuils !== 'object') {
     throw new Error('juger : seuils manquants. Un verdict sans seuils serait '
       + 'une opinion.');
   }
   const techniques = Object.entries(seuils.techniques ?? {})
     .map(([cle, st]) => jugerTechnique(cle, mesures, st, valeurs?.techniques?.[cle]));
+
+  // LA VUE PRODUIT, arbitrage Alex du 20/08 : le client part d'un produit,
+  // pas d'une technique. Elle se calcule des que la taxonomie est fournie,
+  // avec les memes entrees que les tailles par technique.
+  const traitPx = borne(mesures?.m5TraitLePlusFin?.encadrementPx, 'basse');
+  const largeurPx = mesures?.m1Dimensions?.largeurPx ?? null;
+  const vueProduits = produits
+    ? taillesParProduit(traitPx, largeurPx, valeurs, produits)
+    : null;
+
+  // La taille saisie, unique pour tout le verdict : la meme reconstruction
+  // que dans jugerTechnique, faite une fois.
+  let largeurDonneeMm = null;
+  {
+    const mmBasse = borne(mesures?.m5TraitLePlusFin?.encadrementMm, 'basse');
+    if (Number.isFinite(mmBasse) && Number.isFinite(traitPx) && traitPx > 0
+        && Number.isFinite(largeurPx)) {
+      largeurDonneeMm = Math.round((mmBasse / traitPx) * largeurPx);
+    }
+  }
 
   const compte = (e) => techniques.filter((t) => t.etat === e).length;
   const compteSituation = (e) => techniques.filter((t) => t.situation?.etat === e).length;
@@ -237,7 +257,10 @@ export function juger({ mesures, seuils, valeurs }) {
     version: VERSION_VERDICT,
     versionSeuils: seuils.version ?? null,
     versionValeurs: valeurs?.version ?? null,
+    versionProduits: produits?.version ?? null,
     techniques,
+    produits: vueProduits,
+    largeurDonneeMm,
     resume: {
       favorables: compte('favorable'),
       defavorables: compte('defavorable'),

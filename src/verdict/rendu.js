@@ -68,44 +68,6 @@ function rendreCriteres(t) {
     .join('');
 }
 
-/**
- * LE TABLEAU DES TAILLES PAR MATIERE.
- *
- * Il est replie par defaut, et c'est un arbitrage de lecture, pas un moyen de
- * cacher. Un visiteur veut d'abord la reponse ; celui qui veut verifier, ou
- * envoyer la ligne a son marqueur, deplie et trouve la matiere, le minimum
- * publie qui a servi au calcul, la source, la date et le lien. C'est la
- * definition d'une valeur SOURCEE : elle se re-verifie sans nous.
- *
- * La colonne de tete est la TAILLE CALCULEE POUR CE LOGO, pas le minimum
- * publie : c'est elle que le visiteur cherche. Le minimum publie reste dans sa
- * colonne, parce que c'est lui qui se verifie chez la source.
- */
-function rendreMinimums(s) {
-  if (s?.etat !== 'tailles' || !s.parSupport?.length) return '';
-  const lignes = s.parSupport.map((v) => {
-    const source = v.url
-      ? `<a href="${echapper(v.url)}" rel="nofollow noopener" target="_blank">${echapper(v.source)}</a>`
-      : echapper(v.source);
-    return `<tr>
-      <td>${echapper(v.support)}</td>
-      <td class="mm">dès ${echapper(String(v.tailleMinMm))} mm de large</td>
-      <td class="mm">${echapper(mmTexte(v.mm))}</td>
-      <td>${source}</td>
-      <td class="date">${echapper(v.date)}</td>
-    </tr>`;
-  }).join('');
-  return `<details class="minimums">
-  <summary>Le détail par matière, avec les sources (${s.parSupport.length} matières)</summary>
-  <p class="note-calcul">La taille « dès NN mm » est calculée pour VOTRE logo : c'est la
-  largeur de marquage à partir de laquelle son trait le plus fin atteint le minimum
-  publié par la source.</p>
-  <table><thead><tr><th>matière</th><th>marquez ce logo</th>
-    <th>trait minimal publié</th><th>source</th><th>relevé le</th></tr></thead>
-  <tbody>${lignes}</tbody></table>
-</details>`;
-}
-
 function mmTexte(v) {
   return (Math.round(v * 100) / 100).toFixed(2).replace('.', ',') + ' mm';
 }
@@ -122,14 +84,145 @@ export function rendreTechnique(t) {
                       : LIBELLES[t.etat];
   const phrase = s ? direTailles(s, t.verdictLargeur, t.largeurDonneeMm) : null;
   const couleurs = s ? direCouleurs(t.technique, t.nCouleurs) : null;
+  // Plus de tableau de sources DANS la carte, second arbitrage Alex du 20/08 :
+  // « les sources, on les donnera si on nous demande ». Elles vivent dans la
+  // rubrique unique « D'où viennent ces chiffres ? », en bas du diagnostic.
   return `<article class="technique ${CLASSE[t.etat]}">
   <h3>${echapper(t.libelle)}<span class="etiquette">${echapper(etiquette)}</span></h3>
   ${base ? `<p class="base">${echapper(base)}</p>` : ''}
   ${phrase ? `<p class="situation">${echapper(phrase)}</p>` : ''}
   ${couleurs ? `<p class="couleurs-technique">${echapper(couleurs)}</p>` : ''}
-  ${rendreMinimums(s)}
   <ul class="criteres">${criteres}</ul>
 </article>`;
+}
+
+/* ------------------------------------------------- la vue produit, 20/08 */
+
+/**
+ * LE MENU DEROULANT DES PRODUITS.
+ *
+ * Le client part d'un produit, pas d'une technique : arbitrage Alex du 20/08,
+ * apres les captures du patch 0025. La taxonomie vient de produits.json,
+ * limitee aux rubriques publiques des grands catalogues d'objets
+ * promotionnels. Un produit a variantes (le mug) demande un second choix :
+ * on indique d'abord le produit, puis son type.
+ *
+ * Le rendu reste une fonction PURE : la selection arrive en parametre, les
+ * ecouteurs sont poses par app.js en delegation. Reconstruire le HTML a
+ * chaque changement ne perd donc aucun etat.
+ */
+function rendreChoixProduit(vue, selection) {
+  if (!vue?.produits?.length) return '';
+  const parRubrique = new Map();
+  for (const p of vue.produits) {
+    if (!parRubrique.has(p.rubrique)) parRubrique.set(p.rubrique, []);
+    parRubrique.get(p.rubrique).push(p);
+  }
+  const groupes = [...parRubrique.entries()].map(([rubrique, liste]) => {
+    const options = liste.map((p) =>
+      `<option value="${echapper(p.cle)}"${selection?.produit === p.cle ? ' selected' : ''}>${echapper(p.libelle)}</option>`).join('');
+    return `<optgroup label="${echapper(rubrique)}">${options}</optgroup>`;
+  }).join('');
+
+  const produit = vue.produits.find((p) => p.cle === selection?.produit);
+  let variante = '';
+  if (produit?.variantes?.length) {
+    const options = produit.variantes.map((v) =>
+      `<option value="${echapper(v.cle)}"${selection?.variante === v.cle ? ' selected' : ''}>${echapper(v.libelle)}</option>`).join('');
+    variante = `<label for="choix_variante">Quel type ?</label>
+  <select id="choix_variante">
+    <option value=""${!selection?.variante ? ' selected' : ''}>Choisissez…</option>
+    ${options}
+  </select>`;
+  }
+
+  return `<div class="choix-produit">
+  <label for="choix_produit">Sur quel produit voulez-vous marquer ce logo ?</label>
+  <select id="choix_produit">
+    <option value=""${!selection?.produit ? ' selected' : ''}>Choisissez un produit…</option>
+    ${groupes}
+  </select>
+  ${variante}
+</div>`;
+}
+
+/**
+ * La carte du produit choisi : une ligne par technique praticable, la taille
+ * calculee pour CE logo, la mecanique des couleurs, et rien d'autre. Si le
+ * visiteur a donne une taille de marquage, chaque ligne dit si ca passe.
+ */
+function rendreProduitChoisi(vue, selection, verdict) {
+  const produit = vue?.produits?.find((p) => p.cle === selection?.produit);
+  if (!produit) return '';
+  let cible = produit;
+  if (produit.variantes) {
+    cible = produit.variantes.find((v) => v.cle === selection?.variante);
+    if (!cible) {
+      return `<p class="note">Indiquez le type de ${echapper(produit.libelle.toLowerCase())} pour voir les tailles.</p>`;
+    }
+  }
+
+  const L = verdict.largeurDonneeMm;
+  const nCouleurs = verdict.techniques?.[0]?.nCouleurs ?? null;
+  const lignes = cible.techniques.map((t) => {
+    const note = t.note ? ` <span class="note-produit">(${echapper(t.note)})</span>` : '';
+    if (t.tailleMinMm === null) {
+      return `<li><b>${echapper(t.libelle)}</b>${note} : praticable à toutes les tailles,
+      votre logo n'a pas de trait fin à contraindre.</li>`;
+    }
+    let verdictLigne = '';
+    if (Number.isFinite(L)) {
+      verdictLigne = L >= t.tailleMinMm
+        ? ` <span class="ligne-ok">À ${L} mm : ça passe.</span>`
+        : ` <span class="ligne-ko">À ${L} mm : trop petit, passez à ${t.tailleMinMm} mm ou plus.</span>`;
+    }
+    const couleurs = direCouleurs(t.technique, nCouleurs);
+    return `<li><b>${echapper(t.libelle)}</b>${note} : dès ${t.tailleMinMm} mm de large.${verdictLigne}
+    ${couleurs ? `<span class="couleurs-technique">${echapper(couleurs)}</span>` : ''}</li>`;
+  }).join('\n');
+
+  return `<article class="produit-verdict">
+  <h3>${echapper(cible.libelle)}</h3>
+  <ul class="produit-techniques">
+${lignes}
+  </ul>
+</article>`;
+}
+
+/**
+ * D'OU VIENNENT CES CHIFFRES : la seule rubrique qui montre les sources.
+ *
+ * Second arbitrage Alex du 20/08 : les sources ne s'affichent plus a chaque
+ * ligne, elles se donnent a qui les demande. La doctrine ne change pas d'un
+ * millimetre : chaque valeur reste sourcee, datee, liee, re-verifiable sans
+ * nous. Seul l'endroit change : un repli unique, en bas du diagnostic.
+ */
+function rendreSources(verdict) {
+  const techniques = (verdict.techniques ?? [])
+    .filter((t) => t.situation?.etat === 'tailles' && t.situation.parSupport?.length);
+  if (!techniques.length) return '';
+  const blocs = techniques.map((t) => {
+    const lignes = t.situation.parSupport.map((v) => {
+      const source = v.url
+        ? `<a href="${echapper(v.url)}" rel="nofollow noopener" target="_blank">${echapper(v.source)}</a>`
+        : echapper(v.source);
+      return `<tr><td>${echapper(v.support)}</td>
+      <td class="mm">${echapper(mmTexte(v.mm))}</td>
+      <td>${source}</td><td class="date">${echapper(v.date)}</td></tr>`;
+    }).join('');
+    return `<h4>${echapper(t.libelle)}</h4>
+<table><thead><tr><th>matière nommée par la source</th><th>trait minimal publié</th>
+<th>source</th><th>relevé le</th></tr></thead><tbody>${lignes}</tbody></table>`;
+  }).join('\n');
+  return `<details class="minimums sources-verdict">
+  <summary>D'où viennent ces chiffres ?</summary>
+  <p class="note-calcul">Chaque taille affichée est calculée pour votre logo : c'est la
+  largeur de marquage à partir de laquelle son trait le plus fin atteint le minimum
+  d'épaisseur publié par un fabricant ou un atelier, pour la matière qu'il nomme.
+  Voici toutes les valeurs relevées, avec leur source et leur date : chacune se
+  vérifie sans nous croire.</p>
+  ${blocs}
+</details>`;
 }
 
 /**
@@ -141,24 +234,16 @@ export function rendreEntete(verdict) {
   const { favorables, defavorables, inconnues, total, situees, sansTrait,
           parTaille } = verdict.resume;
 
-  // Le bandeau depuis l'inversion du 20/08. Il donne la reponse d'usage tout
-  // de suite : les techniques les plus accessibles avec LEUR taille, calculee
-  // pour ce logo, puis la plus exigeante. Chaque chiffre vient d'une valeur
-  // sourcee, la provenance est dans les cartes.
+  // Le bandeau depuis la vue produit du 20/08 : une seule phrase, qui dit
+  // quoi faire. Le detail vit dans la carte du produit choisi, le reste est
+  // replie. Deuxieme retour d'Alex sur les captures du 0025 : « il y a trop
+  // de choses ». Le bandeau n'enumere donc plus rien.
   if (situees && parTaille?.length) {
-    const dire = (e) => `${echapper(e.libelle)} dès ${e.des} mm`;
-    const accessibles = parTaille.slice(0, 3).map(dire);
-    const exigeante = parTaille[parTaille.length - 1];
-    const suite = parTaille.length > 3
-      ? ` La plus exigeante pour ce logo : ${dire(exigeante).toLowerCase()},`
-        + ` sur ${echapper(String(exigeante.support).split(',')[0].trim())}.`
-      : '';
     return `<div class="encadre">
-  <p><b>Voici à quelle taille, et sur quoi, marquer ce logo.</b>
-  Les plus accessibles : ${accessibles.join(', ')} de large.${suite}</p>
-  <p>Ces tailles sont calculées pour votre logo, à partir de son trait le plus fin
-  et des minimums publiés par les fabricants, matière par matière. Chaque carte
-  ci-dessous donne le détail, avec les sources.</p>
+  <p><b>Choisissez un produit : nous vous disons à partir de quelle taille votre
+  logo passe dessus, avec quelle technique, et ce que ça implique pour vos
+  couleurs.</b> Ces tailles sont calculées pour votre logo, à partir des épaisseurs
+  minimales publiées par les fabricants.</p>
 </div>`;
   }
 
@@ -187,12 +272,37 @@ export function rendreEntete(verdict) {
   et ${inconnues} ${inconnues > 1 ? 'restent' : 'reste'} à documenter.</p>`;
 }
 
-export function rendreVerdict(verdict) {
-  return `<h2>Sur quoi marquer ce logo, et à partir de quelle taille</h2>
+/**
+ * L'assemblage. L'ordre est celui de la lecture d'un client : le choix du
+ * produit, la reponse pour CE produit, puis, replies parce qu'ils repondent a
+ * d'autres questions : le detail par technique, et les sources.
+ *
+ * `selection` est l'etat du menu deroulant, tenu par app.js et repasse a
+ * chaque rendu : la fonction reste pure et se teste dans node.
+ */
+export function rendreVerdict(verdict, selection = {}) {
+  const vue = verdict.produits;
+  const aProduits = Boolean(vue?.produits?.length) && verdict.resume.situees > 0;
+  const techniquesRendues = verdict.techniques.map(rendreTechnique).join('\n');
+  // Tant que la vue produit n'a rien a montrer (pas de taxonomie, logo
+  // d'aplats, referentiel vide), les cartes techniques restent depliees :
+  // replier la seule information affichable serait une page vide.
+  const parTechnique = aProduits
+    ? `<details class="par-technique">
+  <summary>Le détail par technique d'impression</summary>
+  <div class="techniques-verdict">
+${techniquesRendues}
+  </div>
+</details>`
+    : `<div class="techniques-verdict">
+${techniquesRendues}
+</div>`;
+  return `<h2>Sur quoi marquer ce logo ?</h2>
 ${rendreEntete(verdict)}
-<div class="techniques-verdict">
-${verdict.techniques.map(rendreTechnique).join('\n')}
-</div>
+${aProduits ? rendreChoixProduit(vue, selection) : ''}
+${aProduits ? rendreProduitChoisi(vue, selection, verdict) : ''}
+${parTechnique}
+${rendreSources(verdict)}
 <p class="note">Ce diagnostic décrit ce que les fabricants d'objets acceptent
 couramment de produire, pas les limites physiques des procédés. Un atelier
 spécialisé peut réaliser ce que la plupart refusent.</p>`;

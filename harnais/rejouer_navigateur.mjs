@@ -627,13 +627,48 @@ console.log('');
       liens: bloc.querySelectorAll('.minimums a[href^="https://"]').length,
       lignes: bloc.querySelectorAll('.minimums tbody tr').length,
     };
+    // LE MENU DEROULANT DES PRODUITS, par le vrai chemin : on choisit un
+    // mug, puis son type, comme le ferait un visiteur. Les ecouteurs sont en
+    // delegation sur #verdict, donc la reconstruction du HTML ne doit rien
+    // casser.
+    const choisir = (id, valeur) => {
+      const s = document.getElementById(id);
+      if (!s) return false;
+      s.value = valeur;
+      s.dispatchEvent(new Event('change', { bubbles: true }));
+      return true;
+    };
+    const menuExiste = Boolean(document.getElementById('choix_produit'));
+    choisir('choix_produit', 'mug');
+    await new Promise((r) => setTimeout(r, 100));
+    const varianteApparue = Boolean(document.getElementById('choix_variante'));
+    choisir('choix_variante', 'mug_inox');
+    await new Promise((r) => setTimeout(r, 100));
+    const carte = document.querySelector('#verdict .produit-verdict');
+    const produit = {
+      menuExiste,
+      varianteApparue,
+      carteTexte: carte ? carte.innerText : '',
+      carteLiens: carte ? carte.querySelectorAll('a').length : -1,
+      // Les sources ne s'affichent qu'a la demande : chaque lien externe vit
+      // dans un repli FERME. On teste l'appartenance au repli plutot que
+      // offsetParent, que Chrome ne rend plus null dans un details ferme
+      // depuis le passage a content-visibility.
+      liensHorsRepli: [...document.querySelectorAll('#verdict a[href^="https://"]')]
+        .filter((a) => a.closest('details:not([open])') === null).length,
+      selectionGardee: document.getElementById('choix_produit')?.value,
+    };
     const champ = document.getElementById('largeur_mm');
     champ.value = '30';
     champ.dispatchEvent(new Event('input', { bubbles: true }));
     await new Promise((r) => setTimeout(r, 400));
     return {
       avant,
+      produit,
       apres: document.getElementById('verdict').innerText,
+      // La selection du produit doit survivre a la re-mesure declenchee par
+      // la saisie d'une largeur.
+      carteApresSaisie: document.querySelector('#verdict .produit-verdict')?.innerText ?? '',
     };
   }, octets.toString('base64'));
   await page.close();
@@ -651,8 +686,8 @@ console.log('');
   console.log('  ' + '-'.repeat(66));
   for (const [libelle, ok] of [
     ['sans aucune saisie, les sept techniques ont deja leur carte', av.cartes === 7],
-    ['sans aucune saisie, des tailles « dès NN mm » sont affichees',
-      /dès \d+ mm de large/.test(av.texte)],
+    ['sans aucune saisie, le bloc invite a choisir un produit',
+      /[Cc]hoisissez un produit/.test(av.texte)],
     ['le bloc ne reclame plus de largeur au visiteur',
       !/donnez une largeur|indiquez la largeur/i.test(av.texte)],
     ['aucune etiquette jargon du 19/08', !JARGON.test(av.texte)],
@@ -669,6 +704,18 @@ console.log('');
     // moins une technique, et la page le dit en langage d'usage.
     ['une taille saisie affine la reponse au lieu d\'etre une condition',
       /À 30 mm/.test(constat.apres)],
+    // La vue produit, arbitrage Alex du 20/08 : un menu deroulant, le type
+    // ensuite, une carte sans fouillis et sans sources en ligne.
+    ['le menu deroulant des produits est la', constat.produit.menuExiste === true],
+    ['choisir le mug fait apparaitre le choix du type', constat.produit.varianteApparue === true],
+    ['la carte du mug inox repond « dès NN mm de large »',
+      /dès \d+ mm de large/.test(constat.produit.carteTexte)],
+    ['la carte produit ne porte aucun lien de source', constat.produit.carteLiens === 0],
+    ['aucun lien de source hors d\'un repli ferme',
+      constat.produit.liensHorsRepli === 0],
+    ['la selection du produit survit au re-rendu', constat.produit.selectionGardee === 'mug'],
+    ['et elle survit aussi a la saisie d\'une largeur',
+      constat.carteApresSaisie.includes('Mug en inox')],
   ]) {
     console.log(`  ${ok ? 'ok   ' : 'ECHEC'} ${libelle}`);
     if (!ok) echecs++;

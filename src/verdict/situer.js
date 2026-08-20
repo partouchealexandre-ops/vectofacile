@@ -159,3 +159,84 @@ export function taillesMinimales(traitPx, largeurImagePx, valeurs) {
     jusqu_a: parSupport[parSupport.length - 1].tailleMinMm,
   };
 }
+
+/**
+ * LA VUE PRODUIT, ARBITRÉ ALEX 20/08/2026.
+ *
+ * La vue par matiere restait la vue de NOTRE donnee : dix-huit matieres en
+ * serigraphie, des supports de packaging au milieu des objets, une source par
+ * ligne. Le client, lui, part d'un produit : un tote bag, un mug, un t-shirt.
+ * La taxonomie de produits.json reprend les rubriques publiques des grands
+ * catalogues d'objets promotionnels, et chaque couple produit x technique
+ * reference les lignes sourcees qui le concernent en lecture directe.
+ *
+ * Deux disciplines, et le harnais les controle :
+ *
+ *   une reference se resout par le triplet source + support + mm, et elle doit
+ *   resoudre EXACTEMENT une ligne de valeurs_sourcees.json : une valeur
+ *   corrigee la bas casse bruyamment ici, au lieu de servir une correspondance
+ *   perimee en silence ;
+ *
+ *   la valeur retenue est LA PLUS EXIGEANTE des lignes referencees, meme
+ *   prudence que le reste du calcul. Les autres lignes restent portees par le
+ *   resultat, pour la rubrique sources.
+ *
+ * Fonction PURE : elle rend, pour chaque produit et chaque variante, la liste
+ * des techniques praticables avec la taille minimale calculee pour CE logo.
+ */
+export function taillesParProduit(traitPx, largeurImagePx, valeursSourcees, produits) {
+  const catalogue = produits?.produits ?? [];
+  if (!catalogue.length) return { etat: 'sans_produits', produits: [] };
+
+  const calculable = Number.isFinite(traitPx) && traitPx > 0
+    && Number.isFinite(largeurImagePx) && largeurImagePx > 0;
+
+  const resoudre = (technique, ref) => {
+    const liste = valeursSourcees?.techniques?.[technique]?.criteres?.trait_minimal?.valeurs ?? [];
+    const trouvees = liste.filter((v) => v.source === ref.source
+      && v.support === ref.support && v.mm === ref.mm);
+    return trouvees.length === 1 ? trouvees[0] : null;
+  };
+
+  const calculerTechniques = (techniques) => {
+    const sortie = [];
+    for (const [cle, spec] of Object.entries(techniques ?? {})) {
+      const lignes = (spec.refs ?? []).map((r) => resoudre(cle, r)).filter(Boolean);
+      if (!lignes.length) continue;
+      // La plus exigeante des lignes referencees.
+      const retenue = lignes.reduce((a, b) => (b.mm > a.mm ? b : a));
+      sortie.push({
+        technique: cle,
+        libelle: valeursSourcees?.techniques?.[cle]?.libelle ?? cle,
+        note: spec.note ?? null,
+        retenue: { mm: retenue.mm, support: retenue.support, source: retenue.source,
+                   date: retenue.date, url: retenue.url ?? null },
+        lignes,
+        tailleMinMm: calculable
+          ? Math.ceil((retenue.mm * largeurImagePx) / traitPx) : null,
+      });
+    }
+    sortie.sort((a, b) => (a.tailleMinMm ?? 0) - (b.tailleMinMm ?? 0)
+      || a.libelle.localeCompare(b.libelle, 'fr'));
+    return sortie;
+  };
+
+  const resultat = [];
+  for (const p of catalogue) {
+    if (Array.isArray(p.variantes)) {
+      const variantes = p.variantes
+        .map((v) => ({ cle: v.cle, libelle: v.libelle,
+                       techniques: calculerTechniques(v.techniques) }))
+        .filter((v) => v.techniques.length);
+      if (variantes.length) {
+        resultat.push({ cle: p.cle, libelle: p.libelle, rubrique: p.rubrique, variantes });
+      }
+    } else {
+      const techniques = calculerTechniques(p.techniques);
+      if (techniques.length) {
+        resultat.push({ cle: p.cle, libelle: p.libelle, rubrique: p.rubrique, techniques });
+      }
+    }
+  }
+  return { etat: calculable ? 'tailles' : 'sans_trait', produits: resultat };
+}
