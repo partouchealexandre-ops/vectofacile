@@ -92,6 +92,12 @@ export function fichierHeaders() {
   lignes.push('/vtracer_wasm_bg.wasm');
   lignes.push('  Cache-Control: public, max-age=3600');
   lignes.push('');
+  lignes.push('# Le lecteur de PDF ne change qu\'avec la version du paquet, lui aussi.');
+  lignes.push('# Ceinture en plus des bretelles : le worker est deja partage cote code,');
+  lignes.push('# mais un script servi sans cache se re-telecharge au moindre faux pas.');
+  lignes.push('/pdfjs/*');
+  lignes.push('  Cache-Control: public, max-age=86400');
+  lignes.push('');
   return lignes.join('\n');
 }
 

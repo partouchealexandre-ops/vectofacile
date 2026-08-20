@@ -98,7 +98,12 @@ const serveur = http.createServer((req, res) => {
   let f = path.join(PUBLIC, u);
   if (fs.existsSync(f) && fs.statSync(f).isDirectory()) f = path.join(f, 'index.html');
   if (!fs.existsSync(f)) { res.writeHead(404); return res.end(); }
-  res.writeHead(200, { 'content-type': TYPES[path.extname(f)] || 'application/octet-stream' });
+  // Le serveur du harnais interdit le cache : le controle « reseau coupe »
+  // doit prouver que le CODE ne re-telecharge rien, pas que le cache du
+  // navigateur a eu de la chance. C'est la difference entre ma machine, ou le
+  // test passait, et celle d'Alex, ou il echouait : meme code, autre cache.
+  res.writeHead(200, { 'content-type': TYPES[path.extname(f)] || 'application/octet-stream',
+    'cache-control': 'no-store' });
   res.end(fs.readFileSync(f));
 });
 await new Promise((r) => serveur.listen(PORT, r));

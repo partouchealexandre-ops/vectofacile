@@ -58,7 +58,18 @@ function chargerPdfjs() {
     promessePdfjs = import(/* @vite-ignore */ `${BASE}pdf.min.js`).then((mod) => {
       const lib = mod.default ?? mod;
       lib.GlobalWorkerOptions.workerSrc = `${BASE}pdf.worker.min.js`;
-      return lib;
+      // UN SEUL WORKER, PARTAGE ENTRE TOUS LES DOCUMENTS.
+      //
+      // Sans lui, chaque getDocument fabrique son worker, et le script du
+      // worker se RE-TELECHARGE a chaque depot. Le harnais d'Alex l'a montre
+      // le 20/08 : premier PDF audite, reseau coupe, deuxieme PDF en echec.
+      // Chez moi le meme test passait, parce que mon navigateur servait le
+      // script depuis son cache et pas le sien. Un comportement qui depend de
+      // l'etat du cache du visiteur n'est pas un comportement, c'est une
+      // loterie. Le worker est cree une fois, avec le lecteur, et les taches
+      // ne le possedent pas : tache.destroy() libere le document, jamais lui.
+      const worker = new lib.PDFWorker({ name: 'vecto-pdf' });
+      return { lib, worker };
     });
   }
   return promessePdfjs;
@@ -93,11 +104,12 @@ export async function lireVectoriel(fichier, options = {}) {
       + 'il a probablement été enregistré sans l\'option de compatibilité PDF.');
   }
 
-  const pdfjs = await chargerPdfjs();
+  const { lib: pdfjs, worker } = await chargerPdfjs();
   let doc;
   let tache;
   try {
     tache = pdfjs.getDocument({
+      worker,
       data: new Uint8Array(octets),
       standardFontDataUrl: `${BASE}standard_fonts/`,
       wasmUrl: `${BASE}wasm/`,
