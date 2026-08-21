@@ -138,7 +138,11 @@ async function deposer(page, octets, nom, type) {
       titreFiche: document.querySelector('#fiche h2')?.textContent ?? null,
       conseils: [...document.querySelectorAll('#conseils .conseil h3')].map((x) => x.textContent),
       verdict: document.getElementById('verdict').offsetParent !== null,
-      bandeauFichier: document.querySelector('#verdict .etat-fichier')?.innerText ?? '',
+      // C2 du brief du 21/08 : le bandeau de six lignes a ete remplace par
+      // l'ACTION, une ligne et un bouton. On lit donc ce que le visiteur voit
+      // maintenant, pas ce qui n'existe plus.
+      actionFichier: document.querySelector('#verdict .verdict-action')?.innerText ?? '',
+      verdictCourt: document.querySelector('#verdict .verdict-tete')?.innerText ?? '',
     };
   }, [octets.toString('base64'), nom, type]);
 }
@@ -178,8 +182,8 @@ await page.waitForTimeout(900);
     ['le diagnostic par technique s\'affiche quand meme', r.verdict === true],
     // Le bandeau du fichier (20/08) : un vrai vectoriel est felicite, la
     // premiere question du diagnostic est deja reglee.
-    ['le bandeau du fichier le felicite : deja vectoriel, bon pour envoi',
-      /déjà vectoriel/.test(r.bandeauFichier) && !/refusé/.test(r.bandeauFichier)],
+    ['l\'action le felicite : deja vectoriel, bon pour envoi',
+      /déjà vectoriel/.test(r.actionFichier) && !/refusé/.test(r.actionFichier)],
   ], [`${r.fiche?.largeurMm} x ${r.fiche?.hauteurMm} mm, ${r.fiche?.traces} traces, `
       + `${r.fiche?.images} image(s), ${r.couleurs} couleur(s)`]);
 }
@@ -199,11 +203,11 @@ await page.waitForTimeout(900);
     // Le bandeau du fichier, reecrit le 20/08 apres le §1 du brief : il nomme
     // ce que le fichier EST, il garde ce que son image ouvre deja, et il donne
     // la sortie, la page Vectoriser mon logo, avec l'image d'origine.
-    ['le bandeau nomme le faux vectoriel et donne la sortie',
-      /ne contient qu'une image/.test(r.bandeauFichier)
-        && /Vectoriser mon logo/.test(r.bandeauFichier)],
-    ['et il ne ferme pas les portes que l\'image ouvre deja',
-      /transfert numérique/.test(r.bandeauFichier)],
+    ['l\'action donne la sortie : redeposer l\'image d\'origine',
+      /Vectoriser mon logo|image d'origine/.test(r.actionFichier),
+      ],
+    ['et le verdict, lui, dit quand meme sur quoi le logo passe',
+      /Votre logo (passe|ne passe)/.test(r.verdictCourt)],
   ], [r.titreFiche, ...r.conseils]);
 }
 

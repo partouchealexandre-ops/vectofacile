@@ -17,6 +17,7 @@ import { lireVectoriel, reconnaitre, FichierVectorielNonLu } from './adaptateurs
 import { mesurer } from './moteur/mesures.js';
 import { juger } from './verdict/juger.js';
 import { jugerGrille, choisirPourContraste } from './verdict/grille.js';
+import { CONTACT } from './verdict/rendu_grille.js';
 import { rendreVerdict } from './verdict/rendu.js';
 import { conseiller } from './conseils/conseils.js';
 import { preparerVectorisation, FORMES_MAXIMALES } from './vectorisation/options.js';
@@ -125,7 +126,7 @@ function rendrePalette(palette) {
       <span class="pastille" style="background:${c.hex}"></span>
       <code class="hex">${c.hex.toUpperCase()}</code>
       <span class="rvb">R ${c.rvb[0]} V ${c.rvb[1]} B ${c.rvb[2]}</span>
-      <span class="part">${pourcent(c.part)} de l'encre</span>
+      <span class="part">${pourcent(c.part)} de la surface du logo</span>
     </li>`).join('');
   // §7.4 du brief du 20/08 : « à donner à votre marqueur » se disait deux fois
   // sur le meme ecran, dans le titre de la section ET dans celui de la palette.
@@ -145,14 +146,18 @@ function rendrePalette(palette) {
  */
 function afficherCouleurs(m) {
   const n = m.m2Couleurs.couleursReelles;
+  // Le titre vit dans le <summary> du volet : « un fait ne se dit qu'une fois »,
+  // regle d'ecriture du brief du 21/08. Le compte de couleurs apparaissait
+  // trois fois sur l'ecran, ici, dans les conseils et dans le tableau.
+  const volet = document.querySelector('#volet_couleurs > summary');
+  if (volet) volet.textContent = `Vos ${nb(n)} couleur${n > 1 ? 's' : ''} réelle${n > 1 ? 's' : ''}, à donner à votre marqueur`;
   $('couleurs').innerHTML = `
-    <h2>${nb(n)} couleur${n > 1 ? 's' : ''} réelle${n > 1 ? 's' : ''}, à donner à votre marqueur</h2>
     <p class="note">Le fichier contient ${nb(m.m2Couleurs.couleursBrutes)} teintes au total,
     mais ${n > 1 ? `ces ${nb(n)} couleurs portent` : 'cette couleur porte'} le dessin :
     le reste est du lissage de bord. En sérigraphie et en tampographie, chaque couleur
     est un écran et un passage de machine à part.</p>
     ${rendrePalette(m.m2Couleurs.palette)}`;
-  $('couleurs').hidden = false;
+  devoiler('couleurs');
 }
 
 function afficherMesures(m, image) {
@@ -194,7 +199,7 @@ function afficherMesures(m, image) {
         ? `oui, ${nb(m.m4Transparence.pixelsSemiTransparents)} pixels` : 'non')}
     </details>
   `;
-  $('mesures').hidden = false;
+  devoiler('mesures');
 }
 
 /**
@@ -369,6 +374,10 @@ function rendreLeVerdict() {
   // rien, elle decore. On n'affiche donc pas les douze archetypes, on retient
   // ceux qui repondent des choses DIFFERENTES pour ce logo.
   const contraste = choisirPourContraste(tous);
+  // Les verdicts retenus servent aussi au message pre-rempli du bloc « et
+  // maintenant ? » : le repondant sait de quoi il parle avant d'ouvrir quoi
+  // que ce soit.
+  etat.juges = contraste.choisis;
   $('verdict').innerHTML = rendreVerdict(
     etat.verdict, contraste.choisis, etat.fichierEtat, contraste);
   $('verdict').hidden = false;
@@ -395,6 +404,22 @@ function rendreLeVerdict() {
  * La regle : rien de ce qui concerne le fichier precedent ne survit au depot
  * du suivant. Ni a l'ecran, ni en memoire.
  */
+/**
+ * MONTRER UNE SECTION, ET LE VOLET QUI LA CONTIENT.
+ *
+ * Structure C du brief du 21/08 : tout ce qui n'est pas le verdict est de la
+ * PREUVE, et la preuve se replie. Les sections vivent donc dans des <details>
+ * qui restent caches tant que leur contenu n'existe pas : un volet vide qui
+ * s'ouvre sur rien est pire qu'un volet absent.
+ */
+function devoiler(id) {
+  const e = $(id);
+  if (!e) return;
+  e.hidden = false;
+  const volet = e.closest('details.volet');
+  if (volet) volet.hidden = false;
+}
+
 /**
  * LA VIGNETTE DU LOGO REMPLACE LA ZONE DE DEPOT, §7.1 du brief du 20/08.
  *
@@ -458,6 +483,13 @@ function reinitialiser() {
   // que l'avertissement n'etait plus au-dessus du bouton, parce qu'il n'y
   // avait plus de bouton du tout.
   $('telechargements').hidden = true;
+  // Les volets se referment ET se cachent : un volet ouvert sur le contenu du
+  // fichier precedent serait la meme faute que les boutons qui survivaient a
+  // un refus, corrigee le 19/08.
+  for (const volet of document.querySelectorAll('details.volet')) {
+    volet.hidden = true;
+    volet.open = false;
+  }
   // Meme raison pour la largeur de marquage : son champ et son ecouteur sont
   // poses une seule fois au demarrage. On masque la section, on ne la vide pas.
   const largeur = $('largeur');
@@ -539,7 +571,7 @@ function afficherFiche(fiche) {
       pixellisera exactement comme un JPEG. Un atelier vous le refusera, ou le
       retracera à la main et vous le facturera.</div>` : ''}
   `;
-  $('fiche').hidden = false;
+  devoiler('fiche');
 }
 
 /**
@@ -560,7 +592,7 @@ function afficherConseils(mesures, fiche) {
       <p class="fait">${c.fait}</p>
       <p class="mecanique">${c.mecanique}</p>
     </div>`).join('')}`;
-  $('conseils').hidden = false;
+  devoiler('conseils');
 }
 
 async function traiter(fichier) {
@@ -627,7 +659,7 @@ async function traiter(fichier) {
     // qui doit l'etre.
     if (!modeVectoriser()) {
       const largeur = $('largeur');
-      if (largeur) largeur.hidden = false;
+      if (largeur) devoiler('largeur');
       afficherFiche(etat.fiche);
       afficherCouleurs(mesures);
       afficherMesures(mesures, image);
@@ -650,7 +682,7 @@ async function traiter(fichier) {
           <p class="gris">Il n'y a rien à vectoriser : vous avez déjà ce que cette page
           fabrique. Pour savoir sur quoi et à quelle taille le marquer,
           <a href="/">évaluez votre logo</a>.</p>`;
-        $('resultat').hidden = false;
+        devoiler('resultat');
       }
       $('travail').hidden = true;
       return;
@@ -664,7 +696,7 @@ async function traiter(fichier) {
       $('resultat').innerHTML = `
         <h2>Pas de fichier vectoriel pour celui-ci</h2>
         <p class="gris">${prepare.refus.texte}</p>`;
-      $('resultat').hidden = false;
+      devoiler('resultat');
       $('travail').hidden = true;
       etat.fichierEtat = { origine: 'image', vectorise: false };
       rendreLeVerdict();
@@ -693,7 +725,7 @@ async function traiter(fichier) {
         <p class="gris">Le tracé de ce fichier compte ${inv.formes.toLocaleString('fr-FR')} formes.
         Aucune technique de marquage ne sait rendre ça, et aucun atelier n'ouvrira
         le fichier. Le diagnostic ci-dessus reste valable, il décrit bien votre fichier.</p>`;
-      $('resultat').hidden = false;
+      devoiler('resultat');
       $('travail').hidden = true;
       etat.fichierEtat = { origine: 'image', vectorise: false };
       rendreLeVerdict();
@@ -711,7 +743,7 @@ async function traiter(fichier) {
         site web.
       </p>
     `;
-    $('resultat').hidden = false;
+    devoiler('resultat');
     $('telechargements').hidden = false;
     $('travail').hidden = true;
     // Le .eps existe desormais : le bandeau du fichier peut le promettre au
@@ -787,6 +819,50 @@ function brancher() {
   $('telecharger_svg').addEventListener('click', () => {
     telecharger(etat.svg, `${etat.nom}.svg`, 'image/svg+xml');
   });
+
+  // C4 DU BRIEF DU 21/08 : LA SUITE, POUR LE VISITEUR LE PLUS CHAUD DU
+  // PARCOURS, QUI N'EN AVAIT AUCUNE.
+  //
+  // Le bloc est rendu avec le verdict, donc apres coup : on ecoute au niveau
+  // du document plutot que sur un bouton qui n'existe pas encore au demarrage.
+  //
+  // AUCUN ENVOI AUTOMATIQUE. On compose un message dans le logiciel de courrier
+  // du visiteur, il le relit, il l'envoie. Le fichier ne part pas, le diagnostic
+  // l'accompagne, et la promesse « rien ne quitte votre machine » tient : c'est
+  // lui qui envoie, pas nous.
+  document.addEventListener('click', (evenement) => {
+    if (evenement.target?.id !== 'suite_envoyer') return;
+    const email = $('suite_email')?.value.trim() ?? '';
+    const objet = $('suite_mot')?.value.trim() ?? '';
+    location.href = `mailto:${CONTACT}?subject=${encodeURIComponent('Demande de prix')}`
+      + `&body=${encodeURIComponent(corpsDeLaDemande(email, objet))}`;
+  });
+}
+
+/**
+ * LE MESSAGE PRE-REMPLI : ce que le repondant a besoin de savoir avant meme
+ * d'ouvrir un fichier. Le diagnostic, jamais le logo.
+ */
+function corpsDeLaDemande(email, objet) {
+  const m = etat.mesures;
+  const lignes = ['Bonjour,', ''];
+  lignes.push(objet ? `Je voudrais un prix pour : ${objet}.` : 'Je voudrais un prix pour un marquage.');
+  lignes.push('');
+  lignes.push('Voici le diagnostic de mon logo, fait sur vectofacile.fr :');
+  if (m?.m2Couleurs) lignes.push(`- ${m.m2Couleurs.couleursReelles} couleur(s) réelle(s)`);
+  if (etat.fichierEtat) {
+    lignes.push(etat.fichierEtat.origine === 'vectoriel'
+      ? '- fichier déjà vectoriel'
+      : `- image${etat.fichierEtat.vectorise === true ? ', vectorisée par l\'outil' : ''}`);
+  }
+  for (const p of etat.juges ?? []) {
+    if (p.etat === 'oui' && p.meilleure) {
+      lignes.push(`- ${p.libelle} : ${p.meilleure.zone}, en ${p.meilleure.technique.toLowerCase()}, `
+        + `${p.meilleure.taille.largeurMm} × ${p.meilleure.taille.hauteurMm} mm`);
+    }
+  }
+  lignes.push('', email ? `Vous pouvez me répondre à ${email}.` : 'Merci de me répondre à cette adresse.');
+  return lignes.join('\n');
 }
 
 /**

@@ -78,6 +78,60 @@ export function familleDe(nom) {
 }
 
 /**
+ * CE QUE LA MATIERE INTERDIT, ET CE QU'ELLE CONDITIONNE.
+ *
+ * B1 du brief du 20/08, et c'est le controle qui protege la reference. La page
+ * a affiche « toute la surface : en sublimation » sur une bouteille en acier
+ * inoxydable. La sublimation teint le POLYESTER ou un revetement enduit ; sur
+ * metal nu, elle n'existe pas. Une seule affirmation de ce genre, relevee par
+ * un professionnel, suffit a tuer la credibilite de tout le site.
+ *
+ * La donnee source n'avait pas menti : dix-huit references sur soixante-cinq
+ * declarent bien une zone de sublimation, ce sont des bouteilles A REVETEMENT
+ * sublimable. L'erreur etait de servir ce cas particulier comme s'il valait
+ * pour toute la matiere.
+ *
+ * D'ou deux niveaux, et pas un seul :
+ *
+ *   `non`          le procede ne peut pas fonctionner sur cette matiere. Le
+ *                  couple est ECARTE a la derivation, il n'atteint jamais
+ *                  l'ecran ;
+ *   `conditionnel` il fonctionne, mais seulement sur une variante du produit.
+ *                  Il s'affiche AVEC sa condition, jamais sans.
+ *
+ * LA TABLE RESTE COURTE ET INDISCUTABLE. Une table trop large est aussi
+ * contestable qu'une table absente : on n'y met que ce qu'un atelier
+ * confirmerait sans hesiter. Deux mecaniques suffisent a couvrir la classe :
+ * la sublimation exige un polyester ou un revetement polymere, la broderie
+ * exige un support textile ou l'aiguille passe.
+ */
+const TEXTILES = new Set(['coton', 'polyester', 'polyester recyclé']);
+
+export function compatibilite(matiere, technique) {
+  if (!matiere || !technique) return { etat: 'oui' };
+  const famille = familleDe(technique);
+
+  // LA SUBLIMATION teint la fibre polyester, ou le vernis polymere dont on
+  // enduit un objet pour la recevoir. Elle ne teint ni le coton, ni le metal,
+  // ni le verre, ni le bois.
+  if (technique === 'Sublimation') {
+    if (matiere === 'polyester' || matiere === 'polyester recyclé') return { etat: 'oui' };
+    if (matiere === 'acier inoxydable' || matiere === 'aluminium' || matiere === 'métal'
+        || matiere === 'plastique' || matiere === 'céramique') {
+      return { etat: 'conditionnel', condition: 'sur les modèles à revêtement sublimable' };
+    }
+    return { etat: 'non', raison: 'la sublimation teint le polyester, pas cette matière' };
+  }
+
+  // LA BRODERIE demande un support ou l'aiguille passe et ou le fil tient.
+  if (famille === 'broderie' && !TEXTILES.has(matiere)) {
+    return { etat: 'non', raison: 'la broderie demande un support textile' };
+  }
+
+  return { etat: 'oui' };
+}
+
+/**
  * LE NOM D'UNE TECHNIQUE, AVEC SON ARTICLE.
  *
  * « tampographie s'ouvre aussi » n'est pas une phrase francaise. Le genre ne se

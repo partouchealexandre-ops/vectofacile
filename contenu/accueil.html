@@ -84,50 +84,59 @@
        avertissement, c'est une note de bas de page. -->
   <div id="avertissements" hidden></div>
 
-  <!-- La fiche d'un fichier DEJA vectoriel. Elle precede les mesures : « votre
-       PDF ne contient qu'une image » rend tout le reste secondaire. -->
-  <section id="fiche" hidden></section>
+  <!-- L'ORDRE DE LECTURE, structure C du brief du 21/08 « le site de
+       reference ». Ce n'est pas une question de gout, c'est le test du
+       couloir : un responsable com presse doit comprendre son resultat en dix
+       secondes. La page enterrait son verdict au quatrieme bloc, entre les
+       codes hexadecimaux et les mesures.
 
-  <!-- L'ORDRE DE LECTURE, arbitrage Alex du 20/08. D'abord ce que le
-       visiteur vient chercher : ses couleurs, le verdict par technique, les
-       conseils, son fichier vectoriel. Le tableau des mesures, exact mais
-       aride, passe en dernier derriere un « plus de details » : il reste
-       entier pour qui le cherche, il ne barre plus la route a personne. -->
-  <section id="couleurs" hidden></section>
+       Le verdict passe donc en premier et porte tout ce qui decide : la phrase
+       courte, le bouton, les cartes groupees, et la suite proposee. Tout le
+       reste est de la PREUVE, pas de la reponse : ca se replie.
+
+       Les blocs replies gardent un balisage STATIQUE, comme les boutons de
+       telechargement : leurs ecouteurs sont poses une fois au demarrage, et la
+       remise a zero masque sans jamais toucher au contenu. -->
   <section id="verdict" hidden></section>
 
-  <!-- LA LARGEUR DE MARQUAGE, RETROGRADEE EN FACULTATIF, 20/08.
-       Elle etait posee AVANT le verdict, comme une condition : le visiteur
-       devait donner une taille qu'il ne connait presque jamais. Depuis
-       l'inversion, c'est l'outil qui calcule a partir de quelle taille le
-       logo passe, sans rien demander. Le champ reste, APRES le verdict,
-       pour qui connait sa taille : il affine alors les cartes du diagnostic.
-
-       Le balisage est STATIQUE, comme celui des boutons de telechargement :
-       l'ecouteur est branche une fois, et la remise a zero masque ce bloc sans
-       jamais toucher a son contenu. -->
-  <section id="largeur" hidden>
-    <h2>Vous connaissez la taille de votre marquage ? (facultatif)</h2>
-    <p class="note">Pas besoin de la connaître : chaque technique affiche déjà la taille
-    calculée pour votre logo. Mais si vous la connaissez, donnez-la, et nous vous
-    dirons directement si ça passe à cette taille, matière par matière.</p>
-    <label for="largeur_mm">Largeur du marquage</label>
-    <input type="number" id="largeur_mm" min="1" max="1000" step="1" inputmode="numeric"
-           placeholder="par exemple 40">
-    <span class="unite">mm</span>
-  </section>
-
-  <section id="conseils" hidden></section>
-
-  <section id="resultat" hidden></section>
-  <div id="apercu"></div>
   <div id="telechargements" hidden>
     <button id="telecharger_eps">Télécharger le .eps</button>
     <button id="telecharger_pdf" class="second">Télécharger le .pdf</button>
     <button id="telecharger_svg" class="tertiaire">Le .svg, pour votre site web</button>
   </div>
 
-  <section id="mesures" hidden></section>
+  <details id="volet_couleurs" class="volet" hidden>
+    <summary>Vos couleurs, à donner à votre marqueur</summary>
+    <section id="couleurs" hidden></section>
+  </details>
+
+  <details id="volet_mesures" class="volet" hidden>
+    <summary>Les mesures de votre fichier</summary>
+    <section id="conseils" hidden></section>
+
+    <!-- LA LARGEUR DE MARQUAGE, FACULTATIVE DEPUIS LE 20/08 et repliee depuis
+         le 21 : c'est l'outil qui calcule a partir de quelle taille le logo
+         passe, sans rien demander. Le champ ne sert plus qu'a convertir les
+         mesures en millimetres, pour qui veut ce detail. -->
+    <section id="largeur" hidden>
+      <h3>Vous connaissez la taille de votre marquage ? (facultatif)</h3>
+      <p class="note">Donnez-la, et le tableau ci-dessous convertit chaque mesure
+      en millimètres.</p>
+      <label for="largeur_mm">Largeur du marquage</label>
+      <input type="number" id="largeur_mm" min="1" max="1000" step="1" inputmode="numeric"
+             placeholder="par exemple 40">
+      <span class="unite">mm</span>
+    </section>
+
+    <section id="mesures" hidden></section>
+  </details>
+
+  <details id="volet_fichier" class="volet" hidden>
+    <summary>Le détail de votre fichier</summary>
+    <section id="fiche" hidden></section>
+    <section id="resultat" hidden></section>
+    <div id="apercu"></div>
+  </details>
 
   <!-- Le contenu de l'accueil, sous l'outil.
        Il ne sert pas a remplir : une page qui ne porte que trois boutons ne

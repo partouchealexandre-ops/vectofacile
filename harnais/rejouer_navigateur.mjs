@@ -482,6 +482,10 @@ console.log('');
       [Uint8Array.from(atob(b64), (c) => c.charCodeAt(0))], 'trait.png', { type: 'image/png' });
     await globalThis.vecto.traiter(fichier);
     const avant = globalThis.vecto.etat().mesures;
+    // Depuis la structure C du 21/08, le champ vit dans le volet des mesures,
+    // replie par defaut : on l'ouvre comme le ferait un visiteur, sinon on
+    // remplit un champ que personne ne voit et le controle ne prouve rien.
+    for (const v of document.querySelectorAll('details.volet')) v.open = true;
     const champ = document.getElementById('largeur_mm');
     const visible = document.getElementById('largeur').offsetParent !== null;
     champ.value = '40';
@@ -626,6 +630,8 @@ console.log('');
       // Chaque carte doit porter une phrase qui dit quelque chose. Une carte
       // muette serait pire qu'une carte absente.
       phrasesVides: cartes.filter((c) => !c.querySelector('.produit-phrase')?.textContent.trim()).length,
+      // B4 du brief du 20/08 : deux cartes ne disent pas la meme chose.
+      phrases: cartes.map((c) => c.querySelector('.produit-phrase')?.textContent.trim() ?? ''),
       silhouettes: bloc.querySelectorAll('.produit .silhouette').length,
       liensExternes: bloc.querySelectorAll('a[href^="https://"], a[href^="http://"]').length,
       appels: bloc.querySelectorAll('.cta-entete').length,
@@ -633,9 +639,18 @@ console.log('');
       menuDeroulant: bloc.querySelector('#choix_produit') !== null,
       cartesTechniques: bloc.querySelectorAll('article.technique').length,
       blocSources: bloc.querySelector('.sources-verdict') !== null,
-      // §1 du brief du 20/08 : ce que le bandeau du fichier dit d'une image.
-      bandeau: bloc.querySelector('.etat-fichier')?.innerText ?? '',
-      boutonFichier: bloc.querySelectorAll('.cta-fichier').length,
+      // STRUCTURE C du brief du 21/08 : le verdict d'abord, le bouton, les
+      // cartes groupees, la suite.
+      verdictTete: bloc.querySelector('.verdict-tete')?.innerText ?? '',
+      action: bloc.querySelector('.verdict-action')?.innerText ?? '',
+      boutonFichier: bloc.querySelectorAll('.cta-large').length,
+      groupes: [...bloc.querySelectorAll('.groupe-titre')].map((t) => t.textContent.trim()),
+      suite: bloc.querySelector('.et-maintenant')?.innerText ?? '',
+      // L'ordre reel dans le document : le verdict doit preceder tout le reste.
+      ordre: [...document.querySelectorAll('#verdict, #volet_couleurs, #volet_mesures, #volet_fichier')]
+        .map((e) => e.id),
+      volets: [...document.querySelectorAll('details.volet:not([hidden])')].length,
+      voletsOuverts: [...document.querySelectorAll('details.volet[open]')].length,
       // §7 du brief du 20/08 : la vignette remplace la zone de depot, et une
       // meme phrase ne se dit pas deux fois sur un ecran.
       depot: document.getElementById('depot')?.innerText ?? '',
@@ -657,15 +672,42 @@ console.log('');
   console.log('  ' + '-'.repeat(66));
   for (const [libelle, ok] of [
     // Depuis les archetypes du 21/08, la grille n'affiche plus huit
-    // references mais SIX A HUIT matieres, choisies pour le contraste : le
-    // nombre depend du logo, la borne haute non.
-    ['de six a huit matieres sont affichees',
-      constat.cartes >= 6 && constat.cartes <= 8, ],
+    // references mais des matieres choisies pour le contraste. B4 du brief :
+    // on ne complete JAMAIS avec un doublon, donc le nombre depend du logo.
+    // Une place vide vaut mieux qu'une carte qui n'apprend rien.
+    ['au plus huit matieres, et au moins deux',
+      constat.cartes >= 2 && constat.cartes <= 8],
+    ['aucune carte ne repete le verdict d\'une autre',
+      new Set(constat.phrases).size === constat.phrases.length,
+      constat.phrases.join(' // ')],
     ['chacune porte sa silhouette', constat.silhouettes === constat.cartes],
     ['chacun porte une phrase qui dit quelque chose', constat.phrasesVides === 0],
     ['les verdicts ne sont pas tous les memes', constat.verdicts.length > 1],
-    ['la page dit sur quelles matieres le logo passe',
-      /Sur quelles matières votre logo passe/i.test(constat.texte)],
+    // C1 : LE VERDICT EN PREMIER, SEUL, EN GROS. Le test du couloir se joue
+    // la : dix secondes, sans vocabulaire du metier.
+    ['le verdict ouvre l\'ecran, en une phrase',
+      /Votre logo (passe|ne passe)/.test(constat.verdictTete)],
+    ['il ne porte ni code couleur ni explication de procede',
+      !/#[0-9a-f]{6}/i.test(constat.verdictTete) && !/outil|courbes/i.test(constat.verdictTete)],
+    ['et il precede tout le reste dans la page',
+      constat.ordre[0] === 'verdict', constat.ordre.join(' > ')],
+    // C2 : le bouton, et la ligne qui dit ce qu'on recoit.
+    ['le bouton suit le verdict, avec ce qu\'on recoit',
+      constat.boutonFichier === 1 && /\.eps/.test(constat.action) && /\.pdf/.test(constat.action)],
+    // C3 : les cartes groupees racontent au lieu d'inventorier.
+    ['les cartes sont groupees par etat, avec un intertitre',
+      constat.groupes.length >= 1
+        && constat.groupes.every((t) => /(Ça passe|ouvre aussi|ça coince)/.test(t)),
+      constat.groupes.join(' | ')],
+    // C4 : la suite, que la page n'offrait pas.
+    ['la page propose une suite au visiteur',
+      /marquage en vrai/i.test(constat.suite) && /Demander un prix/i.test(constat.suite)],
+    ['et elle redit que le logo ne part pas',
+      /ne part pas/i.test(constat.suite)],
+    // C5 a C7 : la preuve se replie, elle ne barre plus la route.
+    ['les blocs de preuve sont replies, pas supprimes',
+      constat.volets >= 2 && constat.voletsOuverts === 0,
+      `${constat.volets} volets visibles, ${constat.voletsOuverts} ouverts, ordre ${constat.ordre.join('>')}`],
     // §2 du brief : la matiere est le discriminant, et la page doit le dire,
     // sinon une carte redevient une reference de catalogue.
     ['elle nomme des matieres, pas des references',
@@ -692,18 +734,14 @@ console.log('');
     // image serait donc refusée en l'état » a quelqu'un dont le fichier
     // fonctionne deja sur la moitie des techniques. Ce controle passe par le
     // vrai chemin du visiteur : une image deposee, l'ecran qu'il voit.
-    ['le bandeau ne refuse plus l\'image en bloc',
-      !/refus/i.test(constat.bandeau) && !/oubliez la tampographie/i.test(constat.bandeau)],
+    ['une image nette ne se voit refuser nulle part',
+      !/refusée en l'état/i.test(constat.texte)],
     ['(temoin) le detecteur de refus detecte bien',
-      /refus/i.test(`${constat.bandeau} serait refusée en l'état`)],
-    ['il nomme ce que l\'image ouvre deja',
-      /transfert numérique/i.test(constat.bandeau) && /sublimation/i.test(constat.bandeau)],
-    ['il dit la raison mecanique de l\'autre moitie',
-      /outil/i.test(constat.bandeau) && /courbes/i.test(constat.bandeau)],
+      /refusée en l'état/i.test(`${constat.texte} serait refusée en l'état`)],
     // §7.3 : la vectorisation n'est plus annoncee comme faite, elle est rendue
     // au visiteur sous forme d'action.
     ['la vectorisation est une action, pas une annonce',
-      !/nous l'avons déjà vectorisée/i.test(constat.bandeau) && constat.boutonFichier === 1],
+      !/nous l'avons déjà vectorisée/i.test(constat.texte)],
     // §7.1 : une fois l'analyse faite, la zone de depot ne reclame plus une
     // action deja accomplie, elle montre le logo analyse.
     ['la vignette du logo remplace la zone de depot',

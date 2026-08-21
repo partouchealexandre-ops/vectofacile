@@ -167,6 +167,40 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
      le peage supprime : ce n'est plus une condition, c'est une ouverture. */
   .produit-gain { margin: 0; font-size: 13.5px; line-height: 1.45; color: #8f3d08; }
   .appel-grille { margin: 14px 0 2px; }
+  /* STRUCTURE C DU BRIEF DU 21/08 : le verdict d'abord, seul, en gros. Le test
+     du couloir se joue sur ces trois regles. */
+  .verdict-tete { margin: 4px 0 14px; }
+  .verdict-tete p { margin: 0; font-size: 20px; line-height: 1.45; }
+  .verdict-tete b { color: var(--navy); }
+  .verdict-action { margin: 0 0 22px; }
+  .verdict-action .note { margin: 8px 0 0; }
+  .cta-large { display: block; text-align: center; padding: 14px 20px; border-radius: 10px;
+    background: var(--orange); color: #fff; font-weight: 700; font-size: 16px;
+    text-decoration: none; }
+  .verdict-action-ok p { margin: 0; padding: 12px 16px; border-radius: 10px;
+    background: #eef5f0; border-left: 3px solid #1d6b38; }
+  /* Les trois groupes de C3. Melangees, les cartes sont un inventaire. */
+  .groupe-titre { margin: 22px 0 10px; font-size: 15px; letter-spacing: .01em; }
+  .groupe-passe { color: #12522a; }
+  .groupe-vectoriel { color: #8f3d08; }
+  .groupe-coince { color: #9c3722; }
+  /* C4 : la suite, pour le visiteur le plus chaud du parcours. */
+  .et-maintenant { margin-top: 26px; }
+  .et-maintenant h2 { margin: 0 0 6px; font-size: 19px; }
+  .suite-champs { display: grid; gap: 8px; margin: 14px 0 10px; max-width: 460px; }
+  .suite-champs label { font-size: 13.5px; color: var(--gris); }
+  .suite-champs input { padding: 10px 12px; border: 1px solid var(--trait);
+    border-radius: 8px; font-size: 15px; font-family: inherit; }
+  .suite-champs button { padding: 11px 18px; border-radius: 8px; border: 0;
+    background: var(--navy); color: #fff; font-weight: 600; font-size: 15px;
+    cursor: pointer; justify-self: start; font-family: inherit; }
+  /* C5 a C7 : la preuve se replie, elle ne barre plus la route. */
+  .volet { border-top: 1px solid var(--trait); margin-top: 18px; padding-top: 12px; }
+  .volet > summary { cursor: pointer; font-weight: 600; font-size: 15.5px;
+    color: var(--navy); list-style: none; }
+  .volet > summary::-webkit-details-marker { display: none; }
+  .volet > summary::before { content: '▸ '; color: var(--gris); }
+  .volet[open] > summary::before { content: '▾ '; }
   .produit-oui { border-left: 3px solid #1d6b38; }
   .produit-oui .produit-verdict { color: #12522a; background: #e8f3ec; }
   .produit-si { border-left: 3px solid var(--orange); }

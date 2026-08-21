@@ -395,59 +395,54 @@ const controle = (libelle, ok, detail) => resultats.push({ libelle, ok, detail }
              && Number.isInteger(t.situation.des)));
 }
 
-// LA PREMIERE QUESTION EST LE FICHIER, PAS LA TAILLE (arbitrage Alex 20/08),
-// ET LES COULEURS EN TROP COUTENT DE L'ARGENT, PAS UN REFUS.
+// L'ACTION SUR LE FICHIER, C2 du brief du 21/08, ET LES COULEURS EN TROP QUI
+// COUTENT DE L'ARGENT, PAS UN REFUS.
+//
+// Le bandeau de six lignes a ete retire : il expliquait un procede avant de
+// donner un resultat. Ne restent que le verdict, en tete, et l'ACTION, avec sa
+// sortie. Un refus sans sortie est un mur ; ces controles verifient qu'aucune
+// variante n'en est un.
 {
   const { rendreVerdict } = await import('../src/verdict/rendu.js');
+  const { rendreActionFichier, CONTACT } = await import('../src/verdict/rendu_grille.js');
   const { direCouleurs } = await import('../src/verdict/formulation.js');
   const v = juger({ mesures: mesuresImpeccables(), seuils: SEUILS,
                     valeurs: VALEURS, produits: PRODUITS });
 
-  // Le bandeau selon l'origine du depot. Chaque variante porte sa SORTIE :
-  // un refus sans sortie est un mur.
-  const imageOk = rendreVerdict(v, {}, { origine: 'image', vectorise: true });
-  // LE CORRECTIF DU §1, ET C'EST LE CONTROLE QUI COMPTE : le bandeau disait
-  // « votre image serait donc refusée en l'état » a quelqu'un dont le fichier
-  // fonctionne deja sur la moitie des techniques. Il ne doit plus le dire.
-  controle('une image nette ne se voit plus refuser en bloc',
-           !/refus/i.test(imageOk) && !/oubliez la tampographie/.test(imageOk));
-  controle('le bandeau dit ce que l\'image ouvre DEJA, avec des techniques nommees',
-           imageOk.includes('transfert numérique')
-             && imageOk.includes('impression numérique')
-             && imageOk.includes('sublimation')
-             && imageOk.includes('commander comme ça'));
-  // La raison MECANIQUE se dit, sinon le visiteur retient une regle arbitraire.
-  controle('le bandeau dit POURQUOI l\'autre moitie reclame des courbes',
-           imageOk.includes('fabriquent d\'abord un outil')
-             && imageOk.includes('à partir de courbes'));
-  // §7.3 : on n'annonce plus la vectorisation comme faite, on rend l'action.
-  controle('la vectorisation n\'est plus annoncee comme faite, elle est offerte',
-           !imageOk.includes('nous l\'avons déjà vectorisée')
-             && imageOk.includes('est prêt')
-             && /href="#telechargements"/.test(imageOk));
-  const imageRefus = rendreVerdict(v, {}, { origine: 'image', vectorise: false });
+  const imageOk = rendreActionFichier({ origine: 'image', vectorise: true });
+  // C2 : le bouton, et la ligne qui dit ce qu'on recoit. Rien de plus.
+  controle('une image vectorisee rend le bouton, pas un cours sur les procedes',
+           /cta-large/.test(imageOk) && /href="#telechargements"/.test(imageOk)
+             && /\.eps/.test(imageOk) && /\.pdf/.test(imageOk));
+  controle('le pave sur les outils et les courbes a bien disparu',
+           !/fabriquent d'abord un outil/.test(imageOk)
+             && !/oubliez la tampographie/.test(imageOk));
+  // §7.3 du brief precedent, toujours valable : on n'annonce pas la
+  // vectorisation comme FAITE, on rend l'action au visiteur.
+  controle('la vectorisation reste une action, jamais une annonce',
+           !/nous l'avons déjà vectorisée/.test(imageOk));
+  const imageRefus = rendreActionFichier({ origine: 'image', vectorise: false });
   controle('image non vectorisable : la sortie est le graphiste',
-           imageRefus.includes('graphiste')
-             && imageRefus.includes('comment-vectoriser-un-jpeg'));
-  const vrai = rendreVerdict(v, {}, { origine: 'vectoriel' });
+           /graphiste/.test(imageRefus) && /comment-vectoriser-un-jpeg/.test(imageRefus));
+  const vrai = rendreActionFichier({ origine: 'vectoriel' });
   controle('un vrai vectoriel est felicite, pas sermonne',
-           vrai.includes('déjà vectoriel') && !vrai.includes('refusé en l\'état'));
-  const faux = rendreVerdict(v, {}, { origine: 'faux_vectoriel' });
-  controle('un faux vectoriel est nomme pour ce qu\'il est, avec sa sortie',
-           faux.includes('ne contient qu\'une image')
-             && /href="\/vectoriser"/.test(faux));
-  // Et il garde le benefice du §1 : son image ouvre les techniques d'image.
-  controle('un faux vectoriel garde ce que son image ouvre deja',
-           faux.includes('transfert numérique'));
-  // P0.5 tient sur TOUTES les variantes du bandeau, « impossible » compris,
-  // alors meme que la demande d'origine employait ce mot.
+           /déjà vectoriel/.test(vrai) && !/refus[ée]/i.test(vrai));
+  const faux = rendreActionFichier({ origine: 'faux_vectoriel', vectorise: false });
+  controle('un faux vectoriel garde sa sortie : l\'image d\'origine',
+           /href="\/vectoriser"/.test(faux));
+  // P0.5 tient sur TOUTES les variantes, « impossible » compris.
   const toutes = [imageOk, imageRefus, vrai, faux].join(' ').toLowerCase();
   const fautif = MOTS_INTERDITS.find((m) => toutes.includes(m));
-  controle('aucun mot interdit dans les bandeaux du fichier', !fautif, fautif || 'aucun');
-  // Sans etat de fichier fourni (harnais, anciens appels), aucun bandeau :
-  // pas de mensonge par defaut.
-  controle('sans origine connue, aucun bandeau de fichier',
-           !rendreVerdict(v, {}).includes('etat-fichier'));
+  controle('aucun mot interdit dans les actions sur le fichier', !fautif, fautif || 'aucun');
+  // Sans etat de fichier connu, aucune action : pas de mensonge par defaut.
+  controle('sans origine connue, aucune action de fichier', rendreActionFichier(null) === '');
+  // C4 : l'adresse de contact ne diverge pas de celle des mentions legales.
+  // Deux adresses sur un site, c'est une de trop, et c'est toujours la
+  // mauvaise qui reste.
+  const institution = fs.readFileSync(
+    path.join(ICI, '..', 'contenu', 'institution.mjs'), 'utf-8');
+  controle('l\'adresse de contact est celle des mentions legales',
+           institution.includes(CONTACT), CONTACT);
 
   // LES COULEURS : au dela de 3 couleurs sur une technique a passages, la
   // carte recommande l'economie. Jamais sur les techniques a passage unique,
@@ -507,7 +502,7 @@ const controle = (libelle, ok, detail) => resultats.push({ libelle, ok, detail }
   const { jugerGrille, jugerProduit, tailleDansZone, choisirPourContraste, signature,
           LISIBILITE_MM } = await import('../src/verdict/grille.js');
   const { rendreGrille, direProduit } = await import('../src/verdict/rendu_grille.js');
-  const { exigeVectoriel, techniquesInconnues, avecArticle,
+  const { exigeVectoriel, techniquesInconnues, avecArticle, compatibilite,
           DPI_PLANCHER, DPI_RECOMMANDE } = await import('../src/verdict/techniques.js');
   const par = (juges) => Object.fromEntries(juges.map((p) => [p.famille, p]));
 
@@ -558,10 +553,13 @@ const controle = (libelle, ok, detail) => resultats.push({ libelle, ok, detail }
              && mug.meilleure.zone === 'la face avant, en haut'
              && mug.meilleure.technique === 'Tampographie',
            `${mug.etat} / ${mug.meilleure?.zone} / ${mug.meilleure?.technique}`);
+  // C3 du brief du 21/08 : une info par phrase, et la taille en REFERENCE
+  // PHYSIQUE avant le chiffre. « Votre logo ferait 35 × 14 mm » ne se visualise
+  // pas ; « un timbre-poste » se voit tout de suite.
   controle('et la phrase dit « pas la, mais la », avec la taille calculee',
            direProduit(mug) === 'Pas sur tout le tour, qui n\'accepte qu\'une seule couleur. '
-             + 'Mais oui sur la face avant, en haut : en tampographie, votre logo ferait '
-             + '35 × 14 mm.', direProduit(mug));
+             + 'Sur la face avant, en haut, en tampographie. '
+             + 'Taille max conseillée : un timbre-poste, 35 × 14 mm.', direProduit(mug));
 
   // 3. LE STYLO. Neuf couleurs ne passent nulle part, et le refus porte son
   // palier : a quatre couleurs, les deux emplacements se rouvrent.
@@ -696,6 +694,64 @@ const controle = (libelle, ok, detail) => resultats.push({ libelle, ok, detail }
   controle('toute technique servie sait se dire avec son article',
            nomsGrille.every((n) => /^(le |la |l')/.test(avecArticle(n))),
            [...new Set(nomsGrille)].map(avecArticle).slice(0, 3).join(', '));
+
+  // 8 bis. CE QUI EST PHYSIQUEMENT IMPOSSIBLE NE S'AFFICHE JAMAIS. B1 du brief
+  // du 20/08 : la page a annonce « toute la surface : en sublimation » sur une
+  // bouteille en acier inoxydable. La sublimation teint le polyester ou un
+  // revetement, pas le metal nu. Une seule affirmation de ce genre, relevee par
+  // un professionnel, suffit a tuer la credibilite du site.
+  //
+  // Le controle porte sur les OFFRES RETENUES, toutes matieres et tous
+  // contextes : c'est une garde de classe, pas un cas particulier.
+  const contextes = [
+    { nCouleurs: 1, ratio: 1, fichierVectoriel: true },
+    { nCouleurs: 4, ratio: 1.4, fichierVectoriel: true },
+    { nCouleurs: 9, ratio: 2.5, fichierVectoriel: false, largeurPx: 3000 },
+  ];
+  const impossibles = [];
+  for (const ctx of contextes) {
+    for (const p of jugerGrille(GRILLE, ctx)) {
+      for (const offre of [p.meilleure, p.refusee, p.gain?.meilleure]) {
+        if (!offre) continue;
+        if (compatibilite(p.matiere, offre.technique).etat === 'non') {
+          impossibles.push(`${p.libelle} / ${offre.technique}`);
+        }
+      }
+    }
+  }
+  controle('aucune offre retenue n\'est physiquement impossible sur sa matiere',
+           impossibles.length === 0, impossibles.slice(0, 3).join(', ') || 'aucune');
+  controle('temoin : la table sait dire non, et sait dire sous condition',
+           compatibilite('coton', 'Sublimation').etat === 'non'
+             && compatibilite('verre', 'Broderie').etat === 'non'
+             && compatibilite('acier inoxydable', 'Sublimation').etat === 'conditionnel'
+             && compatibilite('coton', 'Sérigraphie').etat === 'oui');
+  // Et une condition ne se tait jamais : « en sublimation » sur de l'inox sans
+  // « à revêtement sublimable » est exactement l'affirmation fausse qu'on
+  // vient de corriger.
+  const inox = jugerGrille(GRILLE, { nCouleurs: 1, ratio: 1.33, fichierVectoriel: true })
+    .find((p) => p.matiere === 'acier inoxydable' && p.meilleure?.condition);
+  controle('une offre sous condition affiche toujours sa condition',
+           !inox || /revêtement sublimable/.test(rendreGrille([inox], {})),
+           inox ? direProduit(inox) : 'aucune offre conditionnelle dans ce cas');
+
+  // 8 ter. B3 : QUAND LA ZONE PROPOSEE N'EST PAS L'EVIDENTE, LA CARTE DIT
+  // POURQUOI. Sans cette phrase, la casquette proposait le côté sans un mot sur
+  // le devant, et la carte paraissait absurde alors qu'elle avait raison.
+  const casquette = jugerGrille(GRILLE,
+    { nCouleurs: 4, ratio: 1.4, fichierVectoriel: false, largeurPx: 2400 })
+    .find((p) => p.famille === 'Casquette');
+  controle('un ecart a la zone evidente est explique, jamais tu',
+           !casquette?.refusee
+             || /(réclame un fichier vectoriel|n'accepte|manquerait de pixels)/
+               .test(direProduit(casquette)),
+           casquette ? direProduit(casquette) : 'pas de casquette dans la grille');
+  // Et il ne se dit PAS quand la zone evidente passe : « pas sur la face avant »
+  // serait faux si elle marche et qu'on propose plus grand ailleurs.
+  const menteursEcart = jugerGrille(GRILLE, { nCouleurs: 4, ratio: 1.4, fichierVectoriel: true })
+    .filter((p) => p.refusee && p.refusee.accepte && p.refusee.fichierPasse);
+  controle('aucun ecart annonce sur une zone qui passe',
+           menteursEcart.length === 0, menteursEcart.map((p) => p.libelle).join(', ') || 'aucun');
 
   // 9. LE RENDU ne cite plus aucune source et ne porte plus un seul lien
   // externe : decision d'Alex du 20/08, le visiteur n'a pas besoin de savoir

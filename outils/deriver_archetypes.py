@@ -230,10 +230,13 @@ for l in csv.DictReader(open(MARQUAGE, encoding='utf-8')):
 # couleurs d'une technique est sa valeur DOMINANTE, jamais la plus genereuse :
 # annoncer huit couleurs parce qu'une reference sur cent les accepte ferait
 # refuser le fichier chez les quatre-vingt-dix-neuf autres.
+PART_TECHNIQUE = 0.25
+
 def dominant(valeurs):
     return Counter(valeurs).most_common(1)[0][0]
 
 archetypes = []
+ecartees_techniques = Counter()
 for (famille, matiere), obs in lignes.items():
     produits = len({o['code'] for o in obs})
     par_position = defaultdict(list)
@@ -250,7 +253,17 @@ for (famille, matiere), obs in lignes.items():
         for o in groupe:
             par_technique[o['technique']].append(o)
         techniques = []
+        produits_zone = len({o['code'] for o in groupe})
         for nom, sous in par_technique.items():
+            # UNE TECHNIQUE VUE SUR UNE SEULE REFERENCE N'EST PAS UNE TECHNIQUE
+            # DE CETTE MATIERE. Sans ce seuil, la sublimation apparaissait sur
+            # « textile en coton » parce qu'UN produit sur quarante-neuf la
+            # declarait : la carte annoncait alors un procede qui ne teint pas
+            # le coton. Une part d'un quart du groupe, c'est le minimum pour
+            # dire « le grossiste propose ca sur cette matiere ».
+            if len({o['code'] for o in sous}) < max(2, produits_zone * PART_TECHNIQUE):
+                ecartees_techniques[(famille, matiere, nom)] += len(sous)
+                continue
             cmax = dominant([s['couleurs_max'] for s in sous])
             techniques.append({
                 'technique': nom,
@@ -325,6 +338,9 @@ print(f"{retenues} positions retenues sur {total} lues, "
       f"{sum(ecartees.values())} ecartees faute de libelle francais")
 print('les dix noms de zone ecartes les plus frequents : '
       + ', '.join(f'{z} ({n})' for z, n in ecartees.most_common(10)))
+print(f"{len(ecartees_techniques)} couples matiere x technique ecartes faute d'etre "
+      f"proposes sur au moins un quart du groupe : "
+      + ', '.join(f'{f} {m} / {t}' for (f, m, t) in list(ecartees_techniques)[:8]))
 print('archetypes assez peuples mais NON publies, a trancher par Alex : '
       + ', '.join(f"{a['libelle']} ({a['produits']} produits)" for a in ecartes))
 print('aucune trace fournisseur dans le fichier derive')

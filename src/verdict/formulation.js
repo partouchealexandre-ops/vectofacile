@@ -246,68 +246,16 @@ export function direCouleurs(technique, nCouleurs) {
 }
 
 /**
- * CE QUE VOTRE FICHIER PERMET, ET CE QU'IL N'OUVRE PAS ENCORE.
+ * LE BANDEAU DU FICHIER A ETE RETIRE LE 21/08/2026, C2 du brief « le site de
+ * reference ».
  *
- * REECRIT LE 20/08/2026, brief matieres et techniques, §1, et c'est un
- * correctif de justesse, pas un habillage.
+ * Il disait vrai depuis le correctif du 20/08 : ce que l'image ouvre deja, ce
+ * qu'elle laisse ferme, et la mecanique de l'outil contre l'image. Six lignes
+ * qui expliquaient un PROCEDE avant de donner un RESULTAT, en tete de l'ecran
+ * ou le visiteur cherche son verdict.
  *
- * La version precedente disait : « sans fichier vectoriel, oubliez la
- * tampographie, la serigraphie et la gravure laser [...] votre image serait
- * donc refusee en l'etat. » La premiere phrase etait vraie, la conclusion
- * fausse, et elle tombait a l'endroit exact ou le visiteur decouvre son
- * resultat. Le transfert numerique, l'impression numerique et la sublimation
- * acceptent parfaitement une image nette. Le site repondait « non » a
- * quelqu'un dont le fichier fonctionne deja.
- *
- * La mecanique se dit en une phrase, et elle explique tout le reste : une
- * technique qui fabrique un OUTIL a partir du dessin, un ecran, un cliche, un
- * trace de gravure, a besoin de courbes ; une technique qui IMPRIME UNE IMAGE
- * se contente d'une image.
- *
- * Le mot « impossible » reste interdit (P0.5). Et depuis le §7.3 du meme
- * brief, on n'annonce plus la vectorisation comme FAITE : le calcul a bien eu
- * lieu, mais c'est la remise du fichier qui est l'action, et elle appartient
- * au visiteur. « Votre fichier vectoriel est prêt », jamais « nous l'avons
- * deja vectorisee ».
- *
- * `fichier` : { origine: 'image' | 'vectoriel' | 'faux_vectoriel',
- *               vectorise: true | false | null }  (null = en cours)
+ * Ce qu'il portait n'est pas perdu : le verdict court le remplace en tete
+ * (rendreVerdictCourt), le bouton porte l'action (rendreActionFichier), et la
+ * mecanique va dans les questions frequentes, ou elle est mieux tournee et ou
+ * elle sert le referencement au lieu de retarder une reponse.
  */
-const OUVRE_DEJA = 'Votre logo est une image, et c\'est tout ce que demandent les '
-  + 'techniques qui impriment une image : transfert numérique, impression '
-  + 'numérique, sublimation. Vous pouvez commander comme ça.';
-
-const RESTE_FERME = 'Ce qu\'une image n\'ouvre pas : la tampographie, la sérigraphie, '
-  + 'la gravure laser et la broderie. Celles-là ne se contentent pas d\'imprimer, '
-  + 'elles fabriquent d\'abord un outil, un cliché, un écran, un tracé, et un outil '
-  + 'se fabrique à partir de courbes.';
-
-export function direEtatFichier(fichier) {
-  if (!fichier) return null;
-
-  if (fichier.origine === 'vectoriel') {
-    return { ton: 'ok', texte: 'Votre fichier est déjà vectoriel : toutes les '
-      + 'techniques l\'acceptent, y compris la tampographie, la sérigraphie et la '
-      + 'gravure laser, qui n\'acceptent que ça. C\'est ce fichier qu\'il faut envoyer '
-      + 'à votre marqueur.' };
-  }
-
-  if (fichier.origine === 'faux_vectoriel') {
-    return { ton: 'partiel', texte: `Votre fichier porte l'extension d'un vectoriel `
-      + 'mais ne contient qu\'une image. ' + OUVRE_DEJA + ' ' + RESTE_FERME,
-    sortie: 'faux_vectoriel' };
-  }
-
-  if (fichier.vectorise === false) {
-    return { ton: 'partiel', texte: `${OUVRE_DEJA} ${RESTE_FERME}`, sortie: 'graphiste' };
-  }
-
-  if (fichier.vectorise === true) {
-    return { ton: 'ok', texte: `${OUVRE_DEJA} ${RESTE_FERME} `
-      + 'Votre fichier vectoriel est prêt : il ouvre les deux moitiés, et il ne vous '
-      + 'coûte rien.', sortie: 'vectoriel_pret' };
-  }
-
-  return { ton: 'attente', texte: `${OUVRE_DEJA} ${RESTE_FERME} `
-    + 'Nous préparons votre fichier vectoriel, qui ouvre les deux moitiés.' };
-}

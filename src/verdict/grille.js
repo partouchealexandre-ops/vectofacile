@@ -26,7 +26,8 @@
  * Fonction PURE : pas de DOM, pas de fetch. Elle se teste dans node.
  */
 
-import { exigeVectoriel, qualifierDefinition, familleDe, DPI_PLANCHER } from './techniques.js';
+import { exigeVectoriel, qualifierDefinition, familleDe, compatibilite, DPI_PLANCHER }
+  from './techniques.js';
 
 /**
  * LE PLANCHER DE LISIBILITE, §5 du brief du 20/08.
@@ -99,12 +100,22 @@ function jugerFichier(nomTechnique, { fichierVectoriel, largeurPx }, taille) {
   return { passe: true, definition };
 }
 
-/** Toutes les offres d'un produit : une par couple zone x technique. */
+/**
+ * Toutes les offres d'un produit : une par couple zone x technique.
+ *
+ * B1 DU BRIEF DU 20/08 : ce qui est physiquement impossible sur cette matiere
+ * n'entre pas dans la liste. La page a affiche « toute la surface : en
+ * sublimation » sur une bouteille en acier inoxydable ; la sublimation teint le
+ * polyester ou un revetement, pas le metal nu. Une seule affirmation de ce
+ * genre suffit a tuer la credibilite d'un site qui veut faire reference.
+ */
 function offres(produit, nCouleurs, ratio, contexte) {
   const liste = [];
   for (const zone of produit.zones) {
     const taille = tailleDansZone(zone, ratio);
     for (const technique of zone.techniques) {
+      const possible = compatibilite(produit.matiere, technique.technique);
+      if (possible.etat === 'non') continue;
       const fichier = jugerFichier(technique.technique, contexte, taille);
       liste.push({
         zone: zone.libelle,
@@ -120,6 +131,10 @@ function offres(produit, nCouleurs, ratio, contexte) {
         // Leur croisement donne les trois etats du produit.
         accepte: accepte(technique, nCouleurs),
         exigeVectoriel: exigeVectoriel(technique.technique),
+        // `conditionnel` : le procede marche sur cette matiere, mais seulement
+        // sur une variante du produit. La condition voyage avec l'offre et
+        // s'affiche AVEC elle, jamais separement.
+        condition: possible.condition ?? null,
         fichierPasse: fichier.passe,
         definition: fichier.definition,
         bloquePar: fichier.passe ? null : fichier.raison,
@@ -222,7 +237,6 @@ export function jugerProduit(produit, contexte) {
   const telQuel = couleursOk.filter((o) => o.fichierPasse);
 
   const meilleure = recommander(telQuel.length ? telQuel : couleursOk);
-  const plusGrande = toutes[0] ?? null;
 
   let etat = 'non';
   if (telQuel.length) etat = 'oui';
@@ -243,13 +257,37 @@ export function jugerProduit(produit, contexte) {
   const floue = couleursOk.find((o) => o.bloquePar === 'definition') ?? null;
   const raison = etat !== 'si' ? null : (floue ? 'definition' : 'vectoriel');
 
-  // « PAS LA, MAIS LA » : la plus grande zone du produit ne prend pas ce logo,
-  // une autre oui. C'est le moment ou le site cesse d'etre un juge et devient
-  // un conseiller, et il ne se dit qu'apres avoir essaye TOUTES les zones.
-  // Reserve au refus de COULEURS : un blocage de fichier n'est pas un refus du
-  // produit, c'est un gain a venir, et il se dit autrement, plus bas.
-  const ailleurs = Boolean(meilleure && plusGrande && !plusGrande.accepte
-    && meilleure.zone !== plusGrande.zone);
+  // « PAS LA, MAIS LA », et B3 du brief du 20/08 : QUAND LA ZONE PROPOSEE N'EST
+  // PAS LA ZONE EVIDENTE, LA CARTE DIT POURQUOI.
+  //
+  // La casquette annoncait « le côté droit : en transfert numérique » sans un
+  // mot sur le devant, alors que tout le monde marque le devant. La raison
+  // existait, le devant se brode et la broderie reclame un vectoriel, mais elle
+  // etait tue : la carte paraissait absurde alors qu'elle avait raison.
+  //
+  // La zone evidente est la PREMIERE du produit : la derivation les trie par
+  // nombre d'observations, donc c'est celle que les fournisseurs proposent le
+  // plus. Ce n'est pas la plus grande, et c'est voulu : sur un gobelet, le tour
+  // complet est plus grand que la face avant, personne ne marque le tour.
+  const zoneEvidente = produit.zones[0]?.libelle ?? null;
+  const surEvidente = toutes.filter((o) => o.zone === zoneEvidente);
+  // L'arbitrage ne se dit QUE si la zone evidente est vraiment bloquee. Si
+  // elle passe et qu'on propose ailleurs parce que c'est plus grand, « pas sur
+  // la face avant » serait faux : elle marche, elle est juste plus petite. Ne
+  // pas poser cette condition produisait « Pas sur tout le tour. » sans raison,
+  // ce qui est exactement le raisonnement cache que B3 reproche a la page.
+  const evidenteRetenable = surEvidente.some((o) => o.accepte && o.fichierPasse);
+  // ET LES DEUX LIBELLES NE DOIVENT PAS SE RECOUVRIR. « Sur la face avant,
+  // votre image manquerait de pixels. Sur la face avant, en bas, en étiquette
+  // numérique » se lit comme une contradiction : le visiteur voit deux fois la
+  // meme zone. Quand un libelle est le prefixe de l'autre, ce sont deux
+  // decoupes du meme endroit, et l'arbitrage ne s'annonce pas.
+  const memeEndroit = meilleure && zoneEvidente
+    && (meilleure.zone.startsWith(zoneEvidente) || zoneEvidente.startsWith(meilleure.zone));
+  const ecartee = meilleure && zoneEvidente && meilleure.zone !== zoneEvidente
+    && !evidenteRetenable && !memeEndroit
+    ? (recommander(surEvidente.filter((o) => o.accepte)) ?? recommander(surEvidente))
+    : null;
 
   // La reserve de lisibilite porte sur l'offre RECOMMANDEE : c'est elle que le
   // visiteur lira. Elle ne change pas l'etat, elle le nuance, et elle ne se
@@ -275,7 +313,9 @@ export function jugerProduit(produit, contexte) {
     // taille explique le flou, pas forcement celle qu'on recommande.
     offreFloue: raison === 'definition' ? floue : null,
     meilleure,
-    refusee: ailleurs ? plusGrande : null,
+    // L'offre de la zone evidente qu'on n'a PAS retenue, avec ce qui la bloque.
+    // Elle porte l'arbitrage que la carte doit dire a voix haute.
+    refusee: ecartee,
     // On compte des EMPLACEMENTS, pas des offres. Un t-shirt a cinq zones ;
     // annoncer « 18 emplacements » parce que cinq techniques s'y appliquent
     // serait un chiffre juste et un mensonge d'usage.
@@ -334,33 +374,52 @@ export function jugerGrille(grille, contexte) {
  * l'affichage : quand il tombe a un, la grille doit le dire en une ligne
  * plutot que d'aligner huit cartes identiques.
  */
+/** Quatre ordres de grandeur, parce que c'est ce que le visiteur retient. */
+function palierDe(p) {
+  const mm = p.meilleure?.taille?.largeurMm ?? 0;
+  return mm < 20 ? 'minuscule' : mm < 60 ? 'petit' : mm < 150 ? 'moyen' : 'grand';
+}
+
 export function signature(p) {
   if (p.etat === 'non') return 'non';
   const technique = familleDe(p.meilleure.technique) ?? p.meilleure.technique;
-  const mm = p.meilleure.taille?.largeurMm ?? 0;
-  // Quatre ordres de grandeur, parce que c'est ce que le visiteur retient :
-  // un marquage de poche, un marquage de face, un grand aplat.
-  const palier = mm < 20 ? 'minuscule' : mm < 60 ? 'petit' : mm < 150 ? 'moyen' : 'grand';
-  return `${p.etat}|${technique}|${palier}`;
+  return `${p.etat}|${technique}|${palierDe(p)}`;
+}
+
+/**
+ * LA SIGNATURE VUE PAR L'ACHETEUR, et elle est plus grossiere que l'autre.
+ *
+ * B4 du brief du 20/08 : deux cartes « sac shopping », coton et polyester
+ * recycle, disaient la meme chose. Leurs signatures differaient pourtant, l'une
+ * recommandait le transfert numerique et l'autre la serigraphie. Le visiteur,
+ * lui, voyait deux sacs, la meme taille, le meme verdict, et apprenait zero.
+ *
+ * Pour DEUX ARCHETYPES DE LA MEME FAMILLE, il faut donc plus qu'une technique
+ * differente : il faut un verdict ou un ordre de grandeur different. Une
+ * bouteille en inox et une bouteille en verre passent toutes les deux, parce
+ * que l'une se marque sur 200 mm et l'autre sur 55 : ca, ca enseigne.
+ */
+function signatureVisible(p) {
+  return `${p.famille}|${p.etat}|${palierDe(p)}`;
 }
 
 export function choisirPourContraste(juges, maximum = 8) {
   const vues = new Set();
+  const familles = new Set();
   const retenus = [];
-  const reste = [];
   for (const p of juges) {
     const cle = signature(p);
-    if (vues.has(cle)) { reste.push(p); continue; }
+    const vue = signatureVisible(p);
+    if (vues.has(cle) || familles.has(vue)) continue;
     vues.add(cle);
+    familles.add(vue);
     retenus.push(p);
   }
-  // Le tri de jugerGrille tient : ce qui passe d'abord, ce qui passe sous
-  // condition ensuite, ce qui ne passe pas en dernier.
-  const choisis = retenus.slice(0, maximum);
-  for (const p of reste) {
-    if (choisis.length >= maximum) break;
-    choisis.push(p);
-  }
-  choisis.sort((a, b) => juges.indexOf(a) - juges.indexOf(b));
-  return { choisis, signatures: vues.size, total: juges.length };
+  // B4 DU BRIEF DU 20/08 : ON NE COMPLETE PAS AVEC DES DOUBLONS. La premiere
+  // version remplissait jusqu'a huit cartes avec les archetypes ecartes, ce qui
+  // remettait exactement ce qu'on venait d'ecarter : deux sacs shopping, coton
+  // et polyester recycle, disaient mot pour mot la meme phrase. Une place vide
+  // vaut mieux qu'une carte qui n'apprend rien. Le tri de jugerGrille tient :
+  // ce qui passe d'abord, ce qui passe sous condition ensuite, le reste apres.
+  return { choisis: retenus.slice(0, maximum), signatures: vues.size, total: juges.length };
 }

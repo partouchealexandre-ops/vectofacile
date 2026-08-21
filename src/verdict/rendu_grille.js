@@ -59,8 +59,10 @@ function silhouette(nom) {
 function etiquette(p, vectorielPret) {
   // §5 du brief du 20/08 : sous le plancher de lisibilite, on ne dit pas oui.
   // « Techniquement, oui » n'est pas une nuance de style : c'est la difference
-  // entre un marquage possible et un marquage lisible.
-  if (p.etat === 'oui' && p.reserveLisibilite) return 'techniquement, oui';
+  // entre un marquage possible et un marquage lisible. La reserve prime sur
+  // l'etat, sinon une carte classee « là, ça coince » porte l'etiquette
+  // « oui, avec votre fichier vectoriel » et se contredit elle-meme.
+  if (p.etat !== 'non' && p.reserveLisibilite) return 'techniquement, oui';
   if (p.etat === 'oui') return 'oui';
   if (p.etat === 'non') return 'non';
   return vectorielPret ? 'oui, avec votre fichier vectoriel' : 'oui, après vectorisation';
@@ -77,6 +79,28 @@ function ditPlafond(offre) {
   return `${offre.couleursMax} couleurs au maximum`;
 }
 
+const majuscule = (t) => t.charAt(0).toUpperCase() + t.slice(1);
+
+/**
+ * POURQUOI PAS LA ZONE EVIDENTE. B3 du brief du 20/08.
+ *
+ * Sans cette phrase, la casquette proposait « le côté droit » sans un mot sur
+ * le devant, et la carte paraissait absurde alors qu'elle avait raison. Deux
+ * raisons, deux phrases : ce que le logo demande, ou ce que la technique
+ * demande au fichier.
+ */
+function ditEcart(o) {
+  if (!o.accepte) return `pas sur ${o.zone}, ${ditRefus(o)}.`;
+  if (o.bloquePar === 'vectoriel') {
+    return `sur ${o.zone}, le marquage standard est ${avecArticle(o.technique)}, `
+      + 'qui réclame un fichier vectoriel.';
+  }
+  if (o.bloquePar === 'definition') {
+    return `sur ${o.zone}, votre image manquerait de pixels.`;
+  }
+  return `pas sur ${o.zone}.`;
+}
+
 /** Le meme plafond, dit du cote du refus : « qui n'accepte qu'une seule couleur ». */
 function ditRefus(offre) {
   return offre.couleursMax === 1
@@ -84,8 +108,48 @@ function ditRefus(offre) {
     : `qui s'arrête à ${offre.couleursMax} couleurs`;
 }
 
-/** « 35 × 14 mm ». */
-const taille = (o) => `${o.taille.largeurMm} × ${o.taille.hauteurMm} mm`;
+/**
+ * La condition d'une offre, quand la matiere en pose une. B1 du brief : « en
+ * sublimation » sur une bouteille inox ne se dit pas sans « sur les modeles a
+ * revetement sublimable », sinon la carte affirme quelque chose de faux.
+ */
+const condition = (o) => (o?.condition ? `, ${o.condition}` : '');
+
+/**
+ * LA TAILLE, EN REFERENCE PHYSIQUE D'ABORD, LE CHIFFRE ENSUITE.
+ *
+ * Brief du 20/08, C3 : « personne ne visualise un nombre nu ». « Votre logo
+ * ferait 150 × 150 mm » ne dit rien a un responsable com ; « grand comme une
+ * carte postale » se voit tout de suite, et le chiffre suit pour qui en a
+ * besoin.
+ *
+ * Les reperes sont choisis pour etre dans toutes les mains, et leurs vraies
+ * dimensions : A4 210 mm, A5 148 mm, carte postale 148 mm, carte de visite
+ * 85 mm, boite d'allumettes 50 mm, piece de deux euros 26 mm, timbre 20 mm.
+ * On compare sur la LARGEUR du marquage, celle que le visiteur regarde.
+ */
+// Les bandes sont SERREES autour de la vraie dimension du repere, sinon la
+// comparaison ment : « une carte de visite » pour 126 mm, c'est cinquante
+// pour cent d'ecart, et un repere faux est pire qu'un chiffre nu.
+const REPERES = [
+  [260, 'plus grand qu\'une feuille A4'],
+  [180, 'une feuille A4'],       // 210 mm
+  [125, 'une carte postale'],    // 148 mm
+  [100, 'un boîtier de CD'],     // 125 mm
+  [70, 'une carte de visite'],   // 85 mm
+  [45, 'une boîte d\'allumettes'], // 55 mm
+  [26, 'un timbre-poste'],       // 32 mm
+  [20, 'une pièce de 2 euros'],  // 26 mm
+  [0, 'plus petit qu\'une pièce de 2 euros'],
+];
+
+function repere(largeurMm) {
+  return (REPERES.find(([seuil]) => largeurMm >= seuil) ?? REPERES[REPERES.length - 1])[1];
+}
+
+/** « une carte de visite, 90 × 64 mm ». */
+const taille = (o) => `${repere(o.taille.largeurMm)}, `
+  + `${o.taille.largeurMm} × ${o.taille.hauteurMm} mm`;
 
 /**
  * La phrase d'un produit. Une seule, et elle dit toujours ce que le visiteur
@@ -109,17 +173,20 @@ export function direProduit(p) {
   }
   const m = p.meilleure;
   const ou = m.zone.charAt(0).toUpperCase() + m.zone.slice(1);
-  // « PAS LA, MAIS LA ». C'est le moment ou le site cesse d'etre un juge et
-  // devient un conseiller, et il ne vaut que parce qu'on a essaye toutes les
-  // zones avant de le dire.
+  // « PAS LA, MAIS LA », et B3 du brief du 20/08 : la carte DIT l'arbitrage
+  // quand elle ne propose pas la zone evidente du produit. Deux raisons
+  // possibles, et elles ne se disent pas pareil : les couleurs du logo, ou ce
+  // que la technique de cette zone reclame au fichier.
   if (p.refusee) {
-    const refus = p.refusee.zone;
-    return `Pas sur ${refus}, ${ditRefus(p.refusee)}. `
-      + `Mais oui sur ${m.zone} : en ${m.technique.toLowerCase()}, `
-      + `votre logo ferait ${taille(m)}.`;
+    return `${majuscule(ditEcart(p.refusee))} `
+      + `Sur ${m.zone}, en ${m.technique.toLowerCase()}${condition(m)}. `
+      + `Taille max conseillée : ${taille(m)}.`;
   }
-  return `${ou} : en ${m.technique.toLowerCase()}, votre logo ferait ${taille(m)}, `
-    + `${ditPlafond(m)}.`;
+  // UNE INFO PAR PHRASE, regle d'ecriture du brief du 20/08 : ou, comment,
+  // quelle taille, combien de couleurs. Ecrit d'abord en une seule phrase a
+  // rallonge, ca se lisait comme une notice.
+  return `${ou}, en ${m.technique.toLowerCase()}${condition(m)}. `
+    + `Taille max conseillée : ${taille(m)}. ${majuscule(ditPlafond(m))}.`;
 }
 
 /**
@@ -213,7 +280,7 @@ function rendreCarte(p, vectorielPret) {
   // colonne de six caracteres de large.
   // La reserve de lisibilite a sa propre teinte : un « techniquement, oui » en
   // vert franc mentirait sur ce qu'il dit.
-  const classe = `produit-${p.etat}${p.etat === 'oui' && p.reserveLisibilite ? ' produit-reserve' : ''}`;
+  const classe = `produit-${p.etat}${p.reserveLisibilite && p.etat !== 'non' ? ' produit-reserve' : ''}`;
   return `<article class="produit ${classe}">
   <div class="produit-image">${silhouette(p.silhouette)}</div>
   <div class="produit-corps">
@@ -227,78 +294,157 @@ function rendreCarte(p, vectorielPret) {
 }
 
 /**
- * LE BANDEAU DE TETE : ce que le fichier depose ouvre deja, et ce qui manque.
+ * LES TROIS GROUPES, C3 du brief du 20/08.
  *
- * Reecrit apres le §1 du brief du 20/08. Il annoncait « votre logo passe sur 8
- * de ces 8 produits, une fois vectorise » a quelqu'un dont l'image ouvrait
- * deja la moitie des techniques. Il compte maintenant ce qui passe TEL QUEL, et
- * le vectoriel devient un gain chiffre, jamais une condition d'entree.
+ * « Mélangées, les cartes sont un inventaire. Groupées, elles racontent : voilà
+ * ce qui marche, voilà ce que le vectoriel débloque, voilà les vraies
+ * limites. »
  *
- * L'appel a l'action vit ICI, une seule fois, et c'est le seul bouton orange
- * de l'ecran : regle de charte, un appel a l'action par ecran. Quand le fichier
- * vectoriel est deja pret en bas de page, il n'y a plus rien a demander : le
- * bandeau se tait et laisse les boutons de telechargement faire l'action.
+ * La reserve de lisibilite tombe dans le troisieme groupe et pas le premier :
+ * un marquage de dix millimetres est techniquement possible et commercialement
+ * bloque. Le classer avec ce qui marche serait le meme mensonge poli que le
+ * « oui » sec qu'on vient de retirer.
  */
-export function rendreEnteteGrille(produits, vectorielPret = false, contraste = null) {
-  const oui = produits.filter((p) => p.etat === 'oui').length;
-  const si = produits.filter((p) => p.etat === 'si').length;
-  const gains = produits.filter((p) => p.etat === 'oui' && p.gain).length;
+const GROUPES = [
+  { cle: 'passe', titre: 'Ça passe avec votre fichier actuel' },
+  { cle: 'vectoriel', titre: 'Le fichier vectoriel ouvre aussi' },
+  { cle: 'coince', titre: 'Là, ça coince, et voici pourquoi' },
+];
+
+function groupeDe(p) {
+  if (p.etat === 'non' || p.reserveLisibilite) return 'coince';
+  if (p.etat === 'si') return 'vectoriel';
+  return 'passe';
+}
+
+/**
+ * C1 DU BRIEF : LE VERDICT, SEUL, EN PREMIER.
+ *
+ * La phrase existait deja, elle etait au quatrieme bloc, noyee entre les
+ * couleurs et les mesures. Elle passe en tete, en gros, et rien ne
+ * l'accompagne : ni codes hexadecimaux, ni explication de procede. Le test du
+ * couloir, c'est elle : dix secondes, sans vocabulaire du metier.
+ */
+export function rendreVerdictCourt(produits, vectorielPret = false, contraste = null) {
+  if (!produits?.length) return '';
+  const passe = produits.filter((p) => groupeDe(p) === 'passe').length;
+  const parVectoriel = produits.filter((p) => groupeDe(p) === 'vectoriel').length;
   const total = produits.length;
-  const bouton = vectorielPret ? ''
-    : `<p class="appel-grille"><a class="cta-entete" href="/vectoriser">Vectoriser mon logo, gratuitement</a></p>`;
-  const ouvre = vectorielPret ? 'Votre fichier vectoriel' : 'Une fois vectorisé, votre logo';
-
-  // §4 DU BRIEF : quand toutes les cartes repondent la meme chose, la grille
-  // ne discrimine rien et il faut le DIRE, pas aligner huit cartes identiques.
   const uniforme = contraste && contraste.signatures <= 1 && total > 1;
-  const monotone = uniforme
-    ? ' Ces matières répondent toutes la même chose pour ce logo : la même technique, '
-      + 'le même ordre de taille.'
-    : '';
 
-  if (si && !oui) {
-    return `<div class="encadre"><p><b>Votre logo passe sur ${si} de ces ${total} matières,
-    ${vectorielPret ? 'avec le fichier vectoriel préparé plus bas' : 'une fois vectorisé'}.</b>
-    Ces marquages fabriquent un outil à partir de votre dessin, un cliché, un écran,
-    un tracé, et un outil se fabrique à partir de courbes.${monotone}</p>${bouton}</div>`;
+  let phrase;
+  if (!passe && !parVectoriel) {
+    phrase = `<b>Votre logo ne passe en l'état sur aucune de ces ${total} matières.</b>`;
+  } else if (!passe) {
+    phrase = `<b>Votre logo passe sur ${parVectoriel} de ces ${total} matières, `
+      + `avec le fichier vectoriel.</b> Il est gratuit, et il est prêt plus bas.`;
+  } else {
+    const suite = parVectoriel
+      ? ` ${vectorielPret ? 'Le fichier vectoriel, gratuit,' : 'Une fois vectorisé, il'}`
+        + ` ouvre ${parVectoriel === 1 ? 'la dernière' : `les ${parVectoriel} dernières`}.`
+      : '';
+    phrase = `<b>Votre logo passe sur ${passe} matière${passe > 1 ? 's' : ''} `
+      + `sur ${total}, avec le fichier que vous avez déposé.</b>${suite}`;
   }
-  if (!oui && !si) {
-    return `<div class="encadre"><p><b>Votre logo ne passe en l'état sur aucune de ces
-    ${total} matières.</b> Chaque carte dit ce qui bloque, et à combien de couleurs
-    le marquage redevient possible.</p></div>`;
+  const monotone = uniforme
+    ? `<p class="note">Ces matières répondent toutes la même chose pour ce logo : la même
+    technique, le même ordre de taille.</p>`
+    : '';
+  return `<div class="verdict-tete"><p>${phrase}</p>${monotone}</div>`;
+}
+
+/**
+ * C2 DU BRIEF : LE BOUTON, ET RIEN D'AUTRE.
+ *
+ * Le pave de six lignes sur les outils et les courbes disparait de cet ecran :
+ * il expliquait un procede avant de donner un resultat. Sa substance vit dans
+ * les questions frequentes, ou elle est mieux tournee. Ne reste que l'action,
+ * et la ligne qui dit ce qu'on recoit.
+ */
+export function rendreActionFichier(fichier) {
+  if (!fichier) return '';
+  if (fichier.origine === 'vectoriel') {
+    return `<div class="verdict-action verdict-action-ok"><p>`
+      + `<b>Votre fichier est déjà vectoriel.</b> `
+      + `C'est celui-là qu'il faut envoyer à votre marqueur.</p></div>`;
   }
-  let suite = '';
-  if (si) {
-    suite = ` ${ouvre} en ouvre ${si} de plus.`;
-  } else if (gains) {
-    suite = ` ${ouvre} ouvre des emplacements supplémentaires sur ${gains} d'entre elles.`;
+  // LE FAUX VECTORIEL a sa propre sortie, et elle ne depend pas d'une tentative
+  // de vectorisation : on ne retrace pas l'image ecrasee dans un PDF, on
+  // reclame l'originale. Ce cas se traite AVANT les autres, sinon un faux
+  // vectoriel sans drapeau tombe dans « nous préparons votre fichier », ce qui
+  // est faux et le laisse attendre.
+  if (fichier.origine === 'faux_vectoriel') {
+    return `<div class="verdict-action"><p>`
+      + `<b>Ce fichier porte l'extension d'un vectoriel mais n'en est pas un.</b> `
+      + `<a href="/vectoriser">Déposez l'image d'origine de votre logo</a>, ou réclamez `
+      + `le fichier source à votre graphiste.</p></div>`;
   }
-  return `<div class="encadre"><p><b>Votre logo passe déjà sur ${oui} de ces ${total}
-  matières, avec le fichier que vous avez déposé.</b>${suite}${monotone}
-  Chaque carte dit où le marquer, avec quelle technique, et à quelle taille.</p>${bouton}</div>`;
+  if (fichier.vectorise === false) {
+    return `<div class="verdict-action"><p>`
+      + `<b>Nous n'avons pas pu fabriquer votre fichier vectoriel.</b> `
+      + `<a href="/questions/comment-vectoriser-un-jpeg">Repartez de la plus grande version `
+      + `disponible de votre logo</a>, ou faites-le établir par un graphiste.</p></div>`;
+  }
+  if (fichier.vectorise === true) {
+    return `<div class="verdict-action">
+    <a class="cta-large" href="#telechargements">Obtenir mon fichier vectoriel</a>
+    <p class="note">Le <b>.eps</b> pour votre marqueur, le <b>.pdf</b> pour vous. Gratuit,
+    sans compte, sans envoi de votre fichier.</p>
+    </div>`;
+  }
+  return `<div class="verdict-action"><p class="note">Nous préparons votre fichier
+  vectoriel, il arrive en bas de page.</p></div>`;
+}
+
+/**
+ * C4 DU BRIEF : LE BLOC QUI MANQUAIT.
+ *
+ * La page se terminait sur des mesures : le visiteur le plus chaud du parcours
+ * n'avait AUCUNE suite proposee. Le diagnostic et le fichier restent gratuits,
+ * c'est la mise en relation qui qualifie.
+ *
+ * L'adresse est la meme que celle des mentions legales, et le harnais verifie
+ * qu'elles ne divergent pas : deux adresses de contact sur un site, c'est une
+ * de trop et c'est toujours la mauvaise qui reste.
+ */
+export const CONTACT = 'contact@vectofacile.fr';
+
+export function rendreSuite() {
+  return `<div class="encadre et-maintenant">
+  <h2>Vous voulez ce marquage en vrai ?</h2>
+  <p>Dites-nous sur quel objet, on vous dit combien ça coûte et en combien de temps.
+  Réponse par un humain qui a vu votre diagnostic.</p>
+  <div class="suite-champs">
+    <label for="suite_email">Votre email</label>
+    <input type="email" id="suite_email" placeholder="vous@votre-entreprise.fr">
+    <label for="suite_mot">Sur quel objet ? (facultatif)</label>
+    <input type="text" id="suite_mot" placeholder="500 tote bags pour un salon">
+    <button id="suite_envoyer" type="button">Demander un prix</button>
+  </div>
+  <p class="note">Votre logo ne part pas : seul le diagnostic accompagne votre message,
+  pour que la réponse soit utile dès le premier échange.</p>
+</div>`;
 }
 
 /**
  * `options.vectorielPret` : le .eps est deja fabrique et attend en bas de page.
- * `options.contraste` : ce que la selection a retenu, §4 du brief. Il sert a
- * dire « ces matieres repondent toutes la meme chose » au lieu de le laisser
- * decouvrir apres huit cartes.
+ * `options.contraste` : ce que la selection a retenu, §4 du brief.
  */
 export function rendreGrille(produits, options = {}) {
   if (!produits?.length) return '';
   const pret = Boolean(options.vectorielPret);
-  const surLesquels = produits.filter((p) => p.produits).length === produits.length;
-  return `<h2>Sur quelles matières votre logo passe-t-il ?</h2>
-${rendreEnteteGrille(produits, pret, options.contraste ?? null)}
+  const parGroupe = GROUPES.map((g) => ({
+    ...g, cartes: produits.filter((p) => groupeDe(p) === g.cle),
+  })).filter((g) => g.cartes.length);
+
+  const blocs = parGroupe.map((g) => `<h3 class="groupe-titre groupe-${g.cle}">${g.titre}</h3>
 <div class="grille-produits">
-${produits.map((p) => rendreCarte(p, pret)).join('\n')}
-</div>
-<p class="note">Ce ne sont pas des références de catalogue, ce sont des ${surLesquels
-  ? 'matières'
-  : 'produits'} : la contrainte de marquage tient d'abord à la matière, pas au
-modèle. ${surLesquels
-  ? 'Chaque carte agrège les emplacements réels de plusieurs dizaines de produits de '
-    + 'cette matière, et donne leur taille médiane. Votre modèle exact peut différer.'
-  : 'Le verdict croise le nombre de couleurs de votre logo avec ce que chaque '
-    + 'emplacement accepte.'}</p>`;
+${g.cartes.map((p) => rendreCarte(p, pret)).join('\n')}
+</div>`).join('\n');
+
+  return `${blocs}
+<p class="note">Ce ne sont pas des références de catalogue, ce sont des matières : la
+contrainte de marquage tient d'abord à la matière, pas au modèle. Chaque carte agrège les
+emplacements réels de plusieurs dizaines de produits de cette matière, et donne leur taille
+médiane. Votre modèle exact peut différer.</p>`;
 }

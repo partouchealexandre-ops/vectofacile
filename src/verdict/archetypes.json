@@ -54,12 +54,6 @@
        "couleursMax": 8,
        "parDefaut": false,
        "observations": 45
-      },
-      {
-       "technique": "Sublimation",
-       "couleursMax": null,
-       "parDefaut": false,
-       "observations": 1
       }
      ],
      "observations": 229
@@ -98,12 +92,6 @@
        "couleursMax": 1,
        "parDefaut": false,
        "observations": 44
-      },
-      {
-       "technique": "Sublimation",
-       "couleursMax": null,
-       "parDefaut": false,
-       "observations": 1
       }
      ],
      "observations": 222
@@ -142,12 +130,6 @@
        "couleursMax": 8,
        "parDefaut": false,
        "observations": 28
-      },
-      {
-       "technique": "Sublimation",
-       "couleursMax": null,
-       "parDefaut": false,
-       "observations": 1
       }
      ],
      "observations": 218
@@ -186,12 +168,6 @@
        "couleursMax": 8,
        "parDefaut": false,
        "observations": 25
-      },
-      {
-       "technique": "Sublimation",
-       "couleursMax": null,
-       "parDefaut": false,
-       "observations": 1
       }
      ],
      "observations": 202
@@ -230,12 +206,6 @@
        "couleursMax": 1,
        "parDefaut": false,
        "observations": 30
-      },
-      {
-       "technique": "Sublimation",
-       "couleursMax": null,
-       "parDefaut": false,
-       "observations": 1
       }
      ],
      "observations": 152
@@ -316,30 +286,6 @@
        "couleursMax": 1,
        "parDefaut": true,
        "observations": 18
-      },
-      {
-       "technique": "Tampographie",
-       "couleursMax": 4,
-       "parDefaut": true,
-       "observations": 15
-      },
-      {
-       "technique": "Transfert numérique",
-       "couleursMax": null,
-       "parDefaut": false,
-       "observations": 12
-      },
-      {
-       "technique": "Étiquette numérique",
-       "couleursMax": null,
-       "parDefaut": false,
-       "observations": 11
-      },
-      {
-       "technique": "Doming",
-       "couleursMax": null,
-       "parDefaut": false,
-       "observations": 6
       }
      ],
      "observations": 216
@@ -384,30 +330,6 @@
        "couleursMax": 1,
        "parDefaut": true,
        "observations": 17
-      },
-      {
-       "technique": "Tampographie",
-       "couleursMax": 4,
-       "parDefaut": true,
-       "observations": 13
-      },
-      {
-       "technique": "Transfert numérique",
-       "couleursMax": null,
-       "parDefaut": false,
-       "observations": 12
-      },
-      {
-       "technique": "Étiquette numérique",
-       "couleursMax": null,
-       "parDefaut": false,
-       "observations": 11
-      },
-      {
-       "technique": "Doming",
-       "couleursMax": null,
-       "parDefaut": false,
-       "observations": 3
       }
      ],
      "observations": 209
@@ -484,18 +406,6 @@
        "couleursMax": 2,
        "parDefaut": true,
        "observations": 22
-      },
-      {
-       "technique": "Embossage",
-       "couleursMax": 1,
-       "parDefaut": false,
-       "observations": 3
-      },
-      {
-       "technique": "Gravure laser",
-       "couleursMax": 1,
-       "parDefaut": false,
-       "observations": 2
       }
      ],
      "observations": 27
@@ -510,12 +420,6 @@
        "couleursMax": 4,
        "parDefaut": true,
        "observations": 13
-      },
-      {
-       "technique": "Gravure laser",
-       "couleursMax": 1,
-       "parDefaut": true,
-       "observations": 3
       }
      ],
      "observations": 16
@@ -552,12 +456,6 @@
        "couleursMax": null,
        "parDefaut": false,
        "observations": 38
-      },
-      {
-       "technique": "Étiquette numérique",
-       "couleursMax": null,
-       "parDefaut": false,
-       "observations": 3
       }
      ],
      "observations": 137
@@ -578,18 +476,6 @@
        "couleursMax": 4,
        "parDefaut": false,
        "observations": 50
-      },
-      {
-       "technique": "Étiquette numérique",
-       "couleursMax": null,
-       "parDefaut": false,
-       "observations": 4
-      },
-      {
-       "technique": "Impression numérique",
-       "couleursMax": null,
-       "parDefaut": false,
-       "observations": 1
       }
      ],
      "observations": 106
@@ -610,18 +496,6 @@
        "couleursMax": 1,
        "parDefaut": true,
        "observations": 30
-      },
-      {
-       "technique": "Étiquette numérique",
-       "couleursMax": null,
-       "parDefaut": false,
-       "observations": 4
-      },
-      {
-       "technique": "Impression numérique",
-       "couleursMax": null,
-       "parDefaut": false,
-       "observations": 1
       }
      ],
      "observations": 65
@@ -848,12 +722,6 @@
        "couleursMax": null,
        "parDefaut": false,
        "observations": 13
-      },
-      {
-       "technique": "Embossage",
-       "couleursMax": 1,
-       "parDefaut": false,
-       "observations": 1
       }
      ],
      "observations": 53
@@ -1184,30 +1052,6 @@
        "couleursMax": 8,
        "parDefaut": true,
        "observations": 12
-      },
-      {
-       "technique": "Transfert réfléchissant",
-       "couleursMax": 1,
-       "parDefaut": false,
-       "observations": 2
-      },
-      {
-       "technique": "Sérigraphie",
-       "couleursMax": 1,
-       "parDefaut": true,
-       "observations": 1
-      },
-      {
-       "technique": "Transfert sérigraphique",
-       "couleursMax": 8,
-       "parDefaut": true,
-       "observations": 1
-      },
-      {
-       "technique": "Transfert numérique",
-       "couleursMax": null,
-       "parDefaut": false,
-       "observations": 1
       }
      ],
      "observations": 17
@@ -1290,18 +1134,6 @@
        "couleursMax": 1,
        "parDefaut": true,
        "observations": 20
-      },
-      {
-       "technique": "Impression numérique 360",
-       "couleursMax": null,
-       "parDefaut": false,
-       "observations": 4
-      },
-      {
-       "technique": "Étiquette numérique",
-       "couleursMax": null,
-       "parDefaut": false,
-       "observations": 1
       }
      ],
      "observations": 54
@@ -1452,12 +1284,6 @@
        "couleursMax": 4,
        "parDefaut": false,
        "observations": 17
-      },
-      {
-       "technique": "Impression numérique",
-       "couleursMax": null,
-       "parDefaut": false,
-       "observations": 1
       }
      ],
      "observations": 36
@@ -1478,12 +1304,6 @@
        "couleursMax": 4,
        "parDefaut": false,
        "observations": 17
-      },
-      {
-       "technique": "Impression numérique",
-       "couleursMax": null,
-       "parDefaut": false,
-       "observations": 1
       }
      ],
      "observations": 36
@@ -1516,12 +1336,6 @@
        "couleursMax": 4,
        "parDefaut": true,
        "observations": 2
-      },
-      {
-       "technique": "Gravure laser",
-       "couleursMax": 1,
-       "parDefaut": true,
-       "observations": 1
       }
      ],
      "observations": 14
@@ -1582,12 +1396,6 @@
        "couleursMax": null,
        "parDefaut": false,
        "observations": 2
-      },
-      {
-       "technique": "Sérigraphie",
-       "couleursMax": 4,
-       "parDefaut": true,
-       "observations": 1
       }
      ],
      "observations": 10
@@ -1614,30 +1422,6 @@
        "couleursMax": 1,
        "parDefaut": true,
        "observations": 2
-      },
-      {
-       "technique": "Transfert numérique",
-       "couleursMax": null,
-       "parDefaut": false,
-       "observations": 1
-      },
-      {
-       "technique": "Transfert réfléchissant",
-       "couleursMax": 1,
-       "parDefaut": false,
-       "observations": 1
-      },
-      {
-       "technique": "Transfert sérigraphique",
-       "couleursMax": 8,
-       "parDefaut": false,
-       "observations": 1
-      },
-      {
-       "technique": "Étiquette numérique",
-       "couleursMax": null,
-       "parDefaut": false,
-       "observations": 1
       }
      ],
      "observations": 10
@@ -1664,30 +1448,6 @@
        "couleursMax": 1,
        "parDefaut": true,
        "observations": 2
-      },
-      {
-       "technique": "Transfert sérigraphique",
-       "couleursMax": 8,
-       "parDefaut": false,
-       "observations": 1
-      },
-      {
-       "technique": "Transfert numérique",
-       "couleursMax": null,
-       "parDefaut": false,
-       "observations": 1
-      },
-      {
-       "technique": "Transfert réfléchissant",
-       "couleursMax": 1,
-       "parDefaut": false,
-       "observations": 1
-      },
-      {
-       "technique": "Étiquette numérique",
-       "couleursMax": null,
-       "parDefaut": false,
-       "observations": 1
       }
      ],
      "observations": 10
@@ -1828,12 +1588,6 @@
        "couleursMax": null,
        "parDefaut": false,
        "observations": 7
-      },
-      {
-       "technique": "Sérigraphie circulaire",
-       "couleursMax": 1,
-       "parDefaut": true,
-       "observations": 1
       }
      ],
      "observations": 31
@@ -1854,12 +1608,6 @@
        "couleursMax": null,
        "parDefaut": false,
        "observations": 8
-      },
-      {
-       "technique": "Impression numérique 360",
-       "couleursMax": null,
-       "parDefaut": true,
-       "observations": 3
       }
      ],
      "observations": 29
@@ -1912,12 +1660,6 @@
        "couleursMax": 1,
        "parDefaut": true,
        "observations": 4
-      },
-      {
-       "technique": "Étiquette numérique",
-       "couleursMax": null,
-       "parDefaut": false,
-       "observations": 1
       }
      ],
      "observations": 13
@@ -1968,12 +1710,6 @@
        "couleursMax": 4,
        "parDefaut": false,
        "observations": 11
-      },
-      {
-       "technique": "Impression numérique",
-       "couleursMax": null,
-       "parDefaut": false,
-       "observations": 1
       }
      ],
      "observations": 28
@@ -1994,12 +1730,6 @@
        "couleursMax": 4,
        "parDefaut": false,
        "observations": 10
-      },
-      {
-       "technique": "Impression numérique",
-       "couleursMax": null,
-       "parDefaut": false,
-       "observations": 1
       }
      ],
      "observations": 25
@@ -2102,12 +1832,6 @@
        "couleursMax": null,
        "parDefaut": false,
        "observations": 3
-      },
-      {
-       "technique": "Gravure laser",
-       "couleursMax": 1,
-       "parDefaut": true,
-       "observations": 2
       }
      ],
      "observations": 24
@@ -2134,18 +1858,6 @@
        "couleursMax": null,
        "parDefaut": false,
        "observations": 2
-      },
-      {
-       "technique": "Impression numérique",
-       "couleursMax": null,
-       "parDefaut": false,
-       "observations": 1
-      },
-      {
-       "technique": "Gravure laser",
-       "couleursMax": 1,
-       "parDefaut": true,
-       "observations": 1
       }
      ],
      "observations": 16
@@ -2172,18 +1884,6 @@
        "couleursMax": null,
        "parDefaut": true,
        "observations": 2
-      },
-      {
-       "technique": "Gravure laser",
-       "couleursMax": 1,
-       "parDefaut": false,
-       "observations": 1
-      },
-      {
-       "technique": "Doming",
-       "couleursMax": null,
-       "parDefaut": false,
-       "observations": 1
       }
      ],
      "observations": 12
@@ -2210,12 +1910,6 @@
        "couleursMax": 1,
        "parDefaut": true,
        "observations": 2
-      },
-      {
-       "technique": "Doming",
-       "couleursMax": null,
-       "parDefaut": false,
-       "observations": 1
       }
      ],
      "observations": 11
@@ -2236,18 +1930,6 @@
        "couleursMax": 4,
        "parDefaut": true,
        "observations": 4
-      },
-      {
-       "technique": "Gravure laser",
-       "couleursMax": 1,
-       "parDefaut": true,
-       "observations": 1
-      },
-      {
-       "technique": "Doming",
-       "couleursMax": null,
-       "parDefaut": false,
-       "observations": 1
       }
      ],
      "observations": 10
