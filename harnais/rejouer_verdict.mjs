@@ -406,15 +406,25 @@ const controle = (libelle, ok, detail) => resultats.push({ libelle, ok, detail }
   // Le bandeau selon l'origine du depot. Chaque variante porte sa SORTIE :
   // un refus sans sortie est un mur.
   const imageOk = rendreVerdict(v, {}, { origine: 'image', vectorise: true });
-  controle('image vectorisee : exigence du vectoriel, refus en l\'etat, et le .eps en sortie',
-           imageOk.includes('Sans fichier vectoriel, oubliez la tampographie, la sérigraphie et la gravure laser')
-             && imageOk.includes('refusée en l\'état')
-             && imageOk.includes('Téléchargez'));
-  // Les trois grands sont NOMMES et le secteur est dit : l'outil vise l'objet
-  // publicitaire, arbitrage Alex du 20/08. Et la bascule est gratuite.
-  controle('le bandeau nomme l\'objet publicitaire et la gratuite de la bascule',
-           imageOk.includes('objet publicitaire')
-             && imageOk.includes('ça ne vous coûte rien'));
+  // LE CORRECTIF DU §1, ET C'EST LE CONTROLE QUI COMPTE : le bandeau disait
+  // « votre image serait donc refusée en l'état » a quelqu'un dont le fichier
+  // fonctionne deja sur la moitie des techniques. Il ne doit plus le dire.
+  controle('une image nette ne se voit plus refuser en bloc',
+           !/refus/i.test(imageOk) && !/oubliez la tampographie/.test(imageOk));
+  controle('le bandeau dit ce que l\'image ouvre DEJA, avec des techniques nommees',
+           imageOk.includes('transfert numérique')
+             && imageOk.includes('impression numérique')
+             && imageOk.includes('sublimation')
+             && imageOk.includes('commander comme ça'));
+  // La raison MECANIQUE se dit, sinon le visiteur retient une regle arbitraire.
+  controle('le bandeau dit POURQUOI l\'autre moitie reclame des courbes',
+           imageOk.includes('fabriquent d\'abord un outil')
+             && imageOk.includes('à partir de courbes'));
+  // §7.3 : on n'annonce plus la vectorisation comme faite, on rend l'action.
+  controle('la vectorisation n\'est plus annoncee comme faite, elle est offerte',
+           !imageOk.includes('nous l\'avons déjà vectorisée')
+             && imageOk.includes('est prêt')
+             && /href="#telechargements"/.test(imageOk));
   const imageRefus = rendreVerdict(v, {}, { origine: 'image', vectorise: false });
   controle('image non vectorisable : la sortie est le graphiste',
            imageRefus.includes('graphiste')
@@ -423,9 +433,12 @@ const controle = (libelle, ok, detail) => resultats.push({ libelle, ok, detail }
   controle('un vrai vectoriel est felicite, pas sermonne',
            vrai.includes('déjà vectoriel') && !vrai.includes('refusé en l\'état'));
   const faux = rendreVerdict(v, {}, { origine: 'faux_vectoriel' });
-  controle('un faux vectoriel est refuse en l\'etat, avec la page vectoriser en sortie',
-           faux.includes('sera refusé')
+  controle('un faux vectoriel est nomme pour ce qu\'il est, avec sa sortie',
+           faux.includes('ne contient qu\'une image')
              && /href="\/vectoriser"/.test(faux));
+  // Et il garde le benefice du §1 : son image ouvre les techniques d'image.
+  controle('un faux vectoriel garde ce que son image ouvre deja',
+           faux.includes('transfert numérique'));
   // P0.5 tient sur TOUTES les variantes du bandeau, « impossible » compris,
   // alors meme que la demande d'origine employait ce mot.
   const toutes = [imageOk, imageRefus, vrai, faux].join(' ').toLowerCase();
@@ -490,6 +503,8 @@ const controle = (libelle, ok, detail) => resultats.push({ libelle, ok, detail }
 {
   const { jugerGrille, jugerProduit, tailleDansZone } = await import('../src/verdict/grille.js');
   const { rendreGrille, direProduit } = await import('../src/verdict/rendu_grille.js');
+  const { exigeVectoriel, techniquesInconnues, DPI_PLANCHER, DPI_RECOMMANDE } =
+    await import('../src/verdict/techniques.js');
   const par = (juges) => Object.fromEntries(juges.map((p) => [p.famille, p]));
 
   // 1. LA CLOISON, verifiee sur le FICHIER SERVI et pas sur une intention.
@@ -562,13 +577,74 @@ const controle = (libelle, ok, detail) => resultats.push({ libelle, ok, detail }
   controle('aucun « ca ne passe pas » ne cache un emplacement qui passe',
            menteurs.length === 0, menteurs.map((p) => p.famille).join(', ') || 'aucun');
 
-  // 7. LE TROISIEME ETAT, celui qui vaut de l'argent : une image passe, mais
-  // seulement une fois vectorisee. Le meme logo, deja vectoriel, passe tout
-  // court. Rien d'autre ne change entre les deux.
-  const image = par(jugerGrille(GRILLE, { nCouleurs: 2, ratio: 2.5, fichierVectoriel: false }));
-  controle('une image donne « oui, apres vectorisation » la ou un vectoriel donne « oui »',
-           image['T-shirt'].etat === 'si' && deux['T-shirt'].etat === 'oui'
-             && image['T-shirt'].meilleure.zone === deux['T-shirt'].meilleure.zone);
+  // 7. CE QUE LE FICHIER OUVRE, ET CE QU'IL LAISSE FERME. §1 du brief du
+  // 20/08, le correctif de justesse : le site fermait des portes ouvertes.
+  //
+  // Une image nette n'est pas un refus. Elle passe TEL QUEL la ou la technique
+  // imprime une image, et elle ne bute que sur celles qui fabriquent un outil.
+  const image = par(jugerGrille(GRILLE,
+    { nCouleurs: 2, ratio: 2.5, fichierVectoriel: false, largeurPx: 2400 }));
+  controle('une image nette passe TEL QUEL sur un produit a technique d\'image',
+           image['T-shirt'].etat === 'oui'
+             && !exigeVectoriel(image['T-shirt'].meilleure.technique),
+           `${image['T-shirt'].etat} / ${image['T-shirt'].meilleure?.technique}`);
+  // Et le vectoriel n'a pas disparu du discours : il est devenu un GAIN
+  // chiffre, la ou il etait un peage.
+  // Le gain se compte en emplacements OU en techniques. Sur un t-shirt, le
+  // transfert numerique est deja partout : ce que le vectoriel ouvre, ce sont
+  // la serigraphie et la broderie sur les memes emplacements. Ne compter que
+  // les zones rendrait ce gain invisible sur le produit le plus vendu.
+  controle('et le vectoriel s\'y annonce comme un gain, pas comme une condition',
+           image['T-shirt'].gain?.techniques.length > 0
+             && image['T-shirt'].gain.techniques.every((t) => exigeVectoriel(t)),
+           (image['T-shirt'].gain?.techniques || []).join(', '));
+  controle('un gain sans emplacement supplementaire se dit quand meme, en techniques',
+           /s'ouvrent aussi sur ces emplacements/.test(
+             rendreGrille([image['T-shirt']], { vectorielPret: true })));
+  // Le stylo, lui, n'a que des techniques a outil : tampographie et gravure.
+  // C'est LUI le troisieme etat, et il vaut toujours de l'argent.
+  const styloImage = image.Stylo;
+  controle('un produit dont toutes les techniques fabriquent un outil reste « si »',
+           styloImage.etat === 'si' && deux.Stylo.etat === 'oui'
+             && styloImage.meilleure.zone === deux.Stylo.meilleure.zone,
+           styloImage.etat);
+  // « Accepte un raster » ne veut pas dire « accepte n'importe quelle image ».
+  // Un logo de 120 pixels sur une zone de 280 mm fait 11 dpi : dire oui la
+  // serait l'erreur SYMETRIQUE de celle qu'on corrige.
+  const floue = par(jugerGrille(GRILLE,
+    { nCouleurs: 2, ratio: 2.5, fichierVectoriel: false, largeurPx: 120 }));
+  controle('une image trop peu definie pour la zone ne donne pas « oui »',
+           floue['T-shirt'].etat === 'si', floue['T-shirt'].etat);
+  controle('le plancher de definition est celui du corpus, pas un chiffre invente',
+           DPI_PLANCHER === 150 && DPI_RECOMMANDE === 300);
+  // Et la carte DIT laquelle des deux raisons bloque. Sans ca, elle affiche
+  // « oui, avec votre fichier vectoriel » juste au-dessus d'un transfert
+  // numerique, qui accepte pourtant les images : le visiteur y lit une
+  // contradiction, et il a raison.
+  controle('la carte dit que c\'est la definition qui bloque, pas le format',
+           floue['T-shirt'].raison === 'definition'
+             && /sortirait floue/.test(rendreGrille([floue['T-shirt']], {})),
+           floue['T-shirt'].raison);
+  controle('et quand c\'est le format, elle dit l\'outil, pas les pixels',
+           styloImage.raison === 'vectoriel'
+             && /fabrique un outil/.test(rendreGrille([styloImage], {}))
+             && !/sortirait floue/.test(rendreGrille([styloImage], {})),
+           styloImage.raison);
+  // TEMOIN : le controle sait-il echouer ? Une image immense doit repasser en
+  // « oui », sinon les deux controles precedents ne prouvent rien.
+  controle('temoin : la meme image, assez definie, repasse a « oui »',
+           par(jugerGrille(GRILLE, { nCouleurs: 2, ratio: 2.5, fichierVectoriel: false,
+                                     largeurPx: 6000 }))['T-shirt'].etat === 'oui');
+  // UNE TECHNIQUE ABSENTE DE LA TABLE N'EST PAS AUTORISEE PAR DEFAUT. La base
+  // de travail evolue ; si elle introduit un nom inconnu, ce controle tombe et
+  // quelqu'un tranche, au lieu qu'un verdict se rende tout seul.
+  const nomsGrille = GRILLE.produits.flatMap((p) => p.zones)
+    .flatMap((z) => z.techniques).map((t) => t.technique);
+  const inconnues = techniquesInconnues(nomsGrille);
+  controle('toute technique de la grille est classee vectoriel ou image',
+           inconnues.length === 0, inconnues.join(', ') || 'aucune');
+  controle('temoin : une technique inventee serait bien signalee',
+           techniquesInconnues(['Marquage sur nuage']).length === 1);
 
   // 8. LE RENDU ne cite plus aucune source et ne porte plus un seul lien
   // externe : decision d'Alex du 20/08, le visiteur n'a pas besoin de savoir

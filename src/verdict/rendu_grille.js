@@ -46,11 +46,19 @@ function silhouette(nom) {
   stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">${dessin}</svg>`;
 }
 
-const ETIQUETTE = Object.freeze({
-  oui: 'oui',
-  si: 'oui, après vectorisation',
-  non: 'non',
-});
+/**
+ * L'ETIQUETTE D'UNE CARTE.
+ *
+ * « si » se dit de deux facons, et la difference n'est pas cosmetique : quand
+ * le fichier vectoriel est deja pret en bas de page, le visiteur n'a rien a
+ * faire faire, il a juste a le prendre. Lui dire « apres vectorisation »
+ * laisserait croire a une etape qui n'existe plus.
+ */
+function etiquette(p, vectorielPret) {
+  if (p.etat === 'oui') return 'oui';
+  if (p.etat === 'non') return 'non';
+  return vectorielPret ? 'oui, avec votre fichier vectoriel' : 'oui, après vectorisation';
+}
 
 /**
  * Ce qu'un emplacement accepte, dit comme un vendeur le dirait.
@@ -109,6 +117,52 @@ export function direProduit(p) {
 }
 
 /**
+ * CE QUE LE VECTORIEL AJOUTERAIT SUR UN PRODUIT QUI DIT DEJA OUI.
+ *
+ * Cette phrase remplace exactement le peage supprime au §1 du brief du 20/08.
+ * Avant, une image nette se voyait barrer la route partout. Maintenant elle
+ * passe la ou elle passe, et on lui chiffre ce qu'elle gagnerait a devenir des
+ * courbes : des emplacements de plus, et lesquels.
+ */
+/**
+ * POURQUOI CE PRODUIT ATTEND LE FICHIER VECTORIEL.
+ *
+ * Deux raisons, et elles ne se disent pas pareil. Confondre les deux produit
+ * la carte absurde qu'on a vue le 20/08 : « oui, avec votre fichier vectoriel »
+ * juste au-dessus de « en transfert numérique », une technique qui accepte
+ * pourtant les images. Ce n'etait pas le type du fichier qui bloquait, c'etait
+ * sa definition, et la carte ne le disait pas.
+ */
+function ditRaisonSi(p) {
+  if (p.etat !== 'si') return '';
+  if (p.raison === 'definition') {
+    // Avec la taille : « pour cette taille » ne dit rien, « à 280 mm de large »
+    // se verifie d'un coup d'oeil sur la ligne juste au-dessus.
+    const offre = p.offreFloue ?? p.meilleure;
+    const large = offre?.taille ? `À ${offre.taille.largeurMm} mm de large` : 'À cette taille';
+    return `${large}, votre image sortirait floue : elle n'a pas assez de pixels. `
+      + 'Le fichier vectoriel, lui, ne perd jamais en netteté.';
+  }
+  return 'Ce marquage fabrique un outil à partir de votre dessin, et un outil se '
+    + 'fabrique à partir de courbes.';
+}
+
+function ditGain(p, vectorielPret) {
+  if (!p.gain) return '';
+  const ou = vectorielPret ? 'Avec votre fichier vectoriel' : 'Une fois vectorisé';
+  const n = p.gain.zones;
+  if (n > 0) {
+    const technique = p.gain.meilleure ? `, en ${p.gain.meilleure.technique.toLowerCase()}` : '';
+    return `${ou}, ${n} emplacement${n > 1 ? 's' : ''} de plus s'ouvre${n > 1 ? 'nt' : ''}${technique}.`;
+  }
+  // Meme nombre d'emplacements, mais d'autres techniques y deviennent
+  // possibles. On en nomme deux au plus : la liste complete n'apprend rien.
+  const noms = p.gain.techniques.slice(0, 2).map((t) => t.toLowerCase());
+  const liste = noms.length > 1 ? `${noms[0]} et ${noms[1]}` : noms[0];
+  return `${ou}, ${liste} s'ouvre${noms.length > 1 ? 'nt' : ''} aussi sur ces emplacements.`;
+}
+
+/**
  * Combien d'emplacements restent ouverts. Ecrit d'abord « 2 emplacements
  * possibles sur ce produit, sur 2 », ce qui est exact et ridicule : quand tout
  * passe, le denominateur n'apprend rien.
@@ -118,56 +172,92 @@ function ditEmplacements(p) {
   if (p.zonesQuiPassent === p.zonesTotal) {
     return p.zonesTotal > 1 ? `Ses ${p.zonesTotal} emplacements l'acceptent.` : '';
   }
-  return `${p.zonesQuiPassent} de ses ${p.zonesTotal} emplacements l'acceptent.`;
+  // Accord : « 1 de ses 4 emplacements l'accepte », jamais « l'acceptent ».
+  return `${p.zonesQuiPassent} de ses ${p.zonesTotal} emplacements `
+    + `${p.zonesQuiPassent > 1 ? 'l\'acceptent' : 'l\'accepte'}.`;
 }
 
-function rendreCarte(p) {
+function rendreCarte(p, vectorielPret) {
   const autres = ditEmplacements(p);
+  const gain = ditGain(p, vectorielPret) || ditRaisonSi(p);
   // Pas de lien de vectorisation sur CHAQUE carte : sept fois la meme phrase
   // sur un ecran, c'est du bruit, et la charte ne veut qu'un seul appel a
   // l'action par ecran. Il est dans le bandeau, une fois, en bouton.
+  // La carte est DEUX colonnes, pas une grille de lignes : la silhouette a
+  // gauche, tout le texte dans un seul bloc a droite. Ecrit d'abord en lignes
+  // de grille, chaque paragraphe ajoute retombait sous le picto, dans une
+  // colonne de six caracteres de large.
   return `<article class="produit produit-${p.etat}">
   <div class="produit-image">${silhouette(p.silhouette)}</div>
-  <div class="produit-tete">
-    <span class="produit-verdict">${ETIQUETTE[p.etat]}</span>
+  <div class="produit-corps">
+    <span class="produit-verdict">${etiquette(p, vectorielPret)}</span>
     <h3>${echapper(p.libelle)}</h3>
+    <p class="produit-phrase">${echapper(direProduit(p))}</p>
+    ${gain ? `<p class="produit-gain">${echapper(gain)}</p>` : ''}
+    ${autres ? `<p class="produit-autres">${autres}</p>` : ''}
   </div>
-  <p class="produit-phrase">${echapper(direProduit(p))}</p>
-  ${autres ? `<p class="produit-autres">${autres}</p>` : ''}
 </article>`;
 }
 
-/** Le bandeau de tete : combien de produits acceptent ce logo, et rien d'autre. */
-export function rendreEnteteGrille(produits) {
+/**
+ * LE BANDEAU DE TETE : ce que le fichier depose ouvre deja, et ce qui manque.
+ *
+ * Reecrit apres le §1 du brief du 20/08. Il annoncait « votre logo passe sur 8
+ * de ces 8 produits, une fois vectorise » a quelqu'un dont l'image ouvrait
+ * deja la moitie des techniques. Il compte maintenant ce qui passe TEL QUEL, et
+ * le vectoriel devient un gain chiffre, jamais une condition d'entree.
+ *
+ * L'appel a l'action vit ICI, une seule fois, et c'est le seul bouton orange
+ * de l'ecran : regle de charte, un appel a l'action par ecran. Quand le fichier
+ * vectoriel est deja pret en bas de page, il n'y a plus rien a demander : le
+ * bandeau se tait et laisse les boutons de telechargement faire l'action.
+ */
+export function rendreEnteteGrille(produits, vectorielPret = false) {
   const oui = produits.filter((p) => p.etat === 'oui').length;
   const si = produits.filter((p) => p.etat === 'si').length;
+  const gains = produits.filter((p) => p.etat === 'oui' && p.gain).length;
   const total = produits.length;
-  // L'appel a l'action vit ICI, une seule fois, et c'est le seul bouton orange
-  // de l'ecran : regle de charte, un appel a l'action par ecran.
-  const bouton = `<p class="appel-grille"><a class="cta-entete" href="/vectoriser">Vectoriser mon logo, gratuitement</a></p>`;
+  const bouton = vectorielPret ? ''
+    : `<p class="appel-grille"><a class="cta-entete" href="/vectoriser">Vectoriser mon logo, gratuitement</a></p>`;
+  const ouvre = vectorielPret ? 'Votre fichier vectoriel' : 'Une fois vectorisé, votre logo';
+
   if (si && !oui) {
     return `<div class="encadre"><p><b>Votre logo passe sur ${si} de ces ${total} produits,
-    une fois vectorisé.</b> Les fabricants demandent un fichier vectoriel ; nous le
-    fabriquons ici, gratuitement, en quelques secondes.</p>${bouton}</div>`;
+    ${vectorielPret ? 'avec le fichier vectoriel préparé plus bas' : 'une fois vectorisé'}.</b>
+    Ces marquages fabriquent un outil à partir de votre dessin, un cliché, un écran,
+    un tracé, et un outil se fabrique à partir de courbes.</p>${bouton}</div>`;
   }
   if (!oui && !si) {
     return `<div class="encadre"><p><b>Votre logo ne passe en l'état sur aucun de ces
     ${total} produits.</b> Chaque carte dit ce qui bloque, et à combien de couleurs
     le marquage redevient possible.</p></div>`;
   }
-  const suite = si ? ` ${si} de plus une fois le logo vectorisé, ce qui est gratuit et se fait ici.` : '';
-  return `<div class="encadre"><p><b>Votre logo passe sur ${oui} de ces ${total} produits.</b>${suite}
-  Chaque carte dit où le marquer, avec quelle technique, et à quelle taille.</p>${si ? bouton : ''}</div>`;
+  // LE CAS QUI N'EXISTAIT PAS AVANT LE CORRECTIF : une image nette passe deja.
+  let suite = '';
+  if (si) {
+    suite = ` ${ouvre} en ouvre ${si} de plus.`;
+  } else if (gains) {
+    suite = ` ${ouvre} ouvre des emplacements supplémentaires sur ${gains} d'entre eux.`;
+  }
+  return `<div class="encadre"><p><b>Votre logo passe déjà sur ${oui} de ces ${total}
+  produits, avec le fichier que vous avez déposé.</b>${suite}
+  Chaque carte dit où le marquer, avec quelle technique, et à quelle taille.</p>${bouton}</div>`;
 }
 
-export function rendreGrille(produits) {
+/**
+ * `options.vectorielPret` : le .eps est deja fabrique et attend en bas de page.
+ * Il change ce qu'on demande au visiteur, donc il change les phrases.
+ */
+export function rendreGrille(produits, options = {}) {
   if (!produits?.length) return '';
+  const pret = Boolean(options.vectorielPret);
   return `<h2>Sur quels objets votre logo passe-t-il ?</h2>
-${rendreEnteteGrille(produits)}
+${rendreEnteteGrille(produits, pret)}
 <div class="grille-produits">
-${produits.map(rendreCarte).join('\n')}
+${produits.map((p) => rendreCarte(p, pret)).join('\n')}
 </div>
 <p class="note">Ces huit produits sont des objets publicitaires réels, avec leurs
 emplacements de marquage réels. Le verdict croise le nombre de couleurs de votre
-logo avec ce que chaque emplacement accepte.</p>`;
+logo, ce que chaque emplacement accepte, et ce que la technique demande à votre
+fichier.</p>`;
 }

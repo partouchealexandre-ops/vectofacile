@@ -37,7 +37,13 @@ function rendreEtatFichier(fichier) {
   const etat = direEtatFichier(fichier);
   if (!etat) return '';
   let sortie = '';
-  if (etat.sortie === 'faux_vectoriel') {
+  if (etat.sortie === 'vectoriel_pret') {
+    // §7.3 du brief du 20/08 : on n'annonce plus la vectorisation comme FAITE.
+    // Le calcul a eu lieu, mais l'action, c'est la remise du fichier, et elle
+    // appartient au visiteur. Le lien mene aux boutons, en bas de page.
+    sortie = ` <a class="cta-fichier" href="#telechargements">Obtenir mon fichier
+    vectoriel</a>`;
+  } else if (etat.sortie === 'faux_vectoriel') {
     sortie = ` <a href="/vectoriser">Déposez l'image d'origine de votre logo sur
     Vectoriser mon logo</a>, ou réclamez le fichier source à votre graphiste.`;
   } else if (etat.sortie === 'graphiste') {
@@ -46,7 +52,11 @@ function rendreEtatFichier(fichier) {
     <a href="/questions/comment-vectoriser-un-jpeg">pourquoi la taille de départ décide
     de tout</a>.`;
   }
-  const classe = etat.ton === 'ok' ? 'fichier-ok' : etat.ton === 'refus' ? 'fichier-refus' : '';
+  // `partiel` est ne du correctif du §1 : un fichier qui ouvre une moitie des
+  // techniques et pas l'autre n'est ni un feu vert ni un refus.
+  const classe = etat.ton === 'ok' ? 'fichier-ok'
+    : etat.ton === 'refus' ? 'fichier-refus'
+      : etat.ton === 'partiel' ? 'fichier-partiel' : '';
   return `<div class="encadre etat-fichier ${classe}">
   <p>${echapper(etat.texte)}${sortie}</p>
 </div>`;
@@ -74,6 +84,9 @@ function rendreEtatFichier(fichier) {
  * arbitrages P0, elles ne sont plus rendues.
  */
 export function rendreVerdict(verdict, produitsJuges = [], fichier = null) {
+  // Le fichier vectoriel est-il deja fabrique et pose en bas de page ? Cela
+  // change ce qu'on demande au visiteur, donc ce que la grille lui dit.
+  const vectorielPret = fichier?.origine === 'vectoriel' || fichier?.vectorise === true;
   return `${rendreEtatFichier(fichier)}
-${rendreGrille(produitsJuges)}`;
+${rendreGrille(produitsJuges, { vectorielPret })}`;
 }

@@ -345,9 +345,15 @@ function rendreLeVerdict() {
     ? jugerGrille(etat.grille, {
         nCouleurs: m?.m2Couleurs?.couleursReelles ?? null,
         ratio: rapport,
-        // Un fichier deja vectoriel passe ; une image ne passe qu'une fois
-        // vectorisee, et nous savons le faire, gratuitement.
+        // Un fichier deja vectoriel passe partout. Une image passe la ou la
+        // technique imprime une image, §1 du brief du 20/08 : c'est ce que le
+        // site niait, et c'etait sa faute la plus visible.
         fichierVectoriel: etat.fichierEtat?.origine === 'vectoriel',
+        // La DEFINITION decide du reste : « accepte un raster » ne veut pas
+        // dire « accepte n'importe quelle image ». La largeur en pixels du
+        // dessin, pas celle du fichier : ce sont les pixels de l'encre qui
+        // seront imprimes, pas ceux des marges.
+        largeurPx: m?.boiteEncre?.largeurPx ?? m?.m1Dimensions?.largeurPx ?? null,
       })
     : [];
   $('verdict').innerHTML = rendreVerdict(etat.verdict, juges, etat.fichierEtat);

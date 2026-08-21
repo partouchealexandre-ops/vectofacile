@@ -246,51 +246,68 @@ export function direCouleurs(technique, nCouleurs) {
 }
 
 /**
- * LA PREMIERE QUESTION N'EST PAS LA TAILLE, C'EST LE FICHIER.
- * ARBITRÉ ALEX 20/08/2026 : les fabricants exigent un fichier vectoriel,
- * .eps ou .ai, et refusent une image meme en haute definition ; la gravure
- * laser ne travaille qu'en vectoriel. Ce fait rejoint l'arbitrage du 17/08
- * sur le livrable (.eps ou .ai, jamais le SVG seul).
+ * CE QUE VOTRE FICHIER PERMET, ET CE QU'IL N'OUVRE PAS ENCORE.
  *
- * Le mot « impossible » reste interdit (P0.5) : on ecrit ce qui se passe,
- * « refusé en l'état », et surtout la SORTIE : la vectorisation est deja
- * faite, ou bien elle est gratuite a un clic, ou bien il faut un graphiste.
- * Un refus sans sortie est un mur ; avec la sortie, c'est un chemin.
+ * REECRIT LE 20/08/2026, brief matieres et techniques, §1, et c'est un
+ * correctif de justesse, pas un habillage.
+ *
+ * La version precedente disait : « sans fichier vectoriel, oubliez la
+ * tampographie, la serigraphie et la gravure laser [...] votre image serait
+ * donc refusee en l'etat. » La premiere phrase etait vraie, la conclusion
+ * fausse, et elle tombait a l'endroit exact ou le visiteur decouvre son
+ * resultat. Le transfert numerique, l'impression numerique et la sublimation
+ * acceptent parfaitement une image nette. Le site repondait « non » a
+ * quelqu'un dont le fichier fonctionne deja.
+ *
+ * La mecanique se dit en une phrase, et elle explique tout le reste : une
+ * technique qui fabrique un OUTIL a partir du dessin, un ecran, un cliche, un
+ * trace de gravure, a besoin de courbes ; une technique qui IMPRIME UNE IMAGE
+ * se contente d'une image.
+ *
+ * Le mot « impossible » reste interdit (P0.5). Et depuis le §7.3 du meme
+ * brief, on n'annonce plus la vectorisation comme FAITE : le calcul a bien eu
+ * lieu, mais c'est la remise du fichier qui est l'action, et elle appartient
+ * au visiteur. « Votre fichier vectoriel est prêt », jamais « nous l'avons
+ * deja vectorisee ».
  *
  * `fichier` : { origine: 'image' | 'vectoriel' | 'faux_vectoriel',
  *               vectorise: true | false | null }  (null = en cours)
  */
+const OUVRE_DEJA = 'Votre logo est une image, et c\'est tout ce que demandent les '
+  + 'techniques qui impriment une image : transfert numérique, impression '
+  + 'numérique, sublimation. Vous pouvez commander comme ça.';
+
+const RESTE_FERME = 'Ce qu\'une image n\'ouvre pas : la tampographie, la sérigraphie, '
+  + 'la gravure laser et la broderie. Celles-là ne se contentent pas d\'imprimer, '
+  + 'elles fabriquent d\'abord un outil, un cliché, un écran, un tracé, et un outil '
+  + 'se fabrique à partir de courbes.';
+
 export function direEtatFichier(fichier) {
   if (!fichier) return null;
-  // LES TROIS GRANDS SONT NOMMES, arbitrage Alex du 20/08 : sans vectoriel,
-  // ce ne sont pas « des techniques » qui sautent, ce sont la tampographie,
-  // la serigraphie et la gravure laser, les trois grandes techniques de
-  // l'objet publicitaire, le secteur que cet outil vise.
-  const exigence = 'Avant la taille, le fichier. Sans fichier vectoriel, oubliez la '
-    + 'tampographie, la sérigraphie et la gravure laser : les trois grandes techniques '
-    + 'de l\'objet publicitaire. Les fabricants exigent un .eps ou un .ai, et refusent '
-    + 'une image, même en haute définition.';
+
   if (fichier.origine === 'vectoriel') {
-    return { ton: 'ok', texte: 'Le fichier, d\'abord : le vôtre est déjà vectoriel, '
-      + 'exactement ce que la tampographie, la sérigraphie et la gravure laser '
-      + 'exigent. C\'est lui qu\'il faut envoyer à votre marqueur.' };
+    return { ton: 'ok', texte: 'Votre fichier est déjà vectoriel : toutes les '
+      + 'techniques l\'acceptent, y compris la tampographie, la sérigraphie et la '
+      + 'gravure laser, qui n\'acceptent que ça. C\'est ce fichier qu\'il faut envoyer '
+      + 'à votre marqueur.' };
   }
+
   if (fichier.origine === 'faux_vectoriel') {
-    return { ton: 'refus', texte: `${exigence} Le vôtre porte l'extension d'un vectoriel `
-      + 'mais n\'en est pas un : il ne contient qu\'une image, et il sera refusé '
-      + 'en l\'état.', sortie: 'faux_vectoriel' };
+    return { ton: 'partiel', texte: `Votre fichier porte l'extension d'un vectoriel `
+      + 'mais ne contient qu\'une image. ' + OUVRE_DEJA + ' ' + RESTE_FERME,
+    sortie: 'faux_vectoriel' };
   }
+
   if (fichier.vectorise === false) {
-    return { ton: 'refus', texte: `${exigence} Votre image serait donc refusée en l'état, `
-      + 'et elle ne se vectorise pas automatiquement.', sortie: 'graphiste' };
+    return { ton: 'partiel', texte: `${OUVRE_DEJA} ${RESTE_FERME}`, sortie: 'graphiste' };
   }
+
   if (fichier.vectorise === true) {
-    return { ton: 'ok', texte: `${exigence} Votre image serait donc refusée en l'état. `
-      + 'Bonne nouvelle : nous l\'avons déjà vectorisée, gratuitement, ça ne vous '
-      + 'coûte rien. Téléchargez le .eps en bas de page : c\'est lui qu\'il faut '
-      + 'envoyer à votre marqueur, pas votre image de départ.' };
+    return { ton: 'ok', texte: `${OUVRE_DEJA} ${RESTE_FERME} `
+      + 'Votre fichier vectoriel est prêt : il ouvre les deux moitiés, et il ne vous '
+      + 'coûte rien.', sortie: 'vectoriel_pret' };
   }
-  return { ton: 'attente', texte: `${exigence} Votre image serait donc refusée en l'état. `
-    + 'Bonne nouvelle : nous la vectorisons gratuitement, ça ne vous coûte rien, '
-    + 'le fichier arrive en bas de page.' };
+
+  return { ton: 'attente', texte: `${OUVRE_DEJA} ${RESTE_FERME} `
+    + 'Nous préparons votre fichier vectoriel, qui ouvre les deux moitiés.' };
 }

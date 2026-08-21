@@ -135,22 +135,31 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
   /* Le bandeau du fichier, 20/08 : la premiere question est le fichier. */
   .etat-fichier.fichier-ok { border-left-color: #1d6b38; }
   .etat-fichier.fichier-refus { border-left-color: #9c3722; }
+  /* Le ton partiel, ne du correctif du 20/08 : un fichier qui ouvre une moitie
+     des techniques et pas l'autre n'est ni un feu vert ni un refus. */
+  .etat-fichier.fichier-partiel { border-left-color: var(--orange); }
+  .cta-fichier { display: inline-block; margin-top: 8px; font-size: 14px; font-weight: 600;
+    padding: 9px 17px; border-radius: 8px; border: 1.5px solid var(--orange);
+    background: var(--orange); color: #fff; text-decoration: none; }
   /* LA GRILLE DE PRODUITS, pivot du 20/08. Des cartes qui se lisent en une
      seconde : une silhouette, un nom, un verdict, une phrase. */
   .grille-produits { display: grid; gap: 14px; margin: 16px 0 18px;
     grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); }
   .produit { border: 1px solid #e3e6ea; border-radius: 10px; padding: 16px 18px;
-    background: #fff; display: grid; grid-template-columns: 46px 1fr;
-    grid-column-gap: 16px; grid-row-gap: 8px; align-content: start; }
-  .produit-image { grid-row: 1 / span 3; color: var(--navy); opacity: .7; }
+    background: #fff; display: grid; grid-template-columns: 46px minmax(0, 1fr);
+    gap: 16px; align-items: start; }
+  .produit-corps { display: grid; gap: 8px; min-width: 0; align-content: start; }
+  .produit-image { color: var(--navy); opacity: .7; }
   .produit .silhouette { width: 46px; height: 46px; }
-  .produit-tete { min-width: 0; }
   .produit h3 { margin: 2px 0 0; font-size: 15.5px; line-height: 1.35; }
-  .produit-verdict { display: inline-block; font-size: 11.5px; font-weight: 700;
+  .produit-verdict { justify-self: start; display: inline-block; font-size: 11.5px; font-weight: 700;
     letter-spacing: .03em; text-transform: uppercase; padding: 2px 8px;
     border-radius: 20px; background: var(--gris-clair); }
   .produit-phrase { margin: 0; font-size: 14.5px; line-height: 1.5; }
   .produit-autres { margin: 0; font-size: 12.5px; color: var(--gris); }
+  /* Le gain de la vectorisation sur un produit qui dit deja oui. Il remplace
+     le peage supprime : ce n'est plus une condition, c'est une ouverture. */
+  .produit-gain { margin: 0; font-size: 13.5px; line-height: 1.45; color: #8f3d08; }
   .appel-grille { margin: 14px 0 2px; }
   .produit-oui { border-left: 3px solid #1d6b38; }
   .produit-oui .produit-verdict { color: #12522a; background: #e8f3ec; }

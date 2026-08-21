@@ -196,10 +196,14 @@ await page.waitForTimeout(900);
     ['un conseil le dit en clair',
       r.conseils.some((c) => /n'en est pas un/.test(c))],
     ['aucun bouton de telechargement n\'apparait', r.telechargements === false],
-    // Le bandeau du fichier (20/08) : refuse en l'etat, et la SORTIE est la
-    // page Vectoriser mon logo, avec l'image d'origine.
-    ['le bandeau du fichier le refuse en l\'etat et donne la sortie',
-      /sera refusé/.test(r.bandeauFichier) && /Vectoriser mon logo/.test(r.bandeauFichier)],
+    // Le bandeau du fichier, reecrit le 20/08 apres le §1 du brief : il nomme
+    // ce que le fichier EST, il garde ce que son image ouvre deja, et il donne
+    // la sortie, la page Vectoriser mon logo, avec l'image d'origine.
+    ['le bandeau nomme le faux vectoriel et donne la sortie',
+      /ne contient qu'une image/.test(r.bandeauFichier)
+        && /Vectoriser mon logo/.test(r.bandeauFichier)],
+    ['et il ne ferme pas les portes que l\'image ouvre deja',
+      /transfert numérique/.test(r.bandeauFichier)],
   ], [r.titreFiche, ...r.conseils]);
 }
 

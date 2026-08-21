@@ -633,6 +633,9 @@ console.log('');
       menuDeroulant: bloc.querySelector('#choix_produit') !== null,
       cartesTechniques: bloc.querySelectorAll('article.technique').length,
       blocSources: bloc.querySelector('.sources-verdict') !== null,
+      // §1 du brief du 20/08 : ce que le bandeau du fichier dit d'une image.
+      bandeau: bloc.querySelector('.etat-fichier')?.innerText ?? '',
+      boutonFichier: bloc.querySelectorAll('.cta-fichier').length,
     };
   }, octets.toString('base64'));
   await page.close();
@@ -667,6 +670,22 @@ console.log('');
     ['aucune etiquette jargon du 19/08', !JARGON.test(constat.texte)],
     ['(temoin) le detecteur de jargon detecte bien',
       JARGON.test(`${constat.texte} tient les minimums publiés`)],
+    // §1 DU BRIEF DU 20/08, LE CORRECTIF DE JUSTESSE. La page disait « votre
+    // image serait donc refusée en l'état » a quelqu'un dont le fichier
+    // fonctionne deja sur la moitie des techniques. Ce controle passe par le
+    // vrai chemin du visiteur : une image deposee, l'ecran qu'il voit.
+    ['le bandeau ne refuse plus l\'image en bloc',
+      !/refus/i.test(constat.bandeau) && !/oubliez la tampographie/i.test(constat.bandeau)],
+    ['(temoin) le detecteur de refus detecte bien',
+      /refus/i.test(`${constat.bandeau} serait refusée en l'état`)],
+    ['il nomme ce que l\'image ouvre deja',
+      /transfert numérique/i.test(constat.bandeau) && /sublimation/i.test(constat.bandeau)],
+    ['il dit la raison mecanique de l\'autre moitie',
+      /outil/i.test(constat.bandeau) && /courbes/i.test(constat.bandeau)],
+    // §7.3 : la vectorisation n'est plus annoncee comme faite, elle est rendue
+    // au visiteur sous forme d'action.
+    ['la vectorisation est une action, pas une annonce',
+      !/nous l'avons déjà vectorisée/i.test(constat.bandeau) && constat.boutonFichier === 1],
     // Charte : un seul appel a l'action par ecran, et c'est celui qui rapporte.
     ['un seul appel a l\'action, celui de la vectorisation', constat.appels <= 1],
   ]) {
