@@ -27,6 +27,46 @@
 export const INDEXABLE = false;
 
 /**
+ * LE DOMAINE, EN UN SEUL ENDROIT.
+ *
+ * Trouvaille de l'audit du 21/08 : les canonicals, le sitemap et les URL du
+ * JSON-LD pointent vers vectofacile.netlify.app. C'est normal aujourd'hui et
+ * c'est un piege demain. Le jour du .fr, ces trois choses doivent basculer
+ * ENSEMBLE ; si elles vivent a trois endroits, l'une des trois sera oubliee, et
+ * une canonique qui pointe ailleurs que le sitemap est la faute qui coute le
+ * plus longtemps.
+ *
+ * Les gabarits d'outil, contenu/accueil.html et contenu/vectoriser.html,
+ * portent le jeton {{DOMAINE}} et la construction le remplace. Personne ne
+ * recopie une URL a la main nulle part.
+ */
+export const DOMAINE = 'https://vectofacile.netlify.app';
+
+/**
+ * LES METADONNEES DE PARTAGE. Sans elles, un lien envoye sur LinkedIn ou dans
+ * une conversation sort NU : pas de titre, pas d'image, pas un mot. Pour un
+ * outil dont on attend qu'il circule de bouche a oreille entre acheteurs, c'est
+ * la difference entre un lien qu'on clique et un lien qu'on ignore.
+ */
+export function partage({ titre, description, url }) {
+  return [
+    `<meta property="og:type" content="website">`,
+    `<meta property="og:site_name" content="Vecto Facile">`,
+    `<meta property="og:locale" content="fr_FR">`,
+    `<meta property="og:title" content="${titre}">`,
+    `<meta property="og:description" content="${description}">`,
+    `<meta property="og:url" content="${DOMAINE}${url}">`,
+    `<meta property="og:image" content="${DOMAINE}/partage.png">`,
+    `<meta property="og:image:width" content="1200">`,
+    `<meta property="og:image:height" content="630">`,
+    `<meta name="twitter:card" content="summary_large_image">`,
+    `<meta name="twitter:title" content="${titre}">`,
+    `<meta name="twitter:description" content="${description}">`,
+    `<meta name="twitter:image" content="${DOMAINE}/partage.png">`,
+  ].join('\n');
+}
+
+/**
  * Politique de securite du contenu.
  *
  * Elle n'est pas ici pour cocher une case. Le produit promet que le logo du
@@ -106,9 +146,16 @@ export function fichierRobots() {
   if (!INDEXABLE) {
     return [
       '# FICHIER GENERE. Source : outils/entetes.mjs, constante INDEXABLE.',
-      '# Le site est en chantier : le diagnostic par technique n\'existe pas',
-      '# encore et aucune page de contenu n\'est ecrite. On ne fait pas crawler',
-      '# un site vide.',
+      '# L\'indexation reste fermee, et ce n\'est plus parce que le site est vide :',
+      '# dix-sept pages de contenu existent, avec leurs tables sourcees. Elle',
+      '# attend le domaine definitif. Ouvrir ici construirait l\'autorite sur',
+      '# vectofacile.netlify.app, c\'est-a-dire au mauvais endroit, et rien ne se',
+      '# transfere proprement apres coup.',
+      '#',
+      '# La checklist d\'ouverture, aucune etape sautable : domaine achete et',
+      '# branche, constante DOMAINE basculee (canonicals, sitemap, JSON-LD),',
+      '# adresse de contact operationnelle, meta og: en place, Rich Results vert',
+      '# sur chaque gabarit. Alors seulement INDEXABLE passe a vrai.',
       'User-agent: *',
       'Disallow: /',
       '',

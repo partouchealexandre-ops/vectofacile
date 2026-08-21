@@ -10,12 +10,25 @@
      et servie a l'outil comme aux pages de contenu. Une palette dupliquee est une
      palette qui derive : l'identite a deja paye ce defaut avec trois navys dans une
      meme livraison. Ne pas remettre de feuille en ligne dans cette page. -->
-<link rel="canonical" href="https://vectofacile.netlify.app/">
+<link rel="canonical" href="{{DOMAINE}}/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Vecto Facile">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:title" content="Votre logo est-il bon à marquer ?">
+<meta property="og:description" content="Déposez votre logo : on vous dit sur quelles matières il passe, à quelle taille et en combien de couleurs. Fichier vectoriel gratuit, rien ne quitte votre navigateur.">
+<meta property="og:url" content="{{DOMAINE}}/">
+<meta property="og:image" content="{{DOMAINE}}/partage.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Votre logo est-il bon à marquer ?">
+<meta name="twitter:description" content="Déposez votre logo : on vous dit sur quelles matières il passe, à quelle taille et en combien de couleurs. Fichier vectoriel gratuit, rien ne quitte votre navigateur.">
+<meta name="twitter:image" content="{{DOMAINE}}/partage.png">
 <link rel="stylesheet" href="/vecto.css">
 <!-- Balisage structure de l'accueil. Un seul bloc, comme sur les pages de
      contenu : deux blocs seraient deux endroits a tenir a jour, et les robots
      ne lisent de toute facon que ce qu'ils trouvent en premier. -->
-<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","name":"Vecto Facile","url":"https://vectofacile.netlify.app/","inLanguage":"fr-FR","publisher":{"@id":"https://vectofacile.netlify.app/#editeur"}},{"@type":"Organization","@id":"https://vectofacile.netlify.app/#editeur","name":"Bytouch","url":"https://vectofacile.netlify.app/","address":{"@type":"PostalAddress","streetAddress":"4 rue Lemercier","postalCode":"75017","addressLocality":"Paris","addressCountry":"FR"}},{"@type":"WebApplication","name":"Vecto Facile","applicationCategory":"DesignApplication","operatingSystem":"Navigateur web","url":"https://vectofacile.netlify.app/","offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"},"featureList":"Vectorisation et diagnostic de marquage d'un logo, sans envoi de fichier"},{"@type":"FAQPage","mainEntity":[{"@type":"Question","name":"La vectorisation est-elle vraiment gratuite ?","acceptedAnswer":{"@type":"Answer","text":"Oui, sans compte, sans adresse e-mail et sans limite de nombre de fichiers. Le calcul se fait sur votre machine, ce qui ne coûte pratiquement rien à faire tourner."}},{"@type":"Question","name":"Quels formats de fichier puis-je vectoriser ?","acceptedAnswer":{"@type":"Answer","text":"PNG, JPEG, GIF et WEBP. Un fichier déjà vectoriel n'a pas besoin d'être vectorisé, et l'outil le signale au lieu de faire semblant."}},{"@type":"Question","name":"Mon logo est-il envoyé sur un serveur ?","acceptedAnswer":{"@type":"Answer","text":"Non. Coupez votre connexion internet après le chargement de la page puis déposez un logo : tout fonctionne encore, ce qui prouve que rien ne part."}},{"@type":"Question","name":"Que faire si le fichier vectoriel obtenu est décevant ?","acceptedAnswer":{"@type":"Answer","text":"C'est presque toujours que l'image de départ est trop petite. Cherchez la plus grande version disponible, un PDF de plaquette ou un export d'origine, et recommencez."}}]}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","name":"Vecto Facile","url":"{{DOMAINE}}/","inLanguage":"fr-FR","publisher":{"@id":"{{DOMAINE}}/#editeur"}},{"@type":"Organization","@id":"{{DOMAINE}}/#editeur","name":"Bytouch","url":"{{DOMAINE}}/","address":{"@type":"PostalAddress","streetAddress":"4 rue Lemercier","postalCode":"75017","addressLocality":"Paris","addressCountry":"FR"}},{"@type":"WebApplication","name":"Vecto Facile","applicationCategory":"DesignApplication","operatingSystem":"Navigateur web","url":"{{DOMAINE}}/","offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"},"featureList":"Vectorisation et diagnostic de marquage d'un logo, sans envoi de fichier"},{"@type":"FAQPage","mainEntity":[{"@type":"Question","name":"La vectorisation est-elle vraiment gratuite ?","acceptedAnswer":{"@type":"Answer","text":"Oui, sans compte, sans adresse e-mail et sans limite de nombre de fichiers. Le calcul se fait sur votre machine, ce qui ne coûte pratiquement rien à faire tourner."}},{"@type":"Question","name":"Quels formats de fichier puis-je vectoriser ?","acceptedAnswer":{"@type":"Answer","text":"PNG, JPEG, GIF et WEBP. Un fichier déjà vectoriel n'a pas besoin d'être vectorisé, et l'outil le signale au lieu de faire semblant."}},{"@type":"Question","name":"Mon logo est-il envoyé sur un serveur ?","acceptedAnswer":{"@type":"Answer","text":"Non. Coupez votre connexion internet après le chargement de la page puis déposez un logo : tout fonctionne encore, ce qui prouve que rien ne part."}},{"@type":"Question","name":"Que faire si le fichier vectoriel obtenu est décevant ?","acceptedAnswer":{"@type":"Answer","text":"C'est presque toujours que l'image de départ est trop petite. Cherchez la plus grande version disponible, un PDF de plaquette ou un export d'origine, et recommencez."}}]}]}</script>
 </head>
 <body>
 <main>
@@ -144,22 +157,27 @@
        bloc dit ce que l'outil fait, ce qu'il mesure et ce qu'il ne fait pas,
        sans repeter les pages du guide, qui traitent des procedes. -->
   <section class="explication">
-    <h2>Ce que fait cet outil</h2>
-    <ol>
-      <li><b>Il mesure votre fichier.</b> Nombre réel de couleurs, épaisseur du trait le
-      plus fin, écart le plus étroit entre deux formes, hauteur des capitales, présence
-      d'un dégradé ou d'un halo de compression. Ce sont des faits, pas des avis.</li>
-      <li><b>Il vectorise, mais seulement si c'est utile.</b> Une image en pixels est
-      retracée et vous récupérez un <b>.eps</b> pour votre marqueur et un <b>.pdf</b> que
-      vous pouvez ouvrir vous-même. Un <b>PDF</b> ou un fichier <b>Illustrator</b> est déjà
-      vectoriel : on ne le retrace pas, on le mesure tel quel, parce que le retracer
-      donnerait une approximation de ce que vous avez déjà d'exact.</li>
-      <li><b>Il reconnaît un faux vectoriel.</b> Un PDF qui ne contient qu'une image
-      collée dedans porte la bonne extension, s'ouvre normalement, et sera refusé par
-      l'atelier. Nous comptons les tracés : s'il n'y en a aucun, nous vous le disons.</li>
-      <li><b>Il vous dit ce qui est fragile.</b> Un trait trop fin, un texte trop petit,
-      une image de départ trop réduite : vous le savez avant le devis, pas après.</li>
-    </ol>
+    <!-- E1 DU BRIEF DU 21/08 : ON MONTRE AU LIEU DE DECRIRE.
+         La page ouvrait sur quatre paragraphes de specification, « ce que fait
+         cet outil ». Un visiteur comprend un produit en voyant son resultat,
+         pas en lisant sa notice. Le logo est dessine pour le site et n'imite
+         aucune marque ; les trois chiffres ci-dessous sont ceux que l'outil
+         rend vraiment sur lui, et le harnais les recalcule a chaque passage
+         pour qu'ils ne puissent pas devenir faux en silence. -->
+    <h2>Un exemple, avant de déposer le vôtre</h2>
+    <div class="demonstration">
+      <img src="/exemple/logo-exemple.png" width="1200" height="600"
+           alt="Logo de démonstration : un hexagone bleu marine avec un symbole orange,
+                à côté du nom Orbiva Solutions Techniques">
+      <div class="demonstration-dit">
+        <p><b>Deux couleurs réelles</b>, mesurées dans le fichier, pas déclarées.</p>
+        <p><b>Il passe sur 4 matières sur 7</b> avec l'image telle quelle, et sur 6 une
+        fois vectorisé, ce qui est gratuit et se fait ici.</p>
+        <p><b>Sur un stylo en aluminium, il ferait 14 mm de large</b> : techniquement
+        possible, mais plus lisible à cette taille.</p>
+        <button id="voir_exemple" type="button">Voir le résultat complet</button>
+      </div>
+    </div>
 
     <h2>Ce qu'il ne fait pas, et c'est délibéré</h2>
     <ul>

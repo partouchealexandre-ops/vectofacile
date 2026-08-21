@@ -17,7 +17,7 @@ import { lireVectoriel, reconnaitre, FichierVectorielNonLu } from './adaptateurs
 import { mesurer } from './moteur/mesures.js';
 import { juger } from './verdict/juger.js';
 import { jugerGrille, choisirPourContraste } from './verdict/grille.js';
-import { CONTACT } from './verdict/rendu_grille.js';
+import { CONTACT, rendreDecouverte } from './verdict/rendu_grille.js';
 import { rendreVerdict } from './verdict/rendu.js';
 import { conseiller } from './conseils/conseils.js';
 import { preparerVectorisation, FORMES_MAXIMALES } from './vectorisation/options.js';
@@ -405,6 +405,32 @@ function rendreLeVerdict() {
  * du suivant. Ni a l'ecran, ni en memoire.
  */
 /**
+ * LA DECOUVERTE DE /VECTORISER, partie D du brief du 21/08.
+ *
+ * Elle n'existe que sur cette page, et seulement une fois le fichier remis.
+ * Elle passe par le MEME moteur que l'accueil : meme grille, meme jugement,
+ * meme regle de contraste. Deux mises en scene, une seule verite.
+ */
+async function afficherDecouverte(mesures) {
+  if (!modeVectoriser() || !$('decouverte')) return;
+  const grille = await chargerGrille().catch(() => null);
+  if (!grille) return;
+  const rapport = mesures?.boiteEncre?.rapport ?? mesures?.m1Dimensions?.rapport ?? 1;
+  // Le fichier vectoriel vient d'etre fabrique : c'est LUI qu'on juge, pas
+  // l'image de depart. Annoncer ce que l'image ouvrait serait sous-vendre ce
+  // qu'on vient de lui donner.
+  const juges = jugerGrille(grille, {
+    nCouleurs: mesures?.m2Couleurs?.couleursReelles ?? null,
+    ratio: rapport,
+    fichierVectoriel: true,
+  });
+  const html = rendreDecouverte(choisirPourContraste(juges).choisis);
+  if (!html) return;
+  $('decouverte').innerHTML = html;
+  $('decouverte').hidden = false;
+}
+
+/**
  * MONTRER UNE SECTION, ET LE VOLET QUI LA CONTIENT.
  *
  * Structure C du brief du 21/08 : tout ce qui n'est pas le verdict est de la
@@ -472,7 +498,7 @@ function reinitialiser() {
   // n'existent pas sur la page courante (/vectoriser n'a pas de diagnostic)
   // sont simplement ignores.
   for (const id of ['erreur', 'avertissements', 'mesures', 'verdict', 'resultat',
-                    'couleurs', 'fiche', 'conseils']) {
+                    'couleurs', 'fiche', 'conseils', 'decouverte']) {
     const e = $(id);
     if (e) { e.hidden = true; e.innerHTML = ''; }
   }
@@ -746,10 +772,15 @@ async function traiter(fichier) {
     devoiler('resultat');
     $('telechargements').hidden = false;
     $('travail').hidden = true;
-    // Le .eps existe desormais : le bandeau du fichier peut le promettre au
-    // passe, et pointer vers le bas de page.
+    // Le .eps existe desormais : l'action peut le promettre et pointer vers le
+    // bas de page.
     etat.fichierEtat = { origine: 'image', vectorise: true };
     rendreLeVerdict();
+    // PARTIE D DU BRIEF DU 21/08 : sur /vectoriser, la decouverte arrive APRES
+    // la remise du fichier, jamais avant. Le visiteur a ce qu'il venait
+    // chercher ; deux cartes lui montrent ce que son fichier vient d'ouvrir,
+    // et un lien mene au diagnostic complet. Un moteur, deux mises en scene.
+    await afficherDecouverte(mesures);
   } catch (e) {
     $('travail').hidden = true;
     $('erreur').hidden = false;
@@ -819,6 +850,31 @@ function brancher() {
   $('telecharger_svg').addEventListener('click', () => {
     telecharger(etat.svg, `${etat.nom}.svg`, 'image/svg+xml');
   });
+
+  // E1 DU BRIEF DU 21/08 : LE LOGO DE DEMONSTRATION.
+  //
+  // « On montre au lieu de decrire, et le visiteur comprend le produit avant de
+  // donner son fichier. » Le bouton depose le logo temoin comme le visiteur
+  // deposerait le sien : meme chemin, meme moteur, meme verdict. Rien n'est
+  // simule, sinon la demonstration ne demontrerait rien.
+  const exemple = $('voir_exemple');
+  if (exemple) {
+    exemple.addEventListener('click', async () => {
+      exemple.disabled = true;
+      try {
+        const reponse = await fetch('/exemple/logo-exemple.png');
+        const octets = await reponse.blob();
+        await traiter(new File([octets], 'logo-exemple.png', { type: 'image/png' }));
+        $('verdict')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } catch {
+        // Un exemple qui ne se charge pas ne doit pas casser la page : le
+        // visiteur peut toujours deposer son propre fichier, qui est le but.
+        exemple.textContent = 'L\'exemple n\'a pas pu se charger';
+      } finally {
+        exemple.disabled = false;
+      }
+    });
+  }
 
   // C4 DU BRIEF DU 21/08 : LA SUITE, POUR LE VISITEUR LE PLUS CHAUD DU
   // PARCOURS, QUI N'EN AVAIT AUCUNE.

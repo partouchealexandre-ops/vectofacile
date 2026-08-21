@@ -409,7 +409,25 @@ export function rendreActionFichier(fichier) {
  */
 export const CONTACT = 'contact@vectofacile.fr';
 
+/**
+ * ET L'ADRESSE NE RECOIT RIEN AUJOURD'HUI.
+ *
+ * Tour de site du 21/08 : le domaine vectofacile.fr n'est pas achete, donc
+ * contact@vectofacile.fr ne peut pas recevoir de courrier. L'adresse est deja
+ * publiee dans les mentions legales, ce qui est un probleme en soi, mais ce
+ * n'est pas une raison pour en fabriquer un second : un formulaire qui ecrit
+ * dans le vide est PIRE que pas de formulaire. Le visiteur croit avoir demande
+ * un prix, personne ne repond, et c'est le contraire de la confiance qu'on
+ * cherche a construire.
+ *
+ * Le bloc « et maintenant ? » ne s'affiche donc pas encore. Le jour ou le
+ * domaine tourne, ce booleen passe a vrai, une ligne, et le harnais verifie
+ * que l'affichage suit dans les deux sens.
+ */
+export const CONTACT_OPERATIONNEL = false;
+
 export function rendreSuite() {
+  if (!CONTACT_OPERATIONNEL) return '';
   return `<div class="encadre et-maintenant">
   <h2>Vous voulez ce marquage en vrai ?</h2>
   <p>Dites-nous sur quel objet, on vous dit combien ça coûte et en combien de temps.
@@ -424,6 +442,30 @@ export function rendreSuite() {
   <p class="note">Votre logo ne part pas : seul le diagnostic accompagne votre message,
   pour que la réponse soit utile dès le premier échange.</p>
 </div>`;
+}
+
+/**
+ * LA DECOUVERTE APRES LA REMISE DU FICHIER, partie D du brief du 21/08.
+ *
+ * `/vectoriser` fait une chose et une seule : deposer, convertir, telecharger,
+ * trois clics, aucun diagnostic impose. C'est la page d'atterrissage du trafic
+ * « vectoriser un JPEG », et lui imposer un verdict avant son fichier serait
+ * lui faire payer sa visite.
+ *
+ * APRES la remise, c'est autre chose : le visiteur a ce qu'il venait chercher,
+ * et deux cartes lui montrent ce que son fichier vient d'ouvrir. Deux, pas
+ * huit : ce n'est pas le diagnostic, c'est une porte vers le diagnostic.
+ */
+export function rendreDecouverte(produits) {
+  const passe = (produits ?? []).filter((p) => groupeDe(p) !== 'coince').slice(0, 2);
+  if (passe.length < 2) return '';
+  return `<h2>Votre logo passe aussi sur ces objets</h2>
+<p class="note">Votre fichier vectoriel vient d'ouvrir ces marquages. Voici deux exemples,
+sur des matières réelles.</p>
+<div class="grille-produits">
+${passe.map((p) => rendreCarte(p, true)).join('\n')}
+</div>
+<p><a class="cta-secondaire" href="/">Voir toutes les matières pour ce logo</a></p>`;
 }
 
 /**

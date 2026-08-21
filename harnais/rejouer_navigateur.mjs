@@ -699,11 +699,12 @@ console.log('');
       constat.groupes.length >= 1
         && constat.groupes.every((t) => /(Ça passe|ouvre aussi|ça coince)/.test(t)),
       constat.groupes.join(' | ')],
-    // C4 : la suite, que la page n'offrait pas.
-    ['la page propose une suite au visiteur',
-      /marquage en vrai/i.test(constat.suite) && /Demander un prix/i.test(constat.suite)],
-    ['et elle redit que le logo ne part pas',
-      /ne part pas/i.test(constat.suite)],
+    // C4 : la suite. Elle attend une adresse qui recoive vraiment : le domaine
+    // n'est pas achete, et un formulaire qui ecrit dans le vide est pire que
+    // pas de formulaire. Le controle suit le drapeau, dans les deux sens.
+    ['le bloc de demande suit l\'etat reel de l\'adresse de contact',
+      constat.suite === ''
+        || (/marquage en vrai/i.test(constat.suite) && /ne part pas/i.test(constat.suite))],
     // C5 a C7 : la preuve se replie, elle ne barre plus la route.
     ['les blocs de preuve sont replies, pas supprimes',
       constat.volets >= 2 && constat.voletsOuverts === 0,
@@ -763,6 +764,63 @@ console.log('');
 }
 
 // ---------------------------------------------------------------------------
+// LE LOGO DE DEMONSTRATION DIT VRAI, E1 du brief du 21/08.
+//
+// « On montre au lieu de decrire. » Trois chiffres sont ecrits en dur dans
+// l'accueil : deux couleurs, quatre matieres sur sept, quatorze millimetres sur
+// un stylo en aluminium. Ils viennent du moteur, mais une fois recopies dans du
+// HTML ils ne se corrigent plus tout seuls : une grille qui bouge les rendrait
+// faux EN SILENCE, sur la premiere page du site.
+//
+// Ce bloc les RECALCULE par le vrai chemin, en cliquant le bouton comme un
+// visiteur, et compare. C'est le seul moyen qu'une promesse affichee reste
+// verifiee.
+{
+  const page = await navigateur.newPage();
+  await page.goto(`http://127.0.0.1:${PORT}/`, { waitUntil: 'networkidle' });
+  await page.waitForTimeout(900);
+  const annonce = await page.evaluate(() =>
+    document.querySelector('.demonstration-dit')?.innerText ?? '');
+  await page.click('#voir_exemple');
+  await page.waitForTimeout(2500);
+  const rendu = await page.evaluate(() => ({
+    couleurs: globalThis.vecto.etat().mesures?.m2Couleurs?.couleursReelles ?? null,
+    verdict: document.querySelector('.verdict-tete')?.innerText ?? '',
+    stylo: [...document.querySelectorAll('.produit')]
+      .map((c) => c.innerText).find((t) => /aluminium/i.test(t)) ?? '',
+  }));
+  await page.close();
+
+  // Les trois nombres annonces, extraits du texte de la page d'accueil.
+  const nombres = (t, motif) => (t.match(motif) ?? []).slice(1).map(Number);
+  const [matieresAnnoncees, totalAnnonce] = nombres(annonce, /passe sur (\d+) matières sur (\d+)/);
+  const [mmAnnonces] = nombres(annonce, /(\d+) mm de large/);
+  const [matieresRendues, totalRendu] = nombres(rendu.verdict, /passe sur (\d+) matières? sur (\d+)/);
+  const [mmRendus] = nombres(rendu.stylo, /(\d+) × \d+ mm/);
+
+  console.log('');
+  console.log('  LE LOGO DE DEMONSTRATION DIT VRAI');
+  console.log('  ' + '-'.repeat(66));
+  for (const [libelle, ok] of [
+    ['le bouton depose vraiment le logo temoin', rendu.couleurs !== null],
+    ['deux couleurs annoncees, deux couleurs mesurees',
+      /[Dd]eux couleurs réelles/.test(annonce) && rendu.couleurs === 2],
+    ['le compte de matieres annonce est celui que l\'outil rend',
+      matieresAnnoncees === matieresRendues && totalAnnonce === totalRendu],
+    ['la taille annoncee sur le stylo est celle que l\'outil calcule',
+      mmAnnonces === mmRendus && Number.isFinite(mmRendus)],
+    ['et la page ne decrit plus l\'outil avant de le montrer',
+      !/Ce que fait cet outil/.test(annonce)],
+  ]) {
+    console.log(`  ${ok ? 'ok   ' : 'ECHEC'} ${libelle}`);
+    if (!ok) echecs++;
+  }
+  console.log(`         annonce : ${matieresAnnoncees}/${totalAnnonce} matières, ${mmAnnonces} mm`
+    + ` | rendu : ${matieresRendues}/${totalRendu} matières, ${mmRendus} mm`);
+  console.log('  ' + '-'.repeat(66));
+  console.log('');
+}
+
 // LA PAGE /VECTORISER NE FAIT QU'UNE CHOSE, ET ELLE LA FAIT.
 //
 // Arbitrage Alex du 20/08 : « la page vectoriser mon logo doit être épurée et
@@ -786,6 +844,13 @@ console.log('');
       blocsDiagnostic: ['fiche', 'couleurs', 'verdict', 'conseils', 'mesures', 'largeur']
         .filter((id) => document.getElementById(id) !== null),
       programme: globalThis.vecto.etat().programme !== null,
+      // PARTIE D du brief du 21/08 : la decouverte, APRES la remise du
+      // fichier. Deux cartes, pas huit : c'est une porte vers le diagnostic,
+      // pas le diagnostic.
+      decouverte: document.getElementById('decouverte')?.hidden === false,
+      cartesDecouverte: document.querySelectorAll('#decouverte .produit').length,
+      lienEvaluation: document.querySelectorAll('#decouverte a[href="/"]').length,
+      texteDecouverte: document.getElementById('decouverte')?.innerText ?? '',
     };
   }, octets.toString('base64'));
   await page.close();
@@ -800,6 +865,13 @@ console.log('');
     ['l\'apercu du trace est affiche', constat.apercu === true],
     ['aucun bloc de diagnostic n\'existe dans le document',
       constat.blocsDiagnostic.length === 0],
+    // La decouverte n'est pas un diagnostic : elle arrive APRES la remise du
+    // fichier, elle tient en deux cartes, et elle mene a l'evaluation.
+    ['la decouverte apparait une fois le fichier remis', constat.decouverte === true],
+    ['elle tient en deux cartes, pas en huit', constat.cartesDecouverte === 2],
+    ['elle mene a l\'evaluation complete', constat.lienEvaluation >= 1],
+    ['et elle dit ce que le fichier vient d\'ouvrir',
+      /passe aussi sur/i.test(constat.texteDecouverte)],
   ]) {
     console.log(`  ${ok ? 'ok   ' : 'ECHEC'} ${libelle}`);
     if (!ok) echecs++;

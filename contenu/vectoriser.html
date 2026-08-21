@@ -9,9 +9,22 @@
 <!-- La feuille de style est GENEREE dans public/vecto.css depuis contenu/style.mjs.
      Ne pas remettre de feuille en ligne dans cette page : une palette dupliquee
      est une palette qui derive. -->
-<link rel="canonical" href="https://vectofacile.netlify.app/vectoriser">
+<link rel="canonical" href="{{DOMAINE}}/vectoriser">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Vecto Facile">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:title" content="Vectoriser un logo gratuitement, en .eps et .pdf">
+<meta property="og:description" content="Déposez une image : elle est retracée en courbes dans votre navigateur et vous repartez avec un .eps pour votre marqueur et un .pdf. Sans compte, sans envoi.">
+<meta property="og:url" content="{{DOMAINE}}/vectoriser">
+<meta property="og:image" content="{{DOMAINE}}/partage.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Vectoriser un logo gratuitement, en .eps et .pdf">
+<meta name="twitter:description" content="Déposez une image : elle est retracée en courbes dans votre navigateur et vous repartez avec un .eps pour votre marqueur et un .pdf. Sans compte, sans envoi.">
+<meta name="twitter:image" content="{{DOMAINE}}/partage.png">
 <link rel="stylesheet" href="/vecto.css">
-<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebApplication","name":"Vecto Facile, vectorisation","applicationCategory":"DesignApplication","operatingSystem":"Navigateur web","url":"https://vectofacile.netlify.app/vectoriser","offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"},"featureList":"Vectorisation d'un logo en .eps, .pdf et .svg, sans envoi de fichier"},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Vecto Facile","item":"https://vectofacile.netlify.app/"},{"@type":"ListItem","position":2,"name":"Vectoriser mon logo","item":"https://vectofacile.netlify.app/vectoriser"}]}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebApplication","name":"Vecto Facile, vectorisation","applicationCategory":"DesignApplication","operatingSystem":"Navigateur web","url":"{{DOMAINE}}/vectoriser","offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"},"featureList":"Vectorisation d'un logo en .eps, .pdf et .svg, sans envoi de fichier"},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Vecto Facile","item":"{{DOMAINE}}/"},{"@type":"ListItem","position":2,"name":"Vectoriser mon logo","item":"{{DOMAINE}}/vectoriser"}]}]}</script>
 </head>
 <!-- LE MODE. C'est lui que src/app.js lit pour ne restituer QUE la
      vectorisation : pas de fiche, pas de couleurs, pas de verdict, pas de
@@ -63,6 +76,11 @@
     <button id="telecharger_pdf" class="second">Télécharger le .pdf</button>
     <button id="telecharger_svg" class="tertiaire">Le .svg, pour votre site web</button>
   </div>
+
+  <!-- LA DECOUVERTE, partie D du brief du 21/08. Elle n'apparait qu'APRES la
+       remise du fichier : avant, cette page ne promet qu'une chose et ne fait
+       que ca. Le balisage est statique, comme les boutons de telechargement. -->
+  <section id="decouverte" hidden></section>
 
   <section class="explication">
     <h2>Ce que fait cette page, et rien d'autre</h2>

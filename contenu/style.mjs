@@ -194,6 +194,17 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
   .suite-champs button { padding: 11px 18px; border-radius: 8px; border: 0;
     background: var(--navy); color: #fff; font-weight: 600; font-size: 15px;
     cursor: pointer; justify-self: start; font-family: inherit; }
+  /* E1 : on montre au lieu de decrire. Le logo temoin et ce qu'il donne. */
+  .demonstration { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 24px; align-items: center; margin: 12px 0 4px; }
+  .demonstration img { width: 100%; height: auto; border: 1px solid var(--trait);
+    border-radius: 10px; background: #fff; }
+  .demonstration-dit p { margin: 0 0 10px; font-size: 15px; line-height: 1.5; }
+  .demonstration-dit button { margin-top: 6px; padding: 11px 18px; border-radius: 8px;
+    border: 1.5px solid var(--trait); background: #fff; color: var(--encre);
+    font-weight: 600; font-size: 14.5px; cursor: pointer; font-family: inherit; }
+  .demonstration-dit button:hover { border-color: var(--gris); }
+  @media (max-width: 760px) { .demonstration { grid-template-columns: 1fr; } }
   /* C5 a C7 : la preuve se replie, elle ne barre plus la route. */
   .volet { border-top: 1px solid var(--trait); margin-top: 18px; padding-top: 12px; }
   .volet > summary { cursor: pointer; font-weight: 600; font-size: 15.5px;

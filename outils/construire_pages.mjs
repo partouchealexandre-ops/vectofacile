@@ -25,6 +25,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { STYLE } from '../contenu/style.mjs';
 import { RUBRIQUES, PIED, EN_ATTENTE } from '../contenu/pages.mjs';
+import { DOMAINE, partage } from './entetes.mjs';
 import { CONFIDENTIALITE } from '../contenu/confidentialite.mjs';
 import { QUI_SOMMES_NOUS, MENTIONS } from '../contenu/institution.mjs';
 import { QUESTIONS } from '../contenu/questions/vectoriel.mjs';
@@ -108,7 +109,8 @@ préparation de fichier d'imprimerie n'est pas une contrainte de marquage d'obje
 
 const RACINE = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PUBLIC = path.join(RACINE, 'public');
-const DOMAINE = 'https://vectofacile.netlify.app';
+// LE DOMAINE VIT DANS outils/entetes.mjs, une seule fois pour tout le site :
+// canonicals, sitemap, JSON-LD et metadonnees de partage basculent ensemble.
 
 const symbole = fs.readFileSync(path.join(RACINE, 'identite', 'symbole.svg'), 'utf-8')
   .replace(/<\?xml[^>]*\?>\s*/, '')
@@ -132,8 +134,43 @@ function entete(urlCourante, publiees) {
 </header>`;
 }
 
-function pied(publiees) {
-  const colonnes = PIED.map((c) => {
+/**
+ * LE PIED DE PAGE SE DERIVE DES PAGES PUBLIEES, IL NE SE RECOPIE PLUS.
+ *
+ * Trouvaille du tour de site du 21/08 : le pied listait trois guides sur sept
+ * et trois questions sur sept. La broderie, le DTF, l'UV et le marquage a chaud
+ * etaient orphelins, c'est-a-dire quasi invisibles pour un moteur. La cause
+ * n'est pas un oubli, c'est une table tenue a la main a cote d'une autre source
+ * de verite : elle diverge le jour ou quelqu'un ajoute une page sans penser au
+ * pied.
+ *
+ * Les colonnes de rubriques se calculent donc a partir des memes pages que le
+ * sitemap. Les deux colonnes qui n'ont pas de rubrique, l'outil et l'editeur,
+ * restent declarees dans contenu/pages.mjs : ce sont des choix editoriaux, pas
+ * une liste a tenir.
+ */
+function colonnesDerivees(pages) {
+  const parPrefixe = [
+    ['Techniques de marquage', '/guide/'],
+    ['Questions fréquentes', '/questions/'],
+  ];
+  return parPrefixe.map(([titre, prefixe]) => ({
+    titre,
+    // La page d'index de la rubrique n'est pas un de ses articles.
+    liens: pages.filter((p) => p.url.startsWith(prefixe) && p.url !== prefixe)
+      .map((p) => ({ titre: p.titreCourt ?? p.h1 ?? p.titre, url: p.url })),
+  })).filter((c) => c.liens.length);
+}
+
+function pied(publiees, pagesPubliees = []) {
+  const derivees = colonnesDerivees(pagesPubliees);
+  // L'ordre reste celui de la table : l'outil, les rubriques derivees a leur
+  // place, l'editeur en dernier.
+  const toutes = PIED.flatMap((c) => {
+    const remplacante = derivees.find((d) => d.titre === c.titre);
+    return remplacante ? [remplacante] : [c];
+  });
+  const colonnes = toutes.map((c) => {
     const liens = c.liens.filter((l) => publiees.has(l.url));
     if (liens.length === 0) return '';
     return `<div><b>${c.titre}</b>${liens.map((l) => `<a href="${l.url}">${l.titre}</a>`).join('')}</div>`;
@@ -223,7 +260,7 @@ function voisines(page, questions) {
   return `<h2>À lire aussi</h2><ul class="voisines">${items}</ul>`;
 }
 
-function rendre(page, publiees, questions = []) {
+function rendre(page, publiees, questions = [], toutesPages = []) {
   const corps = page.sections.map((s) => `<h2>${echapper(s.h2)}</h2>${s.html.trim()}`).join('\n');
   return `<!DOCTYPE html>
 <html lang="fr">
@@ -233,6 +270,7 @@ function rendre(page, publiees, questions = []) {
 <title>${echapper(page.titre)} | Vecto Facile</title>
 <meta name="description" content="${echapper(page.meta)}">
 <link rel="canonical" href="${DOMAINE}${page.url}">
+${partage({ titre: echapper(page.titre), description: echapper(page.meta), url: page.url })}
 <link rel="icon" href="/favicon.svg">
 <link rel="stylesheet" href="/vecto.css">
 ${balises(page)}
@@ -248,7 +286,7 @@ ${faqVisible(page)}
 ${voisines(page, questions)}
 <div class="appel"><a href="/">Diagnostiquer mon logo, gratuitement</a></div>
 </div>
-${pied(publiees)}
+${pied(publiees, toutesPages)}
 </body>
 </html>
 `;
@@ -453,7 +491,27 @@ if (!REPERES.test(accueil)) {
 }
 fs.writeFileSync(path.join(PUBLIC, 'index.html'),
   accueil.replace(REPERES, entete('/', publiees)
-    .match(/<nav class="nav-site">[\s\S]*?<\/nav>/)[0]));
+    .match(/<nav class="nav-site">[\s\S]*?<\/nav>/)[0])
+    .replaceAll('{{DOMAINE}}', DOMAINE));
+
+/**
+ * LE LOGO DE DEMONSTRATION, E1 du brief du 21/08.
+ *
+ * « On montre au lieu de decrire, et le visiteur comprend le produit avant de
+ * donner son fichier. » Il est dessine pour le site, il n'imite aucune marque
+ * existante, et il est choisi pour ce qu'il ENSEIGNE : deux couleurs, un aplat,
+ * un texte fin. Il declenche les trois reponses que l'outil sait rendre, un
+ * oui franc, un blocage de definition, un blocage de lisibilite.
+ */
+fs.mkdirSync(path.join(PUBLIC, 'exemple'), { recursive: true });
+fs.copyFileSync(path.join(RACINE, 'contenu', 'exemple', 'logo-exemple.png'),
+                path.join(PUBLIC, 'exemple', 'logo-exemple.png'));
+
+// L'IMAGE DE PARTAGE, celle qu'un lien emporte avec lui sur LinkedIn ou dans
+// une conversation. Sans elle, les meta og: annoncent une image qui n'existe
+// pas, ce qui est pire que pas d'image du tout.
+fs.copyFileSync(path.join(RACINE, 'contenu', 'exemple', 'partage.png'),
+                path.join(PUBLIC, 'partage.png'));
 
 /**
  * LA PAGE /VECTORISER, seconde page d'outil, generee comme l'accueil.
@@ -477,7 +535,8 @@ if (!/data-mode="vectoriser"/.test(vectoriser)) {
 fs.mkdirSync(path.join(PUBLIC, 'vectoriser'), { recursive: true });
 fs.writeFileSync(path.join(PUBLIC, 'vectoriser', 'index.html'),
   vectoriser.replace(REPERES, entete('/vectoriser', publiees)
-    .match(/<nav class="nav-site">[\s\S]*?<\/nav>/)[0]));
+    .match(/<nav class="nav-site">[\s\S]*?<\/nav>/)[0])
+    .replaceAll('{{DOMAINE}}', DOMAINE));
 
 fs.writeFileSync(path.join(PUBLIC, 'vecto.css'), STYLE);
 fs.writeFileSync(path.join(PUBLIC, 'favicon.svg'), symbole + '\n');
@@ -487,7 +546,7 @@ fs.writeFileSync(path.join(PUBLIC, 'favicon.svg'), symbole + '\n');
 // relecture, et se decouvre six mois plus tard dans un rapport d'exploration.
 const casses = [];
 for (const page of pages) {
-  const rendu = rendre(page, publiees, QUESTIONS_TOUTES);
+  const rendu = rendre(page, publiees, QUESTIONS_TOUTES, pages);
   for (const [, href] of rendu.matchAll(/<a\b[^>]*\bhref="([^"]+)"/g)) {
     if (/^(https?:|mailto:|#)/.test(href)) continue;
     if (!publiees.has(href)) casses.push(`${page.url} -> ${href}`);
@@ -516,7 +575,7 @@ const page404 = {
   }],
   faq: [],
 };
-fs.writeFileSync(path.join(PUBLIC, '404.html'), rendre(page404, publiees, QUESTIONS_TOUTES));
+fs.writeFileSync(path.join(PUBLIC, '404.html'), rendre(page404, publiees, QUESTIONS_TOUTES, pages));
 
 /**
  * Toute page generee doit etre ignoree par git.

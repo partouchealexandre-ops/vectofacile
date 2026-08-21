@@ -80,6 +80,8 @@ for (const f of pages.sort()) {
     url, titre, description, h1: h1.length, canonique, types, jsonValide,
     blocs: blocs.length,
     mots: corps ? corps.split(' ').length : 0,
+    partage: [...h.matchAll(/<meta (?:property|name)="((?:og|twitter):[^"]+)"/g)].map((m) => m[1]),
+    partageUrl: (h.match(/<meta property="og:url" content="([^"]+)"/) ?? [])[1] ?? '',
     tableaux: (h.match(/<table/g) || []).length,
     listes: (h.match(/<[ou]l/g) || []).length,
     chapo: /class="chapo"/.test(h) || /class="accroche"/.test(h),
@@ -101,6 +103,21 @@ for (const l of lignes) {
   if (l.h1 !== 1) ajouter(l.url, `${l.h1} balise h1, il en faut exactement une`);
   if (!l.canonique.endsWith(l.url) && !l.canonique.endsWith(l.url.replace(/\/$/, ''))) {
     ajouter(l.url, `adresse canonique incoherente : ${l.canonique || 'absente'}`);
+  }
+  // METADONNEES DE PARTAGE, trouvaille de l'audit du 21/08 : aucune page n'en
+  // portait. Un lien envoye sur LinkedIn ou dans une conversation sortait NU,
+  // sans titre ni image. Pour un outil dont on attend qu'il circule entre
+  // acheteurs, c'est la difference entre un lien qu'on clique et un lien qu'on
+  // ignore.
+  for (const balise of ['og:title', 'og:description', 'og:image', 'og:url', 'og:locale']) {
+    if (!l.partage.includes(balise)) ajouter(l.url, `pas de ${balise}`);
+  }
+  if (!l.partage.includes('twitter:card')) ajouter(l.url, 'pas de twitter:card');
+  // ET LE DOMAINE EST LE MEME PARTOUT. Une canonique qui pointe ailleurs que le
+  // sitemap est la faute qui coute le plus longtemps : elle se corrige en une
+  // ligne et se paie en mois de reindexation.
+  if (l.partageUrl && l.canonique && l.partageUrl !== l.canonique) {
+    ajouter(l.url, `og:url ${l.partageUrl} et canonique ${l.canonique} divergent`);
   }
   if (!l.jsonValide) ajouter(l.url, 'balisage structure JSON invalide');
   if (l.blocs !== 1) ajouter(l.url, `${l.blocs} blocs de balisage, il en faut un seul`);
@@ -133,6 +150,22 @@ grouper('description');
 console.log('');
 console.log('  HARNAIS SEO ET GEO, sur le HTML SERVI');
 console.log('  ' + '-'.repeat(74));
+// TEMOIN. Une garde qui ne regarde pas au bon endroit passe au vert en ne
+// trouvant rien : on lui donne une page sans metadonnees de partage et on
+// verifie qu'elle la refuse. Sans ce controle, la ligne precedente ne prouve
+// rien le jour ou le selecteur change.
+{
+  const nue = '<html><head><title>x</title></head><body></body></html>';
+  const trouvees = [...nue.matchAll(/<meta (?:property|name)="((?:og|twitter):[^"]+)"/g)];
+  if (trouvees.length !== 0) {
+    ajouter('(temoin)', 'le detecteur de metadonnees de partage ne detecte pas');
+  }
+  const pleine = '<meta property="og:title" content="x">';
+  if ([...pleine.matchAll(/<meta (?:property|name)="((?:og|twitter):[^"]+)"/g)].length !== 1) {
+    ajouter('(temoin)', 'le detecteur de metadonnees de partage ne trouve pas');
+  }
+}
+
 console.log('  url'.padEnd(56) + 'titre  desc   mots  balisage');
 for (const l of lignes) {
   console.log(`  ${l.url.padEnd(53)}${String(l.titre.length).padStart(4)}`

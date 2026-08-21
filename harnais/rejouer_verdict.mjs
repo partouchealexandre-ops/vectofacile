@@ -404,7 +404,8 @@ const controle = (libelle, ok, detail) => resultats.push({ libelle, ok, detail }
 // variante n'en est un.
 {
   const { rendreVerdict } = await import('../src/verdict/rendu.js');
-  const { rendreActionFichier, CONTACT } = await import('../src/verdict/rendu_grille.js');
+  const { rendreActionFichier, rendreSuite, CONTACT, CONTACT_OPERATIONNEL } =
+    await import('../src/verdict/rendu_grille.js');
   const { direCouleurs } = await import('../src/verdict/formulation.js');
   const v = juger({ mesures: mesuresImpeccables(), seuils: SEUILS,
                     valeurs: VALEURS, produits: PRODUITS });
@@ -443,6 +444,14 @@ const controle = (libelle, ok, detail) => resultats.push({ libelle, ok, detail }
     path.join(ICI, '..', 'contenu', 'institution.mjs'), 'utf-8');
   controle('l\'adresse de contact est celle des mentions legales',
            institution.includes(CONTACT), CONTACT);
+  // ET ON NE DEMANDE PAS UN EMAIL QU'ON NE SAIT PAS RECEVOIR. Le domaine n'est
+  // pas achete : un formulaire qui ecrit dans le vide est pire que pas de
+  // formulaire. Le controle marche dans les DEUX sens, pour que le jour du
+  // domaine, oublier de rebrancher le bloc se voie tout de suite.
+  const suite = rendreSuite();
+  controle('le bloc de demande suit l\'etat reel de l\'adresse',
+           CONTACT_OPERATIONNEL ? /Demander un prix/.test(suite) : suite === '',
+           CONTACT_OPERATIONNEL ? 'adresse operationnelle' : 'adresse pas encore ouverte');
 
   // LES COULEURS : au dela de 3 couleurs sur une technique a passages, la
   // carte recommande l'economie. Jamais sur les techniques a passage unique,
