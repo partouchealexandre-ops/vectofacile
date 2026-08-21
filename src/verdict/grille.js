@@ -26,7 +26,26 @@
  * Fonction PURE : pas de DOM, pas de fetch. Elle se teste dans node.
  */
 
-import { exigeVectoriel, qualifierDefinition, DPI_PLANCHER } from './techniques.js';
+import { exigeVectoriel, qualifierDefinition, familleDe, DPI_PLANCHER } from './techniques.js';
+
+/**
+ * LE PLANCHER DE LISIBILITE, §5 du brief du 20/08.
+ *
+ * L'ecran affichait « le clip : en tampographie, votre logo ferait 12 × 7 mm ».
+ * C'est arithmetiquement juste et commercialement absurde : un logo a trois
+ * couleurs sur douze millimetres, personne ne le lit. C'est la meme famille que
+ * le « dès 726 mm » de la broderie, un nombre exact et vide de sens.
+ *
+ * En dessous du plancher, on ne dit donc pas oui. On dit « techniquement
+ * possible, mais a cette taille votre logo ne serait plus lisible ».
+ *
+ * LE SEUIL EST PROVISOIRE ET IL LE DIT. Le vrai seuil depend du contenu du
+ * logo, de la presence de texte avant tout, et c'est un arbitrage Alex, §9.1 du
+ * brief. En attendant, tout marquage sous 20 mm de large porte la reserve. Ce
+ * n'est pas un refus : c'est une reserve, et elle propose la sortie, une
+ * version simplifiee du logo.
+ */
+export const LISIBILITE_MM = 20;
 
 /** Une zone accepte-t-elle ce nombre de couleurs ? */
 function accepte(technique, nCouleurs) {
@@ -232,15 +251,26 @@ export function jugerProduit(produit, contexte) {
   const ailleurs = Boolean(meilleure && plusGrande && !plusGrande.accepte
     && meilleure.zone !== plusGrande.zone);
 
+  // La reserve de lisibilite porte sur l'offre RECOMMANDEE : c'est elle que le
+  // visiteur lira. Elle ne change pas l'etat, elle le nuance, et elle ne se
+  // confond pas avec un refus.
+  const reserveLisibilite = Boolean(meilleure?.taille
+    && meilleure.taille.largeurMm < LISIBILITE_MM);
+
   const zonesTelQuel = new Set(telQuel.map((o) => o.zone));
   const zonesVectorise = new Set(couleursOk.map((o) => o.zone));
 
   return {
     famille: produit.famille,
+    // La MATIERE, depuis les archetypes du 21/08 : c'est elle qui decide, le
+    // produit n'est que la porte d'entree reconnaissable.
+    matiere: produit.matiere ?? null,
+    produits: produit.produits ?? null,
     libelle: produit.libelle,
     silhouette: produit.silhouette,
     etat,
     raison,
+    reserveLisibilite,
     // L'offre a citer quand c'est la definition qui bloque : celle dont la
     // taille explique le flou, pas forcement celle qu'on recommande.
     offreFloue: raison === 'definition' ? floue : null,
@@ -276,8 +306,61 @@ export function jugerProduit(produit, contexte) {
  */
 export function jugerGrille(grille, contexte) {
   const rang = { oui: 0, si: 1, non: 2 };
-  return (grille?.produits ?? [])
+  // La grille accepte les deux formes : les huit references du 20/08 et les
+  // archetypes famille x matiere du 21/08, qui les remplacent.
+  return (grille?.archetypes ?? grille?.produits ?? [])
     .map((p) => jugerProduit(p, contexte))
     .sort((a, b) => rang[a.etat] - rang[b.etat]
       || (b.meilleure?.surface ?? 0) - (a.meilleure?.surface ?? 0));
+}
+
+/**
+ * LA REGLE DU CONTRASTE, §4 du brief du 20/08.
+ *
+ * « Une grille où tout dit oui n'apprend rien, elle décore. » Le constat est
+ * tombe le 21/08 sur les archetypes : douze cartes, douze fois « oui ». Ce
+ * n'etait pas un bug, c'est la realite du catalogue, presque chaque objet
+ * porte quelque part une technique en quadrichromie. Un verdict binaire ne
+ * discrimine donc plus rien, et une grille qui ne discrimine rien decore.
+ *
+ * Toute la valeur est dans la DIVERGENCE, et elle ne se lit pas sur le seul
+ * oui/non. Deux cartes qui disent oui n'enseignent pas la meme chose si l'une
+ * repond « en broderie, 64 mm » et l'autre « en gravure laser, 11 mm ». La
+ * signature d'une carte est donc ce qu'elle apprend : son etat, la FAMILLE de
+ * technique recommandee, et l'ordre de grandeur de la taille.
+ *
+ * On retient un archetype par signature, les plus peuples d'abord, et on
+ * complete si la place reste. Le compte des signatures distinctes remonte a
+ * l'affichage : quand il tombe a un, la grille doit le dire en une ligne
+ * plutot que d'aligner huit cartes identiques.
+ */
+export function signature(p) {
+  if (p.etat === 'non') return 'non';
+  const technique = familleDe(p.meilleure.technique) ?? p.meilleure.technique;
+  const mm = p.meilleure.taille?.largeurMm ?? 0;
+  // Quatre ordres de grandeur, parce que c'est ce que le visiteur retient :
+  // un marquage de poche, un marquage de face, un grand aplat.
+  const palier = mm < 20 ? 'minuscule' : mm < 60 ? 'petit' : mm < 150 ? 'moyen' : 'grand';
+  return `${p.etat}|${technique}|${palier}`;
+}
+
+export function choisirPourContraste(juges, maximum = 8) {
+  const vues = new Set();
+  const retenus = [];
+  const reste = [];
+  for (const p of juges) {
+    const cle = signature(p);
+    if (vues.has(cle)) { reste.push(p); continue; }
+    vues.add(cle);
+    retenus.push(p);
+  }
+  // Le tri de jugerGrille tient : ce qui passe d'abord, ce qui passe sous
+  // condition ensuite, ce qui ne passe pas en dernier.
+  const choisis = retenus.slice(0, maximum);
+  for (const p of reste) {
+    if (choisis.length >= maximum) break;
+    choisis.push(p);
+  }
+  choisis.sort((a, b) => juges.indexOf(a) - juges.indexOf(b));
+  return { choisis, signatures: vues.size, total: juges.length };
 }

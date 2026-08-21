@@ -14,6 +14,8 @@
  * 20/08. Ce que la page affiche vient des zones reelles des produits.
  */
 
+import { avecArticle } from './techniques.js';
+
 const echapper = (t) => String(t)
   .replace(/&/g, '&amp;').replace(/</g, '&lt;')
   .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -55,6 +57,10 @@ function silhouette(nom) {
  * laisserait croire a une etape qui n'existe plus.
  */
 function etiquette(p, vectorielPret) {
+  // §5 du brief du 20/08 : sous le plancher de lisibilite, on ne dit pas oui.
+  // « Techniquement, oui » n'est pas une nuance de style : c'est la difference
+  // entre un marquage possible et un marquage lisible.
+  if (p.etat === 'oui' && p.reserveLisibilite) return 'techniquement, oui';
   if (p.etat === 'oui') return 'oui';
   if (p.etat === 'non') return 'non';
   return vectorielPret ? 'oui, avec votre fichier vectoriel' : 'oui, après vectorisation';
@@ -133,6 +139,21 @@ export function direProduit(p) {
  * pourtant les images. Ce n'etait pas le type du fichier qui bloquait, c'etait
  * sa definition, et la carte ne le disait pas.
  */
+/**
+ * LA RESERVE DE LISIBILITE, §5 du brief du 20/08.
+ *
+ * « Le clip : en tampographie, votre logo ferait 12 × 7 mm » est
+ * arithmetiquement juste et commercialement absurde. Un refus serait faux, le
+ * marquage est possible ; un oui sec serait pire, il vendrait un logo que
+ * personne ne lit. On dit donc la reserve, et on donne la sortie.
+ */
+function ditReserve(p) {
+  if (!p.reserveLisibilite || !p.meilleure?.taille) return '';
+  return `À ${p.meilleure.taille.largeurMm} mm de large, c'est techniquement possible `
+    + 'mais votre logo n\'y serait plus lisible : il faudrait une version simplifiée, '
+    + 'sans texte fin.';
+}
+
 function ditRaisonSi(p) {
   if (p.etat !== 'si') return '';
   if (p.raison === 'definition') {
@@ -157,7 +178,7 @@ function ditGain(p, vectorielPret) {
   }
   // Meme nombre d'emplacements, mais d'autres techniques y deviennent
   // possibles. On en nomme deux au plus : la liste complete n'apprend rien.
-  const noms = p.gain.techniques.slice(0, 2).map((t) => t.toLowerCase());
+  const noms = p.gain.techniques.slice(0, 2).map(avecArticle);
   const liste = noms.length > 1 ? `${noms[0]} et ${noms[1]}` : noms[0];
   return `${ou}, ${liste} s'ouvre${noms.length > 1 ? 'nt' : ''} aussi sur ces emplacements.`;
 }
@@ -179,7 +200,10 @@ function ditEmplacements(p) {
 
 function rendreCarte(p, vectorielPret) {
   const autres = ditEmplacements(p);
-  const gain = ditGain(p, vectorielPret) || ditRaisonSi(p);
+  // Une seule phrase de nuance par carte, et dans cet ordre : la lisibilite
+  // prime, parce qu'elle survit a la vectorisation ; puis ce qui bloque le
+  // fichier ; puis le gain. Trois phrases empilees ne se lisent pas.
+  const nuance = ditReserve(p) || ditRaisonSi(p) || ditGain(p, vectorielPret);
   // Pas de lien de vectorisation sur CHAQUE carte : sept fois la meme phrase
   // sur un ecran, c'est du bruit, et la charte ne veut qu'un seul appel a
   // l'action par ecran. Il est dans le bandeau, une fois, en bouton.
@@ -187,13 +211,16 @@ function rendreCarte(p, vectorielPret) {
   // gauche, tout le texte dans un seul bloc a droite. Ecrit d'abord en lignes
   // de grille, chaque paragraphe ajoute retombait sous le picto, dans une
   // colonne de six caracteres de large.
-  return `<article class="produit produit-${p.etat}">
+  // La reserve de lisibilite a sa propre teinte : un « techniquement, oui » en
+  // vert franc mentirait sur ce qu'il dit.
+  const classe = `produit-${p.etat}${p.etat === 'oui' && p.reserveLisibilite ? ' produit-reserve' : ''}`;
+  return `<article class="produit ${classe}">
   <div class="produit-image">${silhouette(p.silhouette)}</div>
   <div class="produit-corps">
     <span class="produit-verdict">${etiquette(p, vectorielPret)}</span>
     <h3>${echapper(p.libelle)}</h3>
     <p class="produit-phrase">${echapper(direProduit(p))}</p>
-    ${gain ? `<p class="produit-gain">${echapper(gain)}</p>` : ''}
+    ${nuance ? `<p class="produit-gain">${echapper(nuance)}</p>` : ''}
     ${autres ? `<p class="produit-autres">${autres}</p>` : ''}
   </div>
 </article>`;
@@ -212,7 +239,7 @@ function rendreCarte(p, vectorielPret) {
  * vectoriel est deja pret en bas de page, il n'y a plus rien a demander : le
  * bandeau se tait et laisse les boutons de telechargement faire l'action.
  */
-export function rendreEnteteGrille(produits, vectorielPret = false) {
+export function rendreEnteteGrille(produits, vectorielPret = false, contraste = null) {
   const oui = produits.filter((p) => p.etat === 'oui').length;
   const si = produits.filter((p) => p.etat === 'si').length;
   const gains = produits.filter((p) => p.etat === 'oui' && p.gain).length;
@@ -221,43 +248,57 @@ export function rendreEnteteGrille(produits, vectorielPret = false) {
     : `<p class="appel-grille"><a class="cta-entete" href="/vectoriser">Vectoriser mon logo, gratuitement</a></p>`;
   const ouvre = vectorielPret ? 'Votre fichier vectoriel' : 'Une fois vectorisé, votre logo';
 
+  // §4 DU BRIEF : quand toutes les cartes repondent la meme chose, la grille
+  // ne discrimine rien et il faut le DIRE, pas aligner huit cartes identiques.
+  const uniforme = contraste && contraste.signatures <= 1 && total > 1;
+  const monotone = uniforme
+    ? ' Ces matières répondent toutes la même chose pour ce logo : la même technique, '
+      + 'le même ordre de taille.'
+    : '';
+
   if (si && !oui) {
-    return `<div class="encadre"><p><b>Votre logo passe sur ${si} de ces ${total} produits,
+    return `<div class="encadre"><p><b>Votre logo passe sur ${si} de ces ${total} matières,
     ${vectorielPret ? 'avec le fichier vectoriel préparé plus bas' : 'une fois vectorisé'}.</b>
     Ces marquages fabriquent un outil à partir de votre dessin, un cliché, un écran,
-    un tracé, et un outil se fabrique à partir de courbes.</p>${bouton}</div>`;
+    un tracé, et un outil se fabrique à partir de courbes.${monotone}</p>${bouton}</div>`;
   }
   if (!oui && !si) {
-    return `<div class="encadre"><p><b>Votre logo ne passe en l'état sur aucun de ces
-    ${total} produits.</b> Chaque carte dit ce qui bloque, et à combien de couleurs
+    return `<div class="encadre"><p><b>Votre logo ne passe en l'état sur aucune de ces
+    ${total} matières.</b> Chaque carte dit ce qui bloque, et à combien de couleurs
     le marquage redevient possible.</p></div>`;
   }
-  // LE CAS QUI N'EXISTAIT PAS AVANT LE CORRECTIF : une image nette passe deja.
   let suite = '';
   if (si) {
     suite = ` ${ouvre} en ouvre ${si} de plus.`;
   } else if (gains) {
-    suite = ` ${ouvre} ouvre des emplacements supplémentaires sur ${gains} d'entre eux.`;
+    suite = ` ${ouvre} ouvre des emplacements supplémentaires sur ${gains} d'entre elles.`;
   }
   return `<div class="encadre"><p><b>Votre logo passe déjà sur ${oui} de ces ${total}
-  produits, avec le fichier que vous avez déposé.</b>${suite}
+  matières, avec le fichier que vous avez déposé.</b>${suite}${monotone}
   Chaque carte dit où le marquer, avec quelle technique, et à quelle taille.</p>${bouton}</div>`;
 }
 
 /**
  * `options.vectorielPret` : le .eps est deja fabrique et attend en bas de page.
- * Il change ce qu'on demande au visiteur, donc il change les phrases.
+ * `options.contraste` : ce que la selection a retenu, §4 du brief. Il sert a
+ * dire « ces matieres repondent toutes la meme chose » au lieu de le laisser
+ * decouvrir apres huit cartes.
  */
 export function rendreGrille(produits, options = {}) {
   if (!produits?.length) return '';
   const pret = Boolean(options.vectorielPret);
-  return `<h2>Sur quels objets votre logo passe-t-il ?</h2>
-${rendreEnteteGrille(produits, pret)}
+  const surLesquels = produits.filter((p) => p.produits).length === produits.length;
+  return `<h2>Sur quelles matières votre logo passe-t-il ?</h2>
+${rendreEnteteGrille(produits, pret, options.contraste ?? null)}
 <div class="grille-produits">
 ${produits.map((p) => rendreCarte(p, pret)).join('\n')}
 </div>
-<p class="note">Ces huit produits sont des objets publicitaires réels, avec leurs
-emplacements de marquage réels. Le verdict croise le nombre de couleurs de votre
-logo, ce que chaque emplacement accepte, et ce que la technique demande à votre
-fichier.</p>`;
+<p class="note">Ce ne sont pas des références de catalogue, ce sont des ${surLesquels
+  ? 'matières'
+  : 'produits'} : la contrainte de marquage tient d'abord à la matière, pas au
+modèle. ${surLesquels
+  ? 'Chaque carte agrège les emplacements réels de plusieurs dizaines de produits de '
+    + 'cette matière, et donne leur taille médiane. Votre modèle exact peut différer.'
+  : 'Le verdict croise le nombre de couleurs de votre logo avec ce que chaque '
+    + 'emplacement accepte.'}</p>`;
 }

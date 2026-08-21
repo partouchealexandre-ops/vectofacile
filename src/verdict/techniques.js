@@ -77,6 +77,29 @@ export function familleDe(nom) {
   return TECHNIQUES[nom]?.famille ?? null;
 }
 
+/**
+ * LE NOM D'UNE TECHNIQUE, AVEC SON ARTICLE.
+ *
+ * « tampographie s'ouvre aussi » n'est pas une phrase francaise. Le genre ne se
+ * devine pas depuis la chaine : « transfert » est masculin, « sérigraphie »
+ * feminine, « impression » commence par une voyelle. La table le sait.
+ */
+const GENRES = Object.freeze({
+  'Sérigraphie': 'la', 'Sérigraphie circulaire': 'la', 'Tampographie': 'la',
+  'Gravure laser': 'la', 'Gravure laser 360': 'la', 'Broderie': 'la',
+  'Sublimation': 'la', 'Impression numérique': "l'", 'Impression numérique 360': "l'",
+  'Étiquette numérique': "l'", 'Embossage': "l'",
+  'Transfert numérique': 'le', 'Transfert sérigraphique': 'le',
+  'Transfert réfléchissant': 'le', 'Doming': 'le', 'Marquage à chaud': 'le',
+});
+
+export function avecArticle(nom) {
+  const article = GENRES[nom];
+  const minuscule = String(nom).toLowerCase();
+  if (!article) return minuscule;
+  return article === "l'" ? `l'${minuscule}` : `${article} ${minuscule}`;
+}
+
 /** Toute technique citee est-elle classee ? Sert au harnais, et a lui seul. */
 export function techniquesInconnues(noms) {
   return [...new Set(noms)].filter((n) => !TECHNIQUES[n]);

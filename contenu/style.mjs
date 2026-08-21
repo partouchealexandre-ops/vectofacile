@@ -120,6 +120,12 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
   }
   #depot:hover, #depot.survol { border-color: var(--accent); background: var(--gris-clair); }
   #depot strong { display: block; font-size: 18px; margin-bottom: 6px; }
+  /* §7.1 du brief du 20/08 : une fois l'analyse faite, la zone de depot montre
+     le logo analyse plutot que de reclamer une action deja accomplie. */
+  #depot.depot-analyse { border-style: solid; border-color: var(--trait);
+    background: #fff; padding: 14px; }
+  #depot .vignette { display: block; max-width: 150px; max-height: 150px;
+    margin: 0 auto 10px; }
   #depot span { color: var(--gris); font-size: 14px; }
   input[type=file] { display: none; }
   .ligne { display: flex; align-items: baseline; gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--trait); }
@@ -165,6 +171,9 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
   .produit-oui .produit-verdict { color: #12522a; background: #e8f3ec; }
   .produit-si { border-left: 3px solid var(--orange); }
   .produit-si .produit-verdict { color: #8f3d08; background: #fdf0e6; }
+  /* §5 du brief du 20/08 : « techniquement, oui » n'est pas un oui franc. */
+  .produit-reserve { border-left-color: #b07a1a; }
+  .produit-reserve .produit-verdict { color: #7a5310; background: #fbf3e2; }
   .produit-non { border-left: 3px solid #9c3722; background: #fcfaf9; }
   .produit-non .produit-verdict { color: #9c3722; background: #f8ebe8; }
   .produit-non .produit-image { opacity: .3; }

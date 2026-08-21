@@ -598,7 +598,7 @@ console.log('');
 }
 
 // ---------------------------------------------------------------------------
-// L'ECRAN DE RESULTAT EST UNE GRILLE DE PRODUITS REELS.
+// L'ECRAN DE RESULTAT EST UNE GRILLE DE MATIERES REELLES.
 //
 // Pivot du 20/08 : l'axe n'est plus la technique, c'est le produit. Personne
 // n'arrive en se demandant s'il peut faire de la tampographie ; on arrive en
@@ -636,6 +636,13 @@ console.log('');
       // §1 du brief du 20/08 : ce que le bandeau du fichier dit d'une image.
       bandeau: bloc.querySelector('.etat-fichier')?.innerText ?? '',
       boutonFichier: bloc.querySelectorAll('.cta-fichier').length,
+      // §7 du brief du 20/08 : la vignette remplace la zone de depot, et une
+      // meme phrase ne se dit pas deux fois sur un ecran.
+      depot: document.getElementById('depot')?.innerText ?? '',
+      vignettes: document.querySelectorAll('#depot .vignette').length,
+      vignetteLocale: (document.querySelector('#depot .vignette')?.getAttribute('src') ?? '')
+        .startsWith('data:image/'),
+      marqueur: (document.body.innerText.match(/à donner à votre marqueur/g) || []).length,
     };
   }, octets.toString('base64'));
   await page.close();
@@ -649,12 +656,23 @@ console.log('');
   console.log('  L\'ECRAN DE RESULTAT EST UNE GRILLE DE PRODUITS REELS');
   console.log('  ' + '-'.repeat(66));
   for (const [libelle, ok] of [
-    ['huit produits reels sont affiches', constat.cartes === 8],
-    ['chacun porte sa silhouette', constat.silhouettes === 8],
+    // Depuis les archetypes du 21/08, la grille n'affiche plus huit
+    // references mais SIX A HUIT matieres, choisies pour le contraste : le
+    // nombre depend du logo, la borne haute non.
+    ['de six a huit matieres sont affichees',
+      constat.cartes >= 6 && constat.cartes <= 8, ],
+    ['chacune porte sa silhouette', constat.silhouettes === constat.cartes],
     ['chacun porte une phrase qui dit quelque chose', constat.phrasesVides === 0],
     ['les verdicts ne sont pas tous les memes', constat.verdicts.length > 1],
-    ['la page dit sur quels objets le logo passe',
-      /Sur quels objets votre logo passe/i.test(constat.texte)],
+    ['la page dit sur quelles matieres le logo passe',
+      /Sur quelles matières votre logo passe/i.test(constat.texte)],
+    // §2 du brief : la matiere est le discriminant, et la page doit le dire,
+    // sinon une carte redevient une reference de catalogue.
+    ['elle nomme des matieres, pas des references',
+      /(en coton|en acier inoxydable|en verre|en carton|en aluminium|en polyester)/i
+        .test(constat.texte)],
+    ['et elle dit qu\'elle agrege, pas qu\'elle decrit un modele',
+      /médiane/i.test(constat.texte) && /peut différer/i.test(constat.texte)],
     ['elle nomme un emplacement et une technique en clair',
       /en (sérigraphie|tampographie|impression numérique|broderie|transfert|sublimation|gravure)/i.test(constat.texte)],
     ['elle donne une taille de marquage en millimetres',
@@ -686,6 +704,15 @@ console.log('');
     // au visiteur sous forme d'action.
     ['la vectorisation est une action, pas une annonce',
       !/nous l'avons déjà vectorisée/i.test(constat.bandeau) && constat.boutonFichier === 1],
+    // §7.1 : une fois l'analyse faite, la zone de depot ne reclame plus une
+    // action deja accomplie, elle montre le logo analyse.
+    ['la vignette du logo remplace la zone de depot',
+      constat.vignettes === 1 && !/Déposez votre logo ici/.test(constat.depot)],
+    ['elle reste locale : rien ne part sur le reseau', constat.vignetteLocale],
+    ['et le bloc dit toujours comment en essayer un autre',
+      /essayer un autre logo/i.test(constat.depot)],
+    // §7.4 : « à donner à votre marqueur » se disait deux fois sur l'ecran.
+    ['une meme phrase ne se dit pas deux fois', constat.marqueur <= 1,],
     // Charte : un seul appel a l'action par ecran, et c'est celui qui rapporte.
     ['un seul appel a l\'action, celui de la vectorisation', constat.appels <= 1],
   ]) {

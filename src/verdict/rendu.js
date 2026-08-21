@@ -83,10 +83,10 @@ function rendreEtatFichier(fichier) {
  * mesures dont la grille a besoin. Ses tailles par technique dorment jusqu'aux
  * arbitrages P0, elles ne sont plus rendues.
  */
-export function rendreVerdict(verdict, produitsJuges = [], fichier = null) {
+export function rendreVerdict(verdict, produitsJuges = [], fichier = null, contraste = null) {
   // Le fichier vectoriel est-il deja fabrique et pose en bas de page ? Cela
   // change ce qu'on demande au visiteur, donc ce que la grille lui dit.
   const vectorielPret = fichier?.origine === 'vectoriel' || fichier?.vectorise === true;
   return `${rendreEtatFichier(fichier)}
-${rendreGrille(produitsJuges, { vectorielPret })}`;
+${rendreGrille(produitsJuges, { vectorielPret, contraste })}`;
 }

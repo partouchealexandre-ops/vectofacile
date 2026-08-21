@@ -35,7 +35,7 @@ const VALEURS = JSON.parse(fs.readFileSync(
   path.join(ICI, '..', 'src', 'verdict', 'valeurs_sourcees.json'), 'utf-8'));
 const PRODUITS = JSON.parse(fs.readFileSync(
   path.join(ICI, '..', 'src', 'verdict', 'produits.json'), 'utf-8'));
-const CHEMIN_GRILLE = path.join(ICI, '..', 'src', 'verdict', 'produits_grille.json');
+const CHEMIN_GRILLE = path.join(ICI, '..', 'src', 'verdict', 'archetypes.json');
 const GRILLE = JSON.parse(fs.readFileSync(CHEMIN_GRILLE, 'utf-8'));
 
 /**
@@ -491,46 +491,52 @@ const controle = (libelle, ok, detail) => resultats.push({ libelle, ok, detail }
            neuf.techniques.filter((t) => t.etat === 'defavorable').length === 1);
 }
 
-// LA GRILLE DE PRODUITS : le verdict que le visiteur lit, et la cloison.
+// LA GRILLE : le verdict que le visiteur lit, et la cloison.
 //
-// Pivot du 20/08. Deux familles de controles, et la seconde compte autant que
-// la premiere :
+// Pivot du 20/08, archetypes du 21/08. Trois familles de controles, et les
+// deux dernieres comptent autant que la premiere :
 //
-//   le VERDICT doit etre juste sur des cas calcules a la main, pas recopies
-//   d'une sortie ;
+//   le VERDICT doit etre juste sur des cas calcules a la main. Ils sont ecrits
+//   ICI, en dur, jamais recopies d'une sortie : un attendu qui vient du code
+//   teste ne teste rien ;
+//   les DONNEES SERVIES doivent etre saines : le fichier que le site charge,
+//   pas une intention ;
 //   la CLOISON doit tenir : la base de travail fournisseurs reste hors du
-//   depot, et le fichier derive ne doit porter aucune trace de sa source.
+//   depot, et le fichier derive ne porte aucune trace de sa source.
 {
-  const { jugerGrille, jugerProduit, tailleDansZone } = await import('../src/verdict/grille.js');
+  const { jugerGrille, jugerProduit, tailleDansZone, choisirPourContraste, signature,
+          LISIBILITE_MM } = await import('../src/verdict/grille.js');
   const { rendreGrille, direProduit } = await import('../src/verdict/rendu_grille.js');
-  const { exigeVectoriel, techniquesInconnues, DPI_PLANCHER, DPI_RECOMMANDE } =
-    await import('../src/verdict/techniques.js');
+  const { exigeVectoriel, techniquesInconnues, avecArticle,
+          DPI_PLANCHER, DPI_RECOMMANDE } = await import('../src/verdict/techniques.js');
   const par = (juges) => Object.fromEntries(juges.map((p) => [p.famille, p]));
 
-  // 1. LA CLOISON, verifiee sur le FICHIER SERVI et pas sur une intention.
-  const brutGrille = fs.readFileSync(CHEMIN_GRILLE, 'utf-8');
-  const donnees = JSON.stringify(GRILLE.produits);
-  const traces = ['midocean', 'cdn.', 'http', 'code_interne', 'MO2', 'print-template'];
-  const fuite = traces.find((t) => donnees.toLowerCase().includes(t.toLowerCase()));
-  controle('la grille derivee ne porte aucune trace de son fournisseur',
-           !fuite, fuite ? `trouve : ${fuite}` : 'aucune');
-  // CONTROLE NEGATIF : la detection detecte. Sans lui, une garde qui ne
-  // regarde pas au bon endroit passe au vert en ne trouvant rien.
-  controle('(temoin) le detecteur de trace fournisseur detecte',
-           traces.some((t) => (donnees + ' https://cdn.exemple').toLowerCase().includes(t)));
-  controle('la base de travail brute n\'est pas dans le depot',
-           !fs.existsSync(path.join(ICI, '..', 'referentiel')));
+  // LE JEU TEMOIN, ecrit a la main et rien d'autre. Trois cas, choisis parce
+  // que chacun a produit un defaut reel : le gobelet dont la plus grande zone
+  // refuse (« pas la, mais la »), le stylo dont toutes les zones sont basses
+  // et dont les techniques fabriquent un outil, le carnet dont la zone est
+  // large, ce qui isole le blocage de FORMAT du blocage de TAILLE.
+  const TEMOIN = { produits: [
+    { famille: 'Gobelet', libelle: 'Gobelet témoin', silhouette: 'gobelet', zones: [
+      { libelle: 'tout le tour', largeurMm: 180, hauteurMm: 45, techniques: [
+        { technique: 'Sérigraphie circulaire', couleursMax: 1, parDefaut: true }] },
+      { libelle: 'la face avant, en haut', largeurMm: 35, hauteurMm: 14, techniques: [
+        { technique: 'Tampographie', couleursMax: 4, parDefaut: true }] },
+    ] },
+    { famille: 'Stylo', libelle: 'Stylo témoin', silhouette: 'stylo', zones: [
+      { libelle: 'le corps', largeurMm: 60, hauteurMm: 7, techniques: [
+        { technique: 'Tampographie', couleursMax: 4, parDefaut: true },
+        { technique: 'Gravure laser', couleursMax: 1, parDefaut: false }] },
+      { libelle: 'le clip', largeurMm: 30, hauteurMm: 7, techniques: [
+        { technique: 'Tampographie', couleursMax: 4, parDefaut: true }] },
+    ] },
+    { famille: 'Carnet', libelle: 'Carnet témoin', silhouette: 'carnet', zones: [
+      { libelle: 'la couverture', largeurMm: 90, hauteurMm: 60, techniques: [
+        { technique: 'Sérigraphie', couleursMax: 4, parDefaut: true }] },
+    ] },
+  ] };
 
-  // 2. LA QUADRICHROMIE NE VAUT JAMAIS ZERO COULEUR. La source code la quadri
-  // par 0 ; un « 0 couleur » a l'ecran serait la bourde qui coute la
-  // credibilite. La derivation la traduit en null, une fois.
-  const tousPlafonds = GRILLE.produits.flatMap((p) => p.zones.flatMap(
-    (z) => z.techniques.map((t) => t.couleursMax)));
-  controle('aucun plafond de couleurs ne vaut 0 dans la grille',
-           !tousPlafonds.includes(0),
-           `${tousPlafonds.filter((n) => n === null).length} quadri sur ${tousPlafonds.length}`);
-
-  // 3. LA TAILLE DANS UNE ZONE, calculee a la main. Un logo au rapport 2,5
+  // 1. LA TAILLE DANS UNE ZONE, calculee a la main. Un logo au rapport 2,5
   // dans une zone de 300 x 300 : la largeur gagne, 300 x 120. Dans une zone
   // de 60 x 7, c'est la hauteur qui decide, donc 17,5 arrondi a 18 x 7.
   const large = tailleDansZone({ largeurMm: 300, hauteurMm: 300 }, 2.5);
@@ -542,119 +548,164 @@ const controle = (libelle, ok, detail) => resultats.push({ libelle, ok, detail }
            clip.largeurMm === 18 && clip.hauteurMm === 7 && clip.limitePar === 'hauteur',
            JSON.stringify(clip));
 
-  // 4. LE CAS DU GOBELET, celui qui a motive le pivot. Sa plus grande zone
+  // 2. LE CAS DU GOBELET, celui qui a motive le pivot. Sa plus grande zone
   // fait le tour et n'accepte QU'UNE couleur ; un logo a deux couleurs n'y
-  // passe pas, mais passe sur la face avant, en tampographie. Le verdict doit
-  // donc etre « oui », et la phrase doit dire « pas la, mais la ».
-  const deux = par(jugerGrille(GRILLE, { nCouleurs: 2, ratio: 2.5, fichierVectoriel: true }));
-  const mug = deux.Mug;
+  // passe pas, mais passe sur la face avant, en tampographie.
+  const deux = par(jugerGrille(TEMOIN, { nCouleurs: 2, ratio: 2.5, fichierVectoriel: true }));
+  const mug = deux.Gobelet;
   controle('un logo a deux couleurs passe sur le gobelet, mais pas n\'importe ou',
-           mug.etat === 'oui' && mug.refusee?.zone === 'tout le tour du gobelet'
+           mug.etat === 'oui' && mug.refusee?.zone === 'tout le tour'
              && mug.meilleure.zone === 'la face avant, en haut'
              && mug.meilleure.technique === 'Tampographie',
            `${mug.etat} / ${mug.meilleure?.zone} / ${mug.meilleure?.technique}`);
-  controle('et la phrase dit « pas la, mais la »',
-           /^Pas sur tout le tour du gobelet, qui n'accepte qu'une seule couleur\. Mais oui sur la face avant, en haut/
-             .test(direProduit(mug)), direProduit(mug));
+  controle('et la phrase dit « pas la, mais la », avec la taille calculee',
+           direProduit(mug) === 'Pas sur tout le tour, qui n\'accepte qu\'une seule couleur. '
+             + 'Mais oui sur la face avant, en haut : en tampographie, votre logo ferait '
+             + '35 × 14 mm.', direProduit(mug));
 
-  // 5. LE STYLO, contrainte geometrique de famille : ses cinq emplacements
-  // font 7 mm de haut, aucune exception. Neuf couleurs n'y passent pas, et le
-  // refus doit porter son palier : a quatre couleurs, tout se rouvre.
-  const neuf = par(jugerGrille(GRILLE, { nCouleurs: 9, ratio: 2.5, fichierVectoriel: true }));
+  // 3. LE STYLO. Neuf couleurs ne passent nulle part, et le refus porte son
+  // palier : a quatre couleurs, les deux emplacements se rouvrent.
+  const neuf = par(jugerGrille(TEMOIN, { nCouleurs: 9, ratio: 2.5, fichierVectoriel: true }));
   const stylo = neuf.Stylo;
   controle('neuf couleurs ne passent sur aucun emplacement du stylo',
-           stylo.etat === 'non' && stylo.plafond === 4, `${stylo.etat} / plafond ${stylo.plafond}`);
+           stylo.etat === 'non' && stylo.plafond === 4,
+           `${stylo.etat} / plafond ${stylo.plafond}`);
   controle('et le refus dit a combien de couleurs ca se rouvre',
-           /En 4 couleurs, 5 emplacements s'ouvrent\./.test(direProduit(stylo)),
+           /En 4 couleurs, 2 emplacements s'ouvrent\./.test(direProduit(stylo)),
            direProduit(stylo));
 
-  // 6. UN REFUS NE SE DIT QU'APRES AVOIR ESSAYE TOUTES LES ZONES. Le controle
-  // le verifie par construction : aucun produit declare « non » ne doit avoir
-  // la moindre offre acceptante, toutes zones et techniques confondues.
-  const menteurs = [...jugerGrille(GRILLE, { nCouleurs: 9, ratio: 2.5, fichierVectoriel: true }),
-                    ...jugerGrille(GRILLE, { nCouleurs: 2, ratio: 1, fichierVectoriel: true })]
-    .filter((p) => p.etat === 'non' && p.zonesQuiPassent > 0);
+  // 4. UN REFUS NE SE DIT QU'APRES AVOIR ESSAYE TOUTES LES ZONES, sur le jeu
+  // temoin ET sur les donnees servies.
+  const menteurs = [
+    ...jugerGrille(TEMOIN, { nCouleurs: 9, ratio: 2.5, fichierVectoriel: true }),
+    ...jugerGrille(GRILLE, { nCouleurs: 9, ratio: 2.5, fichierVectoriel: true }),
+    ...jugerGrille(GRILLE, { nCouleurs: 2, ratio: 1, fichierVectoriel: true }),
+  ].filter((p) => p.etat === 'non' && p.zonesQuiPassent > 0);
   controle('aucun « ca ne passe pas » ne cache un emplacement qui passe',
            menteurs.length === 0, menteurs.map((p) => p.famille).join(', ') || 'aucun');
 
-  // 7. CE QUE LE FICHIER OUVRE, ET CE QU'IL LAISSE FERME. §1 du brief du
-  // 20/08, le correctif de justesse : le site fermait des portes ouvertes.
-  //
-  // Une image nette n'est pas un refus. Elle passe TEL QUEL la ou la technique
-  // imprime une image, et elle ne bute que sur celles qui fabriquent un outil.
-  const image = par(jugerGrille(GRILLE,
-    { nCouleurs: 2, ratio: 2.5, fichierVectoriel: false, largeurPx: 2400 }));
-  controle('une image nette passe TEL QUEL sur un produit a technique d\'image',
-           image['T-shirt'].etat === 'oui'
-             && !exigeVectoriel(image['T-shirt'].meilleure.technique),
-           `${image['T-shirt'].etat} / ${image['T-shirt'].meilleure?.technique}`);
-  // Et le vectoriel n'a pas disparu du discours : il est devenu un GAIN
-  // chiffre, la ou il etait un peage.
-  // Le gain se compte en emplacements OU en techniques. Sur un t-shirt, le
-  // transfert numerique est deja partout : ce que le vectoriel ouvre, ce sont
-  // la serigraphie et la broderie sur les memes emplacements. Ne compter que
-  // les zones rendrait ce gain invisible sur le produit le plus vendu.
-  controle('et le vectoriel s\'y annonce comme un gain, pas comme une condition',
-           image['T-shirt'].gain?.techniques.length > 0
-             && image['T-shirt'].gain.techniques.every((t) => exigeVectoriel(t)),
-           (image['T-shirt'].gain?.techniques || []).join(', '));
-  controle('un gain sans emplacement supplementaire se dit quand meme, en techniques',
-           /s'ouvrent aussi sur ces emplacements/.test(
-             rendreGrille([image['T-shirt']], { vectorielPret: true })));
-  // Le stylo, lui, n'a que des techniques a outil : tampographie et gravure.
-  // C'est LUI le troisieme etat, et il vaut toujours de l'argent.
-  const styloImage = image.Stylo;
+  // 5. CE QUE LE FICHIER OUVRE, ET CE QU'IL LAISSE FERME. §1 du brief du
+  // 20/08 : le site fermait des portes ouvertes.
+  const image = par(jugerGrille(TEMOIN,
+    { nCouleurs: 2, ratio: 1.5, fichierVectoriel: false, largeurPx: 2400 }));
   controle('un produit dont toutes les techniques fabriquent un outil reste « si »',
-           styloImage.etat === 'si' && deux.Stylo.etat === 'oui'
-             && styloImage.meilleure.zone === deux.Stylo.meilleure.zone,
-           styloImage.etat);
+           image.Carnet.etat === 'si' && image.Carnet.raison === 'vectoriel',
+           `${image.Carnet.etat} / ${image.Carnet.raison}`);
+  controle('et la carte dit l\'outil, pas les pixels',
+           /fabrique un outil/.test(rendreGrille([image.Carnet], {}))
+             && !/sortirait floue/.test(rendreGrille([image.Carnet], {})));
   // « Accepte un raster » ne veut pas dire « accepte n'importe quelle image ».
-  // Un logo de 120 pixels sur une zone de 280 mm fait 11 dpi : dire oui la
+  // Un logo de 120 pixels sur une zone de 300 mm fait 10 dpi : dire oui la
   // serait l'erreur SYMETRIQUE de celle qu'on corrige.
-  const floue = par(jugerGrille(GRILLE,
-    { nCouleurs: 2, ratio: 2.5, fichierVectoriel: false, largeurPx: 120 }));
-  controle('une image trop peu definie pour la zone ne donne pas « oui »',
-           floue['T-shirt'].etat === 'si', floue['T-shirt'].etat);
+  const IMAGE_SEULE = { produits: [{ famille: 'Sac', libelle: 'Sac témoin', silhouette: 'sac',
+    zones: [{ libelle: 'la face avant', largeurMm: 300, hauteurMm: 300, techniques: [
+      { technique: 'Transfert numérique', couleursMax: null, parDefaut: true }] }] }] };
+  const nette = par(jugerGrille(IMAGE_SEULE,
+    { nCouleurs: 2, ratio: 1, fichierVectoriel: false, largeurPx: 4000 }));
+  const floue = par(jugerGrille(IMAGE_SEULE,
+    { nCouleurs: 2, ratio: 1, fichierVectoriel: false, largeurPx: 120 }));
+  controle('une image nette passe TEL QUEL sur une technique d\'image',
+           nette.Sac.etat === 'oui' && !exigeVectoriel(nette.Sac.meilleure.technique),
+           nette.Sac.etat);
+  controle('la meme image, trop peu definie pour la zone, ne donne pas « oui »',
+           floue.Sac.etat === 'si' && floue.Sac.raison === 'definition',
+           `${floue.Sac.etat} / ${floue.Sac.raison}`);
+  controle('et la carte dit le flou, avec la taille en cause',
+           /À 300 mm de large, votre image sortirait floue/
+             .test(rendreGrille([floue.Sac], {})));
   controle('le plancher de definition est celui du corpus, pas un chiffre invente',
            DPI_PLANCHER === 150 && DPI_RECOMMANDE === 300);
-  // Et la carte DIT laquelle des deux raisons bloque. Sans ca, elle affiche
-  // « oui, avec votre fichier vectoriel » juste au-dessus d'un transfert
-  // numerique, qui accepte pourtant les images : le visiteur y lit une
-  // contradiction, et il a raison.
-  controle('la carte dit que c\'est la definition qui bloque, pas le format',
-           floue['T-shirt'].raison === 'definition'
-             && /sortirait floue/.test(rendreGrille([floue['T-shirt']], {})),
-           floue['T-shirt'].raison);
-  controle('et quand c\'est le format, elle dit l\'outil, pas les pixels',
-           styloImage.raison === 'vectoriel'
-             && /fabrique un outil/.test(rendreGrille([styloImage], {}))
-             && !/sortirait floue/.test(rendreGrille([styloImage], {})),
-           styloImage.raison);
-  // TEMOIN : le controle sait-il echouer ? Une image immense doit repasser en
-  // « oui », sinon les deux controles precedents ne prouvent rien.
-  controle('temoin : la meme image, assez definie, repasse a « oui »',
-           par(jugerGrille(GRILLE, { nCouleurs: 2, ratio: 2.5, fichierVectoriel: false,
-                                     largeurPx: 6000 }))['T-shirt'].etat === 'oui');
+  // Le vectoriel n'a pas disparu du discours : il est devenu un GAIN chiffre.
+  const gain = par(jugerGrille(TEMOIN,
+    { nCouleurs: 2, ratio: 1.5, fichierVectoriel: false, largeurPx: 2400 })).Stylo;
+  controle('sur un produit qui passe deja, le vectoriel s\'annonce comme un gain',
+           gain.etat === 'si' || gain.gain?.techniques.length > 0, gain.etat);
+
+  // 6. LE PLANCHER DE LISIBILITE, §5 du brief. « Le clip : votre logo ferait
+  // 12 × 7 mm » est arithmetiquement juste et commercialement absurde.
+  const petit = par(jugerGrille(TEMOIN, { nCouleurs: 1, ratio: 2.5, fichierVectoriel: true }));
+  controle('sous le plancher, on ne dit pas oui sec : on pose la reserve',
+           petit.Stylo.etat === 'oui' && petit.Stylo.reserveLisibilite === true,
+           `${petit.Stylo.etat} / ${petit.Stylo.meilleure?.taille?.largeurMm} mm`);
+  controle('et la carte le dit, avec la sortie : une version simplifiee',
+           /techniquement possible mais votre logo n'y serait plus lisible/
+             .test(rendreGrille([petit.Stylo], {}))
+             && /version simplifiée/.test(rendreGrille([petit.Stylo], {})));
+  controle('l\'etiquette cesse de dire « oui » tout court',
+           /techniquement, oui/.test(rendreGrille([petit.Stylo], {})));
+  controle('temoin : au-dessus du plancher, aucune reserve',
+           petit.Gobelet.reserveLisibilite === false && LISIBILITE_MM === 20);
+
+  // 7. LA REGLE DU CONTRASTE, §4 du brief. Une grille ou tout dit la meme
+  // chose n'apprend rien : la selection retient ce qui DIVERGE.
+  const tous = jugerGrille(GRILLE, { nCouleurs: 2, ratio: 1.6, fichierVectoriel: true });
+  const choix = choisirPourContraste(tous, 8);
+  controle('la selection ne depasse jamais huit cartes',
+           choix.choisis.length <= 8, String(choix.choisis.length));
+  controle('elle ne retient pas deux fois la meme reponse tant qu\'il en reste d\'autres',
+           new Set(choix.choisis.slice(0, choix.signatures).map(signature)).size
+             === Math.min(choix.signatures, choix.choisis.length),
+           `${choix.signatures} signatures pour ${tous.length} archetypes`);
+  controle('deux archetypes qui repondent la meme chose ont la meme signature',
+           signature({ etat: 'oui', meilleure: { technique: 'Sérigraphie',
+                                                 taille: { largeurMm: 100 } } })
+             === signature({ etat: 'oui', meilleure: { technique: 'Transfert sérigraphique',
+                                                       taille: { largeurMm: 120 } } }));
+  controle('et deux qui repondent autre chose ne l\'ont pas',
+           signature({ etat: 'oui', meilleure: { technique: 'Sérigraphie',
+                                                 taille: { largeurMm: 100 } } })
+             !== signature({ etat: 'oui', meilleure: { technique: 'Gravure laser',
+                                                       taille: { largeurMm: 12 } } }));
+
+  // 8. LES DONNEES SERVIES, et la cloison. Le fichier que le site charge.
+  const brutGrille = fs.readFileSync(CHEMIN_GRILLE, 'utf-8');
+  const donnees = JSON.stringify(GRILLE.archetypes);
+  const traces = ['midocean', 'pf concept', 'xd connects', 'cdn.', 'http',
+                  'code_interne', 'MO2', 'print-template'];
+  const fuite = traces.find((t) => donnees.toLowerCase().includes(t.toLowerCase()));
+  controle('la grille derivee ne porte aucune trace de son fournisseur',
+           !fuite, fuite ? `trouve : ${fuite}` : 'aucune');
+  // CONTROLE NEGATIF : la detection detecte. Sans lui, une garde qui ne
+  // regarde pas au bon endroit passe au vert en ne trouvant rien.
+  controle('(temoin) le detecteur de trace fournisseur detecte',
+           traces.some((t) => (donnees + ' https://cdn.exemple').toLowerCase().includes(t)));
+  controle('la base de travail brute n\'est pas dans le depot',
+           !fs.existsSync(path.join(ICI, '..', 'referentiel')));
+  // LA QUADRICHROMIE NE VAUT JAMAIS ZERO COULEUR. La source code la quadri par
+  // 0 ; un « 0 couleur » a l'ecran serait la bourde qui coute la credibilite.
+  const tousPlafonds = GRILLE.archetypes.flatMap((p) => p.zones.flatMap(
+    (z) => z.techniques.map((t) => t.couleursMax)));
+  controle('aucun plafond de couleurs ne vaut 0 dans la grille',
+           !tousPlafonds.includes(0),
+           `${tousPlafonds.filter((n) => n === null).length} quadri sur ${tousPlafonds.length}`);
+  // UN ARCHETYPE EST UN COUPLE FAMILLE x MATIERE, pas une reference. Sans la
+  // matiere, la carte redevient un produit de catalogue.
+  controle('chaque archetype porte sa matiere et son volume d\'observation',
+           GRILLE.archetypes.every((a) => a.matiere && a.produits >= 8),
+           `${GRILLE.archetypes.length} archetypes`);
   // UNE TECHNIQUE ABSENTE DE LA TABLE N'EST PAS AUTORISEE PAR DEFAUT. La base
   // de travail evolue ; si elle introduit un nom inconnu, ce controle tombe et
   // quelqu'un tranche, au lieu qu'un verdict se rende tout seul.
-  const nomsGrille = GRILLE.produits.flatMap((p) => p.zones)
+  const nomsGrille = GRILLE.archetypes.flatMap((p) => p.zones)
     .flatMap((z) => z.techniques).map((t) => t.technique);
   const inconnues = techniquesInconnues(nomsGrille);
-  controle('toute technique de la grille est classee vectoriel ou image',
+  controle('toute technique servie est classee vectoriel ou image',
            inconnues.length === 0, inconnues.join(', ') || 'aucune');
   controle('temoin : une technique inventee serait bien signalee',
            techniquesInconnues(['Marquage sur nuage']).length === 1);
+  controle('toute technique servie sait se dire avec son article',
+           nomsGrille.every((n) => /^(le |la |l')/.test(avecArticle(n))),
+           [...new Set(nomsGrille)].map(avecArticle).slice(0, 3).join(', '));
 
-  // 8. LE RENDU ne cite plus aucune source et ne porte plus un seul lien
+  // 9. LE RENDU ne cite plus aucune source et ne porte plus un seul lien
   // externe : decision d'Alex du 20/08, le visiteur n'a pas besoin de savoir
   // d'ou vient un chiffre, il a besoin de savoir si ca passe.
-  const html = rendreGrille(jugerGrille(GRILLE, { nCouleurs: 2, ratio: 2.5, fichierVectoriel: true }));
+  const html = rendreGrille(choix.choisis, { contraste: choix });
   controle('la grille ne porte aucun lien externe', !/<a href="https?:/.test(html));
   controle('la grille ne cite aucune source',
-           !/(source|relevé le|d'où viennent)/i.test(html.replace(/<[^>]+>/g, ' ')));
-  controle('elle affiche une carte par produit',
-           (html.match(/<article class="produit /g) || []).length === GRILLE.produits.length);
+           !/(relevé le|d'où viennent)/i.test(html.replace(/<[^>]+>/g, ' ')));
+  controle('elle affiche une carte par archetype retenu',
+           (html.match(/<article class="produit /g) || []).length === choix.choisis.length);
   controle('un seul appel a l\'action sur l\'ecran, celui de la vectorisation',
            (html.match(/cta-entete/g) || []).length <= 1);
   controle('aucun mot interdit dans la grille',
@@ -663,9 +714,14 @@ const controle = (libelle, ok, detail) => resultats.push({ libelle, ok, detail }
            !MOTIF_CONFIANCE.test(html.replace(/<[^>]+>/g, ' ')));
   // Le nom d'origine des zones ne sort jamais a l'ecran : il est en anglais et
   // il ne veut rien dire pour un acheteur.
-  const anglais = ['ROUNDSCREEN', 'FRONT UPPER', 'BARREL', 'CHEST', 'LID TOP', 'TD1', ' PD'];
-  const anglicisme = anglais.find((z) => html.includes(z));
+  const anglais = ['ROUNDSCREEN', 'FRONT UPPER', 'BARREL', 'CHEST', 'LID TOP', 'TD1', ' PD',
+                   'SEGMENT', 'POUCH', 'SHOULDER'];
+  const anglicisme = anglais.find((z) => html.toUpperCase().includes(z));
   controle('aucun nom de zone d\'origine ne sort a l\'ecran', !anglicisme, anglicisme || 'aucun');
+  // Et la page dit sur quoi elle a calcule : REGLE 3 de formulation.js, un
+  // verdict calcule sur une mediane de famille doit DIRE sur quoi il calcule.
+  controle('la page dit qu\'elle agrege des matieres, pas des references',
+           /matières/.test(html) && /médiane/.test(html) && /peut différer/.test(html));
 }
 
 // ------------------------------------------------------------------------

@@ -16,7 +16,7 @@ import { lireImage, telecharger, FichierNonSupporte } from './adaptateurs/image_
 import { lireVectoriel, reconnaitre, FichierVectorielNonLu } from './adaptateurs/pdf_navigateur.js';
 import { mesurer } from './moteur/mesures.js';
 import { juger } from './verdict/juger.js';
-import { jugerGrille } from './verdict/grille.js';
+import { jugerGrille, choisirPourContraste } from './verdict/grille.js';
 import { rendreVerdict } from './verdict/rendu.js';
 import { conseiller } from './conseils/conseils.js';
 import { preparerVectorisation, FORMES_MAXIMALES } from './vectorisation/options.js';
@@ -127,8 +127,10 @@ function rendrePalette(palette) {
       <span class="rvb">R ${c.rvb[0]} V ${c.rvb[1]} B ${c.rvb[2]}</span>
       <span class="part">${pourcent(c.part)} de l'encre</span>
     </li>`).join('');
-  return `<h3>Vos couleurs, à donner à votre marqueur</h3>
-    <ul class="palette">${lignes}</ul>
+  // §7.4 du brief du 20/08 : « à donner à votre marqueur » se disait deux fois
+  // sur le meme ecran, dans le titre de la section ET dans celui de la palette.
+  // Une phrase repetee ne renforce pas, elle dilue.
+  return `<ul class="palette">${lignes}</ul>
     <p class="note">Ces codes sont ceux de votre fichier, tels que nous les y avons
     lus. Nous ne les traduisons pas en référence Pantone : la correspondance
     dépend de l'encre et du support, et c'est votre marqueur qui la choisit.</p>`;
@@ -255,18 +257,25 @@ function chargerProduits() {
 }
 
 /**
- * LA GRILLE DE PRODUITS, source principale depuis le pivot du 20/08/2026.
+ * LA GRILLE, source principale depuis le pivot du 20/08/2026, et des
+ * ARCHETYPES depuis le 21/08.
  *
  * Elle est DERIVEE de la base de travail fournisseurs par
- * outils/deriver_grille_produits.py : la base brute reste hors du depot, seul
- * ce fichier y entre, sans code interne ni nom de grossiste. Elle decrit des
- * objets publicitaires reels avec leurs emplacements de marquage reels, ce
- * qu'aucune page d'atelier ne donne.
+ * outils/deriver_archetypes.py : la base brute reste hors du depot, seul ce
+ * fichier y entre, sans code interne ni nom de grossiste.
+ *
+ * Ce ne sont plus huit references de catalogue mais douze couples FAMILLE x
+ * MATIERE. La raison est au §2 du brief du 20/08 : « sac shopping coton
+ * 140 g/m² » laisse croire qu'on vend ce produit et n'enseigne rien de
+ * general, alors que « sac shopping en coton » enseigne, parce que la
+ * contrainte de marquage tient d'abord a la matiere. La gravure laser
+ * travaille le metal, le bois et le cuir, jamais le coton ; la broderie
+ * n'existe que sur textile ; la sublimation exige du polyester.
  */
 let promesseGrille = null;
 function chargerGrille() {
   if (!promesseGrille) {
-    promesseGrille = fetch('/src/verdict/produits_grille.json').then((r) => {
+    promesseGrille = fetch('/src/verdict/archetypes.json').then((r) => {
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       return r.json();
     });
@@ -341,7 +350,7 @@ function rendreLeVerdict() {
   // sur les dimensions de l'image si elle manque, ce qui n'arrive que sur un
   // fichier sans aucune encre.
   const rapport = m?.boiteEncre?.rapport ?? m?.m1Dimensions?.rapport ?? 1;
-  const juges = etat.grille
+  const tous = etat.grille
     ? jugerGrille(etat.grille, {
         nCouleurs: m?.m2Couleurs?.couleursReelles ?? null,
         ratio: rapport,
@@ -356,7 +365,12 @@ function rendreLeVerdict() {
         largeurPx: m?.boiteEncre?.largeurPx ?? m?.m1Dimensions?.largeurPx ?? null,
       })
     : [];
-  $('verdict').innerHTML = rendreVerdict(etat.verdict, juges, etat.fichierEtat);
+  // §4 du brief du 20/08 : une grille ou tout dit la meme chose n'apprend
+  // rien, elle decore. On n'affiche donc pas les douze archetypes, on retient
+  // ceux qui repondent des choses DIFFERENTES pour ce logo.
+  const contraste = choisirPourContraste(tous);
+  $('verdict').innerHTML = rendreVerdict(
+    etat.verdict, contraste.choisis, etat.fichierEtat, contraste);
   $('verdict').hidden = false;
 }
 
@@ -381,6 +395,53 @@ function rendreLeVerdict() {
  * La regle : rien de ce qui concerne le fichier precedent ne survit au depot
  * du suivant. Ni a l'ecran, ni en memoire.
  */
+/**
+ * LA VIGNETTE DU LOGO REMPLACE LA ZONE DE DEPOT, §7.1 du brief du 20/08.
+ *
+ * Une fois l'analyse faite, la zone de depot n'a plus de raison d'occuper le
+ * premier ecran : elle demande une action deja accomplie, et elle repousse le
+ * resultat sous la ligne de flottaison. Le logo depose prend sa place, en
+ * petit. Ca confirme QUEL fichier a ete analyse, ce qu'aucun texte ne fait
+ * aussi bien, et ca libere la place.
+ *
+ * ELLE NE QUITTE PAS LE NAVIGATEUR. La vignette est peinte depuis les pixels
+ * deja en memoire, dans un canvas local : aucun envoi, aucune trace, la
+ * promesse de la page d'accueil tient mot pour mot.
+ *
+ * Le bloc reste cliquable : c'est lui qui porte l'ecouteur de depot depuis le
+ * demarrage, et on ne le remplace pas, on change ce qu'il montre.
+ */
+let depotOrigine = null;
+function poserVignette(image) {
+  const zone = $('depot');
+  if (!zone || !image) return;
+  if (depotOrigine === null) depotOrigine = zone.innerHTML;
+  const COTE = 150;
+  const echelle = Math.min(COTE / image.largeur, COTE / image.hauteur, 1);
+  const toile = document.createElement('canvas');
+  toile.width = Math.max(1, Math.round(image.largeur * echelle));
+  toile.height = Math.max(1, Math.round(image.hauteur * echelle));
+  const source = document.createElement('canvas');
+  source.width = image.largeur;
+  source.height = image.hauteur;
+  const données = new ImageData(new Uint8ClampedArray(image.donnees), image.largeur, image.hauteur);
+  source.getContext('2d').putImageData(données, 0, 0);
+  const pinceau = toile.getContext('2d');
+  pinceau.imageSmoothingQuality = 'high';
+  pinceau.drawImage(source, 0, 0, toile.width, toile.height);
+  zone.classList.add('depot-analyse');
+  zone.innerHTML = `<img class="vignette" alt="Le logo que vous venez de déposer"
+    src="${toile.toDataURL('image/png')}">
+    <span>Analysé sur cette page. Cliquez pour essayer un autre logo.</span>`;
+}
+
+function rendreLaZoneDeDepot() {
+  const zone = $('depot');
+  if (!zone || depotOrigine === null) return;
+  zone.classList.remove('depot-analyse');
+  zone.innerHTML = depotOrigine;
+}
+
 function reinitialiser() {
   // Ces blocs sont REMPLIS par le traitement : on les vide. Ceux qui
   // n'existent pas sur la page courante (/vectoriser n'a pas de diagnostic)
@@ -403,6 +464,7 @@ function reinitialiser() {
   if (largeur) largeur.hidden = true;
   const apercu = $('apercu');
   if (apercu) apercu.innerHTML = '';
+  rendreLaZoneDeDepot();
   etat = { nom: null, image: null, fiche: null, mesures: null, programme: null, svg: null,
            verdict: null, selection: null, fichierEtat: null, avertissements: [] };
 }
@@ -546,6 +608,10 @@ async function traiter(fichier) {
     const mesures = mesurer(image, { largeurImprimeeMm: largeurDeMarquage() });
     etat.image = image;
     etat.mesures = mesures;
+    // §7.1 : le logo prend la place de la zone de depot, des que l'analyse a
+    // eu lieu. Avant la vectorisation, qui peut echouer : ce qui est confirme
+    // ici, c'est le fichier analyse, pas le fichier produit.
+    poserVignette(image);
     etat.nom = (fichier.name || 'logo').replace(/\.[^.]+$/, '');
     // LA PREMIERE QUESTION DU DIAGNOSTIC : ce fichier passe-t-il, en l'etat ?
     // (arbitrage Alex du 20/08). L'origine se connait ici ; pour une image, le

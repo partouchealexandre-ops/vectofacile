@@ -1,0 +1,2332 @@
+{
+ "version": 1,
+ "genere_le": "21/08/2026",
+ "doctrine": [
+  "DERIVE de la base de travail fournisseurs, instantane du 05/08/2026. La base brute reste hors du depot ; ce fichier n'en garde que ce qui sert a l'ecran.",
+  "Aucun code interne, aucune URL de gabarit, aucun nom de grossiste : ces trois choses identifieraient la source commerciale et n'ont rien a faire dans un depot public.",
+  "Un archetype est un couple FAMILLE x MATIERE, pas une reference de catalogue. Le produit est la porte d'entree, la matiere est le discriminant reel, la technique est la consequence.",
+  "Les tailles de zone sont des MEDIANES sur le groupe, pas des moyennes : une reference geante deplacerait une moyenne. Un plafond de couleurs est la valeur DOMINANTE, pas la plus genereuse.",
+  "couleurs_max vaut null pour la quadrichromie, jamais 0 : la source code la quadri par 0, la traduction se fait a la derivation, une fois.",
+  "Les libelles de zone nomment une POSITION, jamais une technique, et les doublons de position fusionnent. Un nom de zone non traduit est ECARTE, jamais approxime.",
+  "Derive de la source A seule : c'est la seule des trois qui declare la technique proposee PAR DEFAUT sur chaque zone, et cette declaration est ce qui evite de recommander la sangle d'un gobelet plutot que sa face avant.",
+  "Etat : AGREGAT IAG, contexte objet. Ces valeurs decrivent ce qu'un grossiste propose reellement ; elles ne sont pas un seuil de marquage general et ne se citent pas comme tel."
+ ],
+ "archetypes": [
+  {
+   "famille": "Textile",
+   "matiere": "coton",
+   "libelle": "Textile en coton",
+   "silhouette": "t-shirt",
+   "produits": 49,
+   "observations": 1071,
+   "zones": [
+    {
+     "libelle": "la poitrine, à gauche",
+     "largeurMm": 100,
+     "hauteurMm": 100,
+     "techniques": [
+      {
+       "technique": "Sérigraphie",
+       "couleursMax": 8,
+       "parDefaut": true,
+       "observations": 46
+      },
+      {
+       "technique": "Transfert numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 46
+      },
+      {
+       "technique": "Transfert sérigraphique",
+       "couleursMax": 8,
+       "parDefaut": false,
+       "observations": 46
+      },
+      {
+       "technique": "Transfert réfléchissant",
+       "couleursMax": 1,
+       "parDefaut": false,
+       "observations": 45
+      },
+      {
+       "technique": "Broderie",
+       "couleursMax": 8,
+       "parDefaut": false,
+       "observations": 45
+      },
+      {
+       "technique": "Sublimation",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 1
+      }
+     ],
+     "observations": 229
+    },
+    {
+     "libelle": "la manche droite",
+     "largeurMm": 100,
+     "hauteurMm": 70,
+     "techniques": [
+      {
+       "technique": "Sérigraphie",
+       "couleursMax": 8,
+       "parDefaut": true,
+       "observations": 45
+      },
+      {
+       "technique": "Broderie",
+       "couleursMax": 8,
+       "parDefaut": false,
+       "observations": 44
+      },
+      {
+       "technique": "Transfert numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 44
+      },
+      {
+       "technique": "Transfert sérigraphique",
+       "couleursMax": 8,
+       "parDefaut": false,
+       "observations": 44
+      },
+      {
+       "technique": "Transfert réfléchissant",
+       "couleursMax": 1,
+       "parDefaut": false,
+       "observations": 44
+      },
+      {
+       "technique": "Sublimation",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 1
+      }
+     ],
+     "observations": 222
+    },
+    {
+     "libelle": "le dos",
+     "largeurMm": 270,
+     "hauteurMm": 270,
+     "techniques": [
+      {
+       "technique": "Sérigraphie",
+       "couleursMax": 8,
+       "parDefaut": true,
+       "observations": 48
+      },
+      {
+       "technique": "Transfert numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 47
+      },
+      {
+       "technique": "Transfert sérigraphique",
+       "couleursMax": 8,
+       "parDefaut": false,
+       "observations": 47
+      },
+      {
+       "technique": "Transfert réfléchissant",
+       "couleursMax": 1,
+       "parDefaut": false,
+       "observations": 47
+      },
+      {
+       "technique": "Broderie",
+       "couleursMax": 8,
+       "parDefaut": false,
+       "observations": 28
+      },
+      {
+       "technique": "Sublimation",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 1
+      }
+     ],
+     "observations": 218
+    },
+    {
+     "libelle": "la face avant",
+     "largeurMm": 270,
+     "hauteurMm": 270,
+     "techniques": [
+      {
+       "technique": "Transfert réfléchissant",
+       "couleursMax": 1,
+       "parDefaut": false,
+       "observations": 44
+      },
+      {
+       "technique": "Sérigraphie",
+       "couleursMax": 8,
+       "parDefaut": true,
+       "observations": 44
+      },
+      {
+       "technique": "Transfert numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 44
+      },
+      {
+       "technique": "Transfert sérigraphique",
+       "couleursMax": 8,
+       "parDefaut": false,
+       "observations": 44
+      },
+      {
+       "technique": "Broderie",
+       "couleursMax": 8,
+       "parDefaut": false,
+       "observations": 25
+      },
+      {
+       "technique": "Sublimation",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 1
+      }
+     ],
+     "observations": 202
+    },
+    {
+     "libelle": "la manche gauche",
+     "largeurMm": 100,
+     "hauteurMm": 70,
+     "techniques": [
+      {
+       "technique": "Sérigraphie",
+       "couleursMax": 8,
+       "parDefaut": true,
+       "observations": 31
+      },
+      {
+       "technique": "Broderie",
+       "couleursMax": 8,
+       "parDefaut": false,
+       "observations": 30
+      },
+      {
+       "technique": "Transfert numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 30
+      },
+      {
+       "technique": "Transfert sérigraphique",
+       "couleursMax": 8,
+       "parDefaut": false,
+       "observations": 30
+      },
+      {
+       "technique": "Transfert réfléchissant",
+       "couleursMax": 1,
+       "parDefaut": false,
+       "observations": 30
+      },
+      {
+       "technique": "Sublimation",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 1
+      }
+     ],
+     "observations": 152
+    },
+    {
+     "libelle": "l'intérieur",
+     "largeurMm": 70,
+     "hauteurMm": 70,
+     "techniques": [
+      {
+       "technique": "Transfert numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 16
+      },
+      {
+       "technique": "Transfert réfléchissant",
+       "couleursMax": 1,
+       "parDefaut": false,
+       "observations": 16
+      },
+      {
+       "technique": "Transfert sérigraphique",
+       "couleursMax": 8,
+       "parDefaut": true,
+       "observations": 16
+      }
+     ],
+     "observations": 48
+    }
+   ]
+  },
+  {
+   "famille": "Carnet",
+   "matiere": "carton",
+   "libelle": "Carnet en carton",
+   "silhouette": "carnet",
+   "produits": 71,
+   "observations": 553,
+   "zones": [
+    {
+     "libelle": "la face avant",
+     "largeurMm": 90,
+     "hauteurMm": 149,
+     "techniques": [
+      {
+       "technique": "Sérigraphie",
+       "couleursMax": 4,
+       "parDefaut": true,
+       "observations": 48
+      },
+      {
+       "technique": "Embossage",
+       "couleursMax": 1,
+       "parDefaut": false,
+       "observations": 35
+      },
+      {
+       "technique": "Transfert réfléchissant",
+       "couleursMax": 1,
+       "parDefaut": false,
+       "observations": 27
+      },
+      {
+       "technique": "Transfert sérigraphique",
+       "couleursMax": 8,
+       "parDefaut": false,
+       "observations": 26
+      },
+      {
+       "technique": "Impression numérique",
+       "couleursMax": null,
+       "parDefaut": true,
+       "observations": 18
+      },
+      {
+       "technique": "Gravure laser",
+       "couleursMax": 1,
+       "parDefaut": true,
+       "observations": 18
+      },
+      {
+       "technique": "Tampographie",
+       "couleursMax": 4,
+       "parDefaut": true,
+       "observations": 15
+      },
+      {
+       "technique": "Transfert numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 12
+      },
+      {
+       "technique": "Étiquette numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 11
+      },
+      {
+       "technique": "Doming",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 6
+      }
+     ],
+     "observations": 216
+    },
+    {
+     "libelle": "le dos",
+     "largeurMm": 90,
+     "hauteurMm": 150,
+     "techniques": [
+      {
+       "technique": "Sérigraphie",
+       "couleursMax": 4,
+       "parDefaut": true,
+       "observations": 48
+      },
+      {
+       "technique": "Embossage",
+       "couleursMax": 1,
+       "parDefaut": false,
+       "observations": 35
+      },
+      {
+       "technique": "Transfert réfléchissant",
+       "couleursMax": 1,
+       "parDefaut": false,
+       "observations": 27
+      },
+      {
+       "technique": "Transfert sérigraphique",
+       "couleursMax": 8,
+       "parDefaut": false,
+       "observations": 26
+      },
+      {
+       "technique": "Impression numérique",
+       "couleursMax": null,
+       "parDefaut": true,
+       "observations": 17
+      },
+      {
+       "technique": "Gravure laser",
+       "couleursMax": 1,
+       "parDefaut": true,
+       "observations": 17
+      },
+      {
+       "technique": "Tampographie",
+       "couleursMax": 4,
+       "parDefaut": true,
+       "observations": 13
+      },
+      {
+       "technique": "Transfert numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 12
+      },
+      {
+       "technique": "Étiquette numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 11
+      },
+      {
+       "technique": "Doming",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 3
+      }
+     ],
+     "observations": 209
+    },
+    {
+     "libelle": "la face avant, en bas",
+     "largeurMm": 70,
+     "hauteurMm": 50,
+     "techniques": [
+      {
+       "technique": "Embossage",
+       "couleursMax": 1,
+       "parDefaut": false,
+       "observations": 5
+      },
+      {
+       "technique": "Sérigraphie",
+       "couleursMax": 4,
+       "parDefaut": true,
+       "observations": 5
+      },
+      {
+       "technique": "Gravure laser",
+       "couleursMax": 1,
+       "parDefaut": true,
+       "observations": 4
+      },
+      {
+       "technique": "Tampographie",
+       "couleursMax": 4,
+       "parDefaut": true,
+       "observations": 4
+      },
+      {
+       "technique": "Transfert sérigraphique",
+       "couleursMax": 8,
+       "parDefaut": false,
+       "observations": 4
+      },
+      {
+       "technique": "Transfert réfléchissant",
+       "couleursMax": 1,
+       "parDefaut": false,
+       "observations": 4
+      },
+      {
+       "technique": "Étiquette numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 3
+      },
+      {
+       "technique": "Doming",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 3
+      },
+      {
+       "technique": "Transfert numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 3
+      }
+     ],
+     "observations": 35
+    },
+    {
+     "libelle": "une pastille sur la face avant",
+     "largeurMm": 80,
+     "hauteurMm": 40,
+     "techniques": [
+      {
+       "technique": "Tampographie",
+       "couleursMax": 2,
+       "parDefaut": true,
+       "observations": 22
+      },
+      {
+       "technique": "Embossage",
+       "couleursMax": 1,
+       "parDefaut": false,
+       "observations": 3
+      },
+      {
+       "technique": "Gravure laser",
+       "couleursMax": 1,
+       "parDefaut": false,
+       "observations": 2
+      }
+     ],
+     "observations": 27
+    },
+    {
+     "libelle": "le corps",
+     "largeurMm": 60,
+     "hauteurMm": 7,
+     "techniques": [
+      {
+       "technique": "Tampographie",
+       "couleursMax": 4,
+       "parDefaut": true,
+       "observations": 13
+      },
+      {
+       "technique": "Gravure laser",
+       "couleursMax": 1,
+       "parDefaut": true,
+       "observations": 3
+      }
+     ],
+     "observations": 16
+    }
+   ]
+  },
+  {
+   "famille": "Bouteille",
+   "matiere": "acier inoxydable",
+   "libelle": "Bouteille en acier inoxydable",
+   "silhouette": "bouteille",
+   "produits": 65,
+   "observations": 423,
+   "zones": [
+    {
+     "libelle": "tout le tour",
+     "largeurMm": 210,
+     "hauteurMm": 130,
+     "techniques": [
+      {
+       "technique": "Sérigraphie circulaire",
+       "couleursMax": 1,
+       "parDefaut": true,
+       "observations": 52
+      },
+      {
+       "technique": "Gravure laser 360",
+       "couleursMax": 1,
+       "parDefaut": true,
+       "observations": 44
+      },
+      {
+       "technique": "Impression numérique 360",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 38
+      },
+      {
+       "technique": "Étiquette numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 3
+      }
+     ],
+     "observations": 137
+    },
+    {
+     "libelle": "la face avant",
+     "largeurMm": 30,
+     "hauteurMm": 65,
+     "techniques": [
+      {
+       "technique": "Gravure laser",
+       "couleursMax": 1,
+       "parDefaut": true,
+       "observations": 51
+      },
+      {
+       "technique": "Tampographie",
+       "couleursMax": 4,
+       "parDefaut": false,
+       "observations": 50
+      },
+      {
+       "technique": "Étiquette numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 4
+      },
+      {
+       "technique": "Impression numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 1
+      }
+     ],
+     "observations": 106
+    },
+    {
+     "libelle": "le dos",
+     "largeurMm": 30,
+     "hauteurMm": 65,
+     "techniques": [
+      {
+       "technique": "Tampographie",
+       "couleursMax": 4,
+       "parDefaut": false,
+       "observations": 30
+      },
+      {
+       "technique": "Gravure laser",
+       "couleursMax": 1,
+       "parDefaut": true,
+       "observations": 30
+      },
+      {
+       "technique": "Étiquette numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 4
+      },
+      {
+       "technique": "Impression numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 1
+      }
+     ],
+     "observations": 65
+    },
+    {
+     "libelle": "le couvercle",
+     "largeurMm": 30,
+     "hauteurMm": 30,
+     "techniques": [
+      {
+       "technique": "Tampographie",
+       "couleursMax": 4,
+       "parDefaut": false,
+       "observations": 18
+      },
+      {
+       "technique": "Gravure laser",
+       "couleursMax": 1,
+       "parDefaut": true,
+       "observations": 14
+      },
+      {
+       "technique": "Étiquette numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 10
+      },
+      {
+       "technique": "Doming",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 9
+      }
+     ],
+     "observations": 51
+    },
+    {
+     "libelle": "le dessus du couvercle",
+     "largeurMm": 30,
+     "hauteurMm": 30,
+     "techniques": [
+      {
+       "technique": "Gravure laser",
+       "couleursMax": 1,
+       "parDefaut": true,
+       "observations": 7
+      },
+      {
+       "technique": "Tampographie",
+       "couleursMax": 4,
+       "parDefaut": false,
+       "observations": 6
+      },
+      {
+       "technique": "Étiquette numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 3
+      },
+      {
+       "technique": "Doming",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 3
+      }
+     ],
+     "observations": 19
+    },
+    {
+     "libelle": "toute la surface",
+     "largeurMm": 200,
+     "hauteurMm": 150,
+     "techniques": [
+      {
+       "technique": "Sublimation",
+       "couleursMax": null,
+       "parDefaut": true,
+       "observations": 18
+      }
+     ],
+     "observations": 18
+    }
+   ]
+  },
+  {
+   "famille": "Sac shopping",
+   "matiere": "coton",
+   "libelle": "Sac shopping en coton",
+   "silhouette": "sac",
+   "produits": 42,
+   "observations": 350,
+   "zones": [
+    {
+     "libelle": "la face avant",
+     "largeurMm": 300,
+     "hauteurMm": 300,
+     "techniques": [
+      {
+       "technique": "Transfert sérigraphique",
+       "couleursMax": 8,
+       "parDefaut": false,
+       "observations": 41
+      },
+      {
+       "technique": "Transfert numérique",
+       "couleursMax": null,
+       "parDefaut": true,
+       "observations": 41
+      },
+      {
+       "technique": "Transfert réfléchissant",
+       "couleursMax": 1,
+       "parDefaut": false,
+       "observations": 40
+      },
+      {
+       "technique": "Sérigraphie",
+       "couleursMax": 4,
+       "parDefaut": true,
+       "observations": 40
+      },
+      {
+       "technique": "Broderie",
+       "couleursMax": 8,
+       "parDefaut": true,
+       "observations": 20
+      }
+     ],
+     "observations": 182
+    },
+    {
+     "libelle": "le dos",
+     "largeurMm": 300,
+     "hauteurMm": 300,
+     "techniques": [
+      {
+       "technique": "Transfert sérigraphique",
+       "couleursMax": 8,
+       "parDefaut": false,
+       "observations": 42
+      },
+      {
+       "technique": "Transfert réfléchissant",
+       "couleursMax": 1,
+       "parDefaut": false,
+       "observations": 42
+      },
+      {
+       "technique": "Transfert numérique",
+       "couleursMax": null,
+       "parDefaut": true,
+       "observations": 42
+      },
+      {
+       "technique": "Sérigraphie",
+       "couleursMax": 4,
+       "parDefaut": true,
+       "observations": 37
+      }
+     ],
+     "observations": 163
+    }
+   ]
+  },
+  {
+   "famille": "Sac à dos",
+   "matiere": "polyester recyclé",
+   "libelle": "Sac à dos en polyester recyclé",
+   "silhouette": "sac",
+   "produits": 29,
+   "observations": 276,
+   "zones": [
+    {
+     "libelle": "la bretelle droite",
+     "largeurMm": 35,
+     "hauteurMm": 80,
+     "techniques": [
+      {
+       "technique": "Transfert sérigraphique",
+       "couleursMax": 8,
+       "parDefaut": true,
+       "observations": 19
+      },
+      {
+       "technique": "Transfert numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 19
+      },
+      {
+       "technique": "Transfert réfléchissant",
+       "couleursMax": 1,
+       "parDefaut": false,
+       "observations": 19
+      }
+     ],
+     "observations": 57
+    },
+    {
+     "libelle": "la poche avant",
+     "largeurMm": 140,
+     "hauteurMm": 120,
+     "techniques": [
+      {
+       "technique": "Transfert réfléchissant",
+       "couleursMax": 1,
+       "parDefaut": false,
+       "observations": 13
+      },
+      {
+       "technique": "Sérigraphie",
+       "couleursMax": 4,
+       "parDefaut": true,
+       "observations": 13
+      },
+      {
+       "technique": "Transfert sérigraphique",
+       "couleursMax": 8,
+       "parDefaut": false,
+       "observations": 13
+      },
+      {
+       "technique": "Transfert numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 13
+      },
+      {
+       "technique": "Embossage",
+       "couleursMax": 1,
+       "parDefaut": false,
+       "observations": 1
+      }
+     ],
+     "observations": 53
+    },
+    {
+     "libelle": "la bretelle gauche",
+     "largeurMm": 35,
+     "hauteurMm": 80,
+     "techniques": [
+      {
+       "technique": "Transfert réfléchissant",
+       "couleursMax": 1,
+       "parDefaut": false,
+       "observations": 17
+      },
+      {
+       "technique": "Transfert sérigraphique",
+       "couleursMax": 8,
+       "parDefaut": true,
+       "observations": 17
+      },
+      {
+       "technique": "Transfert numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 17
+      }
+     ],
+     "observations": 51
+    },
+    {
+     "libelle": "la face avant",
+     "largeurMm": 150,
+     "hauteurMm": 150,
+     "techniques": [
+      {
+       "technique": "Transfert sérigraphique",
+       "couleursMax": 8,
+       "parDefaut": false,
+       "observations": 11
+      },
+      {
+       "technique": "Transfert numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 11
+      },
+      {
+       "technique": "Transfert réfléchissant",
+       "couleursMax": 1,
+       "parDefaut": false,
+       "observations": 11
+      },
+      {
+       "technique": "Sérigraphie",
+       "couleursMax": 1,
+       "parDefaut": true,
+       "observations": 10
+      }
+     ],
+     "observations": 43
+    },
+    {
+     "libelle": "le dessus",
+     "largeurMm": 150,
+     "hauteurMm": 70,
+     "techniques": [
+      {
+       "technique": "Transfert réfléchissant",
+       "couleursMax": 1,
+       "parDefaut": false,
+       "observations": 9
+      },
+      {
+       "technique": "Transfert sérigraphique",
+       "couleursMax": 8,
+       "parDefaut": false,
+       "observations": 9
+      },
+      {
+       "technique": "Transfert numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 9
+      },
+      {
+       "technique": "Sérigraphie",
+       "couleursMax": 4,
+       "parDefaut": true,
+       "observations": 6
+      }
+     ],
+     "observations": 33
+    },
+    {
+     "libelle": "la face avant, en haut",
+     "largeurMm": 100,
+     "hauteurMm": 40,
+     "techniques": [
+      {
+       "technique": "Transfert numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 3
+      },
+      {
+       "technique": "Transfert réfléchissant",
+       "couleursMax": 1,
+       "parDefaut": false,
+       "observations": 3
+      },
+      {
+       "technique": "Sérigraphie",
+       "couleursMax": 1,
+       "parDefaut": true,
+       "observations": 3
+      },
+      {
+       "technique": "Transfert sérigraphique",
+       "couleursMax": 8,
+       "parDefaut": false,
+       "observations": 3
+      }
+     ],
+     "observations": 12
+    },
+    {
+     "libelle": "la face avant, en bas",
+     "largeurMm": 170,
+     "hauteurMm": 100,
+     "techniques": [
+      {
+       "technique": "Sérigraphie",
+       "couleursMax": 1,
+       "parDefaut": true,
+       "observations": 2
+      },
+      {
+       "technique": "Transfert réfléchissant",
+       "couleursMax": 1,
+       "parDefaut": false,
+       "observations": 2
+      },
+      {
+       "technique": "Transfert sérigraphique",
+       "couleursMax": 8,
+       "parDefaut": true,
+       "observations": 2
+      },
+      {
+       "technique": "Transfert numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 2
+      }
+     ],
+     "observations": 8
+    }
+   ]
+  },
+  {
+   "famille": "Casquette",
+   "matiere": "coton",
+   "libelle": "Casquette en coton",
+   "silhouette": "casquette",
+   "produits": 19,
+   "observations": 225,
+   "zones": [
+    {
+     "libelle": "le côté droit",
+     "largeurMm": 50,
+     "hauteurMm": 40,
+     "techniques": [
+      {
+       "technique": "Sérigraphie",
+       "couleursMax": 4,
+       "parDefaut": true,
+       "observations": 12
+      },
+      {
+       "technique": "Transfert sérigraphique",
+       "couleursMax": 8,
+       "parDefaut": false,
+       "observations": 12
+      },
+      {
+       "technique": "Transfert numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 12
+      },
+      {
+       "technique": "Transfert réfléchissant",
+       "couleursMax": 1,
+       "parDefaut": false,
+       "observations": 12
+      },
+      {
+       "technique": "Broderie",
+       "couleursMax": 8,
+       "parDefaut": false,
+       "observations": 11
+      }
+     ],
+     "observations": 59
+    },
+    {
+     "libelle": "la face avant",
+     "largeurMm": 80,
+     "hauteurMm": 40,
+     "techniques": [
+      {
+       "technique": "Broderie",
+       "couleursMax": 8,
+       "parDefaut": false,
+       "observations": 11
+      },
+      {
+       "technique": "Transfert réfléchissant",
+       "couleursMax": 1,
+       "parDefaut": false,
+       "observations": 11
+      },
+      {
+       "technique": "Sérigraphie",
+       "couleursMax": 1,
+       "parDefaut": true,
+       "observations": 10
+      },
+      {
+       "technique": "Transfert sérigraphique",
+       "couleursMax": 8,
+       "parDefaut": false,
+       "observations": 10
+      },
+      {
+       "technique": "Transfert numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 10
+      }
+     ],
+     "observations": 52
+    },
+    {
+     "libelle": "le côté gauche",
+     "largeurMm": 50,
+     "hauteurMm": 40,
+     "techniques": [
+      {
+       "technique": "Transfert réfléchissant",
+       "couleursMax": 1,
+       "parDefaut": false,
+       "observations": 10
+      },
+      {
+       "technique": "Sérigraphie",
+       "couleursMax": 4,
+       "parDefaut": true,
+       "observations": 10
+      },
+      {
+       "technique": "Transfert sérigraphique",
+       "couleursMax": 8,
+       "parDefaut": false,
+       "observations": 10
+      },
+      {
+       "technique": "Transfert numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 10
+      },
+      {
+       "technique": "Broderie",
+       "couleursMax": 8,
+       "parDefaut": false,
+       "observations": 9
+      }
+     ],
+     "observations": 49
+    },
+    {
+     "libelle": "le panneau gauche",
+     "largeurMm": 50,
+     "hauteurMm": 40,
+     "techniques": [
+      {
+       "technique": "Sérigraphie",
+       "couleursMax": 1,
+       "parDefaut": true,
+       "observations": 5
+      },
+      {
+       "technique": "Transfert sérigraphique",
+       "couleursMax": 8,
+       "parDefaut": false,
+       "observations": 5
+      },
+      {
+       "technique": "Transfert numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 5
+      },
+      {
+       "technique": "Transfert réfléchissant",
+       "couleursMax": 1,
+       "parDefaut": false,
+       "observations": 5
+      },
+      {
+       "technique": "Broderie",
+       "couleursMax": 8,
+       "parDefaut": false,
+       "observations": 3
+      }
+     ],
+     "observations": 23
+    },
+    {
+     "libelle": "le dos",
+     "largeurMm": 60,
+     "hauteurMm": 30,
+     "techniques": [
+      {
+       "technique": "Broderie",
+       "couleursMax": 8,
+       "parDefaut": true,
+       "observations": 12
+      },
+      {
+       "technique": "Transfert réfléchissant",
+       "couleursMax": 1,
+       "parDefaut": false,
+       "observations": 2
+      },
+      {
+       "technique": "Sérigraphie",
+       "couleursMax": 1,
+       "parDefaut": true,
+       "observations": 1
+      },
+      {
+       "technique": "Transfert sérigraphique",
+       "couleursMax": 8,
+       "parDefaut": true,
+       "observations": 1
+      },
+      {
+       "technique": "Transfert numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 1
+      }
+     ],
+     "observations": 17
+    },
+    {
+     "libelle": "le panneau droit",
+     "largeurMm": 50,
+     "hauteurMm": 40,
+     "techniques": [
+      {
+       "technique": "Sérigraphie",
+       "couleursMax": 4,
+       "parDefaut": true,
+       "observations": 3
+      },
+      {
+       "technique": "Transfert sérigraphique",
+       "couleursMax": 8,
+       "parDefaut": false,
+       "observations": 3
+      },
+      {
+       "technique": "Transfert numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 3
+      },
+      {
+       "technique": "Transfert réfléchissant",
+       "couleursMax": 1,
+       "parDefaut": false,
+       "observations": 3
+      },
+      {
+       "technique": "Broderie",
+       "couleursMax": 8,
+       "parDefaut": false,
+       "observations": 2
+      }
+     ],
+     "observations": 14
+    },
+    {
+     "libelle": "le devant",
+     "largeurMm": 120,
+     "hauteurMm": 40,
+     "techniques": [
+      {
+       "technique": "Broderie",
+       "couleursMax": 8,
+       "parDefaut": true,
+       "observations": 6
+      }
+     ],
+     "observations": 6
+    }
+   ]
+  },
+  {
+   "famille": "Gobelet",
+   "matiere": "acier inoxydable",
+   "libelle": "Gobelet en acier inoxydable",
+   "silhouette": "gobelet",
+   "produits": 37,
+   "observations": 181,
+   "zones": [
+    {
+     "libelle": "tout le tour",
+     "largeurMm": 202,
+     "hauteurMm": 60,
+     "techniques": [
+      {
+       "technique": "Sérigraphie circulaire",
+       "couleursMax": 1,
+       "parDefaut": true,
+       "observations": 29
+      },
+      {
+       "technique": "Gravure laser 360",
+       "couleursMax": 1,
+       "parDefaut": true,
+       "observations": 20
+      },
+      {
+       "technique": "Impression numérique 360",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 4
+      },
+      {
+       "technique": "Étiquette numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 1
+      }
+     ],
+     "observations": 54
+    },
+    {
+     "libelle": "le corps",
+     "largeurMm": 35,
+     "hauteurMm": 50,
+     "techniques": [
+      {
+       "technique": "Tampographie",
+       "couleursMax": 4,
+       "parDefaut": false,
+       "observations": 12
+      },
+      {
+       "technique": "Gravure laser",
+       "couleursMax": 1,
+       "parDefaut": true,
+       "observations": 10
+      }
+     ],
+     "observations": 22
+    },
+    {
+     "libelle": "le corps, côté gaucher",
+     "largeurMm": 35,
+     "hauteurMm": 50,
+     "techniques": [
+      {
+       "technique": "Tampographie",
+       "couleursMax": 4,
+       "parDefaut": false,
+       "observations": 12
+      },
+      {
+       "technique": "Gravure laser",
+       "couleursMax": 1,
+       "parDefaut": true,
+       "observations": 10
+      }
+     ],
+     "observations": 22
+    },
+    {
+     "libelle": "la face avant, en haut",
+     "largeurMm": 35,
+     "hauteurMm": 40,
+     "techniques": [
+      {
+       "technique": "Tampographie",
+       "couleursMax": 4,
+       "parDefaut": false,
+       "observations": 11
+      },
+      {
+       "technique": "Gravure laser",
+       "couleursMax": 1,
+       "parDefaut": true,
+       "observations": 8
+      }
+     ],
+     "observations": 19
+    },
+    {
+     "libelle": "la face avant, en bas",
+     "largeurMm": 25,
+     "hauteurMm": 40,
+     "techniques": [
+      {
+       "technique": "Tampographie",
+       "couleursMax": 4,
+       "parDefaut": false,
+       "observations": 10
+      },
+      {
+       "technique": "Gravure laser",
+       "couleursMax": 1,
+       "parDefaut": true,
+       "observations": 7
+      }
+     ],
+     "observations": 17
+    },
+    {
+     "libelle": "la face avant",
+     "largeurMm": 32,
+     "hauteurMm": 45,
+     "techniques": [
+      {
+       "technique": "Gravure laser",
+       "couleursMax": 1,
+       "parDefaut": true,
+       "observations": 8
+      },
+      {
+       "technique": "Tampographie",
+       "couleursMax": 4,
+       "parDefaut": false,
+       "observations": 8
+      }
+     ],
+     "observations": 16
+    },
+    {
+     "libelle": "le dos",
+     "largeurMm": 32,
+     "hauteurMm": 45,
+     "techniques": [
+      {
+       "technique": "Gravure laser",
+       "couleursMax": 1,
+       "parDefaut": true,
+       "observations": 8
+      },
+      {
+       "technique": "Tampographie",
+       "couleursMax": 4,
+       "parDefaut": false,
+       "observations": 8
+      }
+     ],
+     "observations": 16
+    }
+   ]
+  },
+  {
+   "famille": "Stylo",
+   "matiere": "bois ou bambou",
+   "libelle": "Stylo en bois ou bambou",
+   "silhouette": "stylo",
+   "produits": 33,
+   "observations": 177,
+   "zones": [
+    {
+     "libelle": "le corps",
+     "largeurMm": 70,
+     "hauteurMm": 7,
+     "techniques": [
+      {
+       "technique": "Gravure laser",
+       "couleursMax": 1,
+       "parDefaut": true,
+       "observations": 18
+      },
+      {
+       "technique": "Tampographie",
+       "couleursMax": 4,
+       "parDefaut": false,
+       "observations": 17
+      },
+      {
+       "technique": "Impression numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 1
+      }
+     ],
+     "observations": 36
+    },
+    {
+     "libelle": "le corps, côté gaucher",
+     "largeurMm": 70,
+     "hauteurMm": 7,
+     "techniques": [
+      {
+       "technique": "Gravure laser",
+       "couleursMax": 1,
+       "parDefaut": true,
+       "observations": 18
+      },
+      {
+       "technique": "Tampographie",
+       "couleursMax": 4,
+       "parDefaut": false,
+       "observations": 17
+      },
+      {
+       "technique": "Impression numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 1
+      }
+     ],
+     "observations": 36
+    },
+    {
+     "libelle": "le dos",
+     "largeurMm": 32,
+     "hauteurMm": 70,
+     "techniques": [
+      {
+       "technique": "Impression numérique",
+       "couleursMax": null,
+       "parDefaut": true,
+       "observations": 4
+      },
+      {
+       "technique": "Tampographie",
+       "couleursMax": 4,
+       "parDefaut": true,
+       "observations": 4
+      },
+      {
+       "technique": "Étiquette numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 3
+      },
+      {
+       "technique": "Sérigraphie",
+       "couleursMax": 4,
+       "parDefaut": true,
+       "observations": 2
+      },
+      {
+       "technique": "Gravure laser",
+       "couleursMax": 1,
+       "parDefaut": true,
+       "observations": 1
+      }
+     ],
+     "observations": 14
+    },
+    {
+     "libelle": "tout le tour",
+     "largeurMm": 45,
+     "hauteurMm": 25,
+     "techniques": [
+      {
+       "technique": "Sérigraphie circulaire",
+       "couleursMax": 1,
+       "parDefaut": true,
+       "observations": 14
+      }
+     ],
+     "observations": 14
+    },
+    {
+     "libelle": "en face du clip",
+     "largeurMm": 60,
+     "hauteurMm": 7,
+     "techniques": [
+      {
+       "technique": "Gravure laser",
+       "couleursMax": 1,
+       "parDefaut": true,
+       "observations": 7
+      },
+      {
+       "technique": "Tampographie",
+       "couleursMax": 4,
+       "parDefaut": false,
+       "observations": 6
+      }
+     ],
+     "observations": 13
+    },
+    {
+     "libelle": "la face avant",
+     "largeurMm": 40,
+     "hauteurMm": 46,
+     "techniques": [
+      {
+       "technique": "Impression numérique",
+       "couleursMax": null,
+       "parDefaut": true,
+       "observations": 4
+      },
+      {
+       "technique": "Tampographie",
+       "couleursMax": 4,
+       "parDefaut": true,
+       "observations": 3
+      },
+      {
+       "technique": "Étiquette numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 2
+      },
+      {
+       "technique": "Sérigraphie",
+       "couleursMax": 4,
+       "parDefaut": true,
+       "observations": 1
+      }
+     ],
+     "observations": 10
+    },
+    {
+     "libelle": "le côté",
+     "largeurMm": 110,
+     "hauteurMm": 50,
+     "techniques": [
+      {
+       "technique": "Gravure laser",
+       "couleursMax": 1,
+       "parDefaut": true,
+       "observations": 2
+      },
+      {
+       "technique": "Tampographie",
+       "couleursMax": 4,
+       "parDefaut": true,
+       "observations": 2
+      },
+      {
+       "technique": "Sérigraphie",
+       "couleursMax": 1,
+       "parDefaut": true,
+       "observations": 2
+      },
+      {
+       "technique": "Transfert numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 1
+      },
+      {
+       "technique": "Transfert réfléchissant",
+       "couleursMax": 1,
+       "parDefaut": false,
+       "observations": 1
+      },
+      {
+       "technique": "Transfert sérigraphique",
+       "couleursMax": 8,
+       "parDefaut": false,
+       "observations": 1
+      },
+      {
+       "technique": "Étiquette numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 1
+      }
+     ],
+     "observations": 10
+    },
+    {
+     "libelle": "l'autre côté",
+     "largeurMm": 110,
+     "hauteurMm": 50,
+     "techniques": [
+      {
+       "technique": "Gravure laser",
+       "couleursMax": 1,
+       "parDefaut": true,
+       "observations": 2
+      },
+      {
+       "technique": "Tampographie",
+       "couleursMax": 4,
+       "parDefaut": true,
+       "observations": 2
+      },
+      {
+       "technique": "Sérigraphie",
+       "couleursMax": 1,
+       "parDefaut": true,
+       "observations": 2
+      },
+      {
+       "technique": "Transfert sérigraphique",
+       "couleursMax": 8,
+       "parDefaut": false,
+       "observations": 1
+      },
+      {
+       "technique": "Transfert numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 1
+      },
+      {
+       "technique": "Transfert réfléchissant",
+       "couleursMax": 1,
+       "parDefaut": false,
+       "observations": 1
+      },
+      {
+       "technique": "Étiquette numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 1
+      }
+     ],
+     "observations": 10
+    },
+    {
+     "libelle": "le clip",
+     "largeurMm": 45,
+     "hauteurMm": 7,
+     "techniques": [
+      {
+       "technique": "Gravure laser",
+       "couleursMax": 1,
+       "parDefaut": true,
+       "observations": 5
+      },
+      {
+       "technique": "Tampographie",
+       "couleursMax": 4,
+       "parDefaut": false,
+       "observations": 4
+      }
+     ],
+     "observations": 9
+    },
+    {
+     "libelle": "le clip, côté gaucher",
+     "largeurMm": 45,
+     "hauteurMm": 7,
+     "techniques": [
+      {
+       "technique": "Gravure laser",
+       "couleursMax": 1,
+       "parDefaut": true,
+       "observations": 4
+      },
+      {
+       "technique": "Tampographie",
+       "couleursMax": 4,
+       "parDefaut": false,
+       "observations": 3
+      }
+     ],
+     "observations": 7
+    }
+   ]
+  },
+  {
+   "famille": "Bouteille",
+   "matiere": "verre",
+   "libelle": "Bouteille en verre",
+   "silhouette": "bouteille",
+   "produits": 21,
+   "observations": 177,
+   "zones": [
+    {
+     "libelle": "le couvercle",
+     "largeurMm": 35,
+     "hauteurMm": 35,
+     "techniques": [
+      {
+       "technique": "Gravure laser",
+       "couleursMax": 1,
+       "parDefaut": true,
+       "observations": 12
+      },
+      {
+       "technique": "Tampographie",
+       "couleursMax": 4,
+       "parDefaut": false,
+       "observations": 12
+      },
+      {
+       "technique": "Étiquette numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 7
+      },
+      {
+       "technique": "Doming",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 7
+      }
+     ],
+     "observations": 38
+    },
+    {
+     "libelle": "la face avant",
+     "largeurMm": 30,
+     "hauteurMm": 80,
+     "techniques": [
+      {
+       "technique": "Tampographie",
+       "couleursMax": 4,
+       "parDefaut": false,
+       "observations": 14
+      },
+      {
+       "technique": "Gravure laser",
+       "couleursMax": 1,
+       "parDefaut": true,
+       "observations": 12
+      },
+      {
+       "technique": "Étiquette numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 6
+      }
+     ],
+     "observations": 32
+    },
+    {
+     "libelle": "la poche",
+     "largeurMm": 55,
+     "hauteurMm": 100,
+     "techniques": [
+      {
+       "technique": "Transfert réfléchissant",
+       "couleursMax": 1,
+       "parDefaut": false,
+       "observations": 8
+      },
+      {
+       "technique": "Sérigraphie",
+       "couleursMax": 4,
+       "parDefaut": true,
+       "observations": 8
+      },
+      {
+       "technique": "Transfert sérigraphique",
+       "couleursMax": 8,
+       "parDefaut": false,
+       "observations": 7
+      },
+      {
+       "technique": "Transfert numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 7
+      },
+      {
+       "technique": "Sérigraphie circulaire",
+       "couleursMax": 1,
+       "parDefaut": true,
+       "observations": 1
+      }
+     ],
+     "observations": 31
+    },
+    {
+     "libelle": "tout le tour",
+     "largeurMm": 150,
+     "hauteurMm": 90,
+     "techniques": [
+      {
+       "technique": "Sérigraphie circulaire",
+       "couleursMax": 1,
+       "parDefaut": true,
+       "observations": 18
+      },
+      {
+       "technique": "Étiquette numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 8
+      },
+      {
+       "technique": "Impression numérique 360",
+       "couleursMax": null,
+       "parDefaut": true,
+       "observations": 3
+      }
+     ],
+     "observations": 29
+    },
+    {
+     "libelle": "le dessus du couvercle",
+     "largeurMm": 30,
+     "hauteurMm": 30,
+     "techniques": [
+      {
+       "technique": "Gravure laser",
+       "couleursMax": 1,
+       "parDefaut": true,
+       "observations": 8
+      },
+      {
+       "technique": "Tampographie",
+       "couleursMax": 4,
+       "parDefaut": false,
+       "observations": 7
+      },
+      {
+       "technique": "Étiquette numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 2
+      },
+      {
+       "technique": "Doming",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 2
+      }
+     ],
+     "observations": 19
+    },
+    {
+     "libelle": "le dos",
+     "largeurMm": 30,
+     "hauteurMm": 80,
+     "techniques": [
+      {
+       "technique": "Tampographie",
+       "couleursMax": 4,
+       "parDefaut": false,
+       "observations": 8
+      },
+      {
+       "technique": "Gravure laser",
+       "couleursMax": 1,
+       "parDefaut": true,
+       "observations": 4
+      },
+      {
+       "technique": "Étiquette numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 1
+      }
+     ],
+     "observations": 13
+    },
+    {
+     "libelle": "le côté",
+     "largeurMm": 30,
+     "hauteurMm": 80,
+     "techniques": [
+      {
+       "technique": "Tampographie",
+       "couleursMax": 4,
+       "parDefaut": false,
+       "observations": 3
+      },
+      {
+       "technique": "Gravure laser",
+       "couleursMax": 1,
+       "parDefaut": true,
+       "observations": 2
+      }
+     ],
+     "observations": 5
+    }
+   ]
+  },
+  {
+   "famille": "Stylo",
+   "matiere": "aluminium",
+   "libelle": "Stylo en aluminium",
+   "silhouette": "stylo",
+   "produits": 20,
+   "observations": 109,
+   "zones": [
+    {
+     "libelle": "le corps",
+     "largeurMm": 48,
+     "hauteurMm": 7,
+     "techniques": [
+      {
+       "technique": "Gravure laser",
+       "couleursMax": 1,
+       "parDefaut": true,
+       "observations": 16
+      },
+      {
+       "technique": "Tampographie",
+       "couleursMax": 4,
+       "parDefaut": false,
+       "observations": 11
+      },
+      {
+       "technique": "Impression numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 1
+      }
+     ],
+     "observations": 28
+    },
+    {
+     "libelle": "le corps, côté gaucher",
+     "largeurMm": 50,
+     "hauteurMm": 7,
+     "techniques": [
+      {
+       "technique": "Gravure laser",
+       "couleursMax": 1,
+       "parDefaut": true,
+       "observations": 14
+      },
+      {
+       "technique": "Tampographie",
+       "couleursMax": 4,
+       "parDefaut": false,
+       "observations": 10
+      },
+      {
+       "technique": "Impression numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 1
+      }
+     ],
+     "observations": 25
+    },
+    {
+     "libelle": "en face du clip",
+     "largeurMm": 65,
+     "hauteurMm": 7,
+     "techniques": [
+      {
+       "technique": "Gravure laser",
+       "couleursMax": 1,
+       "parDefaut": true,
+       "observations": 13
+      },
+      {
+       "technique": "Tampographie",
+       "couleursMax": 4,
+       "parDefaut": false,
+       "observations": 8
+      }
+     ],
+     "observations": 21
+    },
+    {
+     "libelle": "le clip",
+     "largeurMm": 55,
+     "hauteurMm": 7,
+     "techniques": [
+      {
+       "technique": "Gravure laser",
+       "couleursMax": 1,
+       "parDefaut": true,
+       "observations": 9
+      },
+      {
+       "technique": "Tampographie",
+       "couleursMax": 4,
+       "parDefaut": false,
+       "observations": 8
+      }
+     ],
+     "observations": 17
+    },
+    {
+     "libelle": "le clip, côté gaucher",
+     "largeurMm": 55,
+     "hauteurMm": 7,
+     "techniques": [
+      {
+       "technique": "Gravure laser",
+       "couleursMax": 1,
+       "parDefaut": true,
+       "observations": 9
+      },
+      {
+       "technique": "Tampographie",
+       "couleursMax": 4,
+       "parDefaut": false,
+       "observations": 8
+      }
+     ],
+     "observations": 17
+    }
+   ]
+  },
+  {
+   "famille": "Powerbank",
+   "matiere": "plastique",
+   "libelle": "Powerbank en plastique",
+   "silhouette": "powerbank",
+   "produits": 23,
+   "observations": 93,
+   "zones": [
+    {
+     "libelle": "le côté",
+     "largeurMm": 48,
+     "hauteurMm": 40,
+     "techniques": [
+      {
+       "technique": "Tampographie",
+       "couleursMax": 4,
+       "parDefaut": true,
+       "observations": 9
+      },
+      {
+       "technique": "Étiquette numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 7
+      },
+      {
+       "technique": "Impression numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 3
+      },
+      {
+       "technique": "Doming",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 3
+      },
+      {
+       "technique": "Gravure laser",
+       "couleursMax": 1,
+       "parDefaut": true,
+       "observations": 2
+      }
+     ],
+     "observations": 24
+    },
+    {
+     "libelle": "l'autre côté",
+     "largeurMm": 45,
+     "hauteurMm": 35,
+     "techniques": [
+      {
+       "technique": "Tampographie",
+       "couleursMax": 4,
+       "parDefaut": true,
+       "observations": 7
+      },
+      {
+       "technique": "Étiquette numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 5
+      },
+      {
+       "technique": "Doming",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 2
+      },
+      {
+       "technique": "Impression numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 1
+      },
+      {
+       "technique": "Gravure laser",
+       "couleursMax": 1,
+       "parDefaut": true,
+       "observations": 1
+      }
+     ],
+     "observations": 16
+    },
+    {
+     "libelle": "la face avant",
+     "largeurMm": 50,
+     "hauteurMm": 60,
+     "techniques": [
+      {
+       "technique": "Tampographie",
+       "couleursMax": 4,
+       "parDefaut": true,
+       "observations": 5
+      },
+      {
+       "technique": "Étiquette numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 3
+      },
+      {
+       "technique": "Impression numérique",
+       "couleursMax": null,
+       "parDefaut": true,
+       "observations": 2
+      },
+      {
+       "technique": "Gravure laser",
+       "couleursMax": 1,
+       "parDefaut": false,
+       "observations": 1
+      },
+      {
+       "technique": "Doming",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 1
+      }
+     ],
+     "observations": 12
+    },
+    {
+     "libelle": "le dessus",
+     "largeurMm": 40,
+     "hauteurMm": 30,
+     "techniques": [
+      {
+       "technique": "Tampographie",
+       "couleursMax": 4,
+       "parDefaut": true,
+       "observations": 5
+      },
+      {
+       "technique": "Étiquette numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 3
+      },
+      {
+       "technique": "Gravure laser",
+       "couleursMax": 1,
+       "parDefaut": true,
+       "observations": 2
+      },
+      {
+       "technique": "Doming",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 1
+      }
+     ],
+     "observations": 11
+    },
+    {
+     "libelle": "le troisième côté",
+     "largeurMm": 35,
+     "hauteurMm": 30,
+     "techniques": [
+      {
+       "technique": "Étiquette numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 4
+      },
+      {
+       "technique": "Tampographie",
+       "couleursMax": 4,
+       "parDefaut": true,
+       "observations": 4
+      },
+      {
+       "technique": "Gravure laser",
+       "couleursMax": 1,
+       "parDefaut": true,
+       "observations": 1
+      },
+      {
+       "technique": "Doming",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 1
+      }
+     ],
+     "observations": 10
+    }
+   ]
+  },
+  {
+   "famille": "Sac shopping",
+   "matiere": "polyester recyclé",
+   "libelle": "Sac shopping en polyester recyclé",
+   "silhouette": "sac",
+   "produits": 10,
+   "observations": 67,
+   "zones": [
+    {
+     "libelle": "la face avant",
+     "largeurMm": 300,
+     "hauteurMm": 260,
+     "techniques": [
+      {
+       "technique": "Transfert sérigraphique",
+       "couleursMax": 8,
+       "parDefaut": false,
+       "observations": 7
+      },
+      {
+       "technique": "Transfert numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 7
+      },
+      {
+       "technique": "Transfert réfléchissant",
+       "couleursMax": 1,
+       "parDefaut": false,
+       "observations": 7
+      },
+      {
+       "technique": "Sérigraphie",
+       "couleursMax": 4,
+       "parDefaut": true,
+       "observations": 6
+      }
+     ],
+     "observations": 27
+    },
+    {
+     "libelle": "le dos",
+     "largeurMm": 300,
+     "hauteurMm": 260,
+     "techniques": [
+      {
+       "technique": "Transfert sérigraphique",
+       "couleursMax": 8,
+       "parDefaut": false,
+       "observations": 6
+      },
+      {
+       "technique": "Transfert numérique",
+       "couleursMax": null,
+       "parDefaut": false,
+       "observations": 6
+      },
+      {
+       "technique": "Transfert réfléchissant",
+       "couleursMax": 1,
+       "parDefaut": false,
+       "observations": 6
+      },
+      {
+       "technique": "Sérigraphie",
+       "couleursMax": 4,
+       "parDefaut": true,
+       "observations": 6
+      }
+     ],
+     "observations": 24
+    }
+   ]
+  }
+ ]
+}
