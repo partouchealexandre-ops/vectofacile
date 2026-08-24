@@ -591,7 +591,9 @@ console.log('');
     return {
       visible: bloc.offsetParent !== null,
       nombre: bloc.querySelectorAll('.conseil').length,
-      titres: [...bloc.querySelectorAll('.conseil h3')].map((e) => e.textContent.trim()),
+      // Le titre d'un conseil est un <b> depuis le 24/08 : un conseil tient sur
+      // une ligne, il n'a plus de bloc a lui, donc plus de <h3>.
+      titres: [...bloc.querySelectorAll('.conseil b')].map((e) => e.textContent.trim()),
       // On assertionne sur les CONSEILS eux memes, pas sur le chapeau. Le
       // chapeau contient la phrase « nous ne vous disons pas encore si votre
       // logo passe », et il doit la contenir : c'est la mise en garde. La
@@ -752,13 +754,26 @@ console.log('');
   const page = await navigateur.newPage();
   await page.goto(`http://127.0.0.1:${PORT}/`, { waitUntil: 'networkidle' });
   await page.waitForTimeout(600);
-  const constat = await page.evaluate(() => ({
-    pastilles: document.querySelectorAll('.pastilles, [data-exemple]').length,
-    boutonExemple: document.getElementById('voir_exemple') !== null,
-    imageExemple: document.querySelectorAll('img[src*="logo-exemple"]').length,
-    depot: document.getElementById('depot') !== null,
-    verdictVide: (document.getElementById('verdict')?.innerHTML ?? '').trim() === '',
-  }));
+  const petit = fs.readFileSync(path.join(IMAGES, 'couleurs_09_plat.png'));
+  const constat = await page.evaluate(async (b64) => {
+    const avant = {
+      pastilles: document.querySelectorAll('.pastilles, [data-exemple]').length,
+      boutonExemple: document.getElementById('voir_exemple') !== null,
+      imageExemple: document.querySelectorAll('img[src*="logo-exemple"]').length,
+      depot: document.getElementById('depot') !== null,
+      verdictVide: (document.getElementById('verdict')?.innerHTML ?? '').trim() === '',
+      // La presentation repond a qui HESITE a deposer : elle doit etre la.
+      presentation: document.getElementById('presentation')?.offsetParent !== null,
+    };
+    const f = new File([Uint8Array.from(atob(b64), (c) => c.charCodeAt(0))],
+      'logo.png', { type: 'image/png' });
+    await globalThis.vecto.traiter(f);
+    return { ...avant,
+      // Une fois le fichier depose, elle se lit comme du remplissage derriere
+      // un verdict : elle sort de l'ecran, sans quitter le HTML servi.
+      presentationApres: document.getElementById('presentation')?.offsetParent !== null,
+      motsServis: (document.getElementById('presentation')?.innerText ?? '').length };
+  }, petit.toString('base64'));
   await page.close();
 
   console.log('');
@@ -770,6 +785,10 @@ console.log('');
     ['le logo de demonstration n\'est plus servi', constat.imageExemple === 0],
     ['la zone de depot, elle, est bien la : c\'est elle qui explique', constat.depot === true],
     ['le bloc de verdict arrive vide', constat.verdictVide === true],
+    ['la presentation est la pour qui hesite a deposer', constat.presentation === true],
+    ['elle sort de l\'ecran une fois le logo analyse', constat.presentationApres === false],
+    ['mais elle reste dans le document, mot pour mot', constat.motsServis > 200,
+      `${constat.motsServis} caracteres`],
   ]) {
     console.log(`  ${ok ? 'ok   ' : 'ECHEC'} ${libelle}`);
     if (!ok) echecs++;

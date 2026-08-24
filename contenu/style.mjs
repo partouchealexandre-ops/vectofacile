@@ -416,10 +416,13 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
   #largeur input { width: 110px; padding: 9px 12px; font: inherit; font-size: 16px;
                    border: 1px solid var(--trait); border-radius: 6px; background: #fff; }
   #largeur .unite { margin-left: 8px; color: var(--gris); font-size: 14px; }
-  .conseil { border-left: 3px solid var(--trait); padding: 2px 0 2px 16px; margin: 16px 0; }
-  .conseil h3 { margin: 0 0 6px; font-size: 16.5px; }
-  .conseil .fait { margin: 0 0 6px; font-weight: 600; }
-  .conseil .mecanique { margin: 0; color: var(--gris); font-size: 14.5px; }
+  /* UNE LIGNE PAR POINT depuis le 24/08. Le fait reste en avant, la mecanique
+     passe en gris derriere lui : c'est la meme hierarchie qu'avant, sur une
+     ligne au lieu de trois blocs. */
+  ul.conseils { list-style: none; padding: 0; margin: 12px 0 0; }
+  .conseil { border-left: 3px solid var(--trait); padding: 2px 0 2px 16px;
+    margin: 0 0 14px; font-size: 15px; line-height: 1.55; }
+  .conseil .mecanique { color: var(--gris); }
   .palette { list-style: none; padding: 0; margin: 12px 0 0; }
   .teinte { display: flex; align-items: center; gap: 12px; padding: 6px 0;
             border-bottom: 1px solid var(--trait); }

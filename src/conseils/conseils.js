@@ -59,10 +59,7 @@ export function conseiller(mesures, fiche = null) {
       cle: 'faux_vectoriel',
       titre: 'Votre fichier porte une extension de vectoriel, mais il n\'en est pas un',
       fait: `Il ne contient aucun tracé, seulement ${fiche.images} image${fiche.images > 1 ? 's' : ''} posée${fiche.images > 1 ? 's' : ''} dedans.`,
-      mecanique: 'Un atelier ouvre ce fichier, l\'agrandit à la taille du marquage, '
-        + 'et découvre des pixels. Il vous le refusera, ou le retracera à la main et '
-        + 'vous le facturera. La version d\'origine, celle du logiciel de dessin, '
-        + 'existe forcément quelque part : c\'est elle qu\'il faut demander.',
+      mecanique: 'Agrandie à la taille du marquage, cette image sera floue : c\'est le fichier d\'origine qu\'il faut retrouver.',
     });
   }
 
@@ -74,10 +71,7 @@ export function conseiller(mesures, fiche = null) {
       cle: 'texte_vivant',
       titre: 'Votre fichier contient du texte non vectorisé',
       fait: `${fiche.texte} bloc${fiche.texte > 1 ? 's' : ''} de texte ${fiche.texte > 1 ? 'sont' : 'est'} encore ${fiche.texte > 1 ? 'des textes' : 'un texte'}, pas ${fiche.texte > 1 ? 'des dessins' : 'un dessin'}.`,
-      mecanique: 'Si l\'atelier n\'a pas votre police, son logiciel en substitue une '
-        + 'autre, et le dessin change sans que personne ne s\'en aperçoive avant '
-        + 'l\'impression. Dans votre logiciel, la commande s\'appelle « vectoriser le '
-        + 'texte » ou « créer des contours ».',
+      mecanique: 'Sans votre police, l\'atelier en substituera une autre, et le logo changera sans que personne ne s\'en aperçoive.',
     });
   }
 
@@ -93,10 +87,7 @@ export function conseiller(mesures, fiche = null) {
       cle: 'fond',
       titre: 'Votre logo a un fond, et un fond se marque',
       fait: `Le fond de votre image est ${teinte}, pas transparent.`,
-      mecanique: 'Aucune technique de marquage ne sait ignorer un fond : ce qui est '
-        + 'dans le fichier est ce qui part sur l\'objet. Sur un objet qui n\'est pas '
-        + 'de cette couleur, le rectangle se verra autour du logo. Un marqueur le '
-        + 'détoure lui-même, et il le facture.',
+      mecanique: 'Aucune technique ne sait ignorer un fond : il sera marqué comme le reste du dessin.',
     });
   }
 
@@ -108,9 +99,7 @@ export function conseiller(mesures, fiche = null) {
       cle: 'transparence',
       titre: 'Les zones à demi transparentes n\'existent pas en marquage',
       fait: `${n.toLocaleString('fr-FR')} pixels de votre logo sont à demi transparents.`,
-      mecanique: 'Une encre est déposée ou ne l\'est pas, un fil est posé ou ne l\'est '
-        + 'pas, un laser brûle ou ne brûle pas. Ces pixels seront donc rendus pleins '
-        + 'ou supprimés, et c\'est l\'atelier qui tranchera si vous ne le faites pas.',
+      mecanique: 'Une encre est déposée ou ne l\'est pas : ces pixels seront rendus pleins ou supprimés, et c\'est l\'atelier qui tranchera si vous ne le faites pas.',
     });
   }
 
@@ -123,10 +112,7 @@ export function conseiller(mesures, fiche = null) {
       titre: 'Votre logo contient un dégradé',
       fait: `${(100 * variable).toFixed(0)} % de l'intérieur de votre logo varie au lieu `
         + 'd\'être un aplat uniforme.',
-      mecanique: 'La sérigraphie, la tampographie et la broderie posent des couleurs '
-        + 'pleines, une par une : elles ne savent pas faire un dégradé autrement qu\'en '
-        + 'le simulant par une trame de points. L\'impression numérique et le transfert, '
-        + 'eux, le rendent directement.',
+      mecanique: 'La sérigraphie, la tampographie et la broderie ne savent le rendre qu\'en le simulant par une trame de points ; le numérique et le transfert, eux, le posent directement.',
     });
   }
 
@@ -152,9 +138,7 @@ export function conseiller(mesures, fiche = null) {
       titre: 'Votre fichier porte des traces de compression',
       fait: `${(100 * halo).toFixed(2).replace('.', ',')} % de la boîte de votre logo n'est ni le fond ni `
         + 'une de ses couleurs.',
-      mecanique: 'Ce sont les résidus d\'un enregistrement en JPEG. Ils ne s\'impriment '
-        + 'pas comme une couleur : ils se traduisent par des bords sales et des contours '
-        + 'qui tremblent. Une version PNG ou vectorielle du même logo n\'en aurait pas.',
+      mecanique: 'Ce sont des résidus d\'un enregistrement en JPEG : ils ne s\'impriment pas comme une couleur, ils donnent des bords sales et des contours qui tremblent.',
     });
   }
 

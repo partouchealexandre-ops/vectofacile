@@ -136,7 +136,9 @@ async function deposer(page, octets, nom, type) {
       telechargements: document.getElementById('telechargements').offsetParent !== null,
       ficheVisible: document.getElementById('fiche').offsetParent !== null,
       titreFiche: document.querySelector('#fiche h2')?.textContent ?? null,
-      conseils: [...document.querySelectorAll('#conseils .conseil h3')].map((x) => x.textContent),
+      // Depuis le 24/08 un conseil tient sur une ligne : le titre est un <b>,
+      // plus un <h3>.
+      conseils: [...document.querySelectorAll('#conseils .conseil b')].map((x) => x.textContent),
       verdict: document.getElementById('verdict').offsetParent !== null,
       // C2 du brief du 21/08 : le bandeau de six lignes a ete remplace par
       // l'ACTION, une ligne et un bouton. On lit donc ce que le visiteur voit

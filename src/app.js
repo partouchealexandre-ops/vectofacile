@@ -174,37 +174,58 @@ function afficherMesures(m, image) {
     ? `mesuré sur une version réduite à ${image.largeur} px de large, l'original fait ${image.largeurOrigine} px`
     : '';
 
+  // DEUX ETAGES, arbitrage Alex du 24/08/2026. Un seul tableau de treize
+  // lignes melangeait ce qu'un responsable com comprend et ce qui n'a de sens
+  // que pour un atelier : « contre forme », « hauteur de capitale »,
+  // « pixels orphelins ». Il se lisait comme un bilan sanguin.
+  //
+  // Le premier etage dit ce que le fichier EST, en francais courant. Le second
+  // garde les mesures fines, et il DIT POURQUOI elles ne produisent aucun
+  // verdict : vingt trois valeurs sourcees de 0,13 a 1,00 mm ne font pas un
+  // seuil, et tant qu'Alex n'a pas tranche, la mesure reste une mesure. C'est
+  // la difference entre cacher un trou et le declarer.
   $('mesures').innerHTML = `
     <details class="mesures-detail">
-    <summary>Plus de détails : toutes les mesures de votre fichier</summary>
+    <summary>Plus de détails : ce que contient votre fichier</summary>
     ${reduction ? `<p class="note">${reduction}</p>` : ''}
     ${ligne('Dimensions', `${nb(m.m1Dimensions.largeurPx)} × ${nb(m.m1Dimensions.hauteurPx)} px`)}
-    ${ligne('Fond', m.fond.type === 'transparent' ? 'transparent' : `couleur ${m.fond.rvb.join(', ')}`)}
+    ${ligne('Fond', m.fond.type === 'transparent' ? 'transparent'
+        : (m.fond.rvb?.every((c) => c > 245) ? 'blanc, pas transparent'
+           : `opaque, RVB ${m.fond.rvb.join(', ')}`))}
     ${ligne('Couleurs réelles', nb(m.m2Couleurs.couleursReelles),
-        `le fichier en contient ${nb(m.m2Couleurs.couleursBrutes)} au total ; le détail est dans la section couleurs`)}
-    ${ligne('Halo et salissures', pourcent(m.m3Halo.partBoite, 2),
+        `le fichier en contient ${nb(m.m2Couleurs.couleursBrutes)} au total ; les codes sont en haut de page`)}
+    ${ligne('Dégradé ou photo', m.m10IndicesExport.partInterieurVariable === null
+        ? 'non mesuré'
+        : `${pourcent(m.m10IndicesExport.partInterieurVariable)} de l'intérieur`)}
+    ${ligne('Zones à demi transparentes', m.m4Transparence.aTransparencePartielle
+        ? `oui, ${nb(m.m4Transparence.pixelsSemiTransparents)} pixels` : 'non')}
+    ${ligne('Résidus de compression', pourcent(m.m3Halo.partBoite, 2),
         `${nb(m.m3Halo.pixelsImpurs)} pixels ni fond ni couleur du logo`)}
-    ${ligne('Pixels orphelins retirés', nb(m.proprete.pixelsRetires),
-        `${nb(m.proprete.composantesRetirees)} amas isolés`)}
-    ${ligne('Trait le plus fin',
+
+    <details class="mesures-fines">
+    <summary>Les mesures fines du dessin</summary>
+    <p class="note">Elles sont exactes, et elles ne produisent aucun verdict. Le trait
+    minimal accepté va de 0,13 à 1,00 mm selon la source et la matière : un écart pareil
+    ne fait pas un seuil, et nous préférons vous donner la mesure plutôt qu'un chiffre
+    que nous aurions moyenné.</p>
+    ${ligne('Le trait le plus fin du dessin',
         longueur(m.m5TraitLePlusFin.encadrementPx, m.m5TraitLePlusFin.encadrementMm))}
-    ${ligne('Écart le plus étroit',
+    ${ligne('Le plus petit écart entre deux formes',
         longueur(m.m6ContreFormes.ecartMinimalPx, m.m6ContreFormes.ecartMinimalMm))}
-    ${ligne('Plus petite contre forme', encadrement(m.m6ContreFormes.plusPetiteContreFormePx),
-        `${m.m6ContreFormes.nombreContreFormes} contre formes fermées`)}
-    ${ligne('Hauteur de capitale', m.m7HauteurDeCapitale.hauteurPx === null
+    ${ligne('Le plus petit trou fermé du dessin',
+        encadrement(m.m6ContreFormes.plusPetiteContreFormePx),
+        `${m.m6ContreFormes.nombreContreFormes} trous fermés, comme l'intérieur d'un o`)}
+    ${ligne('La hauteur des capitales', m.m7HauteurDeCapitale.hauteurPx === null
         ? `non mesurée (${m.m7HauteurDeCapitale.motif})`
         : (m.m7HauteurDeCapitale.hauteurMm != null
             ? `${texte(m.m7HauteurDeCapitale.hauteurMm, ' mm')} <span class="secondaire">soit `
               + `${texte(m.m7HauteurDeCapitale.hauteurPx, ' px')}</span>`
             : texte(m.m7HauteurDeCapitale.hauteurPx, ' px')))}
-    ${ligne('Plus grand aplat', `${nb(m.m8PlusGrandAplat.airePx)} px²`,
+    ${ligne('La plus grande surface d\'un seul tenant', `${nb(m.m8PlusGrandAplat.airePx)} px²`,
         `${pourcent(m.m8PlusGrandAplat.partDeLEncre, 0)} de l'encre`)}
-    ${ligne('Dégradé ou photo', m.m10IndicesExport.partInterieurVariable === null
-        ? 'non mesuré'
-        : `${pourcent(m.m10IndicesExport.partInterieurVariable)} de l'intérieur`)}
-    ${ligne('Transparence partielle', m.m4Transparence.aTransparencePartielle
-        ? `oui, ${nb(m.m4Transparence.pixelsSemiTransparents)} pixels` : 'non')}
+    ${ligne('Points isolés retirés avant mesure', nb(m.proprete.pixelsRetires),
+        `${nb(m.proprete.composantesRetirees)} amas isolés`)}
+    </details>
     </details>
   `;
   devoiler('mesures');
@@ -536,6 +557,7 @@ function poserVignette(image) {
   pinceau.drawImage(reduireParMoities(source, toile.width, toile.height),
                     0, 0, toile.width, toile.height);
   zone.classList.add('depot-analyse');
+  passerEnModeResultat(true);
   zone.innerHTML = `<img class="vignette" alt="Le logo que vous venez de déposer"
     src="${toile.toDataURL('image/png')}">
     <span>Analysé sur cette page. Cliquez pour essayer un autre logo.</span>`;
@@ -569,9 +591,28 @@ function reduireParMoities(source, cibleL, cibleH) {
 
 function rendreLaZoneDeDepot() {
   const zone = $('depot');
+  passerEnModeResultat(false);
   if (!zone || depotOrigine === null) return;
   zone.classList.remove('depot-analyse');
   zone.innerHTML = depotOrigine;
+}
+
+/**
+ * LA PRESENTATION SORT DE L'ECRAN DE RESULTAT, arbitrage Alex du 24/08/2026.
+ *
+ * « Ce que fait cet outil », « ce qu'il ne fait pas » et les questions
+ * frequentes repondent a quelqu'un qui HESITE a deposer. Une fois le fichier
+ * depose, ces trois blocs se lisent comme du remplissage derriere un verdict,
+ * et ils poussent la grille loin du haut de page.
+ *
+ * ILS NE SONT PAS SUPPRIMES, ILS SONT MASQUES. Le HTML servi les garde mot
+ * pour mot, avec leur balisage FAQPage : ce que les moteurs lisent ne change
+ * pas d'une ligne, et le visiteur qui arrive sans rien deposer les voit
+ * toujours. Ils reviennent des qu'on redepose un autre logo.
+ */
+function passerEnModeResultat(actif) {
+  const bloc = $('presentation');
+  if (bloc) bloc.hidden = actif;
 }
 
 function reinitialiser() {
@@ -730,16 +771,20 @@ function afficherFiche(fiche) {
 function afficherConseils(mesures, fiche) {
   const liste = conseiller(mesures, fiche);
   if (!liste.length) { $('conseils').hidden = true; return; }
+  // UNE PHRASE PAR POINT, arbitrage Alex du 24/08/2026. Chaque point tenait en
+  // un titre et deux paragraphes : six points faisaient dix huit blocs de
+  // texte apres le verdict, et « c'est pompeux, un peu illisible ». Le fait et
+  // la mecanique restent DEUX champs, parce que la doctrine du site est de ne
+  // jamais donner une mecanique sans la mesure qui la declenche : ils se
+  // rendent maintenant sur la meme ligne.
   $('conseils').innerHTML = `
     <h2>Ce que votre fichier implique au marquage</h2>
-    <p class="note">Chaque point ci-dessous croise une mesure de votre fichier avec
-    une mécanique de procédé. Ce ne sont pas des verdicts : nous ne vous disons pas
-    encore si votre logo passe, nous vous disons ce qu'il implique.</p>
-    ${liste.map((c) => `<div class="conseil">
-      <h3>${c.titre}</h3>
-      <p class="fait">${c.fait}</p>
-      <p class="mecanique">${c.mecanique}</p>
-    </div>`).join('')}`;
+    <p class="note">Ce ne sont pas des verdicts : chaque ligne croise une mesure de
+    votre fichier avec une mécanique de procédé.</p>
+    <ul class="conseils">${liste.map((c) => `<li class="conseil">
+      <b>${c.titre}.</b> <span class="fait">${c.fait}</span>
+      <span class="mecanique">${c.mecanique}</span>
+    </li>`).join('')}</ul>`;
   devoiler('conseils');
 }
 
