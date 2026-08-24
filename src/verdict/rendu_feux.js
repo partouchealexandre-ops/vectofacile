@@ -112,8 +112,14 @@ export function luminance([r, v, b]) {
 function raison(ligne) {
   if (ligne.feu === 'vert') return '';
   if (ligne.feu === 'orange' && ligne.nuance === 'format') {
+    // LE MOT MANQUAIT, arbitrage Alex du 24/08/2026. La phrase disait « des
+    // courbes », le bouton juste dessous disait « fichier vectoriel », et
+    // personne ne faisait le lien entre les deux. C'est pourtant LE mot que le
+    // marqueur emploie au telephone : il faut donc l'apprendre au visiteur, pas
+    // le contourner. Le site vulgarise, il ne remplace pas le vocabulaire.
     return 'Cette technique fabrique un outil à partir de votre dessin : elle réclame '
-      + 'des courbes, pas une image. Nous les fabriquons ici, gratuitement.';
+      + 'des courbes, pas une image. Cela s\'appelle un fichier vectoriel, et nous '
+      + 'vous le fabriquons ici, gratuitement.';
   }
   if (ligne.feu === 'orange' && ligne.nuance === 'definition') {
     return `Votre image est trop petite pour un marquage de ${ligne.chiffres.tailleMm} mm, `

@@ -850,6 +850,13 @@ const controle = (libelle, ok, detail) => resultats.push({ libelle, ok, detail }
              && !/Obtenir mon fichier vectoriel/.test(rendreFeux([floue.numerique_uv])));
   controle('le format, lui, propose le bouton : c\'est nous qui le reglons',
            /Obtenir mon fichier vectoriel/.test(rendreFeux([image.serigraphie])));
+  // LE MOT S'APPREND, il ne se contourne pas. La raison disait « des courbes »
+  // et le bouton disait « fichier vectoriel » : deux mots pour une seule chose,
+  // et aucun des deux n'expliquait l'autre. Le marqueur, lui, dit « vectoriel »
+  // au telephone : c'est ce mot la que le visiteur doit repartir en sachant.
+  controle('et la raison NOMME le fichier vectoriel, elle ne dit pas que « des courbes »',
+           /fichier vectoriel/.test(rendreFeux([image.serigraphie])
+             .match(/class="feu-raison">([^<]*)</)?.[1] ?? ''));
 
   // 5. ROUGE R1, TROP DE COULEURS, et seulement la ou le plafond SERT. La
   // tampographie a son seuil ARBITRÉ ALEX du 20/08 ; la serigraphie n'a qu'un

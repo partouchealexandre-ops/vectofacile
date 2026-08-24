@@ -247,8 +247,10 @@ function ditRaisonSi(p) {
     return `${large}, votre image sortirait floue : elle n'a pas assez de pixels. `
       + 'Le fichier vectoriel, lui, ne perd jamais en netteté.';
   }
+  // Meme pedagogie que dans la grille de feux : on nomme le fichier vectoriel
+  // plutot que de parler de courbes sans dire de quoi il s'agit.
   return 'Ce marquage fabrique un outil à partir de votre dessin, et un outil se '
-    + 'fabrique à partir de courbes.';
+    + 'fabrique à partir de courbes : c\'est ce qu\'on appelle un fichier vectoriel.';
 }
 
 function ditGain(p, vectorielPret) {
