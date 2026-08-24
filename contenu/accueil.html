@@ -28,7 +28,7 @@
 <!-- Balisage structure de l'accueil. Un seul bloc, comme sur les pages de
      contenu : deux blocs seraient deux endroits a tenir a jour, et les robots
      ne lisent de toute facon que ce qu'ils trouvent en premier. -->
-<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","name":"Vecto Facile","url":"{{DOMAINE}}/","inLanguage":"fr-FR","publisher":{"@id":"{{DOMAINE}}/#editeur"}},{"@type":"Organization","@id":"{{DOMAINE}}/#editeur","name":"Bytouch","url":"{{DOMAINE}}/","address":{"@type":"PostalAddress","streetAddress":"4 rue Lemercier","postalCode":"75017","addressLocality":"Paris","addressCountry":"FR"}},{"@type":"WebApplication","name":"Vecto Facile","applicationCategory":"DesignApplication","operatingSystem":"Navigateur web","url":"{{DOMAINE}}/","offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"},"featureList":"Vectorisation et diagnostic de marquage d'un logo, sans envoi de fichier"},{"@type":"FAQPage","mainEntity":[{"@type":"Question","name":"La vectorisation est-elle vraiment gratuite ?","acceptedAnswer":{"@type":"Answer","text":"Oui, sans compte, sans adresse e-mail et sans limite de nombre de fichiers. Le calcul se fait sur votre machine, ce qui ne coûte pratiquement rien à faire tourner."}},{"@type":"Question","name":"Quels formats de fichier puis-je vectoriser ?","acceptedAnswer":{"@type":"Answer","text":"PNG, JPEG, GIF et WEBP. Un fichier déjà vectoriel n'a pas besoin d'être vectorisé, et l'outil le signale au lieu de faire semblant."}},{"@type":"Question","name":"Mon logo est-il envoyé sur un serveur ?","acceptedAnswer":{"@type":"Answer","text":"Non. Coupez votre connexion internet après le chargement de la page puis déposez un logo : tout fonctionne encore, ce qui prouve que rien ne part."}},{"@type":"Question","name":"Que faire si le fichier vectoriel obtenu est décevant ?","acceptedAnswer":{"@type":"Answer","text":"C'est presque toujours que l'image de départ est trop petite. Cherchez la plus grande version disponible, un PDF de plaquette ou un export d'origine, et recommencez."}}]}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","name":"Vecto Facile","url":"{{DOMAINE}}/","inLanguage":"fr-FR","publisher":{"@id":"{{DOMAINE}}/#editeur"}},{"@type":"Organization","@id":"{{DOMAINE}}/#editeur","name":"Bytouch","url":"{{DOMAINE}}/","address":{"@type":"PostalAddress","streetAddress":"4 rue Lemercier","postalCode":"75017","addressLocality":"Paris","addressCountry":"FR"}},{"@type":"WebApplication","name":"Vecto Facile","applicationCategory":"DesignApplication","operatingSystem":"Navigateur web","url":"{{DOMAINE}}/","offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"},"featureList":"Vectorisation et diagnostic de marquage d'un logo, sans envoi de fichier"},{"@type":"FAQPage","mainEntity":[{"@type":"Question","name":"La vectorisation est-elle vraiment gratuite ?","acceptedAnswer":{"@type":"Answer","text":"Oui, sans compte, sans adresse e-mail et sans limite de nombre de fichiers. Le calcul se fait sur votre machine, ce qui ne coûte pratiquement rien à faire tourner."}},{"@type":"Question","name":"Quels formats de fichier puis-je déposer ?","acceptedAnswer":{"@type":"Answer","text":"PNG, JPEG, GIF, WEBP, PDF et AI. Les quatre premiers sont des images : elles sont vectorisées, puis mesurées. Un PDF ou un fichier Illustrator est mesuré directement, sans être retracé, parce qu'il est déjà vectoriel."}},{"@type":"Question","name":"Mon logo est-il envoyé sur un serveur ?","acceptedAnswer":{"@type":"Answer","text":"Non. Coupez votre connexion internet après le chargement de la page puis déposez un logo : tout fonctionne encore, ce qui prouve que rien ne part."}},{"@type":"Question","name":"Que faire si le fichier vectoriel obtenu est décevant ?","acceptedAnswer":{"@type":"Answer","text":"C'est presque toujours que l'image de départ est trop petite. Cherchez la plus grande version disponible, un PDF de plaquette ou un export d'origine, et recommencez."}}]}]}</script>
 </head>
 <body>
 <main>
@@ -110,6 +110,17 @@
        Les blocs replies gardent un balisage STATIQUE, comme les boutons de
        telechargement : leurs ecouteurs sont poses une fois au demarrage, et la
        remise a zero masque sans jamais toucher au contenu. -->
+  <!-- LA REPONSE, puis les codes couleur, puis la grille. Le compte de
+       couleurs se lit dans la reponse : c'est donc la, et nulle part ailleurs,
+       qu'on a envie de deplier les codes. Le volet etait relegue sous les
+       boutons de telechargement, ou personne n'allait le chercher. -->
+  <div id="fait_principal" hidden></div>
+
+  <details id="volet_couleurs" class="volet" hidden>
+    <summary>Voir les codes couleur, à donner à votre marqueur</summary>
+    <section id="couleurs" hidden></section>
+  </details>
+
   <section id="verdict" hidden></section>
 
   <div id="telechargements" hidden>
@@ -117,11 +128,6 @@
     <button id="telecharger_pdf" class="second">Télécharger le .pdf</button>
     <button id="telecharger_svg" class="tertiaire">Le .svg, pour votre site web</button>
   </div>
-
-  <details id="volet_couleurs" class="volet" hidden>
-    <summary>Vos couleurs, à donner à votre marqueur</summary>
-    <section id="couleurs" hidden></section>
-  </details>
 
   <details id="volet_mesures" class="volet" hidden>
     <summary>Les mesures de votre fichier</summary>
@@ -183,8 +189,10 @@
     calcul se fait sur votre machine, ce qui ne nous coûte pratiquement rien à faire
     tourner.</p>
     <h3>Quels formats puis-je déposer ?</h3>
-    <p>PNG, JPEG, GIF et WEBP. Un fichier déjà vectoriel n'a pas besoin d'être vectorisé,
-    et l'outil vous le dit au lieu de faire semblant.</p>
+    <p>PNG, JPEG, GIF, WEBP, PDF et AI. Les quatre premiers sont des images : elles sont
+    vectorisées, puis mesurées. Un PDF ou un fichier Illustrator est mesuré directement,
+    sans être retracé, parce qu'il est déjà vectoriel : l'outil vous le dit au lieu de
+    faire semblant de travailler.</p>
     <h3>Mon logo est-il envoyé quelque part ?</h3>
     <p>Non. Coupez votre connexion internet après le chargement de la page et déposez un
     logo : tout fonctionne encore. <a href="/confidentialite">Le test complet</a>.</p>

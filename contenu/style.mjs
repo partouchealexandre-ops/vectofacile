@@ -180,9 +180,30 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
   .appel-grille { margin: 14px 0 2px; }
   /* STRUCTURE C DU BRIEF DU 21/08 : le verdict d'abord, seul, en gros. Le test
      du couloir se joue sur ces trois regles. */
-  .verdict-tete { margin: 4px 0 14px; }
-  .verdict-tete p { margin: 0; font-size: 20px; line-height: 1.45; }
-  .verdict-tete b { color: var(--navy); }
+  /* LA REPONSE, en haut de page. Le visiteur a lu « Votre logo est-il bon a
+     marquer ? » et il a depose son fichier : la premiere ligne REPOND, elle ne
+     mesure pas. Le compte de couleurs suit, en second, plus petit. */
+  .verdict-tete { margin: 8px 0 14px; padding: 14px 18px; border-radius: 10px;
+    border: 1px solid var(--trait); background: var(--gris-clair);
+    border-left: 4px solid var(--gris); }
+  .verdict-tete p { margin: 0; }
+  .fait-reponse { font-family: 'Poppins', var(--pile-systeme); font-size: 21px;
+    font-weight: 700; line-height: 1.25; letter-spacing: -.02em; }
+  .fait-couleurs { margin-top: 8px !important; font-size: 15px; color: var(--gris); }
+  .fait-couleurs b { color: var(--encre); }
+  /* La couleur du filet suit celle du feu le plus favorable de la grille : la
+     reponse et les cartes disent la meme chose, elles doivent se ressembler. */
+  .reponse-oui { border-left-color: var(--vert); }
+  .reponse-oui .fait-reponse { color: var(--vert); }
+  .reponse-format { border-left-color: var(--orange); }
+  .reponse-format .fait-reponse { color: #8f3d08; }
+  .reponse-definition { border-left-color: var(--orange); }
+  .reponse-definition .fait-reponse { color: #8f3d08; }
+  .reponse-retouche { border-left-color: #9c3722; }
+  .reponse-retouche .fait-reponse { color: #9c3722; }
+  /* Le volet des couleurs est monte juste sous la reponse : il se pose comme
+     une ligne discrete, pas comme un bloc de plus. */
+  #volet_couleurs { margin: 0 0 18px; }
   .verdict-action { margin: 0 0 22px; }
   .verdict-action .note { margin: 8px 0 0; }
   .cta-large { display: block; text-align: center; padding: 14px 20px; border-radius: 10px;

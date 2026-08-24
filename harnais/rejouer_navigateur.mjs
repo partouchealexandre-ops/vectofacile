@@ -668,12 +668,15 @@ console.log('');
       rouges: lignes.filter((l) => l.classList.contains('feu-rouge')).length,
       // L'action du format ne se propose QUE sur un orange de format.
       actionsFormat: bloc.querySelectorAll('.feu-orange .feu-action').length,
-      teteCouleurs: bloc.querySelector('.verdict-tete')?.innerText ?? '',
+      // LA REPONSE a quitte #verdict le 24/08 : elle ouvre la page, au dessus
+      // du volet des couleurs, qui est au dessus de la grille.
+      tete: document.getElementById('fait_principal')?.innerText ?? '',
+      teteClasse: document.querySelector('#fait_principal .verdict-tete')?.className ?? '',
       points: bloc.querySelectorAll('.points-attention li').length,
       // Ce qui ne doit PLUS exister sur cet ecran.
       cartesProduits: bloc.querySelectorAll('.produit').length,
-      ordre: [...document.querySelectorAll('#verdict, #volet_couleurs, #volet_mesures')]
-        .map((e) => e.id),
+      ordre: [...document.querySelectorAll(
+        '#fait_principal, #volet_couleurs, #verdict, #volet_mesures')].map((e) => e.id),
     };
   }, octets.toString('base64'));
   await page.close();
@@ -700,13 +703,24 @@ console.log('');
     ['et chaque brief se copie en un clic', constat.copiables === constat.briefs],
     ['le bouton de vectorisation ne s\'affiche que sur un orange de format',
       constat.actionsFormat >= 1],
-    // §6 : le fait le plus actionnable ouvre l'ecran.
-    ['le nombre de couleurs reelles ouvre l\'ecran',
-      /couleurs? réelles?/.test(constat.teteCouleurs)],
+    // LA PREMIERE LIGNE REPOND A LA QUESTION POSEE, elle ne mesure pas. Le
+    // visiteur a lu « Votre logo est-il bon a marquer ? » avant de deposer.
+    ['la premiere ligne repond a la question, elle ne mesure pas',
+      /technique|retouche|définie|format/i.test(constat.tete), constat.tete.slice(0, 70)],
+    ['et elle porte l\'etat qu\'elle annonce, pas une couleur au hasard',
+      /reponse-(oui|format|definition|retouche)/.test(constat.teteClasse),
+      constat.teteClasse],
+    // « Bonne nouvelle » ne s'ecrit QUE s'il existe au moins un vert. Le cas de
+    // corpus n'en a aucun : la phrase ne doit pas apparaitre.
+    ['« bonne nouvelle » ne s\'ecrit pas quand aucune technique ne passe',
+      constat.feux.includes('vert') || !/bonne nouvelle/i.test(constat.tete)],
+    ['le compte de couleurs reste, en second', /couleurs? réelles?/.test(constat.tete)],
     ['les points d\'attention suivent la grille, et restent courts',
       constat.points >= 1 && constat.points <= 5, `${constat.points} points`],
     ['la grille de produits a quitte l\'ecran principal', constat.cartesProduits === 0],
-    ['le verdict precede tout le reste dans la page', constat.ordre[0] === 'verdict'],
+    ['la reponse ouvre la page, les codes couleur suivent, puis la grille',
+      constat.ordre.join(' ') === 'fait_principal volet_couleurs verdict volet_mesures',
+      constat.ordre.join(' ')],
     ['aucune etiquette jargon du 19/08', !JARGON.test(constat.texte)],
     ['(temoin) le detecteur de jargon detecte bien',
       JARGON.test(`${constat.texte} tient les minimums publiés`)],

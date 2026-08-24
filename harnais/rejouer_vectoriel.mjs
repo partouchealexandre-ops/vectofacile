@@ -142,7 +142,8 @@ async function deposer(page, octets, nom, type) {
       // l'ACTION, une ligne et un bouton. On lit donc ce que le visiteur voit
       // maintenant, pas ce qui n'existe plus.
       actionFichier: document.querySelector('#verdict .verdict-action')?.innerText ?? '',
-      verdictCourt: document.querySelector('#verdict .verdict-tete')?.innerText ?? '',
+      // La reponse a quitte #verdict le 24/08 : elle ouvre la page.
+      verdictCourt: document.querySelector('#fait_principal .verdict-tete')?.innerText ?? '',
     };
   }, [octets.toString('base64'), nom, type]);
 }
@@ -206,11 +207,12 @@ await page.waitForTimeout(900);
     ['l\'action donne la sortie : redeposer l\'image d\'origine',
       /Vectoriser mon logo|image d'origine/.test(r.actionFichier),
       ],
-    // Depuis le lot 1 du 21/08, l'ecran ouvre sur le fait le plus actionnable :
-    // le nombre de couleurs reelles. C'est ce qu'un marqueur demande en
-    // premier, et ca decide de la technique comme du devis.
-    ['et le verdict, lui, ouvre sur le fait le plus actionnable',
-      /couleurs? réelles?/.test(r.verdictCourt), r.verdictCourt],
+    // Un faux vectoriel n'est pas une impasse : son IMAGE reste mesurable, et
+    // la page doit donc quand meme repondre a la question posee, puis donner le
+    // compte de couleurs. Ce controle verifie les deux etages de la reponse.
+    ['et la page repond quand meme, avec le compte de couleurs',
+      /technique|retouche|définie|format/i.test(r.verdictCourt)
+        && /couleurs? réelles?/.test(r.verdictCourt), r.verdictCourt],
   ], [r.titreFiche, ...r.conseils]);
 }
 

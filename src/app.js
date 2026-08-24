@@ -20,6 +20,7 @@ import { jugerGrille, choisirPourContraste } from './verdict/grille.js';
 import { jugerFeux } from './verdict/feux.js';
 import { CONTACT, rendreDecouverte } from './verdict/rendu_grille.js';
 import { rendreVerdict } from './verdict/rendu.js';
+import { rendreFaitPrincipal } from './verdict/rendu_feux.js';
 import { conseiller } from './conseils/conseils.js';
 import { preparerVectorisation, FORMES_MAXIMALES } from './vectorisation/options.js';
 import { construireProgramme, inventaire } from './vectorisation/programme.js';
@@ -150,14 +151,20 @@ function afficherCouleurs(m) {
   // Le titre vit dans le <summary> du volet : « un fait ne se dit qu'une fois »,
   // regle d'ecriture du brief du 21/08. Le compte de couleurs apparaissait
   // trois fois sur l'ecran, ici, dans les conseils et dans le tableau.
+  // LE COMPTE EST DIT JUSTE AU DESSUS, dans la reponse. Le repeter dans le
+  // resume du volet le dirait deux fois a dix pixels d'intervalle, et la
+  // mecanique du cout se dit une seule fois, dans les points d'attention.
+  // Ici, il ne reste que ce que ce volet est seul a savoir : les codes, et
+  // pourquoi le fichier en contient davantage.
   const volet = document.querySelector('#volet_couleurs > summary');
-  if (volet) volet.textContent = `Vos ${nb(n)} couleur${n > 1 ? 's' : ''} réelle${n > 1 ? 's' : ''}, à donner à votre marqueur`;
-  $('couleurs').innerHTML = `
-    <p class="note">Le fichier contient ${nb(m.m2Couleurs.couleursBrutes)} teintes au total,
-    mais ${n > 1 ? `ces ${nb(n)} couleurs portent` : 'cette couleur porte'} le dessin :
-    le reste est du lissage de bord. En sérigraphie et en tampographie, chaque couleur
-    est un écran et un passage de machine à part.</p>
-    ${rendrePalette(m.m2Couleurs.palette)}`;
+  if (volet) volet.textContent = 'Voir les codes couleur, à donner à votre marqueur';
+  const brutes = m.m2Couleurs.couleursBrutes;
+  const ecart = brutes > n
+    ? `<p class="note">Le fichier contient ${nb(brutes)} teintes au total, mais
+      ${n > 1 ? `ces ${nb(n)} couleurs portent` : 'cette couleur porte'} le dessin :
+      le reste est du lissage de bord.</p>`
+    : '';
+  $('couleurs').innerHTML = `${ecart}${rendrePalette(m.m2Couleurs.palette)}`;
   devoiler('couleurs');
 }
 
@@ -384,6 +391,16 @@ function rendreLeVerdict() {
     nomsParFamille: NOMS_PAR_FAMILLE,
   }, etat.grille);
   etat.feux = feux;
+  // DEUX BLOCS, DEPUIS LE 24/08/2026. La reponse ouvre la page, et le volet des
+  // couleurs se glisse ENTRE elle et la grille : le compte de couleurs se lit
+  // juste au dessus, donc c'est la, et nulle part ailleurs, qu'on a envie de
+  // voir les codes. Il etait relegue sous les telechargements, ou personne
+  // n'allait le chercher.
+  const tete = $('fait_principal');
+  if (tete) {
+    tete.innerHTML = rendreFaitPrincipal(m?.m2Couleurs?.couleursReelles ?? null, feux);
+    tete.hidden = false;
+  }
   $('verdict').innerHTML = rendreVerdict(m, feux, etat.fichierEtat);
   $('verdict').hidden = false;
 }
@@ -488,7 +505,23 @@ function poserVignette(image) {
   if (!zone || !image) return;
   if (depotOrigine === null) depotOrigine = zone.innerHTML;
   const COTE = 150;
-  const echelle = Math.min(COTE / image.largeur, COTE / image.hauteur, 1);
+
+  // DEUX DEFAUTS CUMULES, CORRIGES LE 24/08/2026. La vignette sortait
+  // pixelisee, et c'etait la premiere chose qu'un visiteur voyait de notre
+  // travail sur SON logo.
+  //
+  // 1. LA DENSITE D'ECRAN. La toile faisait 150 pixels pour une case affichee
+  //    a 150 pixels CSS. Sur un ecran Retina, 150 px CSS valent 300 pixels
+  //    reels : le navigateur agrandissait donc notre vignette d'un facteur
+  //    deux. On peint a la densite REELLE, et le CSS la ramene a 150.
+  //
+  // 2. LA REDUCTION D'UN SEUL COUP. Passer de 1270 px a 150 en un seul
+  //    drawImage fait echantillonner un pixel sur huit : les traits fins et
+  //    le texte circulaire se hachent. Le lissage du navigateur ne rattrape
+  //    pas un facteur pareil. On descend PAR MOITIES, ce qui moyenne les
+  //    pixels a chaque passe, et la derniere marche finit au format voulu.
+  const densite = Math.min(globalThis.devicePixelRatio || 1, 3);
+  const echelle = Math.min(COTE / image.largeur, COTE / image.hauteur, 1) * densite;
   const toile = document.createElement('canvas');
   toile.width = Math.max(1, Math.round(image.largeur * echelle));
   toile.height = Math.max(1, Math.round(image.hauteur * echelle));
@@ -498,12 +531,40 @@ function poserVignette(image) {
   const données = new ImageData(new Uint8ClampedArray(image.donnees), image.largeur, image.hauteur);
   source.getContext('2d').putImageData(données, 0, 0);
   const pinceau = toile.getContext('2d');
+  pinceau.imageSmoothingEnabled = true;
   pinceau.imageSmoothingQuality = 'high';
-  pinceau.drawImage(source, 0, 0, toile.width, toile.height);
+  pinceau.drawImage(reduireParMoities(source, toile.width, toile.height),
+                    0, 0, toile.width, toile.height);
   zone.classList.add('depot-analyse');
   zone.innerHTML = `<img class="vignette" alt="Le logo que vous venez de déposer"
     src="${toile.toDataURL('image/png')}">
     <span>Analysé sur cette page. Cliquez pour essayer un autre logo.</span>`;
+}
+
+/**
+ * LA REDUCTION PAR MOITIES.
+ *
+ * Tant que la source fait plus du double de la cible, on la divise par deux.
+ * Chaque passe moyenne quatre pixels en un, donc rien ne se perd : c'est la
+ * difference entre une vignette lisse et une vignette hachee. On s'arrete au
+ * dernier facteur deux, et le drawImage final fait la marche restante.
+ *
+ * Trois passes suffisent a couvrir tous les cas reels : un logo de 4000 px
+ * ramene a 300 tient en deux moities plus la marche finale.
+ */
+function reduireParMoities(source, cibleL, cibleH) {
+  let courant = source;
+  while (courant.width >= cibleL * 2 && courant.height >= cibleH * 2) {
+    const demi = document.createElement('canvas');
+    demi.width = Math.max(1, Math.floor(courant.width / 2));
+    demi.height = Math.max(1, Math.floor(courant.height / 2));
+    const p = demi.getContext('2d');
+    p.imageSmoothingEnabled = true;
+    p.imageSmoothingQuality = 'high';
+    p.drawImage(courant, 0, 0, demi.width, demi.height);
+    courant = demi;
+  }
+  return courant;
 }
 
 function rendreLaZoneDeDepot() {
@@ -518,7 +579,7 @@ function reinitialiser() {
   // n'existent pas sur la page courante (/vectoriser n'a pas de diagnostic)
   // sont simplement ignores.
   for (const id of ['erreur', 'avertissements', 'mesures', 'verdict', 'resultat',
-                    'couleurs', 'fiche', 'conseils', 'decouverte']) {
+                    'fait_principal', 'couleurs', 'fiche', 'conseils', 'decouverte']) {
     const e = $(id);
     if (e) { e.hidden = true; e.innerHTML = ''; }
   }

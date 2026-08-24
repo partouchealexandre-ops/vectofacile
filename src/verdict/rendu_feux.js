@@ -265,22 +265,62 @@ function rendreLigne(ligne, index) {
 }
 
 /**
- * L'EN-TETE : la vignette est posee par l'application, ici vient LE FAIT LE
- * PLUS ACTIONNABLE. Le nombre de couleurs decide de la technique et du devis,
- * et c'est la premiere question d'un marqueur.
+ * LE FAIT PRINCIPAL, REECRIT LE 24/08/2026.
+ *
+ * IL DISAIT LE MAUVAIS FAIT. « Votre logo a 3 couleurs réelles » est vrai,
+ * utile, et ce n'est pas la reponse a la question que le visiteur vient de
+ * poser. Il a depose son logo apres avoir lu « Votre logo est-il bon a
+ * marquer ? » : la premiere ligne doit REPONDRE, pas mesurer.
+ *
+ * La reponse se compte sur les feux, et elle ne se force jamais. « Bonne
+ * nouvelle » ne s'ecrit QUE s'il existe au moins un vert, c'est a dire au
+ * moins une technique qui prend le fichier tel quel. Un orange n'est pas une
+ * bonne nouvelle, c'est un travail a faire, meme quand c'est nous qui le
+ * faisons.
+ *
+ * Le compte de couleurs reste, en seconde ligne : c'est le fait le plus
+ * actionnable APRES la reponse, celui qu'un marqueur demande en premier.
  */
-export function rendreFaitPrincipal(nCouleurs) {
-  if (!Number.isInteger(nCouleurs) || nCouleurs < 1) return '';
-  return `<div class="verdict-tete"><p><b>Votre logo a ${nCouleurs} couleur${
-    nCouleurs > 1 ? 's' : ''} réelle${nCouleurs > 1 ? 's' : ''}.</b></p></div>`;
+export function rendreFaitPrincipal(nCouleurs, feux = []) {
+  const verts = feux.filter((f) => f.feu === 'vert').length;
+  const formats = feux.filter((f) => f.feu === 'orange' && f.nuance === 'format').length;
+  const definitions = feux.filter((f) => f.feu === 'orange' && f.nuance === 'definition').length;
+  const total = feux.length;
+
+  let titre = '';
+  let classe = '';
+  if (verts > 0) {
+    classe = 'reponse-oui';
+    titre = verts === total
+      ? `Bonne nouvelle : votre logo part tel quel sur les ${total} techniques.`
+      : `Bonne nouvelle : votre logo part tel quel sur ${verts} des ${total} techniques.`;
+  } else if (formats > 0) {
+    // PAS DE « BONNE NOUVELLE » ICI, et c'est delibere : aucune technique ne
+    // prend le fichier en l'etat. Mais l'obstacle est le notre, pas le sien,
+    // et la phrase doit le dire dans cet ordre.
+    classe = 'reponse-format';
+    titre = `Votre dessin convient. C'est le format du fichier qui bloque, et nous le `
+      + `réglons : ${formats} technique${formats > 1 ? 's' : ''} s'ouvre${
+        formats > 1 ? 'nt' : ''} avec le fichier vectoriel.`;
+  } else if (definitions > 0) {
+    classe = 'reponse-definition';
+    titre = 'Votre image est trop peu définie pour être marquée en l\'état. '
+      + 'Cherchez une version plus grande de votre logo.';
+  } else if (total > 0) {
+    classe = 'reponse-retouche';
+    titre = `Votre logo demande une retouche avant d'être marqué. Chaque technique ci-dessous `
+      + `dit laquelle, et vous pouvez copier le brief.`;
+  }
+  if (!titre) return '';
+
+  const couleurs = Number.isInteger(nCouleurs) && nCouleurs >= 1
+    ? `<p class="fait-couleurs">Votre logo a <b>${nCouleurs} couleur${
+      nCouleurs > 1 ? 's' : ''} réelle${nCouleurs > 1 ? 's' : ''}</b>.</p>`
+    : '';
+  return `<div class="verdict-tete ${classe}"><p class="fait-reponse">${titre}</p>
+  ${couleurs}</div>`;
 }
 
-/**
- * LA GRILLE. Deux cartes par ligne sur un ecran large, une seule sous 850 px.
- *
- * Le sprite des pictos est pose ICI, une seule fois : vingt cinq dessins
- * repetes dans quarante neuf puces tripleraient le poids de la page pour rien.
- */
 export function rendreFeux(feux) {
   if (!feux?.length) return '';
   return `${spritePictos()}

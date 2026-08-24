@@ -130,29 +130,19 @@ export function conseiller(mesures, fiche = null) {
     });
   }
 
-  // 4. LE NOMBRE DE COULEURS. On donne la mecanique, JAMAIS un plafond.
-  const couleurs = mesures.m2Couleurs?.couleursReelles;
-  if (couleurs) {
-    conseils.push({
-      cle: 'couleurs',
-      titre: couleurs === 1
-        ? 'Votre logo est monochrome'
-        : `Votre logo compte ${couleurs} couleurs réelles`,
-      fait: couleurs === 1
-        ? 'Une seule couleur réelle a été mesurée.'
-        : `${couleurs} couleurs réelles ont été mesurées, sur `
-          + `${mesures.m2Couleurs.couleursBrutes.toLocaleString('fr-FR')} teintes présentes `
-          + 'dans le fichier.',
-      mecanique: couleurs === 1
-        ? 'C\'est le cas le plus simple à marquer : un seul écran en sérigraphie, un seul '
-          + 'passage en tampographie, et la gravure laser ne sait de toute façon rendre '
-          + 'qu\'une teinte, celle de la matière sous la surface.'
-        : `En sérigraphie et en tampographie, chaque couleur demande son propre écran ou `
-          + `son propre cliché et son propre passage : ${couleurs} couleurs, c'est `
-          + `${couleurs} outils à fabriquer et ${couleurs} passages à caler. L'impression `
-          + 'numérique et le transfert, eux, impriment toutes les couleurs en une fois.',
-    });
-  }
+  // 4. LE NOMBRE DE COULEURS A QUITTE LES CONSEILS, le 24/08/2026.
+  //
+  // Il se disait TROIS fois sur le meme ecran, dans les memes termes : en tete
+  // de page, dans le volet des couleurs, et ici. « Chaque couleur est un ecran
+  // et un passage de machine a part » suivi douze lignes plus bas de « chaque
+  // couleur demande son propre ecran ou son propre cliche et son propre
+  // passage » : c'est la meme phrase, et la relire donne l'impression que le
+  // site meuble.
+  //
+  // Chacun des trois garde desormais son etage, et un seul :
+  //   le FAIT, en haut de page, dans le fait principal ;
+  //   le DETAIL, les codes et les parts, dans le volet des couleurs ;
+  //   le COUT, quand il y a matiere a l'ecrire, dans les points d'attention.
 
   // 5. LE HALO DE COMPRESSION.
   const halo = mesures.m3Halo?.partBoite;

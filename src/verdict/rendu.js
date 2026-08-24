@@ -50,8 +50,7 @@ export function rendreVerdict(mesures, feux = [], fichier = null) {
   // Les cartes de feu orange portent deja le bouton de conversion depuis le
   // 24/08/2026. Le bandeau du bas ne le repete pas : voir rendreActionFichier.
   const ctaDejaPorte = feux.some((f) => f.feu === 'orange' && f.nuance === 'format');
-  return `${rendreFaitPrincipal(mesures?.m2Couleurs?.couleursReelles ?? null)}
-${rendreFeux(feux)}
+  return `${rendreFeux(feux)}
 ${rendrePointsAttention(points)}
 ${rendreActionFichier(fichier, ctaDejaPorte)}
 ${rendreSuite()}`;
