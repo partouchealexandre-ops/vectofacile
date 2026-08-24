@@ -13,10 +13,10 @@
  * dessin, ses propres graisses, et le site aurait deux mains.
  *
  * LA REGLE QUI COMPTE, arbitrage Alex du 24/08/2026 : quand un produit nouveau
- * n'a pas de picto, ON N'EN INVENTE PAS. On retombe sur `defaut`, le produit
- * entre dans APPROXIMATIONS, et `pictosManquants()` le remonte pour que le
- * dessin soit commande dans le meme langage. Une icone improvisee dans un autre
- * style coute plus cher a rattraper qu'un rond neutre pendant une semaine.
+ * n'a pas de picto, ON N'EN INVENTE PAS. Il retombe sur `defaut` et
+ * `pictosManquants()` le remonte, avec son motif, pour que le dessin soit
+ * commande dans le meme langage. Une icone improvisee dans un autre style coute
+ * plus cher a rattraper qu'un rond neutre pendant une semaine.
  *
  * Fonction PURE : pas de DOM, pas de fetch. Elle se teste dans node.
  */
@@ -38,10 +38,10 @@ export const PICTOS_TECHNIQUE = Object.freeze({
 });
 
 /**
- * LES PICTOS D'OBJET. Dix-huit dessins pour vingt-neuf produits : plusieurs
- * objets partagent legitimement une silhouette (une gourde et une gourde inox
- * sont la meme forme), d'autres la partagent FAUTE DE MIEUX et sont declares
- * dans APPROXIMATIONS.
+ * LES PICTOS D'OBJET. Vingt cinq dessins pour vingt neuf produits : plusieurs
+ * objets partagent legitimement une silhouette, une gourde et une gourde inox
+ * sont la meme forme, et ceux la sont declares dans PARTAGES_VOULUS. Les autres
+ * sont des manques, et le harnais les reclame.
  */
 export const PICTOS_OBJET = Object.freeze({
   stylo: '<path d="m15 49 11-3 22-22-8-8-22 22z"/><path d="m40 24 8 8"/>',
@@ -61,6 +61,17 @@ export const PICTOS_OBJET = Object.freeze({
   serviette: '<path d="M16 12h32v40H16z"/><path d="M16 40h32M24 12v40"/>',
   bonnet: '<path d="M18 38V26a14 14 0 0 1 28 0v12"/><path d="M14 38h36v12H14z"/><circle cx="32" cy="12" r="3"/>',
   etui: '<rect x="14" y="18" width="36" height="30" rx="4"/><path d="M24 18v-6h16v6M14 32h36"/>',
+  // LOT COMPLEMENTAIRE DU 24/08/2026, commande apres le rapport du harnais.
+  // `etui_fin` porte volontairement une cle distincte de `etui` : redessiner
+  // `etui` aurait change en silence le picto du boitier et de la trousse, qui
+  // n'ont rien demande. Un dessin nouveau prend une cle nouvelle.
+  chargeur: '<rect x="18" y="15" width="28" height="31" rx="5"/><path d="M26 15V9M38 15V9"/><path d="M28 26h8"/><path d="M32 22v8"/><path d="M25 46v7M39 46v7"/>',
+  sweat: '<path d="M23 15 14 20 8 34l9 4 5-10v23h20V28l5 10 9-4-6-14-9-5"/><path d="M23 15c1 5 5 8 9 8s8-3 9-8"/><path d="M22 44h20"/>',
+  sac_a_dos: '<path d="M20 24c0-8 5-13 12-13s12 5 12 13"/><rect x="15" y="21" width="34" height="34" rx="8"/><path d="M23 35h18v12H23z"/><path d="M15 30h-4v17h4M49 30h4v17h-4"/><path d="M26 21v-5h12v5"/>',
+  briquet: '<rect x="18" y="24" width="28" height="31" rx="4"/><path d="M23 24v-8h17v8"/><path d="M40 17h7"/><circle cx="28" cy="20" r="3"/><path d="M43 13c4 4 4 8 0 11-3-2-5-4-4-7 1-2 2-3 4-4z"/>',
+  agenda: '<rect x="14" y="14" width="36" height="40" rx="4"/><path d="M22 10v9M32 10v9M42 10v9"/><path d="M14 24h36"/><path d="M22 32h5M33 32h5M22 40h5M33 40h5"/>',
+  etui_fin: '<rect x="12" y="20" width="40" height="27" rx="7"/><path d="M16 25 32 36l16-11"/><path d="M24 47v5h16v-5"/>',
+  sous_main: '<rect x="8" y="15" width="48" height="34" rx="5"/><path d="M16 42h32"/><path d="m39 23 8 8"/><path d="m37 25 8 8"/><path d="M36 34l11-11"/>',
   defaut: '<circle cx="32" cy="32" r="18"/><path d="M24 32h16M32 24v16"/>',
 });
 
@@ -73,47 +84,56 @@ export const PICTO_PAR_PRODUIT = Object.freeze({
   'stylo': 'stylo',
   'stylo métal': 'stylo',
   'powerbank': 'batterie',
-  'chargeur': 'batterie',
+  'chargeur': 'chargeur',
   'gourde': 'gourde',
   'gourde inox': 'gourde',
   'règle': 'regle',
   'boîtier': 'etui',
   't-shirt': 'textile',
-  'sweat': 'textile',
+  'sweat': 'sweat',
   'polo': 'textile',
   'tote bag': 'sac',
-  'sac à dos': 'sac',
+  'sac à dos': 'sac_a_dos',
   'sac en toile': 'sac',
   'casquette': 'casquette',
   'bonnet': 'bonnet',
   'parapluie': 'parapluie',
   'mug': 'mug',
   'carnet': 'carnet',
-  'agenda': 'carnet',
-  'briquet': 'defaut',
+  'agenda': 'agenda',
+  'briquet': 'briquet',
   'clé USB': 'usb',
   'porte-clés': 'porte_cles',
   'objet en bois': 'bois',
   'cuir': 'cuir',
   'serviette': 'serviette',
   'trousse': 'etui',
-  'étui': 'etui',
-  'sous-main': 'etui',
+  'étui': 'etui_fin',
+  'sous-main': 'sous_main',
 });
 
 /**
- * CE QUI EST APPROXIME, ET POURQUOI ON LE DECLARE.
+ * LES PARTAGES VOULUS, et pourquoi ils ne sont pas des manques.
  *
  * Deux objets qui partagent un picto DANS LA MEME CARTE donnent deux puces
  * identiques cote a cote : le picto cesse alors d'informer, il decore. C'est le
- * seul critere retenu ici, et il est mecanique : `pictosManquants()` le
- * recalcule sur les donnees reelles, il ne lit pas cette liste.
+ * seul critere qui declenche une commande de dessin, et il est mecanique :
+ * `pictosManquants()` le recalcule sur les donnees reelles, il ne lit jamais
+ * cette liste.
  *
- * Cette liste sert a documenter l'intention, pas a produire le rapport.
+ * Ceux ci partagent une silhouette a dessein, et aucun ne se retrouve deux fois
+ * dans la meme carte. Une gourde et une gourde inox ont la meme forme ; un
+ * stylo metal est un stylo. Les redessiner separement ferait sept variantes du
+ * meme trait pour une difference que personne ne verrait a 15 px.
+ *
+ * Le lot du 24/08/2026 a ferme les sept vrais manques : le rapport sort vide.
  */
-export const APPROXIMATIONS = Object.freeze([
-  'briquet', 'sweat', 'polo', 'sac à dos', 'chargeur', 'agenda',
-  'trousse', 'étui', 'sous-main',
+export const PARTAGES_VOULUS = Object.freeze([
+  { produit: 'gourde inox', partageAvec: 'gourde' },
+  { produit: 'stylo métal', partageAvec: 'stylo' },
+  { produit: 'polo', partageAvec: 't-shirt' },
+  { produit: 'sac en toile', partageAvec: 'tote bag' },
+  { produit: 'boîtier', partageAvec: 'trousse' },
 ]);
 
 /** Le picto d'un produit, ou `defaut` si le libelle n'est pas dans la table. */

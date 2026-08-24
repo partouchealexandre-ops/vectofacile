@@ -949,8 +949,8 @@ const controle = (libelle, ok, detail) => resultats.push({ libelle, ok, detail }
   // repete sept fois, et la page triple de poids sans que rien ne se voie. Un
   // picto absent, et une puce sort avec un rond neutre que personne ne
   // remarque a la relecture.
-  const { spritePictos, pictoProduit, pictosManquants, PICTOS_TECHNIQUE, objets } =
-    await import('../src/verdict/pictos.js');
+  const { spritePictos, pictoProduit, pictosManquants, PICTOS_TECHNIQUE,
+    PARTAGES_VOULUS, objets } = await import('../src/verdict/pictos.js');
 
   controle('le sprite des pictos est pose UNE seule fois dans la grille',
            (ecran.match(/class="sprite-pictos"/g) ?? []).length === 1);
@@ -972,6 +972,21 @@ const controle = (libelle, ok, detail) => resultats.push({ libelle, ok, detail }
   // demande a passer au dessin, et le harnais la tient a jour tout seul. La
   // regle du 24/08 est de NE PAS improviser une icone dans un autre style.
   const manquants = pictosManquants(TECHNIQUES_FEUX);
+  // LA LISTE DES PARTAGES VOULUS NE DOIT PAS DERIVER. Un partage declare qui
+  // n'en est plus un laisse croire qu'un choix a ete fait, alors que le dessin
+  // a change sous lui. On verifie les deux moities : les deux objets portent
+  // bien le meme picto, et ils ne se croisent dans AUCUNE carte, sinon ce
+  // n'etait pas un partage voulu mais un manque non declare.
+  controle('chaque partage de picto declare en est vraiment un',
+           PARTAGES_VOULUS.every((v) =>
+             pictoProduit(v.produit) === pictoProduit(v.partageAvec)
+             && !TECHNIQUES_FEUX.some((t) => {
+               const l = objets(t.produits);
+               return l.includes(v.produit) && l.includes(v.partageAvec);
+             })),
+           PARTAGES_VOULUS.filter((v) =>
+             pictoProduit(v.produit) !== pictoProduit(v.partageAvec))
+             .map((v) => v.produit).join(', '));
   controle('aucun picto absent n\'est ignore : le rapport les nomme tous',
            TECHNIQUES_FEUX.flatMap((t) => objets(t.produits))
              .filter((n) => pictoProduit(n) === 'defaut')
