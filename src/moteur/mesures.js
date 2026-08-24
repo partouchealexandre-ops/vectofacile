@@ -442,6 +442,96 @@ export function m8PlusGrandAplat(image, masque, palette, largeur, hauteur, lab) 
   return resultat;
 }
 
+/* ----------------------------------------------------------------- M11 */
+
+/**
+ * M11 : CE QUE LE LOGO PERD EN UNE SEULE COULEUR.
+ *
+ * La mesure qu'aucun outil du marche ne fait, et le cas fondateur est reel :
+ * une chaine de creches a un visage creme pose DANS une goutte rouge, sans
+ * contour. Grave au laser, brode en une couleur ou marque a chaud, le dessin
+ * n'a plus qu'une teinte : le visage et la goutte deviennent la meme matiere,
+ * et il ne reste qu'une goutte pleine. Le personnage a disparu.
+ *
+ * CE N'EST PAS UN JUGEMENT SUR LE NOMBRE DE COULEURS. Un logo a trois couleurs
+ * grave au laser sort en monochrome et c'est le cas standard, accepte tous les
+ * jours. Ce qui se mesure ici est autre chose : est-ce que le DESSIN survit a
+ * la perte des couleurs, ou est-ce qu'il se referme sur lui-meme ?
+ *
+ * LE PRINCIPE, et il tient en une phrase : deux formes de couleurs
+ * differentes qui se touchent ne font qu'une forme quand la couleur disparait.
+ * On regarde donc les composantes connexes de l'encre ENTIERE, celle du
+ * monochrome, et on compte combien de couleurs chacune contient. Une
+ * composante qui en contient deux ou plus est une fusion : ce qui etait lisible
+ * par contraste de teinte ne l'est plus.
+ *
+ * CE QUI EST RENDU, jamais un verdict : la part d'encre qui disparait, le
+ * nombre de formes concernees, et les deux couleurs du cas le plus gros, pour
+ * que le rendu puisse nommer ce qui se confond au lieu de rester general.
+ *
+ * PARAMETRE D'INSTRUMENT, pas seuil de marquage (doctrine §3 de la skill
+ * moteur) : sous PART_FUSION_NEGLIGEABLE de l'encre, une forme absorbee ne
+ * change pas la lecture du logo. Cale sur le corpus synthetique, ne vient
+ * d'aucune source, ne descend d'aucun arbitrage.
+ */
+const PART_FUSION_NEGLIGEABLE = 0.005;
+
+export function m11FusionMonochrome(masque, affectation, palette, largeur, hauteur) {
+  if (!palette || palette.length < 2) {
+    return { mesuree: false, motif: 'une seule couleur : rien a perdre',
+             fusionne: false, formesPerdues: 0, partPerdue: 0, confusion: null };
+  }
+  const { composantes, etiquettes } = composantesConnexes(masque, largeur, hauteur);
+  if (!composantes.length) {
+    return { mesuree: false, motif: 'aucune forme', fusionne: false,
+             formesPerdues: 0, partPerdue: 0, confusion: null };
+  }
+
+  // Par composante du monochrome : l'aire de chaque couleur qui la compose.
+  const aires = composantes.map(() => new Map());
+  let encre = 0;
+  for (let i = 0; i < masque.length; i++) {
+    if (!masque[i] || !etiquettes[i]) continue;
+    const k = affectation[i];
+    if (k < 0) continue;
+    encre++;
+    const m = aires[etiquettes[i] - 1];
+    m.set(k, (m.get(k) ?? 0) + 1);
+  }
+
+  let perdue = 0;
+  let formesPerdues = 0;
+  let pire = null;
+  for (const m of aires) {
+    if (m.size < 2) continue;
+    // Dans une composante multicolore, la couleur majoritaire est celle qui
+    // reste lisible : c'est la masse. Les autres sont absorbees par elle.
+    const rangees = [...m.entries()].sort((a, b) => b[1] - a[1]);
+    const [dominante] = rangees;
+    for (const [k, aire] of rangees.slice(1)) {
+      if (encre && aire / encre < PART_FUSION_NEGLIGEABLE) continue;
+      perdue += aire;
+      formesPerdues++;
+      if (!pire || aire > pire.aire) {
+        pire = { aire, absorbee: palette[k]?.rvb ?? null, absorbante: palette[dominante[0]]?.rvb ?? null };
+      }
+    }
+  }
+
+  return {
+    mesuree: true,
+    motif: null,
+    fusionne: formesPerdues > 0,
+    formesPerdues,
+    partPerdue: encre ? perdue / encre : 0,
+    // Les deux teintes qui se confondent, pour que la phrase puisse les
+    // nommer. « Le clair dans le foncé » se voit ; « des formes fusionnent »
+    // ne se voit pas.
+    confusion: pire ? { absorbee: pire.absorbee, absorbante: pire.absorbante,
+                        part: encre ? pire.aire / encre : 0 } : null,
+  };
+}
+
 /* ------------------------------------------------------------------ M9 */
 
 /**
@@ -781,6 +871,15 @@ export function mesurer(image, options = {}) {
   // valable quand il est le plus fin. Voir le commentaire de
   // affectationParCouleur pour le pourquoi.
   const plans = mesurerParPlans(image, masque, m2._interne, lab, largeur, hauteur, boite);
+  // M11 se calcule sur la MEME affectation que les plans : deux affectations
+  // independantes divergeraient sur les pixels de frontiere, et la mesure
+  // dirait qu'une forme fusionne alors que le plan la voit separee.
+  const m11 = m11FusionMonochrome(
+    masque,
+    m2._interne && m2._interne.length >= 2
+      ? affectationParCouleur(image, masque, m2._interne, lab)
+      : new Int32Array(masque.length).fill(0),
+    m2._interne, largeur, hauteur);
   if (plans) {
     // LE TRAIT : le pire des deux mondes, et c'est voulu. Les plans voient ce
     // que l'union ne voit pas, un motif pose sur un aplat ; l'union voit ce
@@ -887,6 +986,11 @@ export function mesurer(image, options = {}) {
     // sert pour montrer ou est le probleme, et la vectorisation pour ne pas
     // refaire le meme travail sur les memes pixels.
     masqueEncre: masque,
+    // CE QUE LE LOGO PERD EN UNE SEULE COULEUR. Gravure laser, embossage,
+    // marquage a chaud et broderie une couleur en dependent : c'est la seule
+    // mesure qui distingue « votre logo sortira en monochrome, c'est normal »
+    // de « en monochrome, votre dessin se referme ».
+    m11FusionMonochrome: m11,
     m9TailleMaximale: options.dpiCible
       ? m9TailleMaximaleMm(largeur, hauteur, options.dpiCible)
       : null,

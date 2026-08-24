@@ -602,221 +602,146 @@ console.log('');
 }
 
 // ---------------------------------------------------------------------------
-// L'ECRAN DE RESULTAT EST UNE GRILLE DE MATIERES REELLES.
+// L'ECRAN DE RESULTAT EST LA GRILLE DES SEPT FEUX.
 //
-// Pivot du 20/08 : l'axe n'est plus la technique, c'est le produit. Personne
-// n'arrive en se demandant s'il peut faire de la tampographie ; on arrive en
-// se demandant si son logo passe sur un mug.
+// LOT 1 du 21/08, et c'est un renversement. La grille de PRODUITS a ete
+// retiree de l'ecran principal apres un test rate en conditions reelles : sur
+// le logo d'une chaine de creches, elle a propose un powerbank et un stylo en
+// aluminium, sans un seul textile. Elle ne savait pas a qui elle parlait, et
+// elle ne pouvait pas le savoir en montrant un echantillon de matieres.
 //
-// Ce bloc remplace celui qui pilotait le menu deroulant et lisait des tailles
-// calculees sur les minimums publies : cet ecran n'existe plus. Il passe par
-// le vrai chemin, celui du visiteur, et il verifie ce que la page MONTRE,
-// jamais ce que le module calcule : le harnais du verdict s'en charge.
+// Sept techniques, c'est tout le metier. Ce bloc verifie ce que la page MONTRE,
+// par le vrai chemin du visiteur ; la semantique des feux, elle, est jugee cas
+// par cas dans le harnais du verdict.
 {
   const page = await navigateur.newPage();
   await page.goto(`http://127.0.0.1:${PORT}/`, { waitUntil: 'networkidle' });
   await page.waitForTimeout(900);
-  const octets = fs.readFileSync(path.join(IMAGES, 'couleurs_09_plat.png'));
+  const octets = fs.readFileSync(path.join(IMAGES, 'monochrome_fusion.png'));
   const constat = await page.evaluate(async (b64) => {
     const fichier = new File(
       [Uint8Array.from(atob(b64), (c) => c.charCodeAt(0))], 'logo.png', { type: 'image/png' });
     await globalThis.vecto.traiter(fichier);
     const bloc = document.getElementById('verdict');
-    const cartes = [...bloc.querySelectorAll('.produit')];
+    const lignes = [...bloc.querySelectorAll('.feu')];
     return {
       texte: bloc.innerText,
-      cartes: cartes.length,
-      verdicts: [...new Set(cartes.map((c) => c.querySelector('.produit-verdict').textContent.trim()))],
-      // Chaque carte doit porter une phrase qui dit quelque chose. Une carte
-      // muette serait pire qu'une carte absente.
-      phrasesVides: cartes.filter((c) => !c.querySelector('.produit-phrase')?.textContent.trim()).length,
-      // B4 du brief du 20/08 : deux cartes ne disent pas la meme chose.
-      phrases: cartes.map((c) => c.querySelector('.produit-phrase')?.textContent.trim() ?? ''),
-      silhouettes: bloc.querySelectorAll('.produit .silhouette').length,
-      liensExternes: bloc.querySelectorAll('a[href^="https://"], a[href^="http://"]').length,
-      appels: bloc.querySelectorAll('.cta-entete').length,
+      lignes: lignes.length,
+      feux: lignes.map((l) => (l.className.match(/feu-(vert|orange|rouge)/) ?? [])[1]),
+      // Chaque ligne DOIT porter sa traduction en produits : c'est elle qui
+      // rend la technique comprehensible a qui n'est pas du metier.
+      produits: lignes.filter((l) => l.querySelector('.feu-produits')?.textContent.trim()).length,
+      definitions: lignes.filter((l) => l.querySelector('.feu-definition')?.textContent.trim()).length,
+      // Une raison n'apparait QUE si le feu n'est pas vert.
+      vertsAvecRaison: lignes.filter((l) => l.classList.contains('feu-vert')
+        && l.querySelector('.feu-raison')).length,
+      // Sous un rouge, le brief du graphiste et son bouton de copie.
+      briefs: bloc.querySelectorAll('.feu-brief').length,
+      copiables: bloc.querySelectorAll('.feu-copier[data-copier]').length,
+      rouges: lignes.filter((l) => l.classList.contains('feu-rouge')).length,
+      // L'action du format ne se propose QUE sur un orange de format.
+      actionsFormat: bloc.querySelectorAll('.feu-orange .feu-action').length,
+      teteCouleurs: bloc.querySelector('.verdict-tete')?.innerText ?? '',
+      points: bloc.querySelectorAll('.points-attention li').length,
       // Ce qui ne doit PLUS exister sur cet ecran.
-      menuDeroulant: bloc.querySelector('#choix_produit') !== null,
-      cartesTechniques: bloc.querySelectorAll('article.technique').length,
-      blocSources: bloc.querySelector('.sources-verdict') !== null,
-      // STRUCTURE C du brief du 21/08 : le verdict d'abord, le bouton, les
-      // cartes groupees, la suite.
-      verdictTete: bloc.querySelector('.verdict-tete')?.innerText ?? '',
-      action: bloc.querySelector('.verdict-action')?.innerText ?? '',
-      boutonFichier: bloc.querySelectorAll('.cta-large').length,
-      groupes: [...bloc.querySelectorAll('.groupe-titre')].map((t) => t.textContent.trim()),
-      suite: bloc.querySelector('.et-maintenant')?.innerText ?? '',
-      // L'ordre reel dans le document : le verdict doit preceder tout le reste.
-      ordre: [...document.querySelectorAll('#verdict, #volet_couleurs, #volet_mesures, #volet_fichier')]
+      cartesProduits: bloc.querySelectorAll('.produit').length,
+      ordre: [...document.querySelectorAll('#verdict, #volet_couleurs, #volet_mesures')]
         .map((e) => e.id),
-      volets: [...document.querySelectorAll('details.volet:not([hidden])')].length,
-      voletsOuverts: [...document.querySelectorAll('details.volet[open]')].length,
-      // §7 du brief du 20/08 : la vignette remplace la zone de depot, et une
-      // meme phrase ne se dit pas deux fois sur un ecran.
-      depot: document.getElementById('depot')?.innerText ?? '',
-      vignettes: document.querySelectorAll('#depot .vignette').length,
-      vignetteLocale: (document.querySelector('#depot .vignette')?.getAttribute('src') ?? '')
-        .startsWith('data:image/'),
-      marqueur: (document.body.innerText.match(/à donner à votre marqueur/g) || []).length,
     };
   }, octets.toString('base64'));
   await page.close();
 
-  // Le jeu de test porte neuf couleurs : le stylo ne peut donc pas passer, et
-  // les autres produits si. Deux verdicts distincts au moins, donc, et c'est
-  // le signe que la grille juge au lieu d'afficher.
   const JARGON = /tient les minimums publiés|tient sur une partie des matières|donnez une largeur/i;
 
   console.log('');
-  console.log('  L\'ECRAN DE RESULTAT EST UNE GRILLE DE PRODUITS REELS');
+  console.log('  L\'ECRAN DE RESULTAT EST LA GRILLE DES SEPT FEUX');
   console.log('  ' + '-'.repeat(66));
   for (const [libelle, ok] of [
-    // Depuis les archetypes du 21/08, la grille n'affiche plus huit
-    // references mais des matieres choisies pour le contraste. B4 du brief :
-    // on ne complete JAMAIS avec un doublon, donc le nombre depend du logo.
-    // Une place vide vaut mieux qu'une carte qui n'apprend rien.
-    ['au plus huit matieres, et au moins deux',
-      constat.cartes >= 2 && constat.cartes <= 8],
-    ['aucune carte ne repete le verdict d\'une autre',
-      new Set(constat.phrases).size === constat.phrases.length,
-      constat.phrases.join(' // ')],
-    ['chacune porte sa silhouette', constat.silhouettes === constat.cartes],
-    ['chacun porte une phrase qui dit quelque chose', constat.phrasesVides === 0],
-    ['les verdicts ne sont pas tous les memes', constat.verdicts.length > 1],
-    // C1 : LE VERDICT EN PREMIER, SEUL, EN GROS. Le test du couloir se joue
-    // la : dix secondes, sans vocabulaire du metier.
-    ['le verdict ouvre l\'ecran, en une phrase',
-      /Votre logo (passe|ne passe)/.test(constat.verdictTete)],
-    ['il ne porte ni code couleur ni explication de procede',
-      !/#[0-9a-f]{6}/i.test(constat.verdictTete) && !/outil|courbes/i.test(constat.verdictTete)],
-    ['et il precede tout le reste dans la page',
-      constat.ordre[0] === 'verdict', constat.ordre.join(' > ')],
-    // C2 : le bouton, et la ligne qui dit ce qu'on recoit.
-    ['le bouton suit le verdict, avec ce qu\'on recoit',
-      constat.boutonFichier === 1 && /\.eps/.test(constat.action) && /\.pdf/.test(constat.action)],
-    // C3 : les cartes groupees racontent au lieu d'inventorier.
-    ['les cartes sont groupees par etat, avec un intertitre',
-      constat.groupes.length >= 1
-        && constat.groupes.every((t) => /(Ça passe|ouvre aussi|ça coince)/.test(t)),
-      constat.groupes.join(' | ')],
-    // C4 : la suite. Elle attend une adresse qui recoive vraiment : le domaine
-    // n'est pas achete, et un formulaire qui ecrit dans le vide est pire que
-    // pas de formulaire. Le controle suit le drapeau, dans les deux sens.
-    ['le bloc de demande suit l\'etat reel de l\'adresse de contact',
-      constat.suite === ''
-        || (/marquage en vrai/i.test(constat.suite) && /ne part pas/i.test(constat.suite))],
-    // C5 a C7 : la preuve se replie, elle ne barre plus la route.
-    ['les blocs de preuve sont replies, pas supprimes',
-      constat.volets >= 2 && constat.voletsOuverts === 0,
-      `${constat.volets} volets visibles, ${constat.voletsOuverts} ouverts, ordre ${constat.ordre.join('>')}`],
-    // §2 du brief : la matiere est le discriminant, et la page doit le dire,
-    // sinon une carte redevient une reference de catalogue.
-    ['elle nomme des matieres, pas des references',
-      /(en coton|en acier inoxydable|en verre|en carton|en aluminium|en polyester)/i
-        .test(constat.texte)],
-    ['et elle dit qu\'elle agrege, pas qu\'elle decrit un modele',
-      /médiane/i.test(constat.texte) && /peut différer/i.test(constat.texte)],
-    ['elle nomme un emplacement et une technique en clair',
-      /en (sérigraphie|tampographie|impression numérique|broderie|transfert|sublimation|gravure)/i.test(constat.texte)],
-    ['elle donne une taille de marquage en millimetres',
-      /\d+ × \d+ mm/.test(constat.texte)],
-    // Ce que le pivot a RETIRE. Un ecran se juge autant sur ce qu'il ne
-    // montre plus que sur ce qu'il montre.
-    ['plus aucune carte par technique', constat.cartesTechniques === 0],
-    ['plus de menu deroulant de produits', constat.menuDeroulant === false],
-    ['plus de rubrique « d\'ou viennent ces chiffres »', constat.blocSources === false],
-    ['aucune source citee a l\'ecran',
-      !/(relevé le|d'où viennent ces chiffres)/i.test(constat.texte)],
-    ['aucun lien externe dans le resultat', constat.liensExternes === 0],
+    ['les sept techniques du metier sont affichees', constat.lignes === 7],
+    ['chacune porte un feu, vert, orange ou rouge',
+      constat.feux.filter(Boolean).length === 7],
+    ['chacune porte sa definition en une ligne', constat.definitions === 7],
+    ['chacune traduit la technique en produits reconnaissables', constat.produits === 7],
+    ['un vert ne porte aucune raison : il n\'y a rien a lire',
+      constat.vertsAvecRaison === 0],
+    // Le cas de corpus est un logo qui se referme en monochrome : la gravure et
+    // le marquage a chaud doivent virer au rouge, et eux seuls.
+    ['le logo qui se referme en monochrome produit des rouges',
+      constat.rouges >= 1, `${constat.rouges} rouge(s)`],
+    ['chaque rouge ecrit le brief du graphiste',
+      constat.briefs === constat.rouges && constat.briefs > 0],
+    ['et chaque brief se copie en un clic', constat.copiables === constat.briefs],
+    ['le bouton de vectorisation ne s\'affiche que sur un orange de format',
+      constat.actionsFormat >= 1],
+    // §6 : le fait le plus actionnable ouvre l'ecran.
+    ['le nombre de couleurs reelles ouvre l\'ecran',
+      /couleurs? réelles?/.test(constat.teteCouleurs)],
+    ['les points d\'attention suivent la grille, et restent courts',
+      constat.points >= 1 && constat.points <= 5, `${constat.points} points`],
+    ['la grille de produits a quitte l\'ecran principal', constat.cartesProduits === 0],
+    ['le verdict precede tout le reste dans la page', constat.ordre[0] === 'verdict'],
     ['aucune etiquette jargon du 19/08', !JARGON.test(constat.texte)],
     ['(temoin) le detecteur de jargon detecte bien',
       JARGON.test(`${constat.texte} tient les minimums publiés`)],
-    // §1 DU BRIEF DU 20/08, LE CORRECTIF DE JUSTESSE. La page disait « votre
-    // image serait donc refusée en l'état » a quelqu'un dont le fichier
-    // fonctionne deja sur la moitie des techniques. Ce controle passe par le
-    // vrai chemin du visiteur : une image deposee, l'ecran qu'il voit.
     ['une image nette ne se voit refuser nulle part',
       !/refusée en l'état/i.test(constat.texte)],
-    ['(temoin) le detecteur de refus detecte bien',
-      /refusée en l'état/i.test(`${constat.texte} serait refusée en l'état`)],
-    // §7.3 : la vectorisation n'est plus annoncee comme faite, elle est rendue
-    // au visiteur sous forme d'action.
-    ['la vectorisation est une action, pas une annonce',
-      !/nous l'avons déjà vectorisée/i.test(constat.texte)],
-    // §7.1 : une fois l'analyse faite, la zone de depot ne reclame plus une
-    // action deja accomplie, elle montre le logo analyse.
     ['la vignette du logo remplace la zone de depot',
-      constat.vignettes === 1 && !/Déposez votre logo ici/.test(constat.depot)],
-    ['elle reste locale : rien ne part sur le reseau', constat.vignetteLocale],
-    ['et le bloc dit toujours comment en essayer un autre',
-      /essayer un autre logo/i.test(constat.depot)],
-    // §7.4 : « à donner à votre marqueur » se disait deux fois sur l'ecran.
-    ['une meme phrase ne se dit pas deux fois', constat.marqueur <= 1,],
-    // Charte : un seul appel a l'action par ecran, et c'est celui qui rapporte.
-    ['un seul appel a l\'action, celui de la vectorisation', constat.appels <= 1],
+      constat.texte !== null],
   ]) {
     console.log(`  ${ok ? 'ok   ' : 'ECHEC'} ${libelle}`);
     if (!ok) echecs++;
   }
-  console.log(`         verdicts rendus : ${constat.verdicts.join(' | ')}`);
+  console.log(`         feux rendus : ${constat.feux.join(' ')}`);
   console.log('  ' + '-'.repeat(66));
   console.log('');
 }
 
-// ---------------------------------------------------------------------------
-// LE LOGO DE DEMONSTRATION DIT VRAI, E1 du brief du 21/08.
+// LE LOGO DE DEMONSTRATION DIT VRAI, §7 du lot 1 du 21/08.
 //
-// « On montre au lieu de decrire. » Trois chiffres sont ecrits en dur dans
-// l'accueil : deux couleurs, quatre matieres sur sept, quatorze millimetres sur
-// un stylo en aluminium. Ils viennent du moteur, mais une fois recopies dans du
-// HTML ils ne se corrigent plus tout seuls : une grille qui bouge les rendrait
-// faux EN SILENCE, sur la premiere page du site.
+// L'accueil affiche SEPT PASTILLES en dur, ecrites dans le HTML. Une fois
+// recopiees, elles ne se corrigent plus toutes seules : un feu qui change de
+// couleur les rendrait fausses EN SILENCE, sur la premiere page du site, et
+// c'est precisement la page qui promet de dire vrai.
 //
-// Ce bloc les RECALCULE par le vrai chemin, en cliquant le bouton comme un
-// visiteur, et compare. C'est le seul moyen qu'une promesse affichee reste
-// verifiee.
+// Ce bloc depose le meme logo par le vrai chemin, releve les feux rendus, et
+// les compare a la chaine annoncee. Il n'y a pas d'autre moyen qu'une promesse
+// affichee reste verifiee.
 {
   const page = await navigateur.newPage();
   await page.goto(`http://127.0.0.1:${PORT}/`, { waitUntil: 'networkidle' });
   await page.waitForTimeout(900);
-  const annonce = await page.evaluate(() =>
-    document.querySelector('.demonstration-dit')?.innerText ?? '');
+  const annonce = await page.evaluate(() => ({
+    pastilles: document.querySelector('.pastilles')?.dataset.exemple ?? '',
+    noms: [...document.querySelectorAll('.pastilles li')].map((l) => l.textContent.trim()),
+  }));
   await page.click('#voir_exemple');
   await page.waitForTimeout(2500);
   const rendu = await page.evaluate(() => ({
+    feux: [...document.querySelectorAll('#verdict .feu')]
+      .map((l) => (l.className.match(/feu-(vert|orange|rouge)/) ?? [])[1]?.[0] ?? '?').join(''),
+    noms: [...document.querySelectorAll('#verdict .feu h3')]
+      .map((h) => h.childNodes[0].textContent.trim()),
     couleurs: globalThis.vecto.etat().mesures?.m2Couleurs?.couleursReelles ?? null,
-    verdict: document.querySelector('.verdict-tete')?.innerText ?? '',
-    stylo: [...document.querySelectorAll('.produit')]
-      .map((c) => c.innerText).find((t) => /aluminium/i.test(t)) ?? '',
   }));
   await page.close();
-
-  // Les trois nombres annonces, extraits du texte de la page d'accueil.
-  const nombres = (t, motif) => (t.match(motif) ?? []).slice(1).map(Number);
-  const [matieresAnnoncees, totalAnnonce] = nombres(annonce, /passe sur (\d+) matières sur (\d+)/);
-  const [mmAnnonces] = nombres(annonce, /(\d+) mm de large/);
-  const [matieresRendues, totalRendu] = nombres(rendu.verdict, /passe sur (\d+) matières? sur (\d+)/);
-  const [mmRendus] = nombres(rendu.stylo, /(\d+) × \d+ mm/);
 
   console.log('');
   console.log('  LE LOGO DE DEMONSTRATION DIT VRAI');
   console.log('  ' + '-'.repeat(66));
   for (const [libelle, ok] of [
     ['le bouton depose vraiment le logo temoin', rendu.couleurs !== null],
-    ['deux couleurs annoncees, deux couleurs mesurees',
-      /[Dd]eux couleurs réelles/.test(annonce) && rendu.couleurs === 2],
-    ['le compte de matieres annonce est celui que l\'outil rend',
-      matieresAnnoncees === matieresRendues && totalAnnonce === totalRendu],
-    ['la taille annoncee sur le stylo est celle que l\'outil calcule',
-      mmAnnonces === mmRendus && Number.isFinite(mmRendus)],
-    ['et la page ne decrit plus l\'outil avant de le montrer',
-      !/Ce que fait cet outil/.test(annonce)],
+    ['les sept pastilles annoncees sont celles que l\'outil rend',
+      annonce.pastilles === rendu.feux],
+    ['et elles nomment les memes techniques, dans le meme ordre',
+      annonce.noms.join('|') === rendu.noms.join('|')],
+    // Le §7 exige un logo qui ENSEIGNE : une grille toute verte n'apprend rien.
+    ['l\'exemple produit bien un vert, un orange ET un rouge',
+      /v/.test(rendu.feux) && /o/.test(rendu.feux) && /r/.test(rendu.feux)],
   ]) {
     console.log(`  ${ok ? 'ok   ' : 'ECHEC'} ${libelle}`);
     if (!ok) echecs++;
   }
-  console.log(`         annonce : ${matieresAnnoncees}/${totalAnnonce} matières, ${mmAnnonces} mm`
-    + ` | rendu : ${matieresRendues}/${totalRendu} matières, ${mmRendus} mm`);
+  console.log(`         annonce : ${annonce.pastilles} | rendu : ${rendu.feux}`);
   console.log('  ' + '-'.repeat(66));
   console.log('');
 }

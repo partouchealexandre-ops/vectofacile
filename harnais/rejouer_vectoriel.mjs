@@ -206,8 +206,11 @@ await page.waitForTimeout(900);
     ['l\'action donne la sortie : redeposer l\'image d\'origine',
       /Vectoriser mon logo|image d'origine/.test(r.actionFichier),
       ],
-    ['et le verdict, lui, dit quand meme sur quoi le logo passe',
-      /Votre logo (passe|ne passe)/.test(r.verdictCourt)],
+    // Depuis le lot 1 du 21/08, l'ecran ouvre sur le fait le plus actionnable :
+    // le nombre de couleurs reelles. C'est ce qu'un marqueur demande en
+    // premier, et ca decide de la technique comme du devis.
+    ['et le verdict, lui, ouvre sur le fait le plus actionnable',
+      /couleurs? réelles?/.test(r.verdictCourt), r.verdictCourt],
   ], [r.titreFiche, ...r.conseils]);
 }
 

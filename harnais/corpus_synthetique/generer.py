@@ -261,6 +261,64 @@ enregistrer(
 )
 
 
+# ------------------------------------------- ce que le monochrome fait perdre
+#
+# Le cas fondateur, reconstruit : un logo de creches porte un visage creme pose
+# DANS une goutte rouge, sans contour. Grave au laser ou brode en une couleur,
+# les deux teintes deviennent la meme matiere et il ne reste qu'une goutte
+# pleine. Aucun outil du marche ne le dit.
+#
+# La verite terrain est DANS LA CONSTRUCTION : un disque clair entierement
+# inclus dans un disque fonce, donc une seule forme en monochrome. Le disque
+# interieur fait 30 px de rayon, l'exterieur 70 : sa part vaut 900/4900, soit
+# 18,4 pour cent de l'encre, et rien de tout cela n'est recopie d'une sortie.
+def disque(d, x, y, r, couleur):
+    d.ellipse([x - r, y - r, x + r, y + r], fill=couleur)
+
+
+ROUGE_GOUTTE = (200, 30, 40)
+CREME_VISAGE = (245, 235, 215)
+
+img = Image.new("RGB", (200, 200), BLANC)
+d = ImageDraw.Draw(img)
+disque(d, 100, 100, 70, ROUGE_GOUTTE)
+disque(d, 100, 100, 30, CREME_VISAGE)
+enregistrer(
+    "monochrome_fusion", img,
+    [
+        egal("m2Couleurs.couleursReelles", 2),
+        # La forme claire est ABSORBEE : une seule composante en monochrome.
+        egal("m11FusionMonochrome.fusionne", True),
+        egal("m11FusionMonochrome.formesPerdues", 1),
+        # 900 / 4900 par construction, avec la tolerance du crenelage du cercle.
+        proche("m11FusionMonochrome.partPerdue", 0.184, 0.02),
+    ],
+    "Un disque clair entierement inclus dans un disque fonce, sans contour. "
+    "En une seule couleur, l'interieur disparait : c'est le cas que la gravure "
+    "laser, l'embossage et la broderie une couleur doivent signaler.",
+)
+
+# LE CONTROLE NEGATIF, et il vaut autant que le premier : deux formes de
+# couleurs differentes qui NE se touchent pas survivent au monochrome. Sans ce
+# cas, une mesure qui repondrait « fusionne » sur tout logo multicolore passerait
+# au vert sur le cas precedent sans rien mesurer.
+img = Image.new("RGB", (200, 200), BLANC)
+d = ImageDraw.Draw(img)
+disque(d, 60, 100, 35, ROUGE_GOUTTE)
+disque(d, 150, 100, 35, CREME_VISAGE)
+enregistrer(
+    "monochrome_sans_fusion", img,
+    [
+        egal("m2Couleurs.couleursReelles", 2),
+        egal("m11FusionMonochrome.fusionne", False),
+        egal("m11FusionMonochrome.formesPerdues", 0),
+    ],
+    "Deux disques de couleurs differentes, separes. En une seule couleur le "
+    "dessin reste lisible : ce logo se grave sans reserve. Temoin du cas "
+    "precedent.",
+)
+
+
 # ------------------------------------------------- le logo sur aplat
 #
 # Le cas qui a revele l'angle mort du moteur, reconstruit en synthetique : un

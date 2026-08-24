@@ -568,7 +568,7 @@ const controle = (libelle, ok, detail) => resultats.push({ libelle, ok, detail }
   controle('et la phrase dit « pas la, mais la », avec la taille calculee',
            direProduit(mug) === 'Pas sur tout le tour, qui n\'accepte qu\'une seule couleur. '
              + 'Sur la face avant, en haut, en tampographie. '
-             + 'Taille max conseillée : un timbre-poste, 35 × 14 mm.', direProduit(mug));
+             + 'Taille maximale de la zone : 35 × 14 mm.', direProduit(mug));
 
   // 3. LE STYLO. Neuf couleurs ne passent nulle part, et le refus porte son
   // palier : a quatre couleurs, les deux emplacements se rouvrent.
@@ -787,6 +787,160 @@ const controle = (libelle, ok, detail) => resultats.push({ libelle, ok, detail }
   // verdict calcule sur une mediane de famille doit DIRE sur quoi il calcule.
   controle('la page dit qu\'elle agrege des matieres, pas des references',
            /matières/.test(html) && /médiane/.test(html) && /peut différer/.test(html));
+}
+
+// LA GRILLE DE FEUX PAR TECHNIQUE, lot 1 du 21/08.
+//
+// Le feu repond a UNE QUESTION D'ACTION, jamais a un jugement de valeur :
+// puis-je envoyer ce fichier tel quel pour cette technique ? Les controles
+// portent donc sur la SEMANTIQUE, cas par cas, avec des contextes ecrits a la
+// main : un feu qui glisse d'une couleur a l'autre change ce que le visiteur
+// va faire de sa journee.
+{
+  const { jugerFeux, compterFeux, TECHNIQUES_FEUX, MARQUAGE_COURANT_MM } =
+    await import('../src/verdict/feux.js');
+  const { rendreFeux, pointsAttention, luminance } =
+    await import('../src/verdict/rendu_feux.js');
+  const seuils = SEUILS;
+  const base = { fusion: { fusionne: false }, degrade: false, seuils };
+  const par = (feux) => Object.fromEntries(feux.map((f) => [f.cle, f]));
+
+  // 1. LA CARTE EST COMPLETE ET SON ORDRE NE BOUGE PAS. Sept techniques, c'est
+  // tout le metier : c'est ce qui rend le « sur 7 » non arbitraire, la ou un
+  // echantillon de produits l'etait. Et un visiteur qui revient doit retrouver
+  // la serigraphie a la meme place.
+  controle('la grille porte les sept techniques du referentiel',
+           TECHNIQUES_FEUX.length === 7);
+  controle('chacune porte sa definition et ses produits, jamais l\'une sans l\'autre',
+           TECHNIQUES_FEUX.every((t) => t.definition && t.produits
+             && t.produits.split(',').length >= 5));
+  controle('l\'ordre est celui de la frequence d\'usage, pas l\'alphabet',
+           TECHNIQUES_FEUX[0].cle === 'numerique_uv'
+             && TECHNIQUES_FEUX[1].cle === 'transfert_dtf'
+             && TECHNIQUES_FEUX[6].cle === 'marquage_a_chaud');
+
+  // 2. VERT : un vectoriel simple passe partout. C'est le cas ou le visiteur
+  // est servi, et il ne doit rien avoir a lire.
+  const vectoriel = jugerFeux({ ...base, nCouleurs: 2, fichierVectoriel: true });
+  controle('un vectoriel a deux couleurs, sans fusion, passe sur les sept',
+           compterFeux(vectoriel).vert === 7, JSON.stringify(compterFeux(vectoriel)));
+
+  // 3. ORANGE A, LE FORMAT. Une image nette bute sur les cinq techniques qui
+  // fabriquent un outil, et sur elles SEULEMENT : les deux numeriques
+  // impriment une image, c'est le correctif du 20/08 et il tient.
+  const image = par(jugerFeux({ ...base, nCouleurs: 2, fichierVectoriel: false,
+                               largeurPx: 4000 }));
+  controle('une image nette reste verte sur les deux techniques numeriques',
+           image.numerique_uv.feu === 'vert' && image.transfert_dtf.feu === 'vert');
+  controle('et orange FORMAT sur les cinq qui fabriquent un outil',
+           ['serigraphie', 'tampographie', 'gravure_laser', 'broderie', 'marquage_a_chaud']
+             .every((c) => image[c].feu === 'orange' && image[c].nuance === 'format'));
+
+  // 4. ORANGE B, LA DEFINITION, et la distinction est le coeur du lot : ce
+  // n'est pas la meme personne qui regle le probleme. Le format, NOUS le
+  // reglons ; la definition, nous ne le pouvons pas, vectoriser un logo de
+  // deux cents pixels donne un fichier propre et une forme fausse.
+  const floue = par(jugerFeux({ ...base, nCouleurs: 2, fichierVectoriel: false,
+                               largeurPx: 60 }));
+  controle('une image trop petite passe en orange DEFINITION, pas en rouge',
+           floue.numerique_uv.feu === 'orange' && floue.numerique_uv.nuance === 'definition',
+           `${floue.numerique_uv.feu} / ${floue.numerique_uv.nuance}`);
+  controle('et la sortie proposee est de chercher un fichier plus grand',
+           /plus grande version/.test(rendreFeux([floue.numerique_uv]))
+             && !/Obtenir mon fichier vectoriel/.test(rendreFeux([floue.numerique_uv])));
+  controle('le format, lui, propose le bouton : c\'est nous qui le reglons',
+           /Obtenir mon fichier vectoriel/.test(rendreFeux([image.serigraphie])));
+
+  // 5. ROUGE R1, TROP DE COULEURS, et seulement la ou le plafond SERT. La
+  // tampographie a son seuil ARBITRÉ ALEX du 20/08 ; la serigraphie n'a qu'un
+  // AGREGAT, qui ne produit aucun verdict. Un plafond observe chez un
+  // grossiste n'est pas un plafond d'atelier.
+  const neuf = par(jugerFeux({ ...base, nCouleurs: 9, fichierVectoriel: true }));
+  controle('neuf couleurs ferment la tampographie, dont le plafond est arbitre',
+           neuf.tampographie.feu === 'rouge' && neuf.tampographie.cause === 'couleurs');
+  controle('mais pas la serigraphie, dont le plafond n\'est qu\'un agregat',
+           neuf.serigraphie.feu !== 'rouge' || neuf.serigraphie.cause !== 'couleurs',
+           `${neuf.serigraphie.feu} / ${neuf.serigraphie.cause ?? ''}`);
+  controle('et le rouge ecrit le brief du graphiste, avec le chiffre',
+           /Une version à 4 couleurs maximum/.test(rendreFeux([neuf.tampographie]))
+             && /Il en compte 9/.test(rendreFeux([neuf.tampographie])));
+
+  // 6. ROUGE R2, LE LOGO CASSE EN MONOCHROME. C'est la mesure qui distingue le
+  // site de tout ce qui existe, et elle ne se pose QUE sur les techniques qui
+  // ne posent qu'une matiere. Un logo a trois couleurs grave au laser n'est
+  // PAS un rouge par principe : il sort en monochrome, c'est le cas standard.
+  const fusionne = par(jugerFeux({ ...base, nCouleurs: 3, fichierVectoriel: true,
+    fusion: { fusionne: true, partPerdue: 0.18,
+              confusion: { absorbee: [246, 238, 222], absorbante: [198, 40, 50] } } }));
+  controle('un logo qui se referme en monochrome ferme la gravure et le marquage a chaud',
+           fusionne.gravure_laser.feu === 'rouge' && fusionne.gravure_laser.cause === 'monochrome'
+             && fusionne.marquage_a_chaud.cause === 'monochrome');
+  controle('et il ne ferme RIEN sur les techniques a plusieurs couleurs',
+           fusionne.serigraphie.feu === 'vert' && fusionne.transfert_dtf.feu === 'vert',
+           `${fusionne.serigraphie.feu} / ${fusionne.transfert_dtf.feu}`);
+  controle('temoin : sans fusion, la gravure repasse au vert',
+           par(jugerFeux({ ...base, nCouleurs: 3, fichierVectoriel: true }))
+             .gravure_laser.feu === 'vert');
+  controle('le rouge monochrome nomme ce qui se confond, et quoi demander',
+           /partie claire/.test(rendreFeux([fusionne.gravure_laser]))
+             && /ajoutant un contour/.test(rendreFeux([fusionne.gravure_laser])));
+
+  // 7. ROUGE R6, LE DEGRADE, sur les techniques sans demi-teinte seulement.
+  const degrade = par(jugerFeux({ ...base, nCouleurs: 3, fichierVectoriel: true,
+                                 degrade: true }));
+  controle('un degrade ferme les techniques a passages, jamais les numeriques',
+           degrade.serigraphie.cause === 'degrade' && degrade.numerique_uv.feu === 'vert');
+
+  // 8. LE BRIEF SE COPIE. Cout nul, valeur immediate, et le texte emporte notre
+  // raisonnement chez un professionnel qui decouvre le site au passage.
+  const htmlRouge = rendreFeux([neuf.tampographie]);
+  controle('chaque rouge porte un bouton de copie, avec le texte complet dedans',
+           /class="feu-copier"/.test(htmlRouge)
+             && /data-copier="[^"]*Ce qu&#039;il faut demander|data-copier="[^"]*faut demander/
+               .test(htmlRouge));
+  // LE REFLEXE GRATUIT PASSE AVANT L'OFFRE. C'est la signature du site.
+  controle('et il rappelle d\'abord que la version existe peut-etre deja',
+           /demandez-la à qui a fait votre\s+logo/.test(htmlRouge.replace(/\s+/g, ' ')));
+
+  // 9. AUCUN SEUIL INVENTE. Trois causes de rouge attendent P0 : le trait trop
+  // fin, l'ecart trop etroit, le texte trop petit. Le moteur les mesure depuis
+  // longtemps ; tant que le seuil n'est pas arbitre, elles se taisent. Un seuil
+  // invente se recopie longtemps.
+  const tous = [vectoriel, ...Object.values(image), ...Object.values(neuf),
+                ...Object.values(fusionne)].flat();
+  controle('aucune cause de rouge ne s\'appuie sur un seuil non arbitre',
+           tous.every((f) => !f.cause || ['couleurs', 'monochrome', 'degrade'].includes(f.cause)),
+           [...new Set(tous.map((f) => f.cause).filter(Boolean))].join(', '));
+  controle('le plancher de marquage courant est nomme, pas cache dans le code',
+           MARQUAGE_COURANT_MM === 50);
+
+  // 10. LES POINTS D'ATTENTION. Le premier n'existe nulle part ailleurs : une
+  // couleur presque blanche disparait sur un objet blanc, qui est le cas par
+  // defaut du coton et de la ceramique.
+  const clair = pointsAttention({
+    m2Couleurs: { couleursReelles: 2, palette: [
+      { rvb: [246, 240, 226], part: 0.3 }, { rvb: [198, 40, 50], part: 0.7 }] },
+    boiteEncre: { rapport: 1.5 } });
+  controle('une couleur presque blanche declenche l\'alerte support clair',
+           clair.some((p) => p.cle === 'support'), clair.map((p) => p.cle).join(', '));
+  controle('temoin : deux couleurs foncees ne la declenchent pas',
+           !pointsAttention({ m2Couleurs: { couleursReelles: 2, palette: [
+             { rvb: [20, 40, 60], part: 0.5 }, { rvb: [198, 40, 50], part: 0.5 }] },
+             boiteEncre: { rapport: 1.5 } }).some((p) => p.cle === 'support'));
+  controle('un logo tres allonge previent qu\'il exclut les objets a zone basse',
+           pointsAttention({ m2Couleurs: { couleursReelles: 1, palette: [] },
+             boiteEncre: { rapport: 4 } }).some((p) => p.cle === 'proportion'));
+  controle('la luminance sait distinguer un creme d\'un rouge fonce',
+           luminance([246, 240, 226]) > 0.8 && luminance([198, 40, 50]) < 0.3);
+
+  // 11. LES REGLES DE CHARTE TIENNENT SUR LE NOUVEL ECRAN.
+  const ecran = rendreFeux(jugerFeux({ ...base, nCouleurs: 9, fichierVectoriel: false,
+    largeurPx: 2000, fusion: { fusionne: true, partPerdue: 0.2, confusion: null } }));
+  controle('aucun mot interdit dans la grille de feux',
+           !MOTS_INTERDITS.some((m) => ecran.toLowerCase().includes(m)));
+  controle('aucun pourcentage ni confiance dans la grille de feux',
+           !MOTIF_CONFIANCE.test(ecran.replace(/<[^>]+>/g, ' ')));
+  controle('aucun lien externe dans la grille de feux', !/<a href="https?:/.test(ecran));
 }
 
 // ------------------------------------------------------------------------

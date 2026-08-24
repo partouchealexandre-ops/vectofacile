@@ -157,25 +157,40 @@
        bloc dit ce que l'outil fait, ce qu'il mesure et ce qu'il ne fait pas,
        sans repeter les pages du guide, qui traitent des procedes. -->
   <section class="explication">
-    <!-- E1 DU BRIEF DU 21/08 : ON MONTRE AU LIEU DE DECRIRE.
-         La page ouvrait sur quatre paragraphes de specification, « ce que fait
-         cet outil ». Un visiteur comprend un produit en voyant son resultat,
-         pas en lisant sa notice. Le logo est dessine pour le site et n'imite
-         aucune marque ; les trois chiffres ci-dessous sont ceux que l'outil
-         rend vraiment sur lui, et le harnais les recalcule a chaque passage
-         pour qu'ils ne puissent pas devenir faux en silence. -->
+    <!-- L'EXEMPLE, §7 du lot 1 du 21/08 : LA GRILLE DE FEUX ET RIEN D'AUTRE.
+         Trois paragraphes de prose demandaient a etre lus ; sept pastilles se
+         comprennent en une demi-seconde, sans lire, et c'est exactement ce que
+         la page de resultat fait.
+
+         LE LOGO EST FABRIQUE EXPRES, et c'est delibere : un vrai logo client
+         donne ce qu'il donne, souvent tout vert, et une grille toute verte
+         n'enseigne rien. Celui-ci porte le defaut le plus pedagogique de tous,
+         une zone claire posee dans une zone foncee, sans contour : elle
+         disparait sur support blanc et elle se referme en monochrome. Forme
+         abstraite et mot generique, il n'imite aucune marque.
+
+         Les sept pastilles sont ecrites ici, en dur. Le harnais depose le meme
+         logo par le vrai chemin et compare : un feu qui deviendrait faux se
+         verrait, sur la premiere page du site. -->
     <h2>Un exemple, avant de déposer le vôtre</h2>
-    <div class="demonstration">
-      <img src="/exemple/logo-exemple.png" width="1200" height="600"
-           alt="Logo de démonstration : un hexagone bleu marine avec un symbole orange,
-                à côté du nom Orbiva Solutions Techniques">
-      <div class="demonstration-dit">
-        <p><b>Deux couleurs réelles</b>, mesurées dans le fichier, pas déclarées.</p>
-        <p><b>Il passe sur 4 matières sur 7</b> avec l'image telle quelle, et sur 6 une
-        fois vectorisé, ce qui est gratuit et se fait ici.</p>
-        <p><b>Sur un stylo en aluminium, il ferait 14 mm de large</b> : techniquement
-        possible, mais plus lisible à cette taille.</p>
-        <button id="voir_exemple" type="button">Voir le résultat complet</button>
+    <div class="exemple-feux">
+      <img src="/exemple/logo-exemple.png" width="1000" height="520"
+           alt="Logo de démonstration : une goutte rouge portant une forme claire,
+                à côté du mot atelier">
+      <div>
+        <ul class="pastilles" data-exemple="vvooror">
+          <li class="pastille-vert">Impression numérique</li>
+          <li class="pastille-vert">Transfert numérique</li>
+          <li class="pastille-orange">Sérigraphie</li>
+          <li class="pastille-orange">Tampographie</li>
+          <li class="pastille-rouge">Gravure laser</li>
+          <li class="pastille-orange">Broderie</li>
+          <li class="pastille-rouge">Marquage à chaud</li>
+        </ul>
+        <p class="note">Deux techniques prennent ce fichier tel quel. Trois attendent un
+        fichier vectoriel, qui se fabrique ici. Deux demandent de retoucher le logo, et
+        le site dit quoi demander.</p>
+        <button id="voir_exemple" type="button">Voir le détail</button>
       </div>
     </div>
 

@@ -23,16 +23,33 @@
  * Fonction PURE : elle prend des donnees, elle rend une chaine. Pas de DOM.
  */
 
-import { rendreGrille, rendreVerdictCourt, rendreActionFichier, rendreSuite }
-  from './rendu_grille.js';
+import { rendreActionFichier, rendreSuite } from './rendu_grille.js';
+import { rendreFeux, rendreFaitPrincipal, pointsAttention, rendrePointsAttention }
+  from './rendu_feux.js';
 
-export function rendreVerdict(verdict, produitsJuges = [], fichier = null, contraste = null) {
-  if (!produitsJuges.length) return '';
-  // Le fichier vectoriel est-il deja fabrique et pose en bas de page ? Cela
-  // change ce qu'on demande au visiteur, donc ce que la grille lui dit.
-  const vectorielPret = fichier?.origine === 'vectoriel' || fichier?.vectorise === true;
-  return `${rendreVerdictCourt(produitsJuges, vectorielPret, contraste)}
+/**
+ * L'ORDRE DE LA PAGE, §6 du lot 1 du 21/08/2026.
+ *
+ *   1  le fait le plus actionnable, le nombre de couleurs reelles. C'est ce
+ *      qu'un marqueur demande en premier, et ca decide de la technique comme du
+ *      devis ;
+ *   2  la grille des sept feux ;
+ *   3  les points d'attention ;
+ *   4  l'action sur le fichier, puis les telechargements, en acces permanent ;
+ *   5  le bloc de contact, quand l'adresse recevra.
+ *
+ * LA GRILLE DE PRODUITS N'EST PLUS L'ECRAN PRINCIPAL. Elle repondait a « sur
+ * quels objets », ce qui suppose de savoir a qui on parle : le 20/08, elle a
+ * propose un powerbank et un stylo a une chaine de creches, sans un textile.
+ * Sept techniques, c'est tout le metier, et les produits redeviennent ce
+ * qu'ils doivent etre, la traduction d'une technique en objets qu'on reconnait.
+ */
+export function rendreVerdict(mesures, feux = [], fichier = null) {
+  if (!feux.length) return '';
+  const points = pointsAttention(mesures);
+  return `${rendreFaitPrincipal(mesures?.m2Couleurs?.couleursReelles ?? null)}
+${rendreFeux(feux)}
+${rendrePointsAttention(points)}
 ${rendreActionFichier(fichier)}
-${rendreGrille(produitsJuges, { vectorielPret, contraste })}
 ${rendreSuite()}`;
 }

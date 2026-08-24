@@ -17,6 +17,7 @@ import { lireVectoriel, reconnaitre, FichierVectorielNonLu } from './adaptateurs
 import { mesurer } from './moteur/mesures.js';
 import { juger } from './verdict/juger.js';
 import { jugerGrille, choisirPourContraste } from './verdict/grille.js';
+import { jugerFeux } from './verdict/feux.js';
 import { CONTACT, rendreDecouverte } from './verdict/rendu_grille.js';
 import { rendreVerdict } from './verdict/rendu.js';
 import { conseiller } from './conseils/conseils.js';
@@ -339,49 +340,68 @@ async function afficherVerdict(mesures) {
   }
   etat.verdict = juger({ mesures, seuils, valeurs, produits });
   etat.grille = grille;
+  // Les seuils servent maintenant DIRECTEMENT a la grille de feux : le plafond
+  // de couleurs d'une technique n'y entre que s'il est SOURCÉ ou ARBITRÉ.
+  etat.seuils = seuils;
   rendreLeVerdict();
 }
 
 /**
- * Le rendu du verdict avec la selection courante du menu produits. La
- * selection SURVIT a une re-mesure (le visiteur qui tape une largeur garde
- * son mug a l'ecran) et se remet a zero avec le reste au fichier suivant.
+ * LE RENDU DU VERDICT : la grille des sept feux.
+ *
+ * LOT 1 du 21/08/2026. La grille de PRODUITS a cede la place a la grille de
+ * TECHNIQUES, et la raison est un test rate en conditions reelles : sur le logo
+ * d'une chaine de creches, le site a propose un powerbank et un stylo en
+ * aluminium, sans un seul textile. Il ne savait pas a qui il parlait, et il ne
+ * pouvait pas le savoir en montrant un echantillon de matieres.
+ *
+ * Sept techniques, c'est tout le metier. Les produits restent, en traduction :
+ * personne ne sait ce qu'est la tampographie, tout le monde comprend « stylo,
+ * gourde, powerbank ».
  */
 function rendreLeVerdict() {
-  if (!etat.verdict) return;
   const m = etat.mesures;
-  // Le RAPPORT du dessin, pas celui du fichier : c'est le logo qu'on inscrit
-  // dans une zone, pas ses marges. La boite de l'encre le donne ; on retombe
-  // sur les dimensions de l'image si elle manque, ce qui n'arrive que sur un
-  // fichier sans aucune encre.
-  const rapport = m?.boiteEncre?.rapport ?? m?.m1Dimensions?.rapport ?? 1;
-  const tous = etat.grille
-    ? jugerGrille(etat.grille, {
-        nCouleurs: m?.m2Couleurs?.couleursReelles ?? null,
-        ratio: rapport,
-        // Un fichier deja vectoriel passe partout. Une image passe la ou la
-        // technique imprime une image, §1 du brief du 20/08 : c'est ce que le
-        // site niait, et c'etait sa faute la plus visible.
-        fichierVectoriel: etat.fichierEtat?.origine === 'vectoriel',
-        // La DEFINITION decide du reste : « accepte un raster » ne veut pas
-        // dire « accepte n'importe quelle image ». La largeur en pixels du
-        // dessin, pas celle du fichier : ce sont les pixels de l'encre qui
-        // seront imprimes, pas ceux des marges.
-        largeurPx: m?.boiteEncre?.largeurPx ?? m?.m1Dimensions?.largeurPx ?? null,
-      })
-    : [];
-  // §4 du brief du 20/08 : une grille ou tout dit la meme chose n'apprend
-  // rien, elle decore. On n'affiche donc pas les douze archetypes, on retient
-  // ceux qui repondent des choses DIFFERENTES pour ce logo.
-  const contraste = choisirPourContraste(tous);
-  // Les verdicts retenus servent aussi au message pre-rempli du bloc « et
-  // maintenant ? » : le repondant sait de quoi il parle avant d'ouvrir quoi
-  // que ce soit.
-  etat.juges = contraste.choisis;
-  $('verdict').innerHTML = rendreVerdict(
-    etat.verdict, contraste.choisis, etat.fichierEtat, contraste);
+  // Sur /vectoriser il n'y a pas de bloc de verdict, et c'est voulu : la page
+  // ne promet qu'une chose. Sans cette garde, l'appel jetait une exception qui
+  // interrompait le flux AVANT la remise du fichier, et la decouverte du §D ne
+  // s'affichait plus. Un bloc absent n'est pas une panne.
+  if (!m || !$('verdict')) return;
+  const feux = jugerFeux({
+    nCouleurs: m.m2Couleurs?.couleursReelles ?? null,
+    // Un fichier deja vectoriel passe partout ; une image ne passe que la ou la
+    // technique imprime une image.
+    fichierVectoriel: etat.fichierEtat?.origine === 'vectoriel'
+      ? true
+      : etat.fichierEtat ? false : null,
+    // La largeur en pixels du DESSIN, pas du fichier : ce sont les pixels de
+    // l'encre qui seront imprimes, pas ceux des marges.
+    largeurPx: m.boiteEncre?.largeurPx ?? m.m1Dimensions?.largeurPx ?? null,
+    // Ce que le logo perd en une seule couleur : la mesure qui distingue « il
+    // sortira en monochrome, c'est normal » de « en monochrome, il se referme ».
+    fusion: m.m11FusionMonochrome ?? null,
+    degrade: Boolean(etat.verdict?.degrade ?? m.m10IndicesExport?.degradeDetecte),
+    seuils: etat.seuils ?? null,
+    nomsParFamille: NOMS_PAR_FAMILLE,
+  }, etat.grille);
+  etat.feux = feux;
+  $('verdict').innerHTML = rendreVerdict(m, feux, etat.fichierEtat);
   $('verdict').hidden = false;
 }
+
+/**
+ * Les noms commerciaux des techniques, par famille du referentiel. Ils servent
+ * a lire la taille courante d'un marquage dans les archetypes : une seule
+ * source de donnees pour toute la page.
+ */
+const NOMS_PAR_FAMILLE = Object.freeze({
+  serigraphie: ['Sérigraphie', 'Sérigraphie circulaire', 'Transfert sérigraphique'],
+  tampographie: ['Tampographie'],
+  gravure_laser: ['Gravure laser', 'Gravure laser 360'],
+  broderie: ['Broderie'],
+  numerique_uv: ['Impression numérique', 'Impression numérique 360', 'Étiquette numérique', 'Doming'],
+  transfert_dtf: ['Transfert numérique', 'Sublimation'],
+  marquage_a_chaud: ['Embossage', 'Marquage à chaud'],
+});
 
 /**
  * REMISE A ZERO DE L'ECRAN ET DE L'ETAT, avant chaque fichier.
@@ -875,6 +895,23 @@ function brancher() {
       }
     });
   }
+
+  // LE BOUTON DE COPIE DU BRIEF, lot 1 du 21/08. La personne colle le texte
+  // dans son mail a son graphiste : cout nul, valeur immediate, et le texte
+  // emporte notre raisonnement chez un professionnel qui decouvre le site.
+  document.addEventListener('click', async (evenement) => {
+    const bouton = evenement.target?.closest?.('.feu-copier');
+    if (!bouton) return;
+    try {
+      await navigator.clipboard.writeText(bouton.dataset.copier ?? '');
+      bouton.textContent = 'Copié';
+      setTimeout(() => { bouton.textContent = 'Copier ce brief'; }, 2000);
+    } catch {
+      // Un presse-papier refuse ne doit pas casser la page : le texte reste
+      // lisible et selectionnable a l'ecran, c'est la sortie de secours.
+      bouton.textContent = 'Sélectionnez le texte pour le copier';
+    }
+  });
 
   // C4 DU BRIEF DU 21/08 : LA SUITE, POUR LE VISITEUR LE PLUS CHAUD DU
   // PARCOURS, QUI N'EN AVAIT AUCUNE.

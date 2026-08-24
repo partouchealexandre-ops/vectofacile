@@ -128,28 +128,44 @@ const condition = (o) => (o?.condition ? `, ${o.condition}` : '');
  * 85 mm, boite d'allumettes 50 mm, piece de deux euros 26 mm, timbre 20 mm.
  * On compare sur la LARGEUR du marquage, celle que le visiteur regarde.
  */
-// Les bandes sont SERREES autour de la vraie dimension du repere, sinon la
-// comparaison ment : « une carte de visite » pour 126 mm, c'est cinquante
-// pour cent d'ecart, et un repere faux est pire qu'un chiffre nu.
+// UNE REFERENCE PHYSIQUE DOIT TENIR SUR LES DEUX DIMENSIONS, §8 du lot 1 du
+// 21/08. La premiere version comparait la seule LARGEUR, et elle a produit
+// « plus grand qu'une feuille A4, 300 × 169 mm » : une A4 fait 210 × 297, le
+// marquage est plus large et bien plus court, la comparaison ne renseigne pas,
+// elle egare. Et « plus petit qu'une piece de 2 euros, 12 × 7 mm » compare une
+// surface au sixieme d'une autre.
+//
+// Chaque repere porte donc ses DEUX dimensions, et il n'est propose que si les
+// deux collent, dans un sens ou dans l'autre. Sinon on donne le chiffre seul :
+// un nombre nu renseigne mal, un repere faux renseigne a l'envers.
 const REPERES = [
-  [260, 'plus grand qu\'une feuille A4'],
-  [180, 'une feuille A4'],       // 210 mm
-  [125, 'une carte postale'],    // 148 mm
-  [100, 'un boîtier de CD'],     // 125 mm
-  [70, 'une carte de visite'],   // 85 mm
-  [45, 'une boîte d\'allumettes'], // 55 mm
-  [26, 'un timbre-poste'],       // 32 mm
-  [20, 'une pièce de 2 euros'],  // 26 mm
-  [0, 'plus petit qu\'une pièce de 2 euros'],
+  ['une feuille A4', 210, 297],
+  ['une carte postale', 148, 105],
+  ['un boîtier de CD', 125, 125],
+  ['une carte de visite', 85, 55],
+  ['une boîte d\'allumettes', 55, 35],
+  ['un timbre-poste', 32, 21],
+  ['une pièce de 2 euros', 26, 26],
 ];
 
-function repere(largeurMm) {
-  return (REPERES.find(([seuil]) => largeurMm >= seuil) ?? REPERES[REPERES.length - 1])[1];
+/** Tolerance de ressemblance : au-dela, le repere ne ressemble plus a rien. */
+const ECART_REPERE = 0.30;
+
+function repere(largeurMm, hauteurMm) {
+  const colle = (a, b) => Math.abs(a - b) / b <= ECART_REPERE;
+  for (const [nom, l, h] of REPERES) {
+    if ((colle(largeurMm, l) && colle(hauteurMm, h))
+        || (colle(largeurMm, h) && colle(hauteurMm, l))) return nom;
+  }
+  return null;
 }
 
-/** « une carte de visite, 90 × 64 mm ». */
-const taille = (o) => `${repere(o.taille.largeurMm)}, `
-  + `${o.taille.largeurMm} × ${o.taille.hauteurMm} mm`;
+/** « une carte de visite, 90 × 64 mm », ou le chiffre seul. */
+const taille = (o) => {
+  const r = repere(o.taille.largeurMm, o.taille.hauteurMm);
+  const chiffre = `${o.taille.largeurMm} × ${o.taille.hauteurMm} mm`;
+  return r ? `${r}, ${chiffre}` : chiffre;
+};
 
 /**
  * La phrase d'un produit. Une seule, et elle dit toujours ce que le visiteur
@@ -180,13 +196,13 @@ export function direProduit(p) {
   if (p.refusee) {
     return `${majuscule(ditEcart(p.refusee))} `
       + `Sur ${m.zone}, en ${m.technique.toLowerCase()}${condition(m)}. `
-      + `Taille max conseillée : ${taille(m)}.`;
+      + `Taille maximale de la zone : ${taille(m)}.`;
   }
   // UNE INFO PAR PHRASE, regle d'ecriture du brief du 20/08 : ou, comment,
   // quelle taille, combien de couleurs. Ecrit d'abord en une seule phrase a
   // rallonge, ca se lisait comme une notice.
   return `${ou}, en ${m.technique.toLowerCase()}${condition(m)}. `
-    + `Taille max conseillée : ${taille(m)}. ${majuscule(ditPlafond(m))}.`;
+    + `Taille maximale de la zone : ${taille(m)}.`;
 }
 
 /**
@@ -288,7 +304,7 @@ function rendreCarte(p, vectorielPret) {
     <h3>${echapper(p.libelle)}</h3>
     <p class="produit-phrase">${echapper(direProduit(p))}</p>
     ${nuance ? `<p class="produit-gain">${echapper(nuance)}</p>` : ''}
-    ${autres ? `<p class="produit-autres">${autres}</p>` : ''}
+  
   </div>
 </article>`;
 }

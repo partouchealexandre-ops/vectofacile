@@ -179,6 +179,57 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
     text-decoration: none; }
   .verdict-action-ok p { margin: 0; padding: 12px 16px; border-radius: 10px;
     background: #eef5f0; border-left: 3px solid #1d6b38; }
+  /* LA GRILLE DE FEUX, lot 1 du 21/08. Elle doit se comprendre SANS LIRE, au
+     seul jeu des couleurs : la pastille porte donc tout le poids visuel, et le
+     reste de la ligne reste calme. */
+  .grille-feux { display: grid; gap: 10px; margin: 4px 0 22px; }
+  .feu { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 14px;
+    align-items: start; padding: 14px 16px; border: 1px solid #e3e6ea;
+    border-radius: 10px; background: #fff; }
+  .feu-pastille { width: 16px; height: 16px; border-radius: 50%; margin-top: 3px; }
+  .feu-vert .feu-pastille { background: #1d6b38; }
+  .feu-orange .feu-pastille { background: var(--orange); }
+  .feu-rouge .feu-pastille { background: #9c3722; }
+  .feu-vert { border-left: 3px solid #1d6b38; }
+  .feu-orange { border-left: 3px solid var(--orange); }
+  .feu-rouge { border-left: 3px solid #9c3722; background: #fdfbfa; }
+  .feu h3 { margin: 0 0 2px; font-size: 16px; }
+  .feu-etat { font-size: 11.5px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .03em; margin-left: 8px; vertical-align: 1px; }
+  .feu-vert .feu-etat { color: #12522a; }
+  .feu-orange .feu-etat { color: #8f3d08; }
+  .feu-rouge .feu-etat { color: #9c3722; }
+  .feu-definition { margin: 0; font-size: 14px; color: #5b6470; line-height: 1.45; }
+  .feu-raison { margin: 8px 0 0; font-size: 14.5px; line-height: 1.5; }
+  .feu-produits { margin: 8px 0 0; font-size: 13px; color: var(--gris); }
+  /* L'action de ligne est CONTEXTUELLE : elle se merite la ou l'obstacle est
+     nomme. Elle reste secondaire, en contour : trois boutons pleins identiques
+     sur un ecran ne sont plus un appel a l'action, c'est un sapin. Le seul
+     bouton plein reste celui du bas, qui conclut. */
+  .feu-action { display: inline-block; margin: 10px 0 0; padding: 8px 15px;
+    border-radius: 8px; border: 1.5px solid var(--orange); background: #fff;
+    color: #8f3d08; font-weight: 600; font-size: 14px; text-decoration: none; }
+  .feu-action:hover { background: #fdf0e6; }
+  .feu-sortie { margin: 8px 0 0; font-size: 14px; line-height: 1.5; }
+  /* LE BRIEF DU GRAPHISTE, sous un rouge. Le site ecrit ce que le visiteur ne
+     saurait pas demander, et le bouton le lui met dans le presse-papier. */
+  .feu-brief { margin: 10px 0 0; padding: 12px 14px; border-radius: 8px;
+    background: #f7f4f2; }
+  .feu-brief p { margin: 0 0 8px; font-size: 14.5px; line-height: 1.5; }
+  .feu-brief p:last-child { margin-bottom: 0; }
+  .feu-demande { }
+  /* La couleur est explicite : la regle generale des boutons pose du texte
+     blanc sur fond navy, et un bouton clair qui en herite est invisible. */
+  .feu-copier { margin-left: 8px; padding: 5px 11px; border-radius: 6px;
+    border: 1px solid var(--trait); background: #fff; color: var(--encre);
+    font-size: 12.5px; font-weight: 600; cursor: pointer; font-family: inherit;
+    white-space: nowrap; }
+  .feu-copier:hover { border-color: var(--gris); }
+  /* Les points d'attention : ce qui change la lecture de TOUTES les lignes. */
+  .points-attention { margin: 0 0 22px; }
+  .points-attention h2 { font-size: 18px; margin: 0 0 8px; }
+  .points-attention ul { margin: 0; padding-left: 20px; }
+  .points-attention li { margin: 0 0 8px; font-size: 14.5px; line-height: 1.5; }
   /* Les trois groupes de C3. Melangees, les cartes sont un inventaire. */
   .groupe-titre { margin: 22px 0 10px; font-size: 15px; letter-spacing: .01em; }
   .groupe-passe { color: #12522a; }
@@ -194,17 +245,24 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
   .suite-champs button { padding: 11px 18px; border-radius: 8px; border: 0;
     background: var(--navy); color: #fff; font-weight: 600; font-size: 15px;
     cursor: pointer; justify-self: start; font-family: inherit; }
-  /* E1 : on montre au lieu de decrire. Le logo temoin et ce qu'il donne. */
-  .demonstration { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 24px; align-items: center; margin: 12px 0 4px; }
-  .demonstration img { width: 100%; height: auto; border: 1px solid var(--trait);
+  /* §7 du lot 1 : l'exemple, c'est la grille de feux et rien d'autre. Une
+     demi-hauteur d'ecran, compris sans lire. */
+  .exemple-feux { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+    gap: 26px; align-items: center; margin: 12px 0 4px; }
+  .exemple-feux img { width: 100%; height: auto; border: 1px solid var(--trait);
     border-radius: 10px; background: #fff; }
-  .demonstration-dit p { margin: 0 0 10px; font-size: 15px; line-height: 1.5; }
-  .demonstration-dit button { margin-top: 6px; padding: 11px 18px; border-radius: 8px;
+  .pastilles { list-style: none; margin: 0 0 10px; padding: 0; display: grid; gap: 5px; }
+  .pastilles li { position: relative; padding-left: 22px; font-size: 14.5px; }
+  .pastilles li::before { content: ''; position: absolute; left: 0; top: 5px;
+    width: 12px; height: 12px; border-radius: 50%; }
+  .pastille-vert::before { background: #1d6b38; }
+  .pastille-orange::before { background: var(--orange); }
+  .pastille-rouge::before { background: #9c3722; }
+  .exemple-feux button { margin-top: 6px; padding: 11px 18px; border-radius: 8px;
     border: 1.5px solid var(--trait); background: #fff; color: var(--encre);
     font-weight: 600; font-size: 14.5px; cursor: pointer; font-family: inherit; }
-  .demonstration-dit button:hover { border-color: var(--gris); }
-  @media (max-width: 760px) { .demonstration { grid-template-columns: 1fr; } }
+  .exemple-feux button:hover { border-color: var(--gris); }
+  @media (max-width: 760px) { .exemple-feux { grid-template-columns: 1fr; } }
   /* C5 a C7 : la preuve se replie, elle ne barre plus la route. */
   .volet { border-top: 1px solid var(--trait); margin-top: 18px; padding-top: 12px; }
   .volet > summary { cursor: pointer; font-weight: 600; font-size: 15.5px;
