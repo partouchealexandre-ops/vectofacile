@@ -44,6 +44,17 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
     --accent: #0A2D4D;
     --gris-clair: #F6F8FA;
     --vert: #0E7C52;
+    /* LES LAMPES DU FEU, et pourquoi elles ne sont pas les couleurs de charte.
+       Les trois officielles n'ont pas la meme luminance : le vert #0E7C52 vaut
+       0,151, l'orange 0,316, le rouge #9C3722 0,099. Cote a cote dans un
+       boitier, l'orange ecrase les deux autres, et le feu cesse de se lire.
+       Ces deux valeurs rapprochent les luminances sans quitter la famille, et
+       elles ne vivent QUE dans la lampe : le texte d'etat, le filet de carte
+       et la barre laterale gardent les couleurs officielles, qui portent le
+       contraste necessaire a la lecture. L'orange, lui, ne bouge pas. */
+    --lampe-verte: #16A44F;
+    --lampe-rouge: #E23B2E;
+    --feu-boitier: #102331;
     /* Poppins pour le logotype et les titres, arbitrage du master prompt §8.
        Le texte courant reste sur la pile systeme : elle est deja installee chez
        le visiteur, donc zero octet a telecharger et zero attente. */
@@ -179,52 +190,126 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
     text-decoration: none; }
   .verdict-action-ok p { margin: 0; padding: 12px 16px; border-radius: 10px;
     background: #eef5f0; border-left: 3px solid #1d6b38; }
-  /* LA GRILLE DE FEUX, lot 1 du 21/08. Elle doit se comprendre SANS LIRE, au
-     seul jeu des couleurs : la pastille porte donc tout le poids visuel, et le
-     reste de la ligne reste calme. */
-  .grille-feux { display: grid; gap: 10px; margin: 4px 0 22px; }
-  .feu { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 14px;
-    align-items: start; padding: 14px 16px; border: 1px solid #e3e6ea;
-    border-radius: 10px; background: #fff; }
-  .feu-pastille { width: 16px; height: 16px; border-radius: 50%; margin-top: 3px; }
-  .feu-vert .feu-pastille { background: #1d6b38; }
-  .feu-orange .feu-pastille { background: var(--orange); }
-  .feu-rouge .feu-pastille { background: #9c3722; }
-  .feu-vert { border-left: 3px solid #1d6b38; }
-  .feu-orange { border-left: 3px solid var(--orange); }
-  .feu-rouge { border-left: 3px solid #9c3722; background: #fdfbfa; }
-  .feu h3 { margin: 0 0 2px; font-size: 16px; }
-  .feu-etat { font-size: 11.5px; font-weight: 700; text-transform: uppercase;
-    letter-spacing: .03em; margin-left: 8px; vertical-align: 1px; }
-  .feu-vert .feu-etat { color: #12522a; }
+  /* ------------------------------------------------------- LA GRILLE DE FEUX
+     Lot 1 du 21/08, redessine le 24/08 sur la direction « piste 3 compacte »
+     validee par Alex.
+
+     CE QUI NE MARCHAIT PAS : « c'est tres texte, puis texte, puis texte, c'est
+     peu visuel ». Sept lignes pleine largeur empilees, une pastille de 16 px
+     chacune : la page se LISAIT, elle ne se balayait pas, alors que la grille
+     doit se comprendre SANS LIRE.
+
+     CE QUI CHANGE : deux cartes par ligne, un boitier de feu a trois lampes a
+     gauche, un picto de technique dans le titre, et les objets frequents en
+     puces illustrees. La hauteur suit le contenu et n'est JAMAIS egalisee. */
+  .sprite-pictos { position: absolute; width: 0; height: 0; overflow: hidden; }
+  .picto { fill: none; stroke: currentColor; stroke-width: 2.5;
+    stroke-linejoin: round; stroke-linecap: round; }
+  .grille-feux { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px; align-items: start; margin: 4px 0 22px; }
+  .feu { display: grid; grid-template-columns: 66px minmax(0, 1fr);
+    border: 1px solid var(--trait); border-radius: 10px; overflow: hidden;
+    background: #fff; align-self: start; }
+  /* LA BARRE D'ETAT, 3 px, du cote gauche du rail. Elle etait posee en ombre
+     interne dans la maquette : une bordure fait exactement la meme image, et le
+     site ne porte aucune ombre. */
+  .feu-rail { background: var(--gris-clair); border-right: 1px solid var(--trait);
+    padding: 15px 9px; display: flex; justify-content: center; align-items: flex-start; }
+  .feu-vert .feu-rail { border-left: 3px solid var(--vert); }
+  .feu-orange .feu-rail { border-left: 3px solid var(--orange); }
+  .feu-rouge .feu-rail { border-left: 3px solid #9c3722; }
+  .feu-boitier { width: 46px; padding: 7px; background: var(--feu-boitier);
+    border-radius: 20px; display: flex; flex-direction: column; gap: 6px;
+    align-items: center; }
+  /* Les lampes eteintes gardent leur teinte a tres faible opacite : neutres,
+     elles cesseraient de se lire comme un feu. */
+  .feu-lampe { width: 26px; height: 26px; border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, .13); }
+  .lampe-rouge { background: rgba(226, 59, 46, .17); }
+  .lampe-orange { background: rgba(255, 106, 0, .16); }
+  .lampe-vert { background: rgba(22, 164, 79, .17); }
+  /* LA SEULE LUEUR DU SITE, et elle est autorisee par le brief du 24/08 : une
+     diffusion de 3 px a 10 % d'opacite sur la lampe allumee. Ce n'est pas une
+     elevation, c'est ce qui distingue une lampe allumee d'une pastille. */
+  .lampe-rouge.allumee { background: var(--lampe-rouge);
+    box-shadow: 0 0 0 3px rgba(226, 59, 46, .10); }
+  .lampe-orange.allumee { background: var(--orange);
+    box-shadow: 0 0 0 3px rgba(255, 106, 0, .10); }
+  .lampe-vert.allumee { background: var(--lampe-verte);
+    box-shadow: 0 0 0 3px rgba(22, 164, 79, .10); }
+  .feu-corps { padding: 15px 16px 16px; display: flex; flex-direction: column;
+    gap: 8px; min-width: 0; }
+  .feu-titre { display: flex; align-items: center; gap: 10px; }
+  .feu-picto { width: 38px; height: 38px; border: 1px solid var(--trait);
+    border-radius: 8px; background: var(--gris-clair); display: grid;
+    place-items: center; color: rgba(10, 45, 77, .72); flex: 0 0 auto; }
+  .picto-technique { width: 34px; height: 34px; }
+  .feu-rang { display: block; font-family: 'Poppins', var(--pile-systeme);
+    font-size: 10.5px; color: var(--gris); font-weight: 700; letter-spacing: .03em;
+    text-transform: uppercase; line-height: 1.1; margin-bottom: 2px; }
+  .feu h3 { margin: 0; font-size: 20px; line-height: 1.05; letter-spacing: -.025em; }
+  /* L'ETAT EST LE VERDICT DE LA CARTE, donc il se lit. Il etait en capitales de
+     11,5 px colle au titre : c'etait la charte des etiquettes appliquee a ce qui
+     n'en est pas une. Les vraies etiquettes de la carte, le rang et « objets
+     frequents », gardent les capitales. */
+  .feu-etat { margin: 0; font-family: 'Poppins', var(--pile-systeme);
+    font-size: 15.5px; font-weight: 700; line-height: 1.15; }
+  .feu-vert .feu-etat { color: var(--vert); }
   .feu-orange .feu-etat { color: #8f3d08; }
   .feu-rouge .feu-etat { color: #9c3722; }
-  .feu-definition { margin: 0; font-size: 14px; color: #5b6470; line-height: 1.45; }
-  .feu-raison { margin: 8px 0 0; font-size: 14.5px; line-height: 1.5; }
-  .feu-produits { margin: 8px 0 0; font-size: 13px; color: var(--gris); }
-  /* L'action de ligne est CONTEXTUELLE : elle se merite la ou l'obstacle est
-     nomme. Elle reste secondaire, en contour : trois boutons pleins identiques
-     sur un ecran ne sont plus un appel a l'action, c'est un sapin. Le seul
-     bouton plein reste celui du bas, qui conclut. */
-  .feu-action { display: inline-block; margin: 10px 0 0; padding: 8px 15px;
-    border-radius: 8px; border: 1.5px solid var(--orange); background: #fff;
-    color: #8f3d08; font-weight: 600; font-size: 14px; text-decoration: none; }
-  .feu-action:hover { background: #fdf0e6; }
-  .feu-sortie { margin: 8px 0 0; font-size: 14px; line-height: 1.5; }
+  .feu-definition { margin: 0; font-size: 14px; line-height: 1.45; }
+  .feu-raison { margin: 0; font-size: 14px; line-height: 1.45; color: var(--gris); }
+  /* LES OBJETS FREQUENTS. C'est la traduction de la technique, et le picto la
+     rend balayable. Il reste PETIT : sa fonction n'est pas de faire grossir la
+     carte. */
+  .feu-produits { padding-top: 8px; border-top: 1px solid var(--trait); }
+  .feu-produits-titre { margin: 0 0 6px; font-family: 'Poppins', var(--pile-systeme);
+    font-size: 10.5px; color: var(--gris); font-weight: 700; letter-spacing: .05em;
+    text-transform: uppercase; }
+  .feu-objets { display: flex; flex-wrap: wrap; gap: 5px; margin: 0; padding: 0;
+    list-style: none; }
+  .feu-objet { display: inline-flex; align-items: center; gap: 5px;
+    border: 1px solid var(--trait); border-radius: 999px; padding: 4px 8px 4px 6px;
+    font-size: 12.5px; line-height: 1; background: #fff; }
+  .picto-objet { width: 15px; height: 15px; color: rgba(10, 45, 77, .55);
+    flex: 0 0 auto; }
+  /* LE BOUTON DE CONVERSION, plein, arbitrage Alex du 24/08. En contour, il se
+     lisait comme secondaire alors que c'est LA conversion du site. C'est la
+     meme action sur les trois cartes oranges, pas trois actions qui se
+     disputent l'ecran, et le bandeau orange du bas s'efface quand elles sont
+     la. */
+  .feu-action { align-self: flex-start; margin: 2px 0 0; padding: 10px 18px;
+    border-radius: 8px; border: 1.5px solid var(--orange); background: var(--orange);
+    color: #fff; font-weight: 600; font-size: 14.5px; text-decoration: none; }
+  .feu-action:hover { background: #e85f00; border-color: #e85f00; }
+  .feu-sortie { margin: 0; font-size: 14px; line-height: 1.5; }
   /* LE BRIEF DU GRAPHISTE, sous un rouge. Le site ecrit ce que le visiteur ne
      saurait pas demander, et le bouton le lui met dans le presse-papier. */
-  .feu-brief { margin: 10px 0 0; padding: 12px 14px; border-radius: 8px;
-    background: #f7f4f2; }
-  .feu-brief p { margin: 0 0 8px; font-size: 14.5px; line-height: 1.5; }
+  .feu-brief { margin: 2px 0 0; padding: 10px 12px; border-radius: 10px;
+    border: 1px solid rgba(156, 55, 34, .25); }
+  .feu-brief-titre { font-family: 'Poppins', var(--pile-systeme); font-size: 11.5px;
+    text-transform: uppercase; letter-spacing: .03em; font-weight: 700;
+    color: #9c3722; }
+  .feu-brief p { margin: 0 0 6px; font-size: 13.5px; line-height: 1.5; }
   .feu-brief p:last-child { margin-bottom: 0; }
-  .feu-demande { }
+  .feu-brief .note { color: var(--gris); }
   /* La couleur est explicite : la regle generale des boutons pose du texte
-     blanc sur fond navy, et un bouton clair qui en herite est invisible. */
-  .feu-copier { margin-left: 8px; padding: 5px 11px; border-radius: 6px;
-    border: 1px solid var(--trait); background: #fff; color: var(--encre);
-    font-size: 12.5px; font-weight: 600; cursor: pointer; font-family: inherit;
-    white-space: nowrap; }
-  .feu-copier:hover { border-color: var(--gris); }
+     blanc sur fond navy, et un bouton clair qui en herite est invisible. Celui
+     ci est navy plein, comme les telechargements : copier n'est pas convertir,
+     et l'orange resterait pris pour un second appel a l'action. */
+  .feu-copier { margin-top: 4px; padding: 9px 12px; border-radius: 8px;
+    border: 1.5px solid var(--navy); background: var(--navy); color: #fff;
+    font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; }
+  .feu-copier:hover { background: #08243d; border-color: #08243d; }
+  @media (max-width: 900px) {
+    .grille-feux { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 520px) {
+    .feu { grid-template-columns: 60px minmax(0, 1fr); }
+    .feu-corps { padding: 14px 13px; }
+    .feu h3 { font-size: 19px; }
+    .feu-action, .feu-copier { width: 100%; text-align: center; }
+  }
   /* Les points d'attention : ce qui change la lecture de TOUTES les lignes. */
   .points-attention { margin: 0 0 22px; }
   .points-attention h2 { font-size: 18px; margin: 0 0 8px; }

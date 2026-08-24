@@ -941,6 +941,50 @@ const controle = (libelle, ok, detail) => resultats.push({ libelle, ok, detail }
   controle('aucun pourcentage ni confiance dans la grille de feux',
            !MOTIF_CONFIANCE.test(ecran.replace(/<[^>]+>/g, ' ')));
   controle('aucun lien externe dans la grille de feux', !/<a href="https?:/.test(ecran));
+
+  // 12. LA DIRECTION VISUELLE DU 24/08 : DEUX CARTES, UN BOITIER, DES PICTOS.
+  //
+  // Ce qui se controle ici n'est pas du gout : ce sont les trois choses qui
+  // cassent en silence. Une lampe allumee de trop, et le feu ment. Un sprite
+  // repete sept fois, et la page triple de poids sans que rien ne se voie. Un
+  // picto absent, et une puce sort avec un rond neutre que personne ne
+  // remarque a la relecture.
+  const { spritePictos, pictoProduit, pictosManquants, PICTOS_TECHNIQUE, objets } =
+    await import('../src/verdict/pictos.js');
+
+  controle('le sprite des pictos est pose UNE seule fois dans la grille',
+           (ecran.match(/class="sprite-pictos"/g) ?? []).length === 1);
+  controle('chaque carte porte exactement une lampe allumee',
+           (ecran.match(/<article class="feu /g) ?? []).length
+             === (ecran.match(/feu-lampe lampe-\w+ allumee/g) ?? []).length);
+  const cartesVertes = (ecran.match(/class="feu feu-vert"/g) ?? []).length;
+  controle('et la lampe allumee est bien celle de la couleur du feu',
+           (ecran.match(/lampe-vert allumee/g) ?? []).length === cartesVertes,
+           `${cartesVertes} carte(s) verte(s)`);
+  controle('les sept techniques ont chacune leur picto',
+           TECHNIQUES_FEUX.every((t) => PICTOS_TECHNIQUE[t.cle])
+             && Object.keys(PICTOS_TECHNIQUE).length === TECHNIQUES_FEUX.length);
+  controle('chaque objet frequent sort avec une puce illustree',
+           (ecran.match(/class="feu-objet"/g) ?? []).length
+             === TECHNIQUES_FEUX.reduce((n, t) => n + objets(t.produits).length, 0));
+
+  // LE RAPPORT DES PICTOS A COMMANDER. Ce n'est pas un echec : c'est une
+  // demande a passer au dessin, et le harnais la tient a jour tout seul. La
+  // regle du 24/08 est de NE PAS improviser une icone dans un autre style.
+  const manquants = pictosManquants(TECHNIQUES_FEUX);
+  controle('aucun picto absent n\'est ignore : le rapport les nomme tous',
+           TECHNIQUES_FEUX.flatMap((t) => objets(t.produits))
+             .filter((n) => pictoProduit(n) === 'defaut')
+             .every((n) => manquants.some((m) => m.produit === n)));
+  if (manquants.length) {
+    console.log('');
+    console.log('  PICTOGRAMMES A COMMANDER, dans le meme langage graphique :');
+    for (const m of manquants) {
+      console.log(`    - ${m.produit} (${m.technique}) : `
+        + (m.motif === 'absent' ? 'aucun dessin, tombe sur le rond neutre'
+                                : `porte le meme picto que « ${m.partageAvec} »`));
+    }
+  }
 }
 
 // ------------------------------------------------------------------------

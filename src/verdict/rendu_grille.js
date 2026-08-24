@@ -377,7 +377,7 @@ export function rendreVerdictCourt(produits, vectorielPret = false, contraste = 
  * les questions frequentes, ou elle est mieux tournee. Ne reste que l'action,
  * et la ligne qui dit ce qu'on recoit.
  */
-export function rendreActionFichier(fichier) {
+export function rendreActionFichier(fichier, ctaDejaPorte = false) {
   if (!fichier) return '';
   if (fichier.origine === 'vectoriel') {
     return `<div class="verdict-action verdict-action-ok"><p>`
@@ -402,8 +402,15 @@ export function rendreActionFichier(fichier) {
       + `disponible de votre logo</a>, ou faites-le établir par un graphiste.</p></div>`;
   }
   if (fichier.vectorise === true) {
+    // UN SEUL BLOC ORANGE PAR ECRAN, regle de charte. Depuis le 24/08/2026 les
+    // cartes de feu orange portent elles memes le bouton, avec le meme libelle
+    // et la meme ancre : garder ce bandeau ferait quatre appels identiques sur
+    // le meme ecran, ce qui n'est plus un appel a l'action. La ligne qui dit ce
+    // qu'on recoit reste, elle : c'est la seule qui l'ecrit.
+    const appel = ctaDejaPorte ? '' :
+      `<a class="cta-large" href="#telechargements">Obtenir mon fichier vectoriel</a>`;
     return `<div class="verdict-action">
-    <a class="cta-large" href="#telechargements">Obtenir mon fichier vectoriel</a>
+    ${appel}
     <p class="note">Le <b>.eps</b> pour votre marqueur, le <b>.pdf</b> pour vous. Gratuit,
     sans compte, sans envoi de votre fichier.</p>
     </div>`;

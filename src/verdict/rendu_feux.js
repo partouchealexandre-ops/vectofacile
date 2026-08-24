@@ -6,21 +6,42 @@
  * meriter sa place : un feu, un nom, une definition d'une ligne, la raison si
  * le feu n'est pas vert, et les produits qui traduisent la technique.
  *
+ * DIRECTION VISUELLE DU 24/08/2026, « piste 3 compacte », validee par Alex.
+ * Le premier rendu tenait la doctrine et ratait sa promesse : « c'est tres
+ * texte, puis texte, puis texte, c'est peu visuel ». Sept lignes pleine largeur
+ * empilees, une pastille de 16 px chacune, la page se LISAIT.
+ *
+ * Ce qui change, et rien d'autre : deux cartes par ligne, un boitier de feu a
+ * trois lampes qui se lit de loin, un picto de technique dans le titre, les
+ * objets frequents en puces illustrees, et le bouton de conversion redevenu
+ * plein. Les DONNEES ne bougent pas : meme ordre, memes definitions, memes
+ * etats, memes briefs.
+ *
  * Fonction PURE : elle prend des donnees, elle rend une chaine.
  */
 
 import { CAUSES } from './feux.js';
 import { CONTACT_OPERATIONNEL } from './rendu_grille.js';
+import { spritePictos, usePicto, pictoProduit, objets } from './pictos.js';
 
 const echapper = (t) => String(t)
   .replace(/&/g, '&amp;').replace(/</g, '&lt;')
   .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
+/**
+ * L'ETIQUETTE D'ETAT. Elle etait une micro-capitale de 11,5 px collee au titre :
+ * c'etait la charte des ETIQUETTES, appliquee a ce qui n'en est pas une. Cette
+ * ligne EST le verdict de la carte, elle se lit. Les vraies etiquettes de la
+ * carte, le rang et « objets frequents », gardent les capitales.
+ */
 const ETIQUETTE_FEU = Object.freeze({
-  vert: 'envoyez tel quel',
-  orange: 'un obstacle, surmontable',
-  rouge: 'le logo doit être retravaillé',
+  vert: 'Envoyez tel quel',
+  orange: 'Un obstacle, surmontable',
+  rouge: 'Le logo doit être retravaillé',
 });
+
+/** Les trois lampes du boitier, de haut en bas, comme un feu de carrefour. */
+const LAMPES = Object.freeze(['rouge', 'orange', 'vert']);
 
 /**
  * LES SIX TEXTES DE ROUGE, dont trois se taisent encore.
@@ -109,6 +130,12 @@ function raison(ligne) {
  */
 function action(ligne) {
   if (ligne.feu === 'orange' && ligne.nuance === 'format') {
+    // BOUTON PLEIN, arbitrage Alex du 24/08/2026. Il etait en contour, par
+    // crainte du sapin de boutons oranges. Le contour le rendait secondaire
+    // alors que c'est LA conversion du site, et c'est la meme action sur les
+    // trois cartes, pas trois actions qui se disputent l'ecran. La regle de la
+    // charte est tenue autrement : le bloc orange du bas s'efface quand les
+    // cartes portent deja le bouton, voir `rendreActionFichier`.
     return `<a class="feu-action" href="#telechargements">Obtenir mon fichier vectoriel</a>`;
   }
   if (ligne.feu === 'orange' && ligne.nuance === 'definition') {
@@ -143,27 +170,90 @@ function brief(ligne) {
       </div>`
     : '';
   return `<div class="feu-brief">
+  <p class="feu-brief-titre">Ce qu'il faut demander à votre graphiste</p>
   <p>${echapper(t.explication)}</p>
-  <p class="feu-demande"><b>Ce qu'il faut demander :</b>
-  <span class="feu-copiable">${echapper(t.demande)}</span>
-  <button class="feu-copier" type="button" data-copier="${echapper(t.titre + ' ' + t.explication + ' Ce qu\'il faut demander : ' + t.demande)}">Copier ce brief</button></p>
+  <p class="feu-demande"><b>À demander :</b>
+  <span class="feu-copiable">${echapper(t.demande)}</span></p>
   <p class="note">Cette version existe peut-être déjà : demandez-la à qui a fait votre
   logo, elle vous appartient.</p>
+  <button class="feu-copier" type="button" data-copier="${echapper(t.titre + ' ' + t.explication + ' Ce qu\'il faut demander : ' + t.demande)}">Copier ce brief</button>
   ${offre}
 </div>`;
 }
 
-function rendreLigne(ligne) {
+/**
+ * LE BOITIER DE FEU, a gauche de la carte.
+ *
+ * Trois lampes, une seule allumee : c'est ce qui se comprend SANS LIRE, et
+ * c'est la raison d'etre de la carte. Les deux lampes eteintes ne sont pas
+ * grises, elles gardent leur teinte a tres faible opacite : un feu dont les
+ * lampes eteintes seraient neutres ne se lit plus comme un feu.
+ *
+ * Le boitier porte le libelle en `aria-label` : sans lui, un lecteur d'ecran
+ * ne recoit que trois `span` vides. L'etat est ecrit juste a cote en toutes
+ * lettres, donc les lampes elles memes restent muettes.
+ */
+function boitier(feu) {
+  const lampes = LAMPES
+    .map((l) => `<span class="feu-lampe lampe-${l}${l === feu ? ' allumee' : ''}"></span>`)
+    .join('');
+  return `<div class="feu-rail">
+    <div class="feu-boitier" role="img" aria-label="Feu ${feu}">${lampes}</div>
+  </div>`;
+}
+
+/**
+ * LES OBJETS FREQUENTS, en puces.
+ *
+ * C'est la traduction de la technique : personne ne sait ce qu'est la
+ * tampographie, tout le monde reconnait un stylo et une cle USB. Le picto reste
+ * PETIT et discret, 15 px : sa fonction est de rendre la liste balayable, pas
+ * de faire grossir la carte.
+ */
+function produits(ligne) {
+  const liste = objets(ligne.produits);
+  if (!liste.length) return '';
+  const puces = liste.map((nom) =>
+    `<li class="feu-objet">${usePicto(`po-${pictoProduit(nom)}`, 'picto-objet')}`
+    + `<span>${echapper(nom)}</span></li>`).join('');
+  return `<div class="feu-produits">
+    <p class="feu-produits-titre">Objets fréquents</p>
+    <ul class="feu-objets">${puces}</ul>
+  </div>`;
+}
+
+/**
+ * UNE CARTE DE TECHNIQUE.
+ *
+ * Deux colonnes : le feu a gauche, tout le reste a droite. La hauteur suit le
+ * contenu, elle n'est jamais egalisee : une carte verte n'a rien a dire de plus
+ * qu'une ligne, et l'etirer a la hauteur d'une carte rouge fabriquerait du vide
+ * qui se lit comme un manque.
+ *
+ * LE RANG N'EST PAS UN CLASSEMENT. « Technique 01 » dit que la carte fait
+ * partie d'un ensemble ferme de sept, et c'est ce qui rend le « sur 7 » non
+ * arbitraire. L'ordre est celui de la frequence d'usage reelle, jamais une
+ * preference.
+ */
+function rendreLigne(ligne, index) {
   const r = raison(ligne);
+  const rang = String(index + 1).padStart(2, '0');
   return `<article class="feu feu-${ligne.feu}">
-  <div class="feu-pastille" aria-hidden="true"></div>
+  ${boitier(ligne.feu)}
   <div class="feu-corps">
-    <h3>${echapper(ligne.nom)} <span class="feu-etat">${ETIQUETTE_FEU[ligne.feu]}</span></h3>
+    <div class="feu-titre">
+      <span class="feu-picto">${usePicto(`pt-${ligne.cle}`, 'picto-technique')}</span>
+      <span>
+        <span class="feu-rang">Technique ${rang}</span>
+        <h3>${echapper(ligne.nom)}</h3>
+      </span>
+    </div>
+    <p class="feu-etat">${ETIQUETTE_FEU[ligne.feu]}</p>
     <p class="feu-definition">${echapper(ligne.definition)}</p>
     ${r ? `<p class="feu-raison">${echapper(r)}</p>` : ''}
+    ${produits(ligne)}
     ${action(ligne)}
     ${brief(ligne)}
-    <p class="feu-produits">${echapper(ligne.produits)}</p>
   </div>
 </article>`;
 }
@@ -179,9 +269,16 @@ export function rendreFaitPrincipal(nCouleurs) {
     nCouleurs > 1 ? 's' : ''} réelle${nCouleurs > 1 ? 's' : ''}.</b></p></div>`;
 }
 
+/**
+ * LA GRILLE. Deux cartes par ligne sur un ecran large, une seule sous 850 px.
+ *
+ * Le sprite des pictos est pose ICI, une seule fois : vingt cinq dessins
+ * repetes dans quarante neuf puces tripleraient le poids de la page pour rien.
+ */
 export function rendreFeux(feux) {
   if (!feux?.length) return '';
-  return `<div class="grille-feux">${feux.map(rendreLigne).join('\n')}</div>`;
+  return `${spritePictos()}
+<div class="grille-feux">${feux.map(rendreLigne).join('\n')}</div>`;
 }
 
 /**
