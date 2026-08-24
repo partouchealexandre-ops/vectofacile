@@ -20,7 +20,7 @@ import { jugerGrille, choisirPourContraste } from './verdict/grille.js';
 import { jugerFeux } from './verdict/feux.js';
 import { CONTACT, rendreDecouverte } from './verdict/rendu_grille.js';
 import { rendreVerdict } from './verdict/rendu.js';
-import { rendreFaitPrincipal } from './verdict/rendu_feux.js';
+import { rendreFaitPrincipal, logoClair } from './verdict/rendu_feux.js';
 import { conseiller } from './conseils/conseils.js';
 import { preparerVectorisation, FORMES_MAXIMALES } from './vectorisation/options.js';
 import { construireProgramme, inventaire } from './vectorisation/programme.js';
@@ -419,7 +419,7 @@ function rendreLeVerdict() {
   // n'allait le chercher.
   const tete = $('fait_principal');
   if (tete) {
-    tete.innerHTML = rendreFaitPrincipal(m?.m2Couleurs?.couleursReelles ?? null, feux);
+    tete.innerHTML = rendreFaitPrincipal(m?.m2Couleurs?.couleursReelles ?? null, feux, m);
     tete.hidden = false;
   }
   $('verdict').innerHTML = rendreVerdict(m, feux, etat.fichierEtat);
@@ -521,7 +521,7 @@ function devoiler(id) {
  * demarrage, et on ne le remplace pas, on change ce qu'il montre.
  */
 let depotOrigine = null;
-function poserVignette(image) {
+function poserVignette(image, mesures = null) {
   const zone = $('depot');
   if (!zone || !image) return;
   if (depotOrigine === null) depotOrigine = zone.innerHTML;
@@ -549,7 +549,14 @@ function poserVignette(image) {
   const source = document.createElement('canvas');
   source.width = image.largeur;
   source.height = image.hauteur;
-  const données = new ImageData(new Uint8ClampedArray(image.donnees), image.largeur, image.hauteur);
+  const octets = new Uint8ClampedArray(image.donnees);
+  // UN LOGO BLANC EST INVISIBLE SUR NOTRE CARTE BLANCHE, et le visiteur croit
+  // que le site n'a rien lu. On le TEINTE pour le montrer, arbitrage Alex du
+  // 24/08/2026, et on ecrit sous la vignette que la couleur n'est pas la
+  // sienne : une image trafiquee sans legende est un mensonge, la meme avec sa
+  // legende est un instrument de mesure.
+  const teinte = mesures ? teinterSiClair(octets, mesures) : false;
+  const données = new ImageData(octets, image.largeur, image.hauteur);
   source.getContext('2d').putImageData(données, 0, 0);
   const pinceau = toile.getContext('2d');
   pinceau.imageSmoothingEnabled = true;
@@ -560,7 +567,42 @@ function poserVignette(image) {
   passerEnModeResultat(true);
   zone.innerHTML = `<img class="vignette" alt="Le logo que vous venez de déposer"
     src="${toile.toDataURL('image/png')}">
+    ${teinte ? `<span class="vignette-teinte">Votre logo est blanc. Il est affiché
+    en rose pour être visible ici : ce n'est pas sa couleur.</span>` : ''}
     <span>Analysé sur cette page. Cliquez pour essayer un autre logo.</span>`;
+}
+
+/**
+ * LA TEINTE DE REPERE, et pourquoi elle n'est pas une couleur de la charte.
+ *
+ * Le rose #E5387E ne dit AUCUN etat : il n'est ni le vert du favorable, ni
+ * l'orange de l'action, ni le rouge du bloquant. C'est exactement ce qu'on lui
+ * demande. Il ne juge rien, il rend visible, comme le crayon bleu d'un
+ * imprimeur sur une epreuve. Le confondre avec une couleur d'identite serait
+ * casser la regle semantique du site.
+ *
+ * On ne teinte QUE les pixels clairs, et seulement quand le logo entier l'est :
+ * un logo fonce portant un lettrage blanc garde ses vraies couleurs, parce
+ * qu'il se voit deja.
+ */
+const ROSE_REPERE = [229, 56, 126];
+
+function teinterSiClair(octets, mesures) {
+  if (!logoClair(mesures)) return false;
+  for (let i = 0; i < octets.length; i += 4) {
+    if (octets[i + 3] < 8) continue;
+    // Meme formule de luminance que le verdict : deux definitions du « clair »
+    // dans un meme ecran donneraient une vignette qui contredit sa legende.
+    const c = [octets[i], octets[i + 1], octets[i + 2]].map((x) => {
+      const n = x / 255;
+      return n <= 0.03928 ? n / 12.92 : ((n + 0.055) / 1.055) ** 2.4;
+    });
+    if (0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2] <= 0.72) continue;
+    octets[i] = ROSE_REPERE[0];
+    octets[i + 1] = ROSE_REPERE[1];
+    octets[i + 2] = ROSE_REPERE[2];
+  }
+  return true;
 }
 
 /**
@@ -836,7 +878,7 @@ async function traiter(fichier) {
     // §7.1 : le logo prend la place de la zone de depot, des que l'analyse a
     // eu lieu. Avant la vectorisation, qui peut echouer : ce qui est confirme
     // ici, c'est le fichier analyse, pas le fichier produit.
-    poserVignette(image);
+    poserVignette(image, mesures);
     etat.nom = (fichier.name || 'logo').replace(/\.[^.]+$/, '');
     // LA PREMIERE QUESTION DU DIAGNOSTIC : ce fichier passe-t-il, en l'etat ?
     // (arbitrage Alex du 20/08). L'origine se connait ici ; pour une image, le

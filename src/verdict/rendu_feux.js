@@ -287,7 +287,8 @@ function rendreLigne(ligne, index) {
  * Le compte de couleurs reste, en seconde ligne : c'est le fait le plus
  * actionnable APRES la reponse, celui qu'un marqueur demande en premier.
  */
-export function rendreFaitPrincipal(nCouleurs, feux = []) {
+export function rendreFaitPrincipal(nCouleurs, feux = [], mesures = null) {
+  const blanc = logoClair(mesures);
   const verts = feux.filter((f) => f.feu === 'vert').length;
   const formats = feux.filter((f) => f.feu === 'orange' && f.nuance === 'format').length;
   const definitions = feux.filter((f) => f.feu === 'orange' && f.nuance === 'definition').length;
@@ -319,9 +320,15 @@ export function rendreFaitPrincipal(nCouleurs, feux = []) {
   }
   if (!titre) return '';
 
+  // LE BLANC SE DIT ICI, pas seulement dans les points d'attention. Ceux ci
+  // arrivent SOUS la grille : un visiteur qui voit sept feux verts s'arrete
+  // avant, et repart sans savoir que son logo ne se marque que sur du fonce.
+  // La ligne ne s'ajoute pas au compte de couleurs, elle le complete.
   const couleurs = Number.isInteger(nCouleurs) && nCouleurs >= 1
     ? `<p class="fait-couleurs">Votre logo a <b>${nCouleurs} couleur${
-      nCouleurs > 1 ? 's' : ''} réelle${nCouleurs > 1 ? 's' : ''}</b>.</p>`
+      nCouleurs > 1 ? 's' : ''} réelle${nCouleurs > 1 ? 's' : ''}</b>${
+      blanc ? ', et elle est blanche : il ne se marque que sur un support foncé'
+            : ''}.</p>`
     : '';
   return `<div class="verdict-tete ${classe}"><p class="fait-reponse">${titre}</p>
   ${couleurs}</div>`;
@@ -350,6 +357,39 @@ les zones, les machines et les tolérances varient d'un atelier à l'autre.</p>`
  */
 const CLAIR = 0.72;
 
+/**
+ * LE LOGO ENTIEREMENT CLAIR, et pourquoi il merite sa propre mesure.
+ *
+ * TROUVE LE 24/08/2026, sur vingt cinq fichiers reels d'Alex. Trois d'entre eux
+ * sont des declinaisons blanches : AWS, ASMR, un logo de t-shirt. Le site leur
+ * repondait SEPT FEUX VERTS, ce qui n'est pas faux, et laissait partir le
+ * visiteur sans lui dire la seule chose qui compte pour lui : un logo blanc ne
+ * se marque QUE sur un support fonce.
+ *
+ * Le point d'attention existant se declenchait bien, mais il disait « une de
+ * vos couleurs est presque blanche », ce qui est tres faible quand la reponse
+ * est « votre logo est blanc ». Une nuance de rendu ne remplace pas un fait.
+ *
+ * LE SEUIL EST HAUT, 90 %, et il ne se negocie pas a la baisse : un logo fonce
+ * avec un lettrage blanc de trente pour cent n'est pas un logo blanc, et le
+ * traiter comme tel serait une fausse alerte sur un cas parfaitement ordinaire.
+ */
+const PART_CLAIRE = 0.90;
+
+export function logoClair(mesures) {
+  const palette = mesures?.m2Couleurs?.palette ?? [];
+  if (!palette.length) return null;
+  const part = palette
+    .filter((c) => luminance(c.rvb) > CLAIR)
+    .reduce((t, c) => t + (c.part ?? 0), 0);
+  // Une palette dont les parts ne somment pas a 1 rendrait le ratio faux : on
+  // rapporte a ce qui est reellement mesure, jamais a un total suppose.
+  const total = palette.reduce((t, c) => t + (c.part ?? 0), 0);
+  if (total <= 0) return null;
+  const ratio = part / total;
+  return ratio >= PART_CLAIRE ? { part: ratio, couleurs: palette.length } : null;
+}
+
 export function pointsAttention(mesures) {
   const points = [];
   const palette = mesures?.m2Couleurs?.palette ?? [];
@@ -358,8 +398,23 @@ export function pointsAttention(mesures) {
   // 1. LE SUPPORT CLAIR. On ne signale que les couleurs qui portent vraiment du
   // dessin : une teinte claire sur un pour cent de l'encre est un liseré, pas
   // une forme, et l'avertir ferait du bruit.
+  const blanc = logoClair(mesures);
   const claires = palette.filter((c) => luminance(c.rvb) > CLAIR && (c.part ?? 0) > 0.05);
-  if (claires.length) {
+  if (blanc) {
+    // LE LOGO EST BLANC, ET CE N'EST PAS UN DEFAUT. C'est une declinaison,
+    // faite expres pour les supports fonces, et la phrase doit le dire dans cet
+    // ordre : d'abord ce que le fichier est, ensuite ce qu'il implique. Lui
+    // reprocher d'etre blanc serait reprocher a un graphiste d'avoir bien
+    // travaille.
+    points.push({
+      cle: 'support',
+      titre: 'Votre logo est blanc',
+      texte: 'C\'est une déclinaison pour supports foncés, et elle est faite pour ça. '
+        + 'Sur un t-shirt blanc, un tote bag écru ou un mug blanc, elle ne se verra pas : '
+        + 'demandez la version foncée du même logo à qui l\'a dessiné, ou choisissez des '
+        + 'objets colorés.',
+    });
+  } else if (claires.length) {
     points.push({
       cle: 'support',
       titre: 'Attention au support clair',

@@ -940,6 +940,33 @@ const controle = (libelle, ok, detail) => resultats.push({ libelle, ok, detail }
   controle('la luminance sait distinguer un creme d\'un rouge fonce',
            luminance([246, 240, 226]) > 0.8 && luminance([198, 40, 50]) < 0.3);
 
+  // LE LOGO ENTIEREMENT BLANC, trouve sur trois fichiers reels le 24/08. Sept
+  // feux verts sans un mot laissaient partir le visiteur sans savoir que sa
+  // declinaison ne se marque que sur du fonce.
+  const { logoClair, rendreFaitPrincipal } =
+    await import('../src/verdict/rendu_feux.js');
+  const blanc = { m2Couleurs: { couleursReelles: 1,
+    palette: [{ rvb: [255, 255, 255], part: 1 }] }, boiteEncre: { rapport: 1.5 } };
+  const lettrage = { m2Couleurs: { couleursReelles: 2, palette: [
+    { rvb: [255, 255, 255], part: 0.25 }, { rvb: [20, 40, 60], part: 0.75 }] },
+    boiteEncre: { rapport: 1.5 } };
+  controle('un logo entierement blanc est reconnu comme tel', Boolean(logoClair(blanc)));
+  controle('et il est NOMME blanc, pas « une couleur presque blanche »',
+           pointsAttention(blanc).some((p) => p.titre === 'Votre logo est blanc'));
+  controle('la reponse le dit des la premiere ligne, pas seulement sous la grille',
+           /support foncé/.test(rendreFaitPrincipal(1,
+             [{ feu: 'vert' }, { feu: 'vert' }], blanc)));
+  controle('et elle ne le dit pas quand le logo n\'est pas blanc',
+           !/support foncé/.test(rendreFaitPrincipal(2,
+             [{ feu: 'vert' }, { feu: 'vert' }], lettrage)));
+  // TEMOIN. Un logo fonce portant un lettrage blanc de 25 % n'est PAS un logo
+  // blanc : c'est le cas le plus ordinaire qui soit, et une fausse alerte
+  // dessus decredibiliserait toutes les vraies.
+  controle('temoin : un lettrage blanc sur fond fonce n\'est pas un logo blanc',
+           logoClair(lettrage) === null);
+  controle('mais l\'alerte support clair, elle, se declenche quand meme',
+           pointsAttention(lettrage).some((p) => p.cle === 'support'));
+
   // 11. LES REGLES DE CHARTE TIENNENT SUR LE NOUVEL ECRAN.
   const ecran = rendreFeux(jugerFeux({ ...base, nCouleurs: 9, fichierVectoriel: false,
     largeurPx: 2000, fusion: { fusionne: true, partPerdue: 0.2, confusion: null } }));

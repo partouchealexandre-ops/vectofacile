@@ -135,6 +135,10 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
      le logo analyse plutot que de reclamer une action deja accomplie. */
   #depot.depot-analyse { border-style: solid; border-color: var(--trait);
     background: #fff; padding: 14px; }
+  /* La legende de la vignette teintee. Elle n'est pas decorative : sans elle,
+     on montrerait au visiteur un logo d'une couleur qui n'est pas la sienne. */
+  .vignette-teinte { display: block; margin-top: 8px; color: #B02463;
+    font-size: 13px; line-height: 1.45; }
   #depot .vignette { display: block; max-width: 150px; max-height: 150px;
     margin: 0 auto 10px; }
   #depot span { color: var(--gris); font-size: 14px; }

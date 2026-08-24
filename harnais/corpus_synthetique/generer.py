@@ -319,6 +319,33 @@ enregistrer(
 )
 
 
+# ------------------------------------------------- le logo entierement blanc
+#
+# CAS TROUVE SUR DES FICHIERS REELS, 24/08/2026. Trois EPS clients sur vingt
+# cinq etaient des declinaisons blanches : encre blanche a 100 %, fond
+# transparent. Le site repondait sept feux verts, ce qui n'est pas faux, et
+# laissait partir le visiteur sans lui dire la seule chose qui compte pour lui :
+# un logo blanc ne se marque QUE sur un support fonce.
+#
+# Le cas est synthetique, pas extrait du corpus client : les fichiers d'Alex ne
+# sortent jamais de son disque, seul ce qui en est DERIVE entre ici.
+
+img = Image.new("RGBA", (300, 300), (0, 0, 0, 0))
+d = ImageDraw.Draw(img)
+d.ellipse([60, 60, 240, 240], fill=(255, 255, 255, 255))
+d.rectangle([130, 100, 170, 200], fill=(0, 0, 0, 0))
+enregistrer(
+    "logo_blanc", img,
+    [
+        egal("m2Couleurs.couleursReelles", 1),
+        egal("fond.type", "transparent"),
+    ],
+    "Un anneau blanc sur fond transparent, la declinaison qu'un graphiste "
+    "livre pour les supports fonces. Le site doit le NOMMER blanc, et la "
+    "vignette doit le teinter pour qu'il soit visible sur une carte blanche.",
+)
+
+
 # ------------------------------------------------- le logo sur aplat
 #
 # Le cas qui a revele l'angle mort du moteur, reconstruit en synthetique : un
