@@ -494,19 +494,6 @@ fs.writeFileSync(path.join(PUBLIC, 'index.html'),
     .match(/<nav class="nav-site">[\s\S]*?<\/nav>/)[0])
     .replaceAll('{{DOMAINE}}', DOMAINE));
 
-/**
- * LE LOGO DE DEMONSTRATION, E1 du brief du 21/08.
- *
- * « On montre au lieu de decrire, et le visiteur comprend le produit avant de
- * donner son fichier. » Il est dessine pour le site, il n'imite aucune marque
- * existante, et il est choisi pour ce qu'il ENSEIGNE : deux couleurs, un aplat,
- * un texte fin. Il declenche les trois reponses que l'outil sait rendre, un
- * oui franc, un blocage de definition, un blocage de lisibilite.
- */
-fs.mkdirSync(path.join(PUBLIC, 'exemple'), { recursive: true });
-fs.copyFileSync(path.join(RACINE, 'contenu', 'exemple', 'logo-exemple.png'),
-                path.join(PUBLIC, 'exemple', 'logo-exemple.png'));
-
 // L'IMAGE DE PARTAGE, celle qu'un lien emporte avec lui sur LinkedIn ou dans
 // une conversation. Sans elle, les meta og: annoncent une image qui n'existe
 // pas, ce qui est pire que pas d'image du tout.

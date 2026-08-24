@@ -407,16 +407,22 @@ export function rendreActionFichier(fichier, ctaDejaPorte = false) {
     // et la meme ancre : garder ce bandeau ferait quatre appels identiques sur
     // le meme ecran, ce qui n'est plus un appel a l'action. La ligne qui dit ce
     // qu'on recoit reste, elle : c'est la seule qui l'ecrit.
-    const appel = ctaDejaPorte ? '' :
-      `<a class="cta-large" href="#telechargements">Obtenir mon fichier vectoriel</a>`;
+    if (ctaDejaPorte) {
+      return `<div class="verdict-action"><p class="note">Le bouton des cartes vous donne
+      le <b>.eps</b> pour votre marqueur et le <b>.pdf</b> pour vous. Gratuit, sans compte,
+      sans envoi de votre fichier.</p></div>`;
+    }
     return `<div class="verdict-action">
-    ${appel}
+    <a class="cta-large" href="#telechargements">Obtenir mon fichier vectoriel</a>
     <p class="note">Le <b>.eps</b> pour votre marqueur, le <b>.pdf</b> pour vous. Gratuit,
     sans compte, sans envoi de votre fichier.</p>
     </div>`;
   }
+  // Il n'« arrive » plus en bas de page : depuis le 24/08/2026, rien ne se
+  // telecharge sans avoir ete demande. On annonce donc une disponibilite, pas
+  // une livraison.
   return `<div class="verdict-action"><p class="note">Nous préparons votre fichier
-  vectoriel, il arrive en bas de page.</p></div>`;
+  vectoriel, il sera prêt dans un instant.</p></div>`;
 }
 
 /**

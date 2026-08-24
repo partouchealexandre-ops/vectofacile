@@ -203,12 +203,18 @@ function boitier(feu) {
 }
 
 /**
- * LES OBJETS FREQUENTS, en puces.
+ * LES OBJETS POSSIBLES, en puces.
  *
  * C'est la traduction de la technique : personne ne sait ce qu'est la
  * tampographie, tout le monde reconnait un stylo et une cle USB. Le picto reste
  * PETIT et discret, 15 px : sa fonction est de rendre la liste balayable, pas
  * de faire grossir la carte.
+ *
+ * « POSSIBLES », PAS « FREQUENTS », arbitrage Alex du 24/08/2026. Nous ne
+ * mesurons aucune frequence : ecrire « frequents » serait une statistique
+ * inventee, exactement ce que le reste du site refuse. Et la liste n'engage
+ * aucun atelier : la reserve est ecrite une fois sous la grille, pas sept fois
+ * dans les cartes, ou elle deviendrait du bruit qu'on saute.
  */
 function produits(ligne) {
   const liste = objets(ligne.produits);
@@ -217,7 +223,7 @@ function produits(ligne) {
     `<li class="feu-objet">${usePicto(`po-${pictoProduit(nom)}`, 'picto-objet')}`
     + `<span>${echapper(nom)}</span></li>`).join('');
   return `<div class="feu-produits">
-    <p class="feu-produits-titre">Objets fréquents</p>
+    <p class="feu-produits-titre">Objets possibles</p>
     <ul class="feu-objets">${puces}</ul>
   </div>`;
 }
@@ -278,7 +284,10 @@ export function rendreFaitPrincipal(nCouleurs) {
 export function rendreFeux(feux) {
   if (!feux?.length) return '';
   return `${spritePictos()}
-<div class="grille-feux">${feux.map(rendreLigne).join('\n')}</div>`;
+<div class="grille-feux">${feux.map(rendreLigne).join('\n')}</div>
+<p class="grille-reserve">Ces objets sont des exemples de ce que chaque technique
+marque couramment, pas une liste fermée. Le dernier mot revient à votre fabricant :
+les zones, les machines et les tolérances varient d'un atelier à l'autre.</p>`;
 }
 
 /**

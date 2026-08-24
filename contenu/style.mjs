@@ -310,6 +310,11 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
     .feu h3 { font-size: 19px; }
     .feu-action, .feu-copier { width: 100%; text-align: center; }
   }
+  /* LA RESERVE, dite UNE fois sous la grille. Repetee dans les sept cartes,
+     elle deviendrait du bruit qu'on saute, et c'est justement la phrase qui
+     doit rester lisible : nous lisons un fichier, pas une machine. */
+  .grille-reserve { margin: -14px 0 22px; font-size: 13px; line-height: 1.5;
+    color: var(--gris); max-width: 68ch; }
   /* Les points d'attention : ce qui change la lecture de TOUTES les lignes. */
   .points-attention { margin: 0 0 22px; }
   .points-attention h2 { font-size: 18px; margin: 0 0 8px; }
@@ -332,22 +337,6 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
     cursor: pointer; justify-self: start; font-family: inherit; }
   /* §7 du lot 1 : l'exemple, c'est la grille de feux et rien d'autre. Une
      demi-hauteur d'ecran, compris sans lire. */
-  .exemple-feux { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
-    gap: 26px; align-items: center; margin: 12px 0 4px; }
-  .exemple-feux img { width: 100%; height: auto; border: 1px solid var(--trait);
-    border-radius: 10px; background: #fff; }
-  .pastilles { list-style: none; margin: 0 0 10px; padding: 0; display: grid; gap: 5px; }
-  .pastilles li { position: relative; padding-left: 22px; font-size: 14.5px; }
-  .pastilles li::before { content: ''; position: absolute; left: 0; top: 5px;
-    width: 12px; height: 12px; border-radius: 50%; }
-  .pastille-vert::before { background: #1d6b38; }
-  .pastille-orange::before { background: var(--orange); }
-  .pastille-rouge::before { background: #9c3722; }
-  .exemple-feux button { margin-top: 6px; padding: 11px 18px; border-radius: 8px;
-    border: 1.5px solid var(--trait); background: #fff; color: var(--encre);
-    font-weight: 600; font-size: 14.5px; cursor: pointer; font-family: inherit; }
-  .exemple-feux button:hover { border-color: var(--gris); }
-  @media (max-width: 760px) { .exemple-feux { grid-template-columns: 1fr; } }
   /* C5 a C7 : la preuve se replie, elle ne barre plus la route. */
   .volet { border-top: 1px solid var(--trait); margin-top: 18px; padding-top: 12px; }
   .volet > summary { cursor: pointer; font-weight: 600; font-size: 15.5px;

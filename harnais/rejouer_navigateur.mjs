@@ -331,11 +331,22 @@ console.log('');
     const blob = await new Promise((ok) => toile.toBlob(ok, 'image/png'));
     await globalThis.vecto.traiter(new File([blob], 'reduit.png', { type: 'image/png' }));
     const alerte = document.querySelector('.alerte');
+    // DEPUIS LE 24/08/2026 les boutons de telechargement sont caches tant que
+    // personne ne les demande : l'action que l'avertissement doit preceder
+    // n'est plus le bouton, c'est l'APPEL qui y mene. On verifie les deux, dans
+    // l'ordre reel du parcours : l'alerte au dessus de l'appel, puis, une fois
+    // l'appel clique, l'alerte toujours au dessus des boutons.
+    const appel = document.querySelector('a[href="#telechargements"]');
+    const avantL_appel = Boolean(alerte && appel
+      && alerte.getBoundingClientRect().top < appel.getBoundingClientRect().top);
+    appel?.click();
     const bouton = document.getElementById('telecharger_eps');
     return {
       alerte: Boolean(alerte && alerte.offsetParent !== null),
       remede: Boolean(document.querySelector('.alerte-remede')),
-      avantLeBouton: Boolean(alerte && bouton
+      appelPresent: Boolean(appel),
+      avantL_appel,
+      avantLeBouton: Boolean(alerte && bouton && bouton.offsetParent !== null
         && alerte.getBoundingClientRect().top < bouton.getBoundingClientRect().top),
     };
   }, petit.toString('base64'));
@@ -347,7 +358,10 @@ console.log('');
   for (const [libelle, ok] of [
     ['un avertissement est affiche', constat.alerte],
     ['il dit quoi faire, pas seulement ce qui ne va pas', constat.remede],
-    ['il apparait AVANT le bouton de telechargement', constat.avantLeBouton],
+    ['un appel au fichier existe bien : le controle a quelque chose a mesurer',
+      constat.appelPresent],
+    ['l\'avertissement apparait AVANT l\'appel au fichier', constat.avantL_appel],
+    ['et toujours avant les boutons, une fois l\'appel clique', constat.avantLeBouton],
   ]) {
     console.log(`  ${ok ? 'ok   ' : 'ECHEC'} ${libelle}`);
     if (!ok) echecs++;
@@ -381,19 +395,32 @@ console.log('');
   const constat = await page.evaluate(async ([b1, b2]) => {
     const fichier = (b64, nom) => new File(
       [Uint8Array.from(atob(b64), (c) => c.charCodeAt(0))], nom, { type: 'image/png' });
+    const visible = () => document.getElementById('telechargements').offsetParent !== null;
     await globalThis.vecto.traiter(fichier(b1, 'bon.png'));
-    const apres1 = document.getElementById('telechargements').offsetParent !== null;
+    // ARBITRAGE ALEX DU 24/08/2026 : le fichier est PRET, il n'est pas MONTRE.
+    // La personne est venue savoir si son logo etait bon a marquer, pas
+    // repartir avec un .eps qu'elle n'a pas reclame.
+    const avantDemande = visible();
+    const pret = Boolean(globalThis.vecto.etat().programme);
+    document.querySelector('a[href="#telechargements"]')?.click();
+    const apresDemande = visible();
     await globalThis.vecto.traiter(fichier(b2, 'refuse.png'));
-    const apres2 = document.getElementById('telechargements').offsetParent !== null;
-    return { apres1, apres2, programme: Boolean(globalThis.vecto.etat().programme) };
+    const apres2 = visible();
+    return { avantDemande, pret, apresDemande, apres2,
+             programme: Boolean(globalThis.vecto.etat().programme) };
   }, [bon.toString('base64'), refuse.toString('base64')]);
   await page.close();
 
   console.log('');
-  console.log('  UN FICHIER REFUSE NE SE TELECHARGE PAS');
+  console.log('  LE FICHIER SE DEMANDE, ET NE SURVIT PAS AU FICHIER SUIVANT');
   console.log('  ' + '-'.repeat(66));
   for (const [libelle, ok] of [
-    ['les boutons apparaissent sur un fichier accepte', constat.apres1 === true],
+    ['rien ne se telecharge tant que personne ne l\'a demande',
+      constat.avantDemande === false],
+    ['mais le fichier est deja fabrique : le clic ne fait pas attendre',
+      constat.pret === true],
+    ['un clic sur l\'appel a l\'action fait apparaitre les boutons',
+      constat.apresDemande === true],
     ['ils DISPARAISSENT sur le fichier refuse suivant', constat.apres2 === false],
     ['le trace du fichier precedent ne survit pas en memoire', constat.programme === false],
   ]) {
@@ -696,52 +723,43 @@ console.log('');
   console.log('');
 }
 
-// LE LOGO DE DEMONSTRATION DIT VRAI, §7 du lot 1 du 21/08.
+// L'ACCUEIL N'ANNONCE PLUS AUCUN VERDICT AVANT MESURE.
 //
-// L'accueil affiche SEPT PASTILLES en dur, ecrites dans le HTML. Une fois
-// recopiees, elles ne se corrigent plus toutes seules : un feu qui change de
-// couleur les rendrait fausses EN SILENCE, sur la premiere page du site, et
-// c'est precisement la page qui promet de dire vrai.
+// L'exemple a ete retire le 24/08/2026, arbitrage Alex : la zone de depot dit
+// deja ce qu'il y a a faire, et le visiteur comprend en deposant son logo, pas
+// en regardant celui d'un autre.
 //
-// Ce bloc depose le meme logo par le vrai chemin, releve les feux rendus, et
-// les compare a la chaine annoncee. Il n'y a pas d'autre moyen qu'une promesse
-// affichee reste verifiee.
+// Ce qui part avec lui : sept pastilles ecrites en dur et le controle qui
+// verifiait qu'elles ne mentaient pas. Ce controle la reste, retourne : la page
+// d'accueil ne doit plus porter UN SEUL verdict recopie a la main. Une couleur
+// de feu ecrite en dur dans une page ne se corrige pas toute seule, et c'est
+// exactement la faute que l'ancien harnais surveillait.
 {
   const page = await navigateur.newPage();
   await page.goto(`http://127.0.0.1:${PORT}/`, { waitUntil: 'networkidle' });
-  await page.waitForTimeout(900);
-  const annonce = await page.evaluate(() => ({
-    pastilles: document.querySelector('.pastilles')?.dataset.exemple ?? '',
-    noms: [...document.querySelectorAll('.pastilles li')].map((l) => l.textContent.trim()),
-  }));
-  await page.click('#voir_exemple');
-  await page.waitForTimeout(2500);
-  const rendu = await page.evaluate(() => ({
-    feux: [...document.querySelectorAll('#verdict .feu')]
-      .map((l) => (l.className.match(/feu-(vert|orange|rouge)/) ?? [])[1]?.[0] ?? '?').join(''),
-    noms: [...document.querySelectorAll('#verdict .feu h3')]
-      .map((h) => h.childNodes[0].textContent.trim()),
-    couleurs: globalThis.vecto.etat().mesures?.m2Couleurs?.couleursReelles ?? null,
+  await page.waitForTimeout(600);
+  const constat = await page.evaluate(() => ({
+    pastilles: document.querySelectorAll('.pastilles, [data-exemple]').length,
+    boutonExemple: document.getElementById('voir_exemple') !== null,
+    imageExemple: document.querySelectorAll('img[src*="logo-exemple"]').length,
+    depot: document.getElementById('depot') !== null,
+    verdictVide: (document.getElementById('verdict')?.innerHTML ?? '').trim() === '',
   }));
   await page.close();
 
   console.log('');
-  console.log('  LE LOGO DE DEMONSTRATION DIT VRAI');
+  console.log('  L\'ACCUEIL N\'ANNONCE AUCUN VERDICT AVANT MESURE');
   console.log('  ' + '-'.repeat(66));
   for (const [libelle, ok] of [
-    ['le bouton depose vraiment le logo temoin', rendu.couleurs !== null],
-    ['les sept pastilles annoncees sont celles que l\'outil rend',
-      annonce.pastilles === rendu.feux],
-    ['et elles nomment les memes techniques, dans le meme ordre',
-      annonce.noms.join('|') === rendu.noms.join('|')],
-    // Le §7 exige un logo qui ENSEIGNE : une grille toute verte n'apprend rien.
-    ['l\'exemple produit bien un vert, un orange ET un rouge',
-      /v/.test(rendu.feux) && /o/.test(rendu.feux) && /r/.test(rendu.feux)],
+    ['aucune pastille de verdict ecrite en dur', constat.pastilles === 0],
+    ['le bouton d\'exemple a disparu', constat.boutonExemple === false],
+    ['le logo de demonstration n\'est plus servi', constat.imageExemple === 0],
+    ['la zone de depot, elle, est bien la : c\'est elle qui explique', constat.depot === true],
+    ['le bloc de verdict arrive vide', constat.verdictVide === true],
   ]) {
     console.log(`  ${ok ? 'ok   ' : 'ECHEC'} ${libelle}`);
     if (!ok) echecs++;
   }
-  console.log(`         annonce : ${annonce.pastilles} | rendu : ${rendu.feux}`);
   console.log('  ' + '-'.repeat(66));
   console.log('');
 }

@@ -48,7 +48,7 @@ const modeVectoriser = () => document.body?.dataset?.mode === 'vectoriser';
 
 let etat = { nom: null, image: null, fiche: null, mesures: null, programme: null, svg: null,
              verdict: null, selection: null, fichierEtat: null, grille: null,
-             avertissements: [] };
+             telechargementDemande: false, avertissements: [] };
 
 function texte(valeur, unite = '') {
   if (valeur === null || valeur === undefined) return 'non mesuré';
@@ -544,7 +544,48 @@ function reinitialiser() {
   if (apercu) apercu.innerHTML = '';
   rendreLaZoneDeDepot();
   etat = { nom: null, image: null, fiche: null, mesures: null, programme: null, svg: null,
-           verdict: null, selection: null, fichierEtat: null, avertissements: [] };
+           verdict: null, selection: null, fichierEtat: null,
+           telechargementDemande: false, avertissements: [] };
+}
+
+/**
+ * LES TELECHARGEMENTS NE S'IMPOSENT PLUS, arbitrage Alex du 24/08/2026.
+ *
+ * CE QUI N'ALLAIT PAS : la page finissait sur « Télécharger le .eps » alors que
+ * la personne n'avait rien demande. Elle etait venue savoir si son logo etait
+ * bon a marquer ; le site lui rendait un fichier qu'elle n'avait pas reclame,
+ * et l'ecran de diagnostic se terminait sur un acte commercial.
+ *
+ * CE QUI NE CHANGE PAS : la vectorisation, elle, se fait quand meme, en fond.
+ * Faire attendre le visiteur APRES son clic serait payer deux fois le meme
+ * calcul en temps de perception. Le fichier est pret, il n'est pas montre.
+ *
+ * SUR /vectoriser, aucune retenue : la page ne fait que ca, la personne y est
+ * venue pour ca, et lui cacher le resultat serait absurde.
+ */
+function revelerTelechargements() {
+  const bloc = $('telechargements');
+  if (!bloc) return;
+  if (!etat.programme) return;
+  if (modeVectoriser() || etat.telechargementDemande) bloc.hidden = false;
+}
+
+/**
+ * LA DEMANDE EXPLICITE. Tous les appels a l'action pointent vers la meme ancre,
+ * qu'ils viennent d'une carte de feu ou du bandeau : un seul ecouteur delegue
+ * les couvre tous, et les fonctions de rendu restent PURES, sans une ligne de
+ * comportement dedans.
+ *
+ * Le clic peut arriver AVANT la fin de la vectorisation : on note la demande,
+ * et `revelerTelechargements()` la respectera quand le fichier sera pret.
+ */
+function ecouterLaDemandeDeFichier() {
+  document.addEventListener('click', (e) => {
+    const lien = e.target.closest?.('a[href="#telechargements"]');
+    if (!lien) return;
+    etat.telechargementDemande = true;
+    revelerTelechargements();
+  });
 }
 
 /**
@@ -790,7 +831,7 @@ async function traiter(fichier) {
       </p>
     `;
     devoiler('resultat');
-    $('telechargements').hidden = false;
+    revelerTelechargements();
     $('travail').hidden = true;
     // Le .eps existe desormais : l'action peut le promettre et pointer vers le
     // bas de page.
@@ -861,6 +902,9 @@ function brancher() {
     }
   });
 
+  // Les appels a l'action ne s'affichent pas tout seuls : ils se demandent.
+  ecouterLaDemandeDeFichier();
+
   $('telecharger_eps').addEventListener('click', () => {
     telecharger(versEps(etat.programme, { titre: etat.nom }), `${etat.nom}.eps`, 'application/postscript');
   });
@@ -870,31 +914,6 @@ function brancher() {
   $('telecharger_svg').addEventListener('click', () => {
     telecharger(etat.svg, `${etat.nom}.svg`, 'image/svg+xml');
   });
-
-  // E1 DU BRIEF DU 21/08 : LE LOGO DE DEMONSTRATION.
-  //
-  // « On montre au lieu de decrire, et le visiteur comprend le produit avant de
-  // donner son fichier. » Le bouton depose le logo temoin comme le visiteur
-  // deposerait le sien : meme chemin, meme moteur, meme verdict. Rien n'est
-  // simule, sinon la demonstration ne demontrerait rien.
-  const exemple = $('voir_exemple');
-  if (exemple) {
-    exemple.addEventListener('click', async () => {
-      exemple.disabled = true;
-      try {
-        const reponse = await fetch('/exemple/logo-exemple.png');
-        const octets = await reponse.blob();
-        await traiter(new File([octets], 'logo-exemple.png', { type: 'image/png' }));
-        $('verdict')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      } catch {
-        // Un exemple qui ne se charge pas ne doit pas casser la page : le
-        // visiteur peut toujours deposer son propre fichier, qui est le but.
-        exemple.textContent = 'L\'exemple n\'a pas pu se charger';
-      } finally {
-        exemple.disabled = false;
-      }
-    });
-  }
 
   // LE BOUTON DE COPIE DU BRIEF, lot 1 du 21/08. La personne colle le texte
   // dans son mail a son graphiste : cout nul, valeur immediate, et le texte
