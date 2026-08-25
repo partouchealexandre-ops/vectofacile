@@ -11,13 +11,15 @@
     "harnais:moteur": "node harnais/rejouer_synthetique.mjs",
     "harnais:vectorisation": "node harnais/rejouer_vectorisation.mjs",
     "harnais:navigateur": "node harnais/rejouer_navigateur.mjs",
-    "verifier": "npm run corpus:generer && npm run harnais:moteur && npm run harnais:vectorisation && npm run harnais:verdict && npm run site:construire && npm run harnais:seo && npm run harnais:navigateur && npm run harnais:vectoriel && npm run harnais:pages",
+    "verifier": "npm run corpus:generer && npm run harnais:moteur && npm run harnais:vectorisation && npm run harnais:verdict && npm run harnais:simulation && npm run site:construire && npm run harnais:seo && npm run harnais:navigateur && npm run harnais:vectoriel && npm run harnais:pages",
     "servir": "python3 -m http.server 8123 --directory public",
     "harnais:pages": "node harnais/rejouer_pages.mjs",
     "harnais:verdict": "node harnais/rejouer_verdict.mjs",
     "harnais:seo": "node harnais/rejouer_seo.mjs",
     "pdfjs:copier": "node outils/construire_pdfjs.mjs",
-    "harnais:vectoriel": "node harnais/rejouer_vectoriel.mjs"
+    "harnais:vectoriel": "node harnais/rejouer_vectoriel.mjs",
+    "harnais:simulation": "node harnais/rejouer_simulation.mjs",
+    "simulation:deriver": "python3 outils/deriver_simulation.py"
   },
   "license": "UNLICENSED",
   "dependencies": {

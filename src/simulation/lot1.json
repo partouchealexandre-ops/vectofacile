@@ -1,0 +1,1584 @@
+{
+ "version": 1,
+ "genere_le": "25/08/2026",
+ "doctrine": [
+  "DERIVE de la base de travail fournisseurs, instantane du 05/08/2026. La base brute reste hors du depot ; ce fichier n'en garde que ce qui sert a l'ecran.",
+  "Aucun nom de fournisseur, aucune reference, aucune URL, aucun prix : le depot est destine a devenir public.",
+  "couleursMax vaut null pour la quadrichromie, jamais 0 : la source code la quadri par 0, la traduction se fait ici, une fois.",
+  "Le plafond de couleurs appartient a la POSITION, jamais a la technique, ni par son nom ni par son identifiant : sur le catalogue complet, 18 identifiants sur 49 portent un plafond qui varie selon la position.",
+  "Les photos sont reduites et les coordonnees de zone reduites avec elles : reduire, c'est recalculer. Un controle a temoin le verifie a chaque derivation.",
+  "Les positions qui partagent la meme photo ET les memes coordonnees fusionnent leur libelle : le fournisseur ne photographie qu'une face.",
+  "Les plafonds fournisseur reconnus faux ne sont pas corriges, ils sont refuses et signales."
+ ],
+ "vues": [
+  {
+   "produit": "p01",
+   "objet": "tote bag en coton",
+   "matiere": "coton",
+   "zonesSource": [
+    "FRONT",
+    "BACK"
+   ],
+   "zone": "Devant ou dos",
+   "largeurMm": 300.0,
+   "hauteurMm": 260.0,
+   "image": "p01_01.jpg",
+   "imagePx": {
+    "largeur": 700,
+    "hauteur": 882
+   },
+   "zonePx": {
+    "x": 138.59,
+    "y": 430.77,
+    "largeur": 424.59,
+    "hauteur": 368.1
+   },
+   "techniques": [
+    {
+     "id": "S1",
+     "nom": "Sérigraphie",
+     "couleursMax": 4
+    },
+    {
+     "id": "T1",
+     "nom": "Transfert sérigraphique",
+     "couleursMax": 8
+    },
+    {
+     "id": "TD1",
+     "nom": "Transfert numérique",
+     "couleursMax": null
+    },
+    {
+     "id": "TR",
+     "nom": "Transfert réfléchissant",
+     "couleursMax": 1
+    }
+   ]
+  },
+  {
+   "produit": "p01",
+   "objet": "tote bag en coton",
+   "matiere": "coton",
+   "zonesSource": [
+    "FRONT EMBROIDERY",
+    "BACK EMBROIDERY"
+   ],
+   "zone": "Devant ou dos, broderie",
+   "largeurMm": 280.0,
+   "hauteurMm": 230.0,
+   "image": "p01_02.jpg",
+   "imagePx": {
+    "largeur": 700,
+    "hauteur": 882
+   },
+   "zonePx": {
+    "x": 151.83,
+    "y": 430.77,
+    "largeur": 396.34,
+    "hauteur": 325.73
+   },
+   "techniques": [
+    {
+     "id": "E",
+     "nom": "Broderie",
+     "couleursMax": 8
+    }
+   ]
+  },
+  {
+   "produit": "p02",
+   "objet": "t-shirt col rond",
+   "matiere": "polyester recyclé",
+   "zonesSource": [
+    "FRONT"
+   ],
+   "zone": "Devant",
+   "largeurMm": 280.0,
+   "hauteurMm": 400.0,
+   "image": "p02_03.jpg",
+   "imagePx": {
+    "largeur": 700,
+    "hauteur": 737
+   },
+   "zonePx": {
+    "x": 213.68,
+    "y": 146.63,
+    "largeur": 268.95,
+    "hauteur": 383.89
+   },
+   "techniques": [
+    {
+     "id": "TST",
+     "nom": "Sublimation",
+     "couleursMax": null
+    },
+    {
+     "id": "ST1",
+     "nom": "Sérigraphie",
+     "couleursMax": 8
+    },
+    {
+     "id": "TDT",
+     "nom": "Transfert numérique",
+     "couleursMax": null
+    },
+    {
+     "id": "TT",
+     "nom": "Transfert sérigraphique",
+     "couleursMax": 8
+    },
+    {
+     "id": "TR",
+     "nom": "Transfert réfléchissant",
+     "couleursMax": 1
+    }
+   ]
+  },
+  {
+   "produit": "p02",
+   "objet": "t-shirt col rond",
+   "matiere": "polyester recyclé",
+   "zonesSource": [
+    "BACK"
+   ],
+   "zone": "Dos",
+   "largeurMm": 280.0,
+   "hauteurMm": 400.0,
+   "image": "p02_04.jpg",
+   "imagePx": {
+    "largeur": 700,
+    "hauteur": 737
+   },
+   "zonePx": {
+    "x": 219.58,
+    "y": 128.21,
+    "largeur": 268.21,
+    "hauteur": 383.16
+   },
+   "techniques": [
+    {
+     "id": "TR",
+     "nom": "Transfert réfléchissant",
+     "couleursMax": 1
+    },
+    {
+     "id": "ST1",
+     "nom": "Sérigraphie",
+     "couleursMax": 8
+    },
+    {
+     "id": "TDT",
+     "nom": "Transfert numérique",
+     "couleursMax": null
+    },
+    {
+     "id": "TT",
+     "nom": "Transfert sérigraphique",
+     "couleursMax": 8
+    },
+    {
+     "id": "TST",
+     "nom": "Sublimation",
+     "couleursMax": null
+    }
+   ]
+  },
+  {
+   "produit": "p02",
+   "objet": "t-shirt col rond",
+   "matiere": "polyester recyclé",
+   "zonesSource": [
+    "CHEST"
+   ],
+   "zone": "Poitrine",
+   "largeurMm": 100.0,
+   "hauteurMm": 100.0,
+   "image": "p02_05.jpg",
+   "imagePx": {
+    "largeur": 700,
+    "hauteur": 708
+   },
+   "zonePx": {
+    "x": 392.82,
+    "y": 166.33,
+    "largeur": 96.26,
+    "hauteur": 95.55
+   },
+   "techniques": [
+    {
+     "id": "TST",
+     "nom": "Sublimation",
+     "couleursMax": null
+    },
+    {
+     "id": "E",
+     "nom": "Broderie",
+     "couleursMax": 8
+    },
+    {
+     "id": "ST1",
+     "nom": "Sérigraphie",
+     "couleursMax": 8
+    },
+    {
+     "id": "TDT",
+     "nom": "Transfert numérique",
+     "couleursMax": null
+    },
+    {
+     "id": "TT",
+     "nom": "Transfert sérigraphique",
+     "couleursMax": 8
+    },
+    {
+     "id": "TR",
+     "nom": "Transfert réfléchissant",
+     "couleursMax": 1
+    }
+   ]
+  },
+  {
+   "produit": "p02",
+   "objet": "t-shirt col rond",
+   "matiere": "polyester recyclé",
+   "zonesSource": [
+    "ARM RIGHT"
+   ],
+   "zone": "Manche droite",
+   "largeurMm": 100.0,
+   "hauteurMm": 70.0,
+   "image": "p02_06.jpg",
+   "imagePx": {
+    "largeur": 373,
+    "hauteur": 1000
+   },
+   "zonePx": {
+    "x": 61.0,
+    "y": 171.0,
+    "largeur": 130.0,
+    "hauteur": 91.0
+   },
+   "techniques": [
+    {
+     "id": "TR",
+     "nom": "Transfert réfléchissant",
+     "couleursMax": 1
+    },
+    {
+     "id": "E",
+     "nom": "Broderie",
+     "couleursMax": 8
+    },
+    {
+     "id": "ST1",
+     "nom": "Sérigraphie",
+     "couleursMax": 8
+    },
+    {
+     "id": "TDT",
+     "nom": "Transfert numérique",
+     "couleursMax": null
+    },
+    {
+     "id": "TT",
+     "nom": "Transfert sérigraphique",
+     "couleursMax": 8
+    },
+    {
+     "id": "TST",
+     "nom": "Sublimation",
+     "couleursMax": null
+    }
+   ]
+  },
+  {
+   "produit": "p02",
+   "objet": "t-shirt col rond",
+   "matiere": "polyester recyclé",
+   "zonesSource": [
+    "ARM LEFT"
+   ],
+   "zone": "Manche gauche",
+   "largeurMm": 100.0,
+   "hauteurMm": 70.0,
+   "image": "p02_07.jpg",
+   "imagePx": {
+    "largeur": 373,
+    "hauteur": 1000
+   },
+   "zonePx": {
+    "x": 188.0,
+    "y": 171.0,
+    "largeur": 130.0,
+    "hauteur": 91.0
+   },
+   "techniques": [
+    {
+     "id": "TST",
+     "nom": "Sublimation",
+     "couleursMax": null
+    },
+    {
+     "id": "E",
+     "nom": "Broderie",
+     "couleursMax": 8
+    },
+    {
+     "id": "ST1",
+     "nom": "Sérigraphie",
+     "couleursMax": 8
+    },
+    {
+     "id": "TDT",
+     "nom": "Transfert numérique",
+     "couleursMax": null
+    },
+    {
+     "id": "TT",
+     "nom": "Transfert sérigraphique",
+     "couleursMax": 8
+    },
+    {
+     "id": "TR",
+     "nom": "Transfert réfléchissant",
+     "couleursMax": 1
+    }
+   ]
+  },
+  {
+   "produit": "p03",
+   "objet": "polo manches courtes",
+   "matiere": "polyester recyclé",
+   "zonesSource": [
+    "FRONT"
+   ],
+   "zone": "Devant",
+   "largeurMm": 270.0,
+   "hauteurMm": 270.0,
+   "image": "p03_08.jpg",
+   "imagePx": {
+    "largeur": 700,
+    "hauteur": 891
+   },
+   "zonePx": {
+    "x": 200.38,
+    "y": 310.81,
+    "largeur": 302.8,
+    "hauteur": 301.91
+   },
+   "techniques": [
+    {
+     "id": "TR",
+     "nom": "Transfert réfléchissant",
+     "couleursMax": 1
+    },
+    {
+     "id": "E",
+     "nom": "Broderie",
+     "couleursMax": 8
+    },
+    {
+     "id": "ST1",
+     "nom": "Sérigraphie",
+     "couleursMax": 8
+    },
+    {
+     "id": "TDT",
+     "nom": "Transfert numérique",
+     "couleursMax": null
+    },
+    {
+     "id": "TT",
+     "nom": "Transfert sérigraphique",
+     "couleursMax": 8
+    }
+   ]
+  },
+  {
+   "produit": "p03",
+   "objet": "polo manches courtes",
+   "matiere": "polyester recyclé",
+   "zonesSource": [
+    "BACK"
+   ],
+   "zone": "Dos",
+   "largeurMm": 270.0,
+   "hauteurMm": 270.0,
+   "image": "p03_09.jpg",
+   "imagePx": {
+    "largeur": 700,
+    "hauteur": 877
+   },
+   "zonePx": {
+    "x": 190.35,
+    "y": 132.46,
+    "largeur": 302.63,
+    "hauteur": 302.63
+   },
+   "techniques": [
+    {
+     "id": "E",
+     "nom": "Broderie",
+     "couleursMax": 8
+    },
+    {
+     "id": "ST1",
+     "nom": "Sérigraphie",
+     "couleursMax": 8
+    },
+    {
+     "id": "TDT",
+     "nom": "Transfert numérique",
+     "couleursMax": null
+    },
+    {
+     "id": "TT",
+     "nom": "Transfert sérigraphique",
+     "couleursMax": 8
+    },
+    {
+     "id": "TR",
+     "nom": "Transfert réfléchissant",
+     "couleursMax": 1
+    }
+   ]
+  },
+  {
+   "produit": "p03",
+   "objet": "polo manches courtes",
+   "matiere": "polyester recyclé",
+   "zonesSource": [
+    "CHEST"
+   ],
+   "zone": "Poitrine",
+   "largeurMm": 100.0,
+   "hauteurMm": 100.0,
+   "image": "p03_10.jpg",
+   "imagePx": {
+    "largeur": 700,
+    "hauteur": 891
+   },
+   "zonePx": {
+    "x": 428.37,
+    "y": 198.6,
+    "largeur": 112.21,
+    "hauteur": 112.21
+   },
+   "techniques": [
+    {
+     "id": "TR",
+     "nom": "Transfert réfléchissant",
+     "couleursMax": 1
+    },
+    {
+     "id": "E",
+     "nom": "Broderie",
+     "couleursMax": 8
+    },
+    {
+     "id": "ST1",
+     "nom": "Sérigraphie",
+     "couleursMax": 8
+    },
+    {
+     "id": "TDT",
+     "nom": "Transfert numérique",
+     "couleursMax": null
+    },
+    {
+     "id": "TT",
+     "nom": "Transfert sérigraphique",
+     "couleursMax": 8
+    }
+   ]
+  },
+  {
+   "produit": "p03",
+   "objet": "polo manches courtes",
+   "matiere": "polyester recyclé",
+   "zonesSource": [
+    "ARM RIGHT"
+   ],
+   "zone": "Manche droite",
+   "largeurMm": 85.0,
+   "hauteurMm": 70.0,
+   "image": "p03_11.jpg",
+   "imagePx": {
+    "largeur": 374,
+    "hauteur": 1000
+   },
+   "zonePx": {
+    "x": 109.0,
+    "y": 159.0,
+    "largeur": 108.0,
+    "hauteur": 90.0
+   },
+   "techniques": [
+    {
+     "id": "E",
+     "nom": "Broderie",
+     "couleursMax": 8
+    },
+    {
+     "id": "ST1",
+     "nom": "Sérigraphie",
+     "couleursMax": 8
+    },
+    {
+     "id": "TDT",
+     "nom": "Transfert numérique",
+     "couleursMax": null
+    },
+    {
+     "id": "TT",
+     "nom": "Transfert sérigraphique",
+     "couleursMax": 8
+    },
+    {
+     "id": "TR",
+     "nom": "Transfert réfléchissant",
+     "couleursMax": 1
+    }
+   ]
+  },
+  {
+   "produit": "p03",
+   "objet": "polo manches courtes",
+   "matiere": "polyester recyclé",
+   "zonesSource": [
+    "ARM LEFT"
+   ],
+   "zone": "Manche gauche",
+   "largeurMm": 85.0,
+   "hauteurMm": 70.0,
+   "image": "p03_12.jpg",
+   "imagePx": {
+    "largeur": 374,
+    "hauteur": 1000
+   },
+   "zonePx": {
+    "x": 142.0,
+    "y": 158.0,
+    "largeur": 108.0,
+    "hauteur": 89.0
+   },
+   "techniques": [
+    {
+     "id": "TR",
+     "nom": "Transfert réfléchissant",
+     "couleursMax": 1
+    },
+    {
+     "id": "E",
+     "nom": "Broderie",
+     "couleursMax": 8
+    },
+    {
+     "id": "ST1",
+     "nom": "Sérigraphie",
+     "couleursMax": 8
+    },
+    {
+     "id": "TDT",
+     "nom": "Transfert numérique",
+     "couleursMax": null
+    },
+    {
+     "id": "TT",
+     "nom": "Transfert sérigraphique",
+     "couleursMax": 8
+    }
+   ]
+  },
+  {
+   "produit": "p04",
+   "objet": "carnet A5 à couverture souple",
+   "matiere": "papier recyclé, couverture PU",
+   "zonesSource": [
+    "FRONT TOP"
+   ],
+   "zone": "Devant en haut",
+   "largeurMm": 80.0,
+   "hauteurMm": 70.0,
+   "image": "p04_13.jpg",
+   "imagePx": {
+    "largeur": 659,
+    "hauteur": 1000
+   },
+   "zonePx": {
+    "x": 149.0,
+    "y": 78.0,
+    "largeur": 342.0,
+    "hauteur": 300.0
+   },
+   "techniques": [
+    {
+     "id": "B",
+     "nom": "Embossage",
+     "couleursMax": 1
+    },
+    {
+     "id": "S3",
+     "nom": "Sérigraphie",
+     "couleursMax": 4
+    },
+    {
+     "id": "T1",
+     "nom": "Transfert sérigraphique",
+     "couleursMax": 8
+    },
+    {
+     "id": "TD1",
+     "nom": "Transfert numérique",
+     "couleursMax": null
+    },
+    {
+     "id": "TR",
+     "nom": "Transfert réfléchissant",
+     "couleursMax": 1
+    }
+   ]
+  },
+  {
+   "produit": "p04",
+   "objet": "carnet A5 à couverture souple",
+   "matiere": "papier recyclé, couverture PU",
+   "zonesSource": [
+    "FRONT TOP PAD"
+   ],
+   "zone": "Devant en haut, tampographie",
+   "largeurMm": 80.0,
+   "hauteurMm": 40.0,
+   "image": "p04_14.jpg",
+   "imagePx": {
+    "largeur": 659,
+    "hauteur": 1000
+   },
+   "zonePx": {
+    "x": 149.0,
+    "y": 142.0,
+    "largeur": 342.0,
+    "hauteur": 172.0
+   },
+   "techniques": [
+    {
+     "id": "P4",
+     "nom": "Tampographie",
+     "couleursMax": 4
+    }
+   ]
+  },
+  {
+   "produit": "p04",
+   "objet": "carnet A5 à couverture souple",
+   "matiere": "papier recyclé, couverture PU",
+   "zonesSource": [
+    "FRONT BOTTOM"
+   ],
+   "zone": "Devant en bas",
+   "largeurMm": 80.0,
+   "hauteurMm": 40.0,
+   "image": "p04_15.jpg",
+   "imagePx": {
+    "largeur": 659,
+    "hauteur": 1000
+   },
+   "zonePx": {
+    "x": 149.0,
+    "y": 647.0,
+    "largeur": 342.0,
+    "hauteur": 171.0
+   },
+   "techniques": [
+    {
+     "id": "P4",
+     "nom": "Tampographie",
+     "couleursMax": 4
+    },
+    {
+     "id": "S3",
+     "nom": "Sérigraphie",
+     "couleursMax": 1
+    },
+    {
+     "id": "T1",
+     "nom": "Transfert sérigraphique",
+     "couleursMax": 8
+    },
+    {
+     "id": "TD1",
+     "nom": "Transfert numérique",
+     "couleursMax": null
+    },
+    {
+     "id": "TR",
+     "nom": "Transfert réfléchissant",
+     "couleursMax": 1
+    },
+    {
+     "id": "B",
+     "nom": "Embossage",
+     "couleursMax": 1
+    }
+   ]
+  },
+  {
+   "produit": "p04",
+   "objet": "carnet A5 à couverture souple",
+   "matiere": "papier recyclé, couverture PU",
+   "zonesSource": [
+    "BACK"
+   ],
+   "zone": "Dos",
+   "largeurMm": 110.0,
+   "hauteurMm": 180.0,
+   "image": "p04_16.jpg",
+   "imagePx": {
+    "largeur": 663,
+    "hauteur": 999
+   },
+   "zonePx": {
+    "x": 126.0,
+    "y": 63.0,
+    "largeur": 467.0,
+    "hauteur": 763.0
+   },
+   "techniques": [
+    {
+     "id": "S3",
+     "nom": "Sérigraphie",
+     "couleursMax": 4
+    },
+    {
+     "id": "T1",
+     "nom": "Transfert sérigraphique",
+     "couleursMax": 8
+    },
+    {
+     "id": "TD1",
+     "nom": "Transfert numérique",
+     "couleursMax": null
+    },
+    {
+     "id": "TR",
+     "nom": "Transfert réfléchissant",
+     "couleursMax": 1
+    }
+   ]
+  },
+  {
+   "produit": "p04",
+   "objet": "carnet A5 à couverture souple",
+   "matiere": "papier recyclé, couverture PU",
+   "zonesSource": [
+    "BACK PAD"
+   ],
+   "zone": "Dos, tampographie",
+   "largeurMm": 80.0,
+   "hauteurMm": 40.0,
+   "image": "p04_17.jpg",
+   "imagePx": {
+    "largeur": 663,
+    "hauteur": 999
+   },
+   "zonePx": {
+    "x": 194.0,
+    "y": 638.0,
+    "largeur": 339.0,
+    "hauteur": 170.0
+   },
+   "techniques": [
+    {
+     "id": "P4",
+     "nom": "Tampographie",
+     "couleursMax": 4
+    },
+    {
+     "id": "B",
+     "nom": "Embossage",
+     "couleursMax": 1
+    }
+   ]
+  },
+  {
+   "produit": "p05",
+   "objet": "carnet A5 à couverture rigide avec insert bambou",
+   "matiere": "papier, bambou",
+   "zonesSource": [
+    "BAMBOO PART"
+   ],
+   "zone": "Partie bambou",
+   "largeurMm": 20.0,
+   "hauteurMm": 40.0,
+   "image": "p05_18.jpg",
+   "imagePx": {
+    "largeur": 665,
+    "hauteur": 1000
+   },
+   "zonePx": {
+    "x": 524.0,
+    "y": 362.0,
+    "largeur": 86.0,
+    "hauteur": 173.0
+   },
+   "techniques": [
+    {
+     "id": "L3",
+     "nom": "Gravure laser",
+     "couleursMax": 1
+    },
+    {
+     "id": "P5",
+     "nom": "Tampographie",
+     "couleursMax": 4
+    },
+    {
+     "id": "S3",
+     "nom": "Sérigraphie",
+     "couleursMax": 4
+    }
+   ]
+  },
+  {
+   "produit": "p05",
+   "objet": "carnet A5 à couverture rigide avec insert bambou",
+   "matiere": "papier, bambou",
+   "zonesSource": [
+    "FRONT"
+   ],
+   "zone": "Devant",
+   "largeurMm": 50.0,
+   "hauteurMm": 150.0,
+   "image": "p05_19.jpg",
+   "imagePx": {
+    "largeur": 665,
+    "hauteur": 1000
+   },
+   "zonePx": {
+    "x": 41.0,
+    "y": 125.0,
+    "largeur": 216.0,
+    "hauteur": 647.0
+   },
+   "techniques": [
+    {
+     "id": "S3",
+     "nom": "Sérigraphie",
+     "couleursMax": 1
+    },
+    {
+     "id": "T1",
+     "nom": "Transfert sérigraphique",
+     "couleursMax": 8
+    },
+    {
+     "id": "TD1",
+     "nom": "Transfert numérique",
+     "couleursMax": null
+    },
+    {
+     "id": "TR",
+     "nom": "Transfert réfléchissant",
+     "couleursMax": 1
+    }
+   ]
+  },
+  {
+   "produit": "p05",
+   "objet": "carnet A5 à couverture rigide avec insert bambou",
+   "matiere": "papier, bambou",
+   "zonesSource": [
+    "FRONT UPPER"
+   ],
+   "zone": "Devant en haut",
+   "largeurMm": 50.0,
+   "hauteurMm": 50.0,
+   "image": "p05_20.jpg",
+   "imagePx": {
+    "largeur": 665,
+    "hauteur": 1000
+   },
+   "zonePx": {
+    "x": 360.0,
+    "y": 41.0,
+    "largeur": 216.0,
+    "hauteur": 216.0
+   },
+   "techniques": [
+    {
+     "id": "TR",
+     "nom": "Transfert réfléchissant",
+     "couleursMax": 1
+    },
+    {
+     "id": "S3",
+     "nom": "Sérigraphie",
+     "couleursMax": 1
+    },
+    {
+     "id": "T1",
+     "nom": "Transfert sérigraphique",
+     "couleursMax": 8
+    },
+    {
+     "id": "TD1",
+     "nom": "Transfert numérique",
+     "couleursMax": null
+    }
+   ]
+  },
+  {
+   "produit": "p05",
+   "objet": "carnet A5 à couverture rigide avec insert bambou",
+   "matiere": "papier, bambou",
+   "zonesSource": [
+    "FRONT LOWER"
+   ],
+   "zone": "Devant en bas",
+   "largeurMm": 50.0,
+   "hauteurMm": 50.0,
+   "image": "p05_21.jpg",
+   "imagePx": {
+    "largeur": 665,
+    "hauteur": 1000
+   },
+   "zonePx": {
+    "x": 366.0,
+    "y": 650.0,
+    "largeur": 216.0,
+    "hauteur": 215.0
+   },
+   "techniques": [
+    {
+     "id": "S3",
+     "nom": "Sérigraphie",
+     "couleursMax": 1
+    },
+    {
+     "id": "T1",
+     "nom": "Transfert sérigraphique",
+     "couleursMax": 8
+    },
+    {
+     "id": "TD1",
+     "nom": "Transfert numérique",
+     "couleursMax": null
+    },
+    {
+     "id": "TR",
+     "nom": "Transfert réfléchissant",
+     "couleursMax": 1
+    }
+   ]
+  },
+  {
+   "produit": "p05",
+   "objet": "carnet A5 à couverture rigide avec insert bambou",
+   "matiere": "papier, bambou",
+   "zonesSource": [
+    "BACK"
+   ],
+   "zone": "Dos",
+   "largeurMm": 120.0,
+   "hauteurMm": 140.0,
+   "image": "p05_22.jpg",
+   "imagePx": {
+    "largeur": 691,
+    "hauteur": 1000
+   },
+   "zonePx": {
+    "x": 87.0,
+    "y": 155.0,
+    "largeur": 525.0,
+    "hauteur": 612.0
+   },
+   "techniques": [
+    {
+     "id": "TR",
+     "nom": "Transfert réfléchissant",
+     "couleursMax": 1
+    },
+    {
+     "id": "S3",
+     "nom": "Sérigraphie",
+     "couleursMax": 1
+    },
+    {
+     "id": "T1",
+     "nom": "Transfert sérigraphique",
+     "couleursMax": 8
+    },
+    {
+     "id": "TD1",
+     "nom": "Transfert numérique",
+     "couleursMax": null
+    }
+   ]
+  },
+  {
+   "produit": "p06",
+   "objet": "tapis de souris rectangulaire",
+   "matiere": "PU recyclé",
+   "zonesSource": [
+    "FRONT"
+   ],
+   "zone": "Devant",
+   "largeurMm": 200.0,
+   "hauteurMm": 170.0,
+   "image": "p06_23.jpg",
+   "imagePx": {
+    "largeur": 700,
+    "hauteur": 569
+   },
+   "zonePx": {
+    "x": 32.2,
+    "y": 14.0,
+    "largeur": 626.5,
+    "hauteur": 532.7
+   },
+   "techniques": [
+    {
+     "id": "S2",
+     "nom": "Sérigraphie",
+     "couleursMax": 4
+    }
+   ]
+  },
+  {
+   "produit": "p06",
+   "objet": "tapis de souris rectangulaire",
+   "matiere": "PU recyclé",
+   "zonesSource": [
+    "FRONT LASER"
+   ],
+   "zone": "Devant, gravure laser",
+   "largeurMm": 149.0,
+   "hauteurMm": 149.0,
+   "image": "p06_24.jpg",
+   "imagePx": {
+    "largeur": 700,
+    "hauteur": 569
+   },
+   "zonePx": {
+    "x": 116.2,
+    "y": 47.6,
+    "largeur": 466.9,
+    "hauteur": 466.9
+   },
+   "techniques": [
+    {
+     "id": "L4",
+     "nom": "Gravure laser",
+     "couleursMax": 1
+    }
+   ]
+  },
+  {
+   "produit": "p06",
+   "objet": "tapis de souris rectangulaire",
+   "matiere": "PU recyclé",
+   "zonesSource": [
+    "FRONT DEBOSSING"
+   ],
+   "zone": "Devant, marquage en creux",
+   "largeurMm": 100.0,
+   "hauteurMm": 85.0,
+   "image": "p06_25.jpg",
+   "imagePx": {
+    "largeur": 700,
+    "hauteur": 569
+   },
+   "zonePx": {
+    "x": 193.2,
+    "y": 144.9,
+    "largeur": 312.9,
+    "hauteur": 266.0
+   },
+   "techniques": [
+    {
+     "id": "B",
+     "nom": "Embossage",
+     "couleursMax": 1
+    }
+   ]
+  },
+  {
+   "produit": "p07",
+   "objet": "tapis de souris à recharge sans fil",
+   "matiere": "liège",
+   "zonesSource": [
+    "FRONT LASER"
+   ],
+   "zone": "Devant, gravure laser",
+   "largeurMm": 149.0,
+   "hauteurMm": 149.0,
+   "image": "p07_26.jpg",
+   "imagePx": {
+    "largeur": 700,
+    "hauteur": 793
+   },
+   "zonePx": {
+    "x": 126.05,
+    "y": 260.82,
+    "largeur": 443.94,
+    "hauteur": 443.94
+   },
+   "techniques": [
+    {
+     "id": "L4",
+     "nom": "Gravure laser",
+     "couleursMax": 1
+    }
+   ]
+  },
+  {
+   "produit": "p07",
+   "objet": "tapis de souris à recharge sans fil",
+   "matiere": "liège",
+   "zonesSource": [
+    "FRONT SCREEN"
+   ],
+   "zone": "Devant, sérigraphie",
+   "largeurMm": 200.0,
+   "hauteurMm": 170.0,
+   "image": "p07_27.jpg",
+   "imagePx": {
+    "largeur": 700,
+    "hauteur": 793
+   },
+   "zonePx": {
+    "x": 48.36,
+    "y": 230.69,
+    "largeur": 596.15,
+    "hauteur": 506.57
+   },
+   "techniques": [
+    {
+     "id": "S3",
+     "nom": "Sérigraphie",
+     "couleursMax": 4
+    }
+   ]
+  },
+  {
+   "produit": "p07",
+   "objet": "tapis de souris à recharge sans fil",
+   "matiere": "liège",
+   "zonesSource": [
+    "BACK"
+   ],
+   "zone": "Dos",
+   "largeurMm": 200.0,
+   "hauteurMm": 145.0,
+   "image": "p07_28.jpg",
+   "imagePx": {
+    "largeur": 700,
+    "hauteur": 785
+   },
+   "zonePx": {
+    "x": 54.93,
+    "y": 224.44,
+    "largeur": 589.35,
+    "hauteur": 427.69
+   },
+   "techniques": [
+    {
+     "id": "S3",
+     "nom": "Sérigraphie",
+     "couleursMax": 4
+    }
+   ]
+  },
+  {
+   "produit": "p08",
+   "objet": "planche à découper rectangulaire",
+   "matiere": "bois",
+   "zonesSource": [
+    "FRONT MIDDLE"
+   ],
+   "zone": "Devant au centre",
+   "largeurMm": 149.0,
+   "hauteurMm": 149.0,
+   "image": "p08_29.jpg",
+   "imagePx": {
+    "largeur": 700,
+    "hauteur": 461
+   },
+   "zonePx": {
+    "x": 180.08,
+    "y": 56.76,
+    "largeur": 344.74,
+    "hauteur": 344.74
+   },
+   "techniques": [
+    {
+     "id": "L4",
+     "nom": "Gravure laser",
+     "couleursMax": 1
+    }
+   ]
+  },
+  {
+   "produit": "p08",
+   "objet": "planche à découper rectangulaire",
+   "matiere": "bois",
+   "zonesSource": [
+    "FRONT BOTTOM"
+   ],
+   "zone": "Devant en bas",
+   "largeurMm": 80.0,
+   "hauteurMm": 5.0,
+   "image": "p08_30.jpg",
+   "imagePx": {
+    "largeur": 700,
+    "hauteur": 461
+   },
+   "zonePx": {
+    "x": 259.96,
+    "y": 437.94,
+    "largeur": 184.98,
+    "hauteur": 11.91
+   },
+   "techniques": [
+    {
+     "id": "L2",
+     "nom": "Gravure laser",
+     "couleursMax": 1
+    },
+    {
+     "id": "P3",
+     "nom": "Tampographie",
+     "couleursMax": 4
+    }
+   ]
+  },
+  {
+   "produit": "p08",
+   "objet": "planche à découper rectangulaire",
+   "matiere": "bois",
+   "zonesSource": [
+    "FRONT  RIGHT"
+   ],
+   "zone": "Devant à droite",
+   "largeurMm": 5.0,
+   "hauteurMm": 80.0,
+   "image": "p08_31.jpg",
+   "imagePx": {
+    "largeur": 700,
+    "hauteur": 461
+   },
+   "zonePx": {
+    "x": 678.98,
+    "y": 135.24,
+    "largeur": 11.91,
+    "hauteur": 184.98
+   },
+   "techniques": [
+    {
+     "id": "L2",
+     "nom": "Gravure laser",
+     "couleursMax": 1
+    },
+    {
+     "id": "P3",
+     "nom": "Tampographie",
+     "couleursMax": 4
+    }
+   ]
+  },
+  {
+   "produit": "p08",
+   "objet": "planche à découper rectangulaire",
+   "matiere": "bois",
+   "zonesSource": [
+    "FRONT TOP"
+   ],
+   "zone": "Devant en haut",
+   "largeurMm": 80.0,
+   "hauteurMm": 5.0,
+   "image": "p08_32.jpg",
+   "imagePx": {
+    "largeur": 700,
+    "hauteur": 461
+   },
+   "zonePx": {
+    "x": 254.35,
+    "y": 10.51,
+    "largeur": 184.98,
+    "hauteur": 11.91
+   },
+   "techniques": [
+    {
+     "id": "L2",
+     "nom": "Gravure laser",
+     "couleursMax": 1
+    },
+    {
+     "id": "P3",
+     "nom": "Tampographie",
+     "couleursMax": 4
+    }
+   ]
+  },
+  {
+   "produit": "p08",
+   "objet": "planche à découper rectangulaire",
+   "matiere": "bois",
+   "zonesSource": [
+    "FRONT LEFT"
+   ],
+   "zone": "Devant à gauche",
+   "largeurMm": 5.0,
+   "hauteurMm": 80.0,
+   "image": "p08_33.jpg",
+   "imagePx": {
+    "largeur": 700,
+    "hauteur": 461
+   },
+   "zonePx": {
+    "x": 13.31,
+    "y": 135.24,
+    "largeur": 11.91,
+    "hauteur": 184.98
+   },
+   "techniques": [
+    {
+     "id": "L2",
+     "nom": "Gravure laser",
+     "couleursMax": 1
+    },
+    {
+     "id": "P3",
+     "nom": "Tampographie",
+     "couleursMax": 4
+    }
+   ]
+  },
+  {
+   "produit": "p09",
+   "objet": "serviette de bain",
+   "matiere": "coton",
+   "zonesSource": [
+    "STRIP RIGHT"
+   ],
+   "zone": "Bande à droite",
+   "largeurMm": 200.0,
+   "hauteurMm": 50.0,
+   "image": "p09_34.jpg",
+   "imagePx": {
+    "largeur": 667,
+    "hauteur": 1000
+   },
+   "zonePx": {
+    "x": 509.0,
+    "y": 918.0,
+    "largeur": 131.0,
+    "hauteur": 32.0
+   },
+   "techniques": [
+    {
+     "id": "E",
+     "nom": "Broderie",
+     "couleursMax": 8
+    },
+    {
+     "id": "S3",
+     "nom": "Sérigraphie",
+     "couleursMax": 1
+    },
+    {
+     "id": "T1",
+     "nom": "Transfert sérigraphique",
+     "couleursMax": 8
+    },
+    {
+     "id": "TR",
+     "nom": "Transfert réfléchissant",
+     "couleursMax": 1
+    },
+    {
+     "id": "TD1",
+     "nom": "Transfert numérique",
+     "couleursMax": null
+    }
+   ]
+  },
+  {
+   "produit": "p09",
+   "objet": "serviette de bain",
+   "matiere": "coton",
+   "zonesSource": [
+    "STRIP RIGHT 2"
+   ],
+   "zone": "Bande à droite (2)",
+   "largeurMm": 200.0,
+   "hauteurMm": 50.0,
+   "image": "p09_35.jpg",
+   "imagePx": {
+    "largeur": 667,
+    "hauteur": 1000
+   },
+   "zonePx": {
+    "x": 337.0,
+    "y": 916.0,
+    "largeur": 131.0,
+    "hauteur": 33.0
+   },
+   "techniques": [
+    {
+     "id": "TD1",
+     "nom": "Transfert numérique",
+     "couleursMax": null
+    },
+    {
+     "id": "E",
+     "nom": "Broderie",
+     "couleursMax": 8
+    },
+    {
+     "id": "S3",
+     "nom": "Sérigraphie",
+     "couleursMax": 1
+    },
+    {
+     "id": "T1",
+     "nom": "Transfert sérigraphique",
+     "couleursMax": 8
+    },
+    {
+     "id": "TR",
+     "nom": "Transfert réfléchissant",
+     "couleursMax": 1
+    }
+   ]
+  },
+  {
+   "produit": "p09",
+   "objet": "serviette de bain",
+   "matiere": "coton",
+   "zonesSource": [
+    "STRIP LEFT"
+   ],
+   "zone": "Bande à gauche",
+   "largeurMm": 200.0,
+   "hauteurMm": 50.0,
+   "image": "p09_36.jpg",
+   "imagePx": {
+    "largeur": 667,
+    "hauteur": 1000
+   },
+   "zonePx": {
+    "x": 181.0,
+    "y": 919.0,
+    "largeur": 131.0,
+    "hauteur": 33.0
+   },
+   "techniques": [
+    {
+     "id": "E",
+     "nom": "Broderie",
+     "couleursMax": 8
+    },
+    {
+     "id": "S3",
+     "nom": "Sérigraphie",
+     "couleursMax": 1
+    },
+    {
+     "id": "T1",
+     "nom": "Transfert sérigraphique",
+     "couleursMax": 8
+    },
+    {
+     "id": "TR",
+     "nom": "Transfert réfléchissant",
+     "couleursMax": 1
+    },
+    {
+     "id": "TD1",
+     "nom": "Transfert numérique",
+     "couleursMax": null
+    }
+   ]
+  },
+  {
+   "produit": "p09",
+   "objet": "serviette de bain",
+   "matiere": "coton",
+   "zonesSource": [
+    "STRIP LEFT 2"
+   ],
+   "zone": "Bande à gauche (2)",
+   "largeurMm": 200.0,
+   "hauteurMm": 50.0,
+   "image": "p09_37.jpg",
+   "imagePx": {
+    "largeur": 667,
+    "hauteur": 1000
+   },
+   "zonePx": {
+    "x": 26.0,
+    "y": 920.0,
+    "largeur": 131.0,
+    "hauteur": 33.0
+   },
+   "techniques": [
+    {
+     "id": "TD1",
+     "nom": "Transfert numérique",
+     "couleursMax": null
+    },
+    {
+     "id": "E",
+     "nom": "Broderie",
+     "couleursMax": 8
+    },
+    {
+     "id": "S3",
+     "nom": "Sérigraphie",
+     "couleursMax": 1
+    },
+    {
+     "id": "T1",
+     "nom": "Transfert sérigraphique",
+     "couleursMax": 8
+    },
+    {
+     "id": "TR",
+     "nom": "Transfert réfléchissant",
+     "couleursMax": 1
+    }
+   ]
+  },
+  {
+   "produit": "p09",
+   "objet": "serviette de bain",
+   "matiere": "coton",
+   "zonesSource": [
+    "UPPER"
+   ],
+   "zone": "Partie haute",
+   "largeurMm": 230.0,
+   "hauteurMm": 280.0,
+   "image": "p09_38.jpg",
+   "imagePx": {
+    "largeur": 667,
+    "hauteur": 1000
+   },
+   "zonePx": {
+    "x": 258.0,
+    "y": 401.0,
+    "largeur": 150.0,
+    "hauteur": 183.0
+   },
+   "techniques": [
+    {
+     "id": "E",
+     "nom": "Broderie",
+     "couleursMax": 8
+    }
+   ]
+  }
+ ]
+}
