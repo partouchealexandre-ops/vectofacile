@@ -556,10 +556,49 @@ if (!/class="mention-simulation"/.test(voirMonLogo)
   console.error('  et la distinction se dit A L\'ECRAN, pas en note de bas de page.');
   process.exit(1);
 }
+/*
+ * LE TABLEAU DES OBJETS, GENERE depuis le lot, jamais ecrit a la main.
+ *
+ * C'est la these GEO du projet appliquee a une page d'outil : de la prose se
+ * cite mal, des faits denses se citent. Et une table ecrite a la main
+ * divergerait du simulateur des le premier objet ajoute, ce qui serait pire
+ * qu'une page sans table : deux verites cote a cote sur le meme ecran.
+ *
+ * Aucun millimetre ici. Les dimensions d'une zone appartiennent a l'apercu,
+ * qui les affiche avec le produit choisi ; les publier en tableau les
+ * transformerait en promesse detachee de son contexte.
+ */
+const LOT_SIMULATION = JSON.parse(fs.readFileSync(
+  path.join(RACINE, 'src', 'simulation', 'lot1.json'), 'utf-8'));
+const REPERES_OBJETS = /<!-- objets:debut[\s\S]*?objets:fin -->/;
+if (!REPERES_OBJETS.test(voirMonLogo)) {
+  console.error('  contenu/voir-mon-logo.html ne porte plus ses reperes de tableau.');
+  console.error('  Sans eux, la page perdrait le seul contenu citable qu\'elle ait.');
+  process.exit(1);
+}
+const parObjet = new Map();
+for (const vue of LOT_SIMULATION.vues) {
+  if (!parObjet.has(vue.produit)) {
+    parObjet.set(vue.produit, { objet: vue.objet, matiere: vue.matiere,
+                                emplacements: 0, techniques: new Set() });
+  }
+  const o = parObjet.get(vue.produit);
+  o.emplacements += 1;
+  for (const t of vue.techniques) o.techniques.add(t.nom);
+}
+const tableauObjets = '<table class="objets-simulation">'
+  + '<thead><tr><th>Objet</th><th>Matière</th><th>Emplacements</th>'
+  + '<th>Techniques proposées</th></tr></thead><tbody>'
+  + [...parObjet.values()].map((o) => `<tr><td>${echapper(o.objet)}</td>`
+      + `<td>${echapper(o.matiere)}</td><td>${o.emplacements}</td>`
+      + `<td>${echapper([...o.techniques].sort().join(', '))}</td></tr>`).join('')
+  + '</tbody></table>';
+
 fs.mkdirSync(path.join(PUBLIC, 'voir-mon-logo'), { recursive: true });
 fs.writeFileSync(path.join(PUBLIC, 'voir-mon-logo', 'index.html'),
   voirMonLogo.replace(REPERES, entete('/voir-mon-logo', publiees)
     .match(/<nav class="nav-site">[\s\S]*?<\/nav>/)[0])
+    .replace(REPERES_OBJETS, tableauObjets)
     .replaceAll('{{DOMAINE}}', DOMAINE));
 
 fs.writeFileSync(path.join(PUBLIC, 'vecto.css'), STYLE);

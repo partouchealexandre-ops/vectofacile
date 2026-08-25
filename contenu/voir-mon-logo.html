@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="/favicon.svg">
 <title>Voir son logo sur un objet, aux vraies dimensions | Vecto Facile</title>
-<meta name="description" content="Posez votre logo sur un tote bag, un carnet ou un tapis de souris. La zone et les dimensions sont celles déclarées par le fabricant, et la taille s'affiche en millimètres.">
+<meta name="description" content="Posez votre logo sur un tote bag, un carnet ou une serviette. La zone et les dimensions sont celles du fabricant, et la taille s'affiche en millimètres.">
 <!-- La feuille de style est GENEREE dans public/vecto.css depuis contenu/style.mjs.
      Ne pas remettre de feuille en ligne dans cette page. -->
 <link rel="canonical" href="{{DOMAINE}}/voir-mon-logo">
@@ -80,6 +80,20 @@
   </div>
 
   <section class="simu-apres">
+    <h2>Les objets disponibles</h2>
+    <p>
+      Neuf objets, trente-huit emplacements de marquage. Chaque emplacement
+      porte ses propres techniques et son propre plafond de couleurs : sur un
+      même carnet, la sérigraphie peut accepter quatre couleurs en haut de la
+      couverture et une seule en bas. C'est le fabricant qui le déclare, pas
+      nous.
+    </p>
+    <!-- objets:debut. Ce tableau est GENERE a la construction depuis
+         src/simulation/lot1.json, la meme source que le simulateur au dessus.
+         Ecrit a la main, il divergerait du lot des le premier ajout. -->
+    <table class="objets-simulation"></table>
+    <!-- objets:fin -->
+
     <h2>Ce que cette page mesure, et ce qu'elle ne mesure pas</h2>
     <p>
       Le placement et les dimensions de chaque zone sont ceux que le fabricant
@@ -92,6 +106,16 @@
       les plis d'un tissu ni la courbe d'un objet. Et l'aperçu est plus grossier
       que le marquage réel, donc un trait qui paraît flou à l'écran peut
       s'imprimer parfaitement. La page vous dit quand c'est le cas.
+    </p>
+    <p>
+      Deux avertissements peuvent apparaître à droite de l'aperçu. Le premier
+      dit que votre logo se confond avec la couleur de l'objet : une serviette
+      bleu marine avale un logo bleu marine, et ce n'est pas un défaut de
+      l'image, ce sera pareil à l'impression. Le second dit que l'aperçu est
+      trop grossier pour juger de la finesse : sur certaines photos, un pixel
+      à l'écran vaut plus d'un millimètre sur l'objet, et un trait parfaitement
+      imprimable y devient invisible. Dans les deux cas, la page préfère vous
+      le dire plutôt que vous laisser conclure.
     </p>
     <p>
       <a href="/">Évaluer votre logo</a> répond à l'autre question, celle qui

@@ -401,6 +401,27 @@ async function controlerLaPage() {
            lu !== null && attendu !== null && Math.abs(lu - attendu) < 0.06,
            `lu ${trait} pour ${largeur}, attendu ${attendu ? attendu.toFixed(2) : '?'} mm`);
 
+  // LE TABLEAU DES OBJETS DIT LA MEME CHOSE QUE LE LOT.
+  //
+  // Il est genere depuis lot1.json, donc il ne peut pas mentir aujourd'hui.
+  // Mais rien n'empeche quelqu'un de le figer dans le gabarit un jour ou la
+  // construction genera, et deux verites cote a cote sur le meme ecran sont
+  // pires qu'une page sans tableau. On compare les totaux.
+  const tableau = await onglet.evaluate(() => {
+    const t = document.querySelector('.objets-simulation');
+    if (!t) return null;
+    const lignes = [...t.querySelectorAll('tbody tr')];
+    return {
+      objets: lignes.length,
+      emplacements: lignes.reduce((n, l) => n + Number(l.children[2].textContent), 0),
+    };
+  });
+  controle('le tableau des objets compte comme le lot',
+           Boolean(tableau) && tableau.objets === produits(LOT).length
+             && tableau.emplacements === LOT.vues.length,
+           tableau ? `${tableau.objets} objets et ${tableau.emplacements} emplacements `
+             + `contre ${produits(LOT).length} et ${LOT.vues.length}` : 'tableau absent');
+
   // AUCUN POINT DECIMAL ANGLAIS dans ce qui s'affiche.
   const anglais = await onglet.evaluate(() =>
     [...document.querySelectorAll('.simu-mesures b')].map((n) => n.textContent)

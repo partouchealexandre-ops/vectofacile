@@ -707,7 +707,21 @@ div.encadre.verdict-inconnu { background: #f4f6f9; }
 }
 .simu-note { color: var(--gris); font-size: 13px; line-height: 1.5; margin: 10px 0 0; }
 
-.simu-apres { max-width: 68ch; margin: 0 0 40px; }
+/* LES DEUX LARGEURS. Ce qui se LIT reste dans la colonne de lecture ; le
+   tableau, lui, se BALAIE et prend le cadre entier. Contraindre un tableau a
+   68 caracteres le rend illisible pour gagner une regularite que personne ne
+   regarde. */
+.simu-apres { margin: 0 0 40px; }
+.simu-apres p, .simu-apres h2 { max-width: 68ch; }
+.objets-simulation {
+  width: 100%; border-collapse: collapse; margin: 4px 0 28px; font-size: 14px;
+}
+.objets-simulation th, .objets-simulation td {
+  text-align: left; padding: 8px 12px 8px 0; border-bottom: 1px solid var(--trait);
+  vertical-align: top;
+}
+.objets-simulation th { font-size: 12.5px; color: var(--gris); font-weight: 700; }
+.objets-simulation td:nth-child(3) { font-variant-numeric: tabular-nums; }
 .simu-apres h2 { font-size: 21px; margin: 0 0 10px; }
 .simu-apres p { margin: 0 0 12px; }
 `;
