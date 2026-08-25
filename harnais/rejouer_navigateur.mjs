@@ -787,6 +787,7 @@ console.log('');
       verdictVide: (document.getElementById('verdict')?.innerHTML ?? '').trim() === '',
       // La presentation repond a qui HESITE a deposer : elle doit etre la.
       presentation: document.getElementById('presentation')?.offsetParent !== null,
+      accroche: document.querySelector('.accroche')?.offsetParent !== null,
     };
     const f = new File([Uint8Array.from(atob(b64), (c) => c.charCodeAt(0))],
       'logo.png', { type: 'image/png' });
@@ -795,6 +796,7 @@ console.log('');
       // Une fois le fichier depose, elle se lit comme du remplissage derriere
       // un verdict : elle sort de l'ecran, sans quitter le HTML servi.
       presentationApres: document.getElementById('presentation')?.offsetParent !== null,
+      accrocheApres: document.querySelector('.accroche')?.offsetParent !== null,
       motsServis: (document.getElementById('presentation')?.innerText ?? '').length };
   }, petit.toString('base64'));
   await page.close();
@@ -810,6 +812,10 @@ console.log('');
     ['le bloc de verdict arrive vide', constat.verdictVide === true],
     ['la presentation est la pour qui hesite a deposer', constat.presentation === true],
     ['elle sort de l\'ecran une fois le logo analyse', constat.presentationApres === false],
+    ['l\'accroche est la avant le depot : elle dit quoi deposer',
+      constat.accroche === true],
+    ['et elle sort aussi, une fois qu\'il n\'y a plus rien a deposer',
+      constat.accrocheApres === false],
     ['mais elle reste dans le document, mot pour mot', constat.motsServis > 200,
       `${constat.motsServis} caracteres`],
   ]) {

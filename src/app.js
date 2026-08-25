@@ -656,6 +656,13 @@ function rendreLaZoneDeDepot() {
 function passerEnModeResultat(actif) {
   const bloc = $('presentation');
   if (bloc) bloc.hidden = actif;
+  // L'ACCROCHE AUSSI, mesure du 25/08/2026. Elle explique QUOI DEPOSER a
+  // quelqu'un qui vient de deposer. Sur un telephone elle coute huit lignes,
+  // et il fallait faire defiler 983 pixels avant de voir la reponse, soit un
+  // ecran et demi. C'est la meme faute que « Ce qu'il ne fait pas » et les
+  // questions frequentes, au meme endroit, corrigee de la meme facon : rien
+  // n'est supprime du document, tout revient au fichier suivant.
+  for (const p of document.querySelectorAll('.accroche')) p.hidden = actif;
 }
 
 function reinitialiser() {
