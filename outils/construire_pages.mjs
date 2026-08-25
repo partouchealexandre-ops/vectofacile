@@ -26,6 +26,7 @@ import { fileURLToPath } from 'node:url';
 import { STYLE } from '../contenu/style.mjs';
 import { RUBRIQUES, PIED, EN_ATTENTE } from '../contenu/pages.mjs';
 import { DOMAINE, partage } from './entetes.mjs';
+import { LEGENDE, VITRINE } from '../contenu/vitrine.mjs';
 import { CONFIDENTIALITE } from '../contenu/confidentialite.mjs';
 import { QUI_SOMMES_NOUS, MENTIONS } from '../contenu/institution.mjs';
 import { QUESTIONS } from '../contenu/questions/vectoriel.mjs';
@@ -151,6 +152,24 @@ function actionsEntete(urlCourante) {
     + `<a class="cta-secondaire" href="/voir-mon-logo"${ici('/voir-mon-logo')}>Mon logo sur des goodies</a>`
     + `<a class="cta-entete" href="/"${ici('/')}>Évaluer votre logo</a>`
     + '</div>';
+}
+
+/**
+ * LA VITRINE DE L'ACCUEIL.
+ *
+ * Les images sont composees hors construction, par outils/composer_vitrine.mjs,
+ * et versionnees. Netlify n'a pas de navigateur : ce qui a besoin d'un moteur
+ * de rendu se fabrique en local et se commit, comme les photos du lot.
+ *
+ * Les attributs width et height ne sont pas decoratifs : ils reservent la
+ * place avant que l'image arrive. Sans eux, le texte sous les images saute au
+ * chargement, ce que les moteurs mesurent et sanctionnent.
+ */
+function vitrine() {
+  const images = VITRINE.map((v) =>
+    `<img src="/vitrine/${v.image}" width="${v.largeurPx}" height="${v.hauteurPx}"`
+    + ` alt="${echapper(v.alt)}" decoding="async">`).join('');
+  return `<figure class="vitrine">${images}<figcaption>${echapper(LEGENDE)}</figcaption></figure>`;
 }
 
 function entete(urlCourante, publiees) {
@@ -531,9 +550,25 @@ if (!REPERES_ACTIONS.test(accueil)) {
   console.error('  contenu/accueil.html ne porte plus ses reperes d\'actions d\'entete.');
   process.exit(1);
 }
+const REPERES_VITRINE = /<!-- vitrine:debut[\s\S]*?vitrine:fin -->/;
+if (!REPERES_VITRINE.test(accueil)) {
+  console.error('  contenu/accueil.html ne porte plus ses reperes de vitrine.');
+  process.exit(1);
+}
+// LES IMAGES DOIVENT EXISTER AVANT D'ETRE ANNONCEES. Une balise img vers un
+// fichier absent ne casse rien : elle affiche un cadre vide, et personne ne
+// s'en apercoit avant un visiteur. La construction, elle, s'en apercoit ici.
+for (const v of VITRINE) {
+  if (!fs.existsSync(path.join(PUBLIC, 'vitrine', v.image))) {
+    console.error(`  Image de vitrine manquante : public/vitrine/${v.image}`);
+    console.error('  Elle se compose en local, avec le moteur : npm run vitrine:composer');
+    process.exit(1);
+  }
+}
 fs.writeFileSync(path.join(PUBLIC, 'index.html'),
   accueil.replace(REPERES, laNavDe('/'))
     .replace(REPERES_ACTIONS, actionsEntete('/'))
+    .replace(REPERES_VITRINE, vitrine())
     .replaceAll('{{DOMAINE}}', DOMAINE));
 
 // L'IMAGE DE PARTAGE, celle qu'un lien emporte avec lui sur LinkedIn ou dans

@@ -124,6 +124,22 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
      puis l'action. Au-dessus, deux colonnes de meme poids, parce que la zone
      de depot etiree sur toute la largeur d'un grand ecran devenait un vide
      avec un titre au milieu. */
+  /* LA VITRINE. Trois tuiles de meme largeur dans le cadre de 1120 px, donc
+     357 px chacune gouttieres comprises. Les images font 700 px de large :
+     c'est exactement le facteur deux qu'un ecran dense demande, et pas
+     davantage, parce que ce sont les premieres images de la page la plus vue.
+     En dessous de 760 px, une colonne : trois objets cote a cote sur un
+     telephone ne montrent plus aucun logo. */
+  .vitrine { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
+             margin: 0 0 30px; }
+  .vitrine img { display: block; width: 100%; height: auto; border-radius: 10px;
+                 background: var(--gris-clair); }
+  .vitrine figcaption { grid-column: 1 / -1; color: var(--gris); font-size: 14px;
+                        line-height: 1.5; margin: -4px 0 0; }
+  @media (max-width: 760px) {
+    .vitrine { grid-template-columns: 1fr; gap: 16px; }
+  }
+
   .bandeau { display: grid; gap: 28px; align-items: center; margin: 4px 0 16px; }
   .bandeau h1 { margin-top: 0; }
   @media (min-width: 1000px) {

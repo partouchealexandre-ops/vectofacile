@@ -290,6 +290,55 @@ for (const url of URLS) {
     fautes.push(`${actions.length} action(s) dans l'entete, il en faut deux`);
   }
 
+  // LA VITRINE DE L'ACCUEIL, et surtout ce qu'elle declare.
+  //
+  // Trois controles, et le troisieme est le seul qui compte vraiment.
+  //
+  // 1. Les images sont la, et chacune porte un texte de remplacement. Une
+  //    image sans alt sur la page la plus vue est invisible pour qui n'y voit
+  //    pas, et muette pour un moteur.
+  // 2. Elles ne sont pas etirees : la largeur naturelle doit couvrir la
+  //    largeur affichee, sinon on sert du flou en croyant servir une photo.
+  // 3. LA LEGENDE PORTE LA DISTINCTION. Master prompt §8 : un ecran qui
+  //    montre un logo sur un objet ne sert jamais de preuve de marquabilite.
+  //    Cette phrase peut sauter d'une relecture sans que rien ne casse, et
+  //    trois belles images sans elle disent exactement le contraire du site.
+  if (url === '/') {
+    const vue = await page.evaluate(() => {
+      const f = document.querySelector('figure.vitrine');
+      if (!f) return null;
+      return {
+        images: [...f.querySelectorAll('img')].map((i) => ({
+          alt: i.getAttribute('alt') || '',
+          naturelle: i.naturalWidth,
+          affichee: Math.round(i.getBoundingClientRect().width),
+        })),
+        legende: (f.querySelector('figcaption')?.textContent || '').trim(),
+      };
+    });
+    if (!vue) {
+      fautes.push('la vitrine de l\'accueil a disparu');
+    } else {
+      if (vue.images.length !== 3) {
+        fautes.push(`${vue.images.length} image(s) de vitrine, il en faut trois`);
+      }
+      for (const [rang, i] of vue.images.entries()) {
+        if (i.alt.length < 20) {
+          fautes.push(`image de vitrine ${rang + 1} sans texte de remplacement utile`);
+        }
+        if (i.naturelle === 0) {
+          fautes.push(`image de vitrine ${rang + 1} : le fichier ne se charge pas`);
+        } else if (i.affichee > 0 && i.naturelle < i.affichee) {
+          fautes.push(`image de vitrine ${rang + 1} etiree : ${i.naturelle} px servis `
+            + `pour ${i.affichee} px affiches`);
+        }
+      }
+      if (!/simulation/i.test(vue.legende) || !/validation/i.test(vue.legende)) {
+        fautes.push('la legende de la vitrine ne distingue plus la simulation de la validation');
+      }
+    }
+  }
+
   // LA NAVIGATION EST LA MEME SUR TOUTES LES PAGES, accueil compris.
   //
   // Controle ajoute apres l'incident du 19/08 : la rubrique /guide/ manquait
