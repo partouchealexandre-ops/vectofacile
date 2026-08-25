@@ -120,17 +120,51 @@ const symbole = fs.readFileSync(path.join(RACINE, 'identite', 'symbole.svg'), 'u
 
 const echapper = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
+/**
+ * LES DEUX ACTIONS DE L'ENTETE, ECRITES UNE SEULE FOIS.
+ *
+ * Elles l'etaient QUATRE fois jusqu'au 25/08 au soir : ici, et en dur dans
+ * chacun des trois gabarits d'outil. La navigation avait ete generee apres
+ * l'incident du 19/08, ou la rubrique /guide/ manquait sur l'accueil et sur
+ * l'accueil seulement. Les boutons, eux, etaient restes recopies. Le meme
+ * defaut attendait donc au meme endroit, sous une autre forme.
+ *
+ * ARBITRAGE ALEX DU 25/08 AU SOIR, deuxieme tour d'entete :
+ *
+ * « Mon logo sur des goodies » monte de la navigation vers les boutons. Une
+ * rubrique se cherche, une promesse se clique.
+ *
+ * « Vectoriser mon logo » descend des boutons vers la navigation, en pilule
+ * navy. C'est l'appat qui amene au diagnostic, pas la destination du site : il
+ * garde un relief, il ne garde pas la premiere place.
+ *
+ * UN SEUL BOUTON ORANGE PAR ECRAN, arbitrage du 18/08 toujours en vigueur.
+ * Des deux boutons de droite, l'orange reste sur « Evaluer votre logo ». Le
+ * simulateur ne valide rien, master prompt §8 : il ne peut pas etre la porte
+ * d'entree du site. L'orange dit « commencer », le navy dit « continuer ».
+ *
+ * L'orange reste le dernier element de la ligne, comme depuis le 18/08.
+ */
+function actionsEntete(urlCourante) {
+  const ici = (url) => (urlCourante === url ? ' aria-current="page"' : '');
+  return '<div class="droite">'
+    + `<a class="cta-secondaire" href="/voir-mon-logo"${ici('/voir-mon-logo')}>Mon logo sur des goodies</a>`
+    + `<a class="cta-entete" href="/"${ici('/')}>Évaluer votre logo</a>`
+    + '</div>';
+}
+
 function entete(urlCourante, publiees) {
   const liens = RUBRIQUES.filter((r) => publiees.has(r.url)).map((r) =>
     `<a href="${r.url}"${urlCourante.startsWith(r.url) && r.url !== '/' ? ' aria-current="page"' : ''}>${r.titre}</a>`
   ).join('');
-  // DEUX ACTIONS, DEUX PAGES, arbitrage Alex du 20/08 : evaluer et vectoriser
-  // sont deux promesses differentes. Chaque bouton mene en HAUT de sa page,
-  // jamais vers une ancre qui ferait atterrir au milieu.
+  // La vectorisation vit DANS la navigation, en dernier, habillee en pilule.
+  // Elle n'est pas dans RUBRIQUES : ce n'est pas une rubrique de contenu, et
+  // la faire entrer dans cette liste melangerait deux choses differentes.
+  const vectoriser = `<a class="nav-action" href="/vectoriser"${urlCourante === '/vectoriser' ? ' aria-current="page"' : ''}>Vectoriser mon logo</a>`;
   return `<header class="entete">
   <a class="lockup" href="/">${symbole}<span class="mot">Bon à<br>Marquer</span></a>
-  <nav class="nav-site">${liens}</nav>
-  <div class="droite"><a class="cta-secondaire" href="/">Évaluer votre logo</a><a class="cta-entete" href="/vectoriser">Vectoriser mon logo</a></div>
+  <nav class="nav-site">${liens}${vectoriser}</nav>
+  ${actionsEntete(urlCourante)}
 </header>`;
 }
 
@@ -484,14 +518,22 @@ for (const lien of [...RUBRIQUES, ...PIED.flatMap((c) => c.liens)]) {
  */
 const accueil = fs.readFileSync(path.join(RACINE, 'contenu', 'accueil.html'), 'utf-8');
 const REPERES = /<!-- nav-site:debut[\s\S]*?nav-site:fin -->/;
+// Le second repere, pose le 25/08 au soir : les deux boutons de droite etaient
+// le dernier morceau d'entete encore recopie a la main dans les gabarits.
+const REPERES_ACTIONS = /<!-- actions-entete:debut[\s\S]*?actions-entete:fin -->/;
+const laNavDe = (url) => entete(url, publiees).match(/<nav class="nav-site">[\s\S]*?<\/nav>/)[0];
 if (!REPERES.test(accueil)) {
   console.error('  contenu/accueil.html ne porte plus ses reperes de navigation.');
   console.error('  Sans eux, l\'accueil garderait une navigation figee.');
   process.exit(1);
 }
+if (!REPERES_ACTIONS.test(accueil)) {
+  console.error('  contenu/accueil.html ne porte plus ses reperes d\'actions d\'entete.');
+  process.exit(1);
+}
 fs.writeFileSync(path.join(PUBLIC, 'index.html'),
-  accueil.replace(REPERES, entete('/', publiees)
-    .match(/<nav class="nav-site">[\s\S]*?<\/nav>/)[0])
+  accueil.replace(REPERES, laNavDe('/'))
+    .replace(REPERES_ACTIONS, actionsEntete('/'))
     .replaceAll('{{DOMAINE}}', DOMAINE));
 
 // L'IMAGE DE PARTAGE, celle qu'un lien emporte avec lui sur LinkedIn ou dans
@@ -514,6 +556,10 @@ if (!REPERES.test(vectoriser)) {
   console.error('  contenu/vectoriser.html ne porte plus ses reperes de navigation.');
   process.exit(1);
 }
+if (!REPERES_ACTIONS.test(vectoriser)) {
+  console.error('  contenu/vectoriser.html ne porte plus ses reperes d\'actions d\'entete.');
+  process.exit(1);
+}
 if (!/data-mode="vectoriser"/.test(vectoriser)) {
   console.error('  contenu/vectoriser.html a perdu son data-mode="vectoriser" :');
   console.error('  la page afficherait le diagnostic complet qu\'elle promet de ne pas faire.');
@@ -521,8 +567,8 @@ if (!/data-mode="vectoriser"/.test(vectoriser)) {
 }
 fs.mkdirSync(path.join(PUBLIC, 'vectoriser'), { recursive: true });
 fs.writeFileSync(path.join(PUBLIC, 'vectoriser', 'index.html'),
-  vectoriser.replace(REPERES, entete('/vectoriser', publiees)
-    .match(/<nav class="nav-site">[\s\S]*?<\/nav>/)[0])
+  vectoriser.replace(REPERES, laNavDe('/vectoriser'))
+    .replace(REPERES_ACTIONS, actionsEntete('/vectoriser'))
     .replaceAll('{{DOMAINE}}', DOMAINE));
 
 /**
@@ -542,6 +588,10 @@ fs.writeFileSync(path.join(PUBLIC, 'vectoriser', 'index.html'),
 const voirMonLogo = fs.readFileSync(path.join(RACINE, 'contenu', 'voir-mon-logo.html'), 'utf-8');
 if (!REPERES.test(voirMonLogo)) {
   console.error('  contenu/voir-mon-logo.html ne porte plus ses reperes de navigation.');
+  process.exit(1);
+}
+if (!REPERES_ACTIONS.test(voirMonLogo)) {
+  console.error('  contenu/voir-mon-logo.html ne porte plus ses reperes d\'actions d\'entete.');
   process.exit(1);
 }
 if (!/src\/simulation\/page\.js/.test(voirMonLogo)) {
@@ -596,8 +646,8 @@ const tableauObjets = '<table class="objets-simulation">'
 
 fs.mkdirSync(path.join(PUBLIC, 'voir-mon-logo'), { recursive: true });
 fs.writeFileSync(path.join(PUBLIC, 'voir-mon-logo', 'index.html'),
-  voirMonLogo.replace(REPERES, entete('/voir-mon-logo', publiees)
-    .match(/<nav class="nav-site">[\s\S]*?<\/nav>/)[0])
+  voirMonLogo.replace(REPERES, laNavDe('/voir-mon-logo'))
+    .replace(REPERES_ACTIONS, actionsEntete('/voir-mon-logo'))
     .replace(REPERES_OBJETS, tableauObjets)
     .replaceAll('{{DOMAINE}}', DOMAINE));
 

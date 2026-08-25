@@ -75,21 +75,26 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
      est qu'aucune page ne nait vide. Elles arrivent avec les premiers guides.
      Ce qui est deja la, en revanche, c'est ce qui ne depend d'aucun contenu :
      le retour a l'outil et la preuve de confidentialite. */
+  /* HAUTEURS RESSERREES LE 25/08 AU SOIR. Le produit demarrait a 170 px du
+     haut de la fenetre : 48 px de marge de page, 34 px sous le filet
+     d'entete, 24 px avant le bandeau, plus l'entete elle-meme. Sur un portable
+     de 800 px de haut, la zone de depot arrivait au ras du pli. Un outil qu'on
+     ne voit pas sans faire defiler n'est pas un outil, c'est une brochure. */
   .entete { display: flex; align-items: center; justify-content: space-between;
-            gap: 18px; padding: 16px 0 18px; border-bottom: 1px solid var(--trait);
-            margin-bottom: 34px; flex-wrap: wrap; }
+            gap: 16px; padding: 10px 0 14px; border-bottom: 1px solid var(--trait);
+            margin-bottom: 22px; flex-wrap: wrap; }
   .lockup { display: flex; align-items: center; gap: 10px; text-decoration: none; }
   .lockup svg { width: 36px; height: 36px; display: block; }
   .lockup .mot { font-family: 'Poppins', var(--pile-systeme); font-weight: 700;
                  font-size: 18px; line-height: 1.05; color: var(--navy);
                  letter-spacing: -0.025em; }
   .entete .droite { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-  .cta-entete { font-size: 14px; font-weight: 600; padding: 9px 17px; border-radius: 8px;
+  .cta-entete { font-size: 14px; font-weight: 600; padding: 9px 15px; border-radius: 8px;
                 border: 1.5px solid var(--orange); background: var(--orange); color: #fff;
                 text-decoration: none; white-space: nowrap; }
-  .cta-secondaire { display: inline-block; padding: 10px 18px; border-radius: 8px;
+  .cta-secondaire { display: inline-block; padding: 9px 15px; border-radius: 8px;
                     border: 1.5px solid var(--trait); color: var(--encre); font-weight: 600;
-                    font-size: 14.5px; text-decoration: none; white-space: nowrap; }
+                    font-size: 14px; text-decoration: none; white-space: nowrap; }
   .cta-secondaire:hover { border-color: var(--gris); }
   .mesures-detail summary { cursor: pointer; color: var(--gris); font-size: 14px;
                             padding: 8px 0; font-weight: 600; }
@@ -108,7 +113,7 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
 
      La premiere version appliquait 860 px aux deux, ce qui etait trop etroit
      pour le cadre et a peu pres juste pour le texte. */
-  main { max-width: 1120px; margin: 0 auto; padding: 48px 24px 96px; }
+  main { max-width: 1120px; margin: 0 auto; padding: 20px 24px 96px; }
   h1 { font-family: 'Poppins', var(--pile-systeme); font-weight: 700; font-size: 34px;
        line-height: 1.2; margin: 0 0 12px; letter-spacing: -0.02em; }
   h2 { font-family: 'Poppins', var(--pile-systeme); font-weight: 700; font-size: 17px;
@@ -119,10 +124,10 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
      puis l'action. Au-dessus, deux colonnes de meme poids, parce que la zone
      de depot etiree sur toute la largeur d'un grand ecran devenait un vide
      avec un titre au milieu. */
-  .bandeau { display: grid; gap: 28px; align-items: center; margin: 8px 0 20px; }
+  .bandeau { display: grid; gap: 28px; align-items: center; margin: 4px 0 16px; }
   .bandeau h1 { margin-top: 0; }
   @media (min-width: 1000px) {
-    .bandeau { grid-template-columns: 1fr 1fr; gap: 56px; margin: 24px 0 28px; }
+    .bandeau { grid-template-columns: 1fr 1fr; gap: 56px; margin: 10px 0 24px; }
     .bandeau h1 { font-size: 40px; }
   }
   #depot {
@@ -557,9 +562,33 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
 
 /* ----------------------------------------------- navigation et pied commun */
 
-.nav-site { display: flex; gap: 20px; font-size: 14px; font-weight: 500; flex-wrap: wrap; }
+.nav-site { display: flex; align-items: center; gap: 18px; font-size: 14px;
+            font-weight: 500; flex-wrap: wrap; }
 .nav-site a { color: var(--texte); text-decoration: none; white-space: nowrap; }
 .nav-site a:hover, .nav-site a[aria-current] { color: var(--navy); }
+/* LA PILULE DE VECTORISATION, arbitrage Alex du 25/08 au soir. Elle detache
+   la vectorisation des deux rubriques de contenu sans inventer de couleur :
+   c'est le niveau « secondaire » de la charte, navy sur blanc. L'orange reste
+   ce qu'il est depuis le 18/08, un seul par ecran, et il est ailleurs.
+   Le selecteur porte .nav-site parce que la regle .nav-site a impose deja
+   une couleur : une regle a un seul point ne la battrait pas. */
+.nav-site a.nav-action { padding: 7px 13px; border-radius: 6px; font-weight: 600;
+                         border: 1.5px solid var(--trait); color: var(--navy); }
+.nav-site a.nav-action:hover { border-color: var(--gris); }
+
+/* L'ENTETE SUR UN PORTABLE DE 1024, mesure du 25/08 au soir. Elle se cassait
+   deja en deux lignes AVANT ce tour d'entete, a 135 px, et personne ne l'avait
+   vu : le controle de hauteur ne mesure qu'a 1280. Les elements demandent
+   1017 px pour un cadre qui n'en offre que 976 a cette largeur. On resserre
+   les gouttieres et les boutons plutot que de couper un libelle, et le
+   controle mesure desormais les deux largeurs. */
+@media (max-width: 1100px) {
+  .entete { gap: 10px; }
+  .nav-site { gap: 12px; }
+  .entete .droite { gap: 10px; }
+  .cta-entete, .cta-secondaire { padding: 9px 11px; }
+  .nav-site a.nav-action { padding: 7px 10px; }
+}
 .pied-site { border-top: 1px solid var(--trait); margin-top: 60px; padding: 30px 20px 40px;
   background: var(--gris-clair); }
 .pied-site .colonnes { max-width: 1120px; margin: 0 auto; display: flex; gap: 40px; flex-wrap: wrap; }

@@ -55,16 +55,13 @@
          trouve doit etre l'action, pas un argument.
          Effet de bord bienvenu : l'en-tete de l'accueil devient identique a
          celui des autres pages, alors que c'etait le seul different. -->
-    <!-- DEUX ACTIONS, PAS UNE, arbitrage Alex du 20/08 : vectoriser et
-         evaluer sont deux choses differentes, et la vectorisation gratuite
-         est l'appat qui amene au diagnostic. DEUX PAGES aussi, depuis le
-         second arbitrage du meme jour : les ancres #depot faisaient atterrir
-         le visiteur au milieu de la page. Chaque bouton mene en HAUT de la
-         page qui tient sa promesse, et une seule. -->
-    <div class="droite">
-      <a class="cta-secondaire" href="/">Évaluer votre logo</a>
-      <a class="cta-entete" href="/vectoriser" id="retour_outil">Vectoriser mon logo</a>
-    </div>
+    <!-- actions-entete:debut. Ce bloc est REECRIT a la construction depuis
+         outils/construire_pages.mjs. Ne pas le modifier ici : il serait
+         ecrase, et surtout il divergerait des dix-neuf autres pages. La
+         navigation a ete generee le 19/08 apres exactement ce defaut ; les
+         boutons, eux, sont restes recopies quatre fois jusqu'au 25/08. -->
+    <div class="droite"></div>
+    <!-- actions-entete:fin -->
   </header>
 
   <!-- Le bandeau d'accueil : le discours a gauche, l'action a droite sur

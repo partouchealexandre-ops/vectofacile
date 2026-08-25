@@ -234,12 +234,60 @@ for (const url of URLS) {
   // aucune erreur ne sort, et le defaut part en production sur les vingt et
   // une pages a la fois. Ce controle existe pour que la cinquieme rubrique se
   // heurte a un mur ici plutot que chez un visiteur.
-  const hauteurEntete = await page.evaluate(() => {
+  //
+  // ET ON MESURE DEUX LARGEURS DEPUIS LE 25/08 AU SOIR. Ce controle ne
+  // regardait que 1280. A 1024, l'entete se cassait deja en deux lignes, a
+  // 135 px, depuis des jours, et le harnais etait au vert. Un controle qui ne
+  // regarde qu'une largeur ne controle pas une mise en page qui depend de la
+  // largeur, exactement comme une mesure de trait qui ne balaie qu'une
+  // direction ne mesure pas une epaisseur.
+  const hauteurDeLEntete = async () => page.evaluate(() => {
     const e = document.querySelector('.entete');
     return e ? Math.round(e.getBoundingClientRect().height) : null;
   });
+  const hauteurEntete = await hauteurDeLEntete();
   if (hauteurEntete !== null && hauteurEntete > 100) {
     fautes.push(`entete sur deux lignes : ${hauteurEntete} px a 1280 de large`);
+  }
+  await page.setViewportSize({ width: 1024, height: 900 });
+  const hauteurEtroite = await hauteurDeLEntete();
+  if (hauteurEtroite !== null && hauteurEtroite > 100) {
+    fautes.push(`entete sur deux lignes : ${hauteurEtroite} px a 1024 de large`);
+  }
+  await page.setViewportSize({ width: 1280, height: 900 });
+
+  // UN SEUL BOUTON ORANGE DANS L'ENTETE, arbitrage Alex du 18/08.
+  //
+  // La regle est ecrite dans la charte depuis une semaine et n'etait tenue par
+  // rien. Elle a failli tomber le 25/08 au soir : l'entete passait a deux
+  // gros boutons, et deux boutons de meme importance appellent deux fois la
+  // meme couleur. Des que l'orange apparait deux fois, il ne signale plus
+  // rien et la conversion perd son repere.
+  //
+  // Le controle compte la couleur SERVIE, calculee par le navigateur, pas la
+  // classe CSS : une regle ajoutee ailleurs qui repeindrait un bouton en
+  // orange serait invisible a un controle qui lirait les classes.
+  //
+  // Il ne peut pas passer au vert sur rien : zero orange echoue aussi.
+  const orangesEntete = await page.evaluate(() => {
+    const e = document.querySelector('.entete');
+    if (!e) return null;
+    return [...e.querySelectorAll('a, button')].filter((n) => {
+      const f = getComputedStyle(n).backgroundColor;
+      return f === 'rgb(255, 106, 0)';
+    }).length;
+  });
+  if (orangesEntete !== null && orangesEntete !== 1) {
+    fautes.push(`${orangesEntete} bouton(s) orange dans l'entete, il en faut exactement un`);
+  }
+
+  // ET LES DEUX ACTIONS SONT BIEN GENEREES. Les reperes existent depuis le
+  // 25/08 ; un gabarit qui les garderait en laissant le bloc vide passerait
+  // le garde-fou de construction, qui ne verifie que la presence des reperes.
+  const actions = await page.evaluate(() =>
+    [...document.querySelectorAll('.entete .droite a')].map((a) => a.getAttribute('href')));
+  if (actions.length !== 2) {
+    fautes.push(`${actions.length} action(s) dans l'entete, il en faut deux`);
   }
 
   // LA NAVIGATION EST LA MEME SUR TOUTES LES PAGES, accueil compris.

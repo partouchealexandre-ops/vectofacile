@@ -22,13 +22,29 @@
  */
 
 export const RUBRIQUES = [
-  // En tete de liste depuis le 25/08 : c'est la rubrique qu'un visiteur vient
-  // chercher sans savoir qu'elle existe, et la seule que personne d'autre ne
-  // propose. Les deux suivantes se cherchent, celle-ci se decouvre.
-  { titre: 'Votre logo sur un objet', url: '/voir-mon-logo' },
   { titre: 'Techniques de marquage', url: '/guide/' },
   { titre: 'Questions fréquentes', url: '/questions/' },
 ];
+
+/*
+ * POURQUOI « VOTRE LOGO SUR UN OBJET » A QUITTE CETTE LISTE, arbitrage Alex du
+ * 25/08/2026 au soir, quelques heures apres l'y avoir mise.
+ *
+ * Le raisonnement d'alors etait juste sur le fond et faux sur la forme : oui,
+ * c'est ce qu'un visiteur vient chercher sans savoir que ca existe. Mais ce
+ * n'est justement PAS une rubrique. Une rubrique se cherche ; une promesse se
+ * clique. Personne ne parcourt une barre de navigation pour trouver l'envie de
+ * voir son logo sur un tote bag.
+ *
+ * Elle est donc montee en ACTION, dans les deux boutons de droite, sous le nom
+ * que les acheteurs emploient entre eux. Le libelle est arbitre : « Mon logo
+ * sur des goodies », pas « sur un objet ». Le mot est de l'anglais, il est
+ * dans la bouche du metier, et le test du couloir prime sur la purete de la
+ * langue.
+ *
+ * Effet de bord voulu : l'entete retombe a deux rubriques, ce qui rend de
+ * l'air a la mesure de 79 px qui avait coute la rubrique confidentialite.
+ */
 
 /*
  * POURQUOI « VOTRE LOGO RESTE CHEZ VOUS » A QUITTE CETTE LISTE, arbitrage
