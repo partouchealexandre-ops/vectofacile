@@ -146,6 +146,7 @@ async function deposer(page, octets, nom, type) {
       actionFichier: document.querySelector('#verdict .verdict-action')?.innerText ?? '',
       // La reponse a quitte #verdict le 24/08 : elle ouvre la page.
       verdictCourt: document.querySelector('#fait_principal .verdict-tete')?.innerText ?? '',
+      teteComplete: document.getElementById('fait_principal')?.innerText ?? '',
     };
   }, [octets.toString('base64'), nom, type]);
 }
@@ -218,18 +219,44 @@ await page.waitForTimeout(900);
   ], [r.titreFiche, ...r.conseils]);
 }
 
-// 3. UN EPS EST REFUSE, ET LE MESSAGE DIT QUOI FAIRE. Un refus qui n'explique
-//    pas laisse le visiteur devant un mur : ici il repart avec une action.
+// 3. UN EPS N'EST PLUS RENVOYE SANS RIEN, arbitrage Alex du 24/08/2026.
+//
+//    On ne sait toujours pas l'executer, donc on ne juge pas son dessin. Mais
+//    son en-tete est du texte en clair : la taille du logo et le logiciel qui
+//    l'a ecrit s'y lisent sans aucune dependance. C'est le visiteur le MIEUX
+//    equipe du parcours, celui qui a deja le fichier que son marqueur reclame,
+//    et c'etait le seul a qui le site ne savait rien dire.
+//
+//    LE CONTROLE QUI COMPTE EST LE TROISIEME. Le site doit dire que le FORMAT
+//    est bon, et dire dans la meme page qu'il ne se prononce pas sur le
+//    DESSIN. Confondre les deux serait le pire mensonge possible, au pire
+//    endroit possible.
 {
-  const eps = Buffer.from('%!PS-Adobe-3.0 EPSF-3.0\n%%BoundingBox: 0 0 10 10\nshowpage\n');
+  // Un EPS avec l'en-tete binaire DOS, comme vingt et un des vingt cinq
+  // fichiers reels du corpus d'Alex : le PostScript ne commence pas a zero.
+  const corps = Buffer.from('%!PS-Adobe-3.0 EPSF-3.0\n%%Creator: Adobe Illustrator(R) 28.0\n'
+    + '%%HiResBoundingBox: 0 0 301.4 170.2\n%%EndComments\nshowpage\n');
+  const tete = Buffer.alloc(30);
+  tete.writeUInt32BE(0xC5D0D3C6, 0);
+  tete.writeUInt32LE(30, 4);
+  tete.writeUInt32LE(corps.length, 8);
+  const eps = Buffer.concat([tete, corps]);
   const r = await deposer(page, eps, 'logo.eps', 'application/postscript');
-  bloc('UN EPS EST REFUSE AVEC UNE SORTIE', [
-    ['il est refuse', typeof r.erreur === 'string' && r.erreur.length > 0],
-    ['le message nomme le format', /EPS|PostScript/i.test(r.erreur || '')],
-    ['il dit quoi faire, pas seulement ce qui ne va pas',
-      /PDF/i.test(r.erreur || '') && /enregistr/i.test(r.erreur || '')],
+  const texte = r.verdictCourt + ' ' + r.teteComplete;
+  bloc('UN EPS DIT CE QU\'IL EST, ET CE QU\'ON N\'EN SAIT PAS', [
+    ['il n\'est plus refuse', !r.erreur],
+    ['le site dit que le format est le bon', /déjà vectoriel/i.test(texte)],
+    // 301,4 x 170,2 points valent 106 x 60 mm. Le controle porte sur les
+    // MILLIMETRES servis, pas sur les points du fichier : c'est la conversion
+    // qui peut casser, pas la lecture.
+    ['il annonce la taille reelle, convertie en millimetres', /106 × 60 mm/.test(texte)],
+    ['ET il dit qu\'il ne se prononce pas sur le dessin',
+      /ne nous prononçons pas|ne savons pas encore lire/i.test(texte)],
+    ['il donne une sortie vers le diagnostic complet', /PDF/i.test(texte)],
     ['rien n\'est propose au telechargement', r.telechargements === false],
-  ]);
+    ['et aucune grille de feux n\'est rendue sur un fichier non mesure',
+      r.verdict === false],
+  ], [texte.replace(/\s+/g, ' ').slice(0, 160)]);
 }
 
 // 4. RIEN NE PART, ET C'EST CA QU'IL FAUT PROUVER.

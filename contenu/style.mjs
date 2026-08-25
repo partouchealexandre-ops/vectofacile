@@ -205,6 +205,12 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
   .reponse-definition .fait-reponse { color: #8f3d08; }
   .reponse-retouche { border-left-color: #9c3722; }
   .reponse-retouche .fait-reponse { color: #9c3722; }
+  /* L'ECRAN D'UN EPS. La deuxieme part, « ce qu'on ne sait pas », est celle
+     qu'un autre site supprimerait : elle se distingue donc, sans crier. */
+  .eps-limite { margin: 0 0 20px; padding: 14px 18px; border: 1px solid var(--trait);
+    border-left: 4px solid var(--gris); border-radius: 10px; background: #fff; }
+  .eps-limite p { margin: 0 0 10px; font-size: 15px; line-height: 1.55; max-width: 68ch; }
+  .eps-limite p:last-child { margin-bottom: 0; }
   /* Le volet des couleurs est monte juste sous la reponse : il se pose comme
      une ligne discrete, pas comme un bloc de plus. */
   #volet_couleurs { margin: 0 0 18px; }

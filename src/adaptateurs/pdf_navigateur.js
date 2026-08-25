@@ -49,6 +49,15 @@ export function reconnaitre(octets) {
   const texte = String.fromCharCode(...debut);
   if (texte.includes('%PDF-')) return 'pdf';
   if (texte.startsWith('%!PS')) return 'postscript';
+  // L'EN-TETE BINAIRE DOS, DEFAUT TROUVE LE 24/08/2026 sur des fichiers reels.
+  // Vingt et un EPS sur vingt cinq commencent par trente octets binaires qui
+  // disent ou trouver le PostScript. `startsWith` echouait donc sur la grande
+  // majorite des EPS du monde, et ces fichiers ne recevaient meme pas le
+  // message qui leur etait destine : ils tombaient dans « format non
+  // supporte », avec la mauvaise raison.
+  if (debut[0] === 0xC5 && debut[1] === 0xD0 && debut[2] === 0xD3 && debut[3] === 0xC6) {
+    return 'postscript';
+  }
   return null;
 }
 

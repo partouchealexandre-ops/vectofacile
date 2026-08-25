@@ -14,6 +14,7 @@
 
 import { lireImage, telecharger, FichierNonSupporte } from './adaptateurs/image_navigateur.js';
 import { lireVectoriel, reconnaitre, FichierVectorielNonLu } from './adaptateurs/pdf_navigateur.js';
+import { lireEnteteEps } from './adaptateurs/eps_entete.js';
 import { mesurer } from './moteur/mesures.js';
 import { juger } from './verdict/juger.js';
 import { jugerGrille, choisirPourContraste } from './verdict/grille.js';
@@ -806,6 +807,57 @@ function afficherFiche(fiche) {
 }
 
 /**
+ * L'ECRAN D'UN EPS, arbitrage Alex du 24/08/2026.
+ *
+ * TROIS PARTS, ET L'ORDRE COMPTE : ce qu'on sait, ce qu'on ne sait pas, ce
+ * qu'il peut faire. La deuxieme est la plus importante, et c'est celle qu'un
+ * autre site supprimerait.
+ *
+ * ON NE DIT PAS QUE LE LOGO EST BON. On dit que le FORMAT est le bon, ce qui
+ * est vrai et verifiable dans l'en-tete, et on dit qu'on ne sait rien du
+ * DESSIN, ce qui est vrai aussi : un EPS peut porter douze couleurs, un
+ * degrade, un trait de cinq centiemes de millimetre, et rien de tout cela
+ * n'est ecrit dans l'en-tete. Confondre le format et le dessin serait
+ * exactement le mensonge que ce site refuse, et ce serait le pire endroit
+ * pour le faire, parce que c'est la personne la mieux equipee du parcours.
+ */
+function afficherFichePostscript(e) {
+  const taille = e.largeurMm
+    ? `Il mesure <b>${Math.round(e.largeurMm)} × ${Math.round(e.hauteurMm)} mm</b> `
+      + 'à sa taille d\'origine, ce qui ne limite rien : un fichier vectoriel '
+      + 'se réduit et s\'agrandit sans jamais perdre en netteté.'
+    : '';
+  const logiciel = e.createur
+    ? `<p class="note">Écrit par ${echapperTexte(e.createur)}.</p>` : '';
+  const tete = $('fait_principal');
+  if (!tete) return;
+  tete.innerHTML = `<div class="verdict-tete reponse-format">
+    <p class="fait-reponse">Votre fichier est déjà vectoriel. C'est le format que
+    votre marqueur réclame.</p>
+    <p class="fait-couleurs">${taille}</p>
+  </div>
+  <div class="encadre eps-limite">
+    <p><b>En revanche, nous ne savons pas encore lire son contenu.</b> Un EPS est un
+    programme, pas une image : pour savoir ce qu'il dessine, il faut l'exécuter, et
+    aucun navigateur ne sait le faire. Nous ne pouvons donc pas vous dire combien
+    votre logo a de couleurs, s'il tient en une seule, ni si son trait le plus fin
+    passera. <b>Le format est bon ; sur le dessin, nous ne nous prononçons pas.</b></p>
+    <p>Pour obtenir le diagnostic complet, deux chemins. Si vous avez Illustrator ou
+    un logiciel équivalent, exportez le même logo en <b>PDF</b> et déposez-le ici :
+    tout fonctionne. Sinon, demandez le PDF à qui vous a fourni cet EPS, c'est
+    l'affaire de deux minutes pour lui.</p>
+    <p class="note">Et si vous ne voulez rien faire de plus : envoyez cet EPS tel quel
+    à votre marqueur. C'est un fichier qu'il sait ouvrir.</p>
+  </div>`;
+  tete.hidden = false;
+  passerEnModeResultat(true);
+}
+
+const echapperTexte = (t) => String(t)
+  .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+/**
  * Les conseils d'impression : un fait mesure, une mecanique de procede.
  * Ils ne dependent d'AUCUN seuil arbitre, c'est pour cela qu'ils peuvent
  * s'afficher aujourd'hui alors que le verdict, lui, attend encore.
@@ -853,6 +905,21 @@ async function traiter(fichier) {
     // rien a tracer, et le tracer degraderait un dessin exact.
     const nature = reconnaitre(await fichier.slice(0, 1024).arrayBuffer());
 
+    // L'EPS N'EST PLUS RENVOYE SANS RIEN, arbitrage Alex du 24/08/2026. On ne
+    // sait toujours pas l'executer, donc on ne juge pas son dessin. Mais son
+    // en-tete est du texte en clair, et il porte deux verites : la taille du
+    // logo et le logiciel qui l'a ecrit. Les dire coute zero dependance, et ca
+    // change tout pour celui qui arrive avec le fichier que son marqueur
+    // reclame et qu'on lui refusait a l'entree.
+    if (nature === 'postscript') {
+      const entete = lireEnteteEps(await fichier.arrayBuffer());
+      if (entete) {
+        afficherFichePostscript(entete);
+        $('travail').hidden = true;
+        return;
+      }
+    }
+
     let image;
     if (nature === 'pdf') {
       etape = 'lecture du fichier vectoriel';
@@ -860,12 +927,6 @@ async function traiter(fichier) {
       const lu = await lireVectoriel(fichier);
       image = lu.image;
       etat.fiche = lu.fiche;
-    } else if (nature === 'postscript') {
-      throw new FichierVectorielNonLu(
-        'ce fichier est un EPS, c\'est à dire du PostScript. Nous savons lire les '
-        + 'PDF et les fichiers Illustrator enregistrés avec l\'option « Créer un '
-        + 'fichier compatible PDF », qui est le réglage par défaut. Réenregistrez '
-        + 'votre logo en PDF depuis votre logiciel, le diagnostic sera le même.');
     } else {
       image = await lireImage(fichier);
     }
