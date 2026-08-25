@@ -48,6 +48,23 @@ export const INDEXABLE = true;
 export const DOMAINE = 'https://bonamarquer.fr';
 
 /**
+ * L'ADRESSE DE DEPLOIEMENT, qui n'est PAS le domaine.
+ *
+ * Netlify sert le site sur les deux : le nom qu'on a achete, et l'adresse
+ * technique du projet. Les deux repondent, avec le meme contenu, et un moteur
+ * qui trouve les deux voit un site en double. Les canoniques disent deja
+ * laquelle compte et Google finit par consolider, mais « finit par » est une
+ * attenuation, pas une reponse. Une redirection est une reponse.
+ *
+ * Elle vit ici plutot que dans un fichier ecrit a la main, pour la meme raison
+ * que tout le reste de ce fichier : le jour ou le projet Netlify est renomme,
+ * cette ligne bouge et la redirection suit. Ce n'est pas une hypothese, c'est
+ * arrive le 25/08 : le projet s'appelait vectofacile jusqu'a ce jour la, et
+ * personne n'avait pense a le dire au depot.
+ */
+export const ADRESSE_DE_DEPLOIEMENT = 'https://bonamarquer.netlify.app';
+
+/**
  * LES METADONNEES DE PARTAGE. Sans elles, un lien envoye sur LinkedIn ou dans
  * une conversation sort NU : pas de titre, pas d'image, pas un mot. Pour un
  * outil dont on attend qu'il circule de bouche a oreille entre acheteurs, c'est
@@ -144,6 +161,24 @@ export function fichierHeaders() {
   lignes.push('  Cache-Control: public, max-age=86400');
   lignes.push('');
   return lignes.join('\n');
+}
+
+/**
+ * Contenu du fichier _redirects de Netlify.
+ *
+ * Le point d'exclamation force la redirection MEME quand un fichier existe a
+ * ce chemin. Sans lui, l'adresse de deploiement continuerait a servir le site
+ * au lieu de renvoyer vers son nom : Netlify ne redirige que ce qu'il ne sait
+ * pas servir, et il sait servir tout ce que la construction produit.
+ */
+export function fichierRedirections() {
+  return [
+    '# FICHIER GENERE par outils/construire_site.mjs. Ne pas modifier a la main.',
+    '# Source : outils/entetes.mjs, constantes ADRESSE_DE_DEPLOIEMENT et DOMAINE.',
+    '',
+    `${ADRESSE_DE_DEPLOIEMENT}/*  ${DOMAINE}/:splat  301!`,
+    '',
+  ].join('\n');
 }
 
 /** Contenu du fichier robots.txt. */

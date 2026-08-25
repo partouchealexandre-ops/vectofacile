@@ -33,7 +33,7 @@ import { fileURLToPath } from 'node:url';
 // lit le HTML servi, mais il lui faut une ATTENTE a quoi le comparer. Le
 // domaine attendu ne peut pas etre recopie ici, sinon il vit a deux endroits,
 // exactement le defaut que la constante existe pour empecher.
-import { DOMAINE } from '../outils/entetes.mjs';
+import { ADRESSE_DE_DEPLOIEMENT, DOMAINE } from '../outils/entetes.mjs';
 
 const ICI = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC = path.join(ICI, '..', 'public');
@@ -231,6 +231,47 @@ console.log('  ' + '-'.repeat(74));
   }
   if (hoteDe('pas une adresse') !== null) {
     ajouter('(temoin)', 'le lecteur d\'hote ne signale pas une adresse illisible');
+  }
+
+  // L'ADRESSE DE DEPLOIEMENT NE SERT PLUS LE SITE, elle y renvoie.
+  //
+  // Releve a l'audit du 25/08 au soir : bonamarquer.netlify.app repondait avec
+  // le meme contenu que le domaine. Les canoniques disaient deja laquelle
+  // compte, ce qui attenue, mais un moteur qui trouve les deux voit d'abord un
+  // site en double et decide ensuite.
+  //
+  // Le controle lit le fichier SERVI, comme tout le reste de ce harnais, et il
+  // verifie les trois choses qui peuvent se tromper separement : que la regle
+  // existe, qu'elle part bien de l'adresse de deploiement, et qu'elle arrive
+  // sur le domaine.
+  const cheminRedirections = path.join(PUBLIC, '_redirects');
+  if (!fs.existsSync(cheminRedirections)) {
+    ajouter('_redirects', 'le fichier n\'est pas produit par la construction');
+  } else {
+    const regles = fs.readFileSync(cheminRedirections, 'utf-8');
+    const ligne = regles.split('\n').find((l) => l.trim() && !l.startsWith('#'));
+    if (!ligne) {
+      ajouter('_redirects', 'aucune regle, seulement des commentaires');
+    } else {
+      const [source, cible, code] = ligne.trim().split(/\s+/);
+      if (hoteDe(source) !== hoteDe(ADRESSE_DE_DEPLOIEMENT)) {
+        ajouter('_redirects', `la regle part de ${hoteDe(source)}, attendu ${hoteDe(ADRESSE_DE_DEPLOIEMENT)}`);
+      }
+      if (hoteDe(cible) !== HOTE) {
+        ajouter('_redirects', `la regle arrive sur ${hoteDe(cible)}, attendu ${HOTE}`);
+      }
+      if (!String(code).startsWith('301')) {
+        ajouter('_redirects', `la regle repond ${code}, attendu une redirection permanente`);
+      }
+    }
+  }
+
+  // TEMOIN, et il ne regarde pas le fichier : il regarde les DEUX CONSTANTES.
+  // Une redirection d'un hote vers lui-meme est une boucle, et c'est
+  // exactement ce que produirait quelqu'un qui alignerait les deux constantes
+  // en croyant bien faire le jour d'un changement de domaine.
+  if (hoteDe(ADRESSE_DE_DEPLOIEMENT) === HOTE) {
+    ajouter('(temoin)', 'l\'adresse de deploiement et le domaine sont le meme hote : la redirection boucle');
   }
 }
 

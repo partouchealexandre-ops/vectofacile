@@ -16,7 +16,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { fichierHeaders, fichierRobots, INDEXABLE } from './entetes.mjs';
+import { fichierHeaders, fichierRedirections, fichierRobots, INDEXABLE } from './entetes.mjs';
 
 const RACINE = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SOURCE = path.join(RACINE, 'src');
@@ -38,6 +38,7 @@ compter(CIBLE);
 // puissent pas diverger de ce que le harnais teste.
 fs.writeFileSync(path.join(RACINE, 'public', '_headers'), fichierHeaders());
 fs.writeFileSync(path.join(RACINE, 'public', 'robots.txt'), fichierRobots());
+fs.writeFileSync(path.join(RACINE, 'public', '_redirects'), fichierRedirections());
 
 if (!fs.existsSync(path.join(RACINE, 'public', 'vtracer_wasm_bg.wasm'))) {
   console.error('  Le WebAssembly manque dans public/. Lancer : npm run vtracer:web');
@@ -54,4 +55,4 @@ for (const attendu of ['polices/poppins-400.woff2', 'polices/poppins-700.woff2']
 }
 
 console.log(`  ${fichiers} modules copies dans public/src/`);
-console.log(`  _headers et robots.txt generes, indexation ${INDEXABLE ? 'OUVERTE' : 'FERMEE'}`);
+console.log(`  _headers, robots.txt et _redirects generes, indexation ${INDEXABLE ? 'OUVERTE' : 'FERMEE'}`);
