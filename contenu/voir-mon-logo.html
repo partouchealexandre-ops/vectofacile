@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="/favicon.svg">
+<title>Voir son logo sur un objet, aux vraies dimensions | Vecto Facile</title>
+<meta name="description" content="Posez votre logo sur un tote bag, un carnet ou un tapis de souris. La zone et les dimensions sont celles déclarées par le fabricant, et la taille s'affiche en millimètres.">
+<!-- La feuille de style est GENEREE dans public/vecto.css depuis contenu/style.mjs.
+     Ne pas remettre de feuille en ligne dans cette page. -->
+<link rel="canonical" href="{{DOMAINE}}/voir-mon-logo">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Vecto Facile">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:title" content="Voir son logo sur un objet, aux vraies dimensions">
+<meta property="og:description" content="Posez votre logo sur un objet publicitaire : la zone de marquage et ses dimensions sont celles du fabricant, et la taille obtenue s'affiche en millimètres.">
+<meta property="og:url" content="{{DOMAINE}}/voir-mon-logo">
+<meta property="og:image" content="{{DOMAINE}}/partage.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Voir son logo sur un objet, aux vraies dimensions">
+<meta name="twitter:description" content="Posez votre logo sur un objet publicitaire : la zone de marquage et ses dimensions sont celles du fabricant, et la taille obtenue s'affiche en millimètres.">
+<meta name="twitter:image" content="{{DOMAINE}}/partage.png">
+<link rel="stylesheet" href="/vecto.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebApplication","name":"Vecto Facile, simulation sur objet","applicationCategory":"DesignApplication","operatingSystem":"Navigateur web","url":"{{DOMAINE}}/voir-mon-logo","offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"},"featureList":"Pose d'un logo sur une photo de produit, aux dimensions declarees par le fabricant"},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Vecto Facile","item":"{{DOMAINE}}/"},{"@type":"ListItem","position":2,"name":"Votre logo sur un objet","item":"{{DOMAINE}}/voir-mon-logo"}]}]}</script>
+</head>
+<!-- LE MODE. Comme /vectoriser, cette page tient une promesse et une seule.
+     Elle ne charge pas src/app.js : le diagnostic n'a rien a faire ici, et le
+     simulateur n'a besoin ni du moteur de mesure ni de la vectorisation. -->
+<body data-mode="simulation">
+<main>
+  <header class="entete">
+    <a class="lockup" href="/"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="-8 -8 116 116"><title>Vecto Facile</title><path d="M11.832,82.298C20.815,92.914 33.813,99.309 47.705,99.947C61.597,100.586 75.127,95.41 85.045,85.663L75.583,76.034C68.203,83.286 58.091,87.066 47.762,86.431C37.434,85.797 27.861,80.809 21.423,72.707Z" fill="#0A2D4D"/><path d="M35.899,97.97C15.108,91.859 0.62,73.05 0.019,51.387C-0.582,29.724 12.84,10.141 33.261,2.885C53.681,-4.37 76.45,2.355 89.652,19.541C102.853,36.727 103.481,60.461 91.206,78.32L80.081,70.674C89.455,57.034 88.479,38.795 77.702,26.234C66.926,13.673 49.047,9.934 34.141,17.125C19.235,24.317 11.032,40.637 14.156,56.89C17.28,73.142 30.948,85.259 47.458,86.411Z" fill="#0A2D4D"/><path d="M22.627,50.173L43.227,70.773C45.863,73.409 50.137,73.409 52.773,70.773L95.773,27.773L86.227,18.227L48,56.454L32.173,40.627Z" fill="#FF6A00"/></svg><span class="mot">Vecto<br>Facile</span></a>
+    <!-- nav-site:debut. Ce bloc est REECRIT a la construction depuis
+         contenu/pages.mjs, comme sur les autres pages. Ne pas le modifier ici. -->
+    <nav class="nav-site"></nav>
+    <!-- nav-site:fin -->
+    <div class="droite">
+      <a class="cta-secondaire" href="/">Évaluer votre logo</a>
+      <a class="cta-entete" href="/vectoriser" id="retour_outil">Vectoriser mon logo</a>
+    </div>
+  </header>
+
+  <div class="bandeau">
+    <div class="bandeau-texte">
+      <h1>Voyez votre logo sur un objet</h1>
+      <p class="accroche">
+        Vous avez un <b>.ai</b> ou un <b>.eps</b> que personne ne peut ouvrir, ou juste
+        une idée à vérifier. Déposez une image : elle se pose dans la zone que le
+        fabricant autorise, et vous lisez la taille obtenue <b>en millimètres</b>.
+        Rien ne quitte votre navigateur.
+      </p>
+      <!-- LA DISTINCTION EN CLAIR, master prompt §8 et charte §11. Un ecran de
+           simulation ne prouve pas qu'un marquage est faisable. Cette phrase
+           n'est pas une note de bas de page : elle est au dessus de l'image,
+           avant que le visiteur ait vu son logo sur un objet. -->
+      <p class="mention-simulation">
+        <b>Ceci est une simulation, pas une validation.</b> Elle montre un rendu,
+        pas une faisabilité : voir son logo sur une photo ne dit pas qu'il
+        s'imprimera bien. Pour savoir ce qui passe et ce qui coince,
+        <a href="/">faites évaluer votre logo</a>.
+      </p>
+    </div>
+
+    <div id="depot">
+      <strong>Déposez votre logo ici</strong>
+      <span>PNG, JPEG, GIF, WEBP. Ou cliquez pour choisir un fichier.</span>
+    </div>
+  </div>
+  <input type="file" id="fichier" accept="image/png,image/jpeg,image/gif,image/webp">
+
+  <div id="erreur" hidden></div>
+
+  <!-- Le panneau est monte ici par src/simulation/page.js. Il n'existe pas
+       dans le document servi : sans JavaScript, la page dit ce qu'elle fait et
+       renvoie a l'evaluation, elle ne montre pas une carcasse vide. -->
+  <div class="simu" id="simulateur">
+    <p class="simu-attente">Chargement des objets.</p>
+  </div>
+
+  <section class="simu-apres">
+    <h2>Ce que cette page mesure, et ce qu'elle ne mesure pas</h2>
+    <p>
+      Le placement et les dimensions de chaque zone sont ceux que le fabricant
+      déclare. Comme la zone est connue à la fois en pixels sur la photo et en
+      millimètres sur l'objet, la taille de votre logo une fois posé est une
+      mesure, pas une impression.
+    </p>
+    <p>
+      Ce qui n'est pas mesuré : le rendu. Le logo est posé à plat, il ne suit ni
+      les plis d'un tissu ni la courbe d'un objet. Et l'aperçu est plus grossier
+      que le marquage réel, donc un trait qui paraît flou à l'écran peut
+      s'imprimer parfaitement. La page vous dit quand c'est le cas.
+    </p>
+    <p>
+      <a href="/">Évaluer votre logo</a> répond à l'autre question, celle qui
+      décide : sur quelles techniques il passe, en combien de couleurs, et ce
+      qu'il faut retoucher quand ça coince.
+    </p>
+  </section>
+</main>
+<script type="module" src="/src/simulation/page.js"></script>
+</body>
+</html>

@@ -22,10 +22,29 @@
  */
 
 export const RUBRIQUES = [
+  // En tete de liste depuis le 25/08 : c'est la rubrique qu'un visiteur vient
+  // chercher sans savoir qu'elle existe, et la seule que personne d'autre ne
+  // propose. Les deux suivantes se cherchent, celle-ci se decouvre.
+  { titre: 'Votre logo sur un objet', url: '/voir-mon-logo' },
   { titre: 'Techniques de marquage', url: '/guide/' },
   { titre: 'Questions fréquentes', url: '/questions/' },
-  { titre: 'Votre logo reste chez vous', url: '/confidentialite' },
 ];
+
+/*
+ * POURQUOI « VOTRE LOGO RESTE CHEZ VOUS » A QUITTE CETTE LISTE, arbitrage
+ * Alex du 25/08/2026, sur mesure et pas sur gout.
+ *
+ * A quatre rubriques, l'entete passait de 79 a 135 pixels et se cassait sur
+ * deux lignes, a 1280 comme a 1440. Ce n'etait pas la longueur du libelle :
+ * meme « Sur un objet », douze caracteres, debordait. C'est le nombre
+ * d'elements qui ne tient pas dans le cadre de 1120 px a cote du logotype et
+ * des deux actions.
+ *
+ * La promesse de confidentialite ne disparait pas pour autant : elle reste
+ * dans le PIED ci-dessous, dans l'accroche de l'accueil, et sur sa propre
+ * page. Des quatre rubriques, c'est celle qui repondait a une inquietude
+ * plutot qu'a un besoin, et celle qu'on cherche le moins.
+ */
 
 /**
  * Les rubriques validees avec Alex mais pas encore publiables, et POURQUOI.
@@ -54,6 +73,7 @@ export const PIED = [
     titre: "L'outil",
     liens: [
       { titre: 'Diagnostiquer un logo', url: '/' },
+      { titre: 'Votre logo sur un objet', url: '/voir-mon-logo' },
       { titre: 'Votre logo reste chez vous', url: '/confidentialite' },
     ],
   },

@@ -223,6 +223,25 @@ for (const url of URLS) {
     else if (table.liens < 3) fautes.push(`tableau des minimums sans sources cliquables : ${table.liens} liens`);
   }
 
+  // L'ENTETE TIENT SUR UNE LIGNE, et c'est une mesure, pas un gout.
+  //
+  // Trouve le 25/08 en ajoutant une quatrieme rubrique : l'entete passait de
+  // 79 a 135 pixels et se cassait en deux lignes, a 1280 comme a 1440. Le
+  // libelle n'y etait pour rien, meme raccourci a douze caracteres. C'est le
+  // NOMBRE d'elements qui ne tient pas a cote du logotype et des deux actions.
+  //
+  // Une navigation qui se casse ne casse rien d'autre : aucun test ne tombe,
+  // aucune erreur ne sort, et le defaut part en production sur les vingt et
+  // une pages a la fois. Ce controle existe pour que la cinquieme rubrique se
+  // heurte a un mur ici plutot que chez un visiteur.
+  const hauteurEntete = await page.evaluate(() => {
+    const e = document.querySelector('.entete');
+    return e ? Math.round(e.getBoundingClientRect().height) : null;
+  });
+  if (hauteurEntete !== null && hauteurEntete > 100) {
+    fautes.push(`entete sur deux lignes : ${hauteurEntete} px a 1280 de large`);
+  }
+
   // LA NAVIGATION EST LA MEME SUR TOUTES LES PAGES, accueil compris.
   //
   // Controle ajoute apres l'incident du 19/08 : la rubrique /guide/ manquait

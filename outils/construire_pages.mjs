@@ -445,7 +445,7 @@ for (const p of pages) {
 // /vectoriser est, comme l'accueil, une page d'outil : elle a son gabarit dans
 // contenu/ et n'entre pas dans `pages`, mais elle est bien publiee, et les
 // liens qui pointent vers elle sont legitimes.
-const publiees = new Set([...vues, '/', '/vectoriser']);
+const publiees = new Set([...vues, '/', '/vectoriser', '/voir-mon-logo']);
 
 // Integrite des liens de navigation. Un lien d'entete ou de pied vers une 404
 // est la faute la plus visible d'un site. On tolere le lien vers une page non
@@ -525,6 +525,43 @@ fs.writeFileSync(path.join(PUBLIC, 'vectoriser', 'index.html'),
     .match(/<nav class="nav-site">[\s\S]*?<\/nav>/)[0])
     .replaceAll('{{DOMAINE}}', DOMAINE));
 
+/**
+ * LA PAGE /VOIR-MON-LOGO, troisieme page d'outil.
+ *
+ * Elle pose un logo sur une photo de produit, aux dimensions declarees par le
+ * fabricant. Meme discipline que les deux autres : gabarit dans contenu/,
+ * navigation injectee entre les memes reperes, une seule source.
+ *
+ * DEUX GARDE-FOUS, et le second est le plus important. Le premier verifie que
+ * la page charge bien le simulateur. Le second verifie qu'elle porte encore la
+ * mention qui distingue une simulation d'une validation : master prompt §8, un
+ * ecran de simulation ne sert JAMAIS de preuve de marquabilite. Cette phrase
+ * peut disparaitre d'une relecture sans que rien ne casse, et c'est
+ * exactement pour ca qu'un controle la garde.
+ */
+const voirMonLogo = fs.readFileSync(path.join(RACINE, 'contenu', 'voir-mon-logo.html'), 'utf-8');
+if (!REPERES.test(voirMonLogo)) {
+  console.error('  contenu/voir-mon-logo.html ne porte plus ses reperes de navigation.');
+  process.exit(1);
+}
+if (!/src\/simulation\/page\.js/.test(voirMonLogo)) {
+  console.error('  contenu/voir-mon-logo.html ne charge plus le simulateur :');
+  console.error('  la page promettrait un apercu qu\'elle ne rendrait pas.');
+  process.exit(1);
+}
+if (!/class="mention-simulation"/.test(voirMonLogo)
+    || !/simulation, pas une validation/i.test(voirMonLogo)) {
+  console.error('  contenu/voir-mon-logo.html a perdu sa mention de simulation.');
+  console.error('  Un ecran de simulation ne sert jamais de preuve de marquabilite,');
+  console.error('  et la distinction se dit A L\'ECRAN, pas en note de bas de page.');
+  process.exit(1);
+}
+fs.mkdirSync(path.join(PUBLIC, 'voir-mon-logo'), { recursive: true });
+fs.writeFileSync(path.join(PUBLIC, 'voir-mon-logo', 'index.html'),
+  voirMonLogo.replace(REPERES, entete('/voir-mon-logo', publiees)
+    .match(/<nav class="nav-site">[\s\S]*?<\/nav>/)[0])
+    .replaceAll('{{DOMAINE}}', DOMAINE));
+
 fs.writeFileSync(path.join(PUBLIC, 'vecto.css'), STYLE);
 fs.writeFileSync(path.join(PUBLIC, 'favicon.svg'), symbole + '\n');
 
@@ -601,6 +638,7 @@ const sitemap = ['<?xml version="1.0" encoding="UTF-8"?>',
   '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
   `<url><loc>${DOMAINE}/</loc></url>`,
   `<url><loc>${DOMAINE}/vectoriser</loc></url>`,
+  `<url><loc>${DOMAINE}/voir-mon-logo</loc></url>`,
   ...pages.map((p) => `<url><loc>${DOMAINE}${p.url}</loc></url>`),
   '</urlset>', ''].join('\n');
 fs.writeFileSync(path.join(PUBLIC, 'sitemap.xml'), sitemap);

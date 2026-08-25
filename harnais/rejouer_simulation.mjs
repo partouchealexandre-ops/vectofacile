@@ -236,6 +236,185 @@ const vueOu = (predicat) => LOT.vues.find(predicat);
 }
 
 // ------------------------------------------------------------------------
+// LE LOGO TEMOIN, 400 par 400, avec une barre de 8 pixels de haut : c'est
+// elle qui donne au trait le plus fin une valeur qu'on peut predire a la main.
+// Il est ecrit ici plutot que lu sur le disque pour que le harnais ne depende
+// d'aucun fichier qu'un nettoyage pourrait emporter.
+const LOGO_TEMOIN = [
+  'iVBORw0KGgoAAAANSUhEUgAAAZAAAAGQCAYAAACAvzbMAAADj0lEQVR42u3VQQ3AIBBFQeCIF6RgpIJqBCl44Uod9NDT',
+  'Nswo2OQn+1ICAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+  'APgmRz+wtr7NBJxozRH6RxcTASAgAAgIAAICgIAAgIAAICAACAgAAgKAgACAgAAgIAAICAACAoCAAICAACAgAAgIAAIC',
+  'gIAAgIAAICAACAgAAgKAgACAgAAgIAAICAACAoCAAICAACAgAAgIAAICgIAAgIAAICAACAgAAgIAAgKAgAAgIAAICAAC',
+  'AgACAoCAACAgAAgIAAICAAICgIAAICAACAgAAgIAAgKAgAAgIAAICAACAgACAoCAACAgAAgIAAICAAICgIAAICAACAgA',
+  'AgIAAgKAgAAgIAAICAACAgACAoCAACAgAAgIAAgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALHk6AfW1reZgBOtOUL/',
+  '6GIiAAQEAAEBQEAAEBAAEBAABAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADgXY5+4L7SNhNw5IO+Y//oYiIABAQAAQFAQAAQEAAQEAAEBAAB',
+  'AUBAABAQABAQAAQEAAEBQEAAEBAAEBAABAQAAQFAQAAQEAAQEAAEBAABAUBAABAQABAQAAQEAAEBQEAAEBAAEBAABAQA',
+  'AQFAQAAQEAAQEAAEBAABAUBAAEBAABAQAAQEAAEBQEAAQEAAEBAABAQAAQFAQABAQAAQEAAEBAABAUBAAEBAABAQAAQE',
+  'AAEBQEAAQEAAEBAABAQAAQFAQABAQAAQEAAEBAABAUBAAEBAABAQAAQEAAEBQEAAQEAAEBAABAQAAQEAAQEAAAAAAAAA',
+  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA4D8ekYQMTkK7ISIAAAAASUVORK5C',
+  'YII=',
+].join('');
+
+// LA PAGE, DANS CHROMIUM. Les seize controles ci-dessus portent sur les
+// donnees et sur le module ; ils passeraient au vert sur une page qui ne monte
+// rien. Ce qui suit ouvre le HTML SERVI et regarde ce qu'un visiteur voit.
+async function controlerLaPage() {
+  const dossier = path.join(ICI, '..', 'public');
+  const page = path.join(dossier, 'voir-mon-logo', 'index.html');
+  if (!fs.existsSync(page)) {
+    controle('la page /voir-mon-logo est construite', false,
+             'public/voir-mon-logo/index.html absent, lancer npm run site:construire');
+    return;
+  }
+  const { TYPES, ouvrirChromium } = await import('./_navigateur.mjs');
+  const http = (await import('node:http')).default;
+  const PORT = 8241;
+  const serveur = await new Promise((resoudre) => {
+    const s = http.createServer((requete, reponse) => {
+      let chemin = decodeURIComponent(requete.url.split('?')[0]);
+      if (chemin.endsWith('/')) chemin += 'index.html';
+      const fichier = path.join(dossier, chemin);
+      if (!fichier.startsWith(dossier) || !fs.existsSync(fichier)
+          || fs.statSync(fichier).isDirectory()) {
+        reponse.writeHead(404); reponse.end('non'); return;
+      }
+      reponse.writeHead(200, { 'Content-Type': TYPES[path.extname(fichier)]
+        || 'application/octet-stream' });
+      reponse.end(fs.readFileSync(fichier));
+    });
+    s.listen(PORT, () => resoudre(s));
+  });
+
+  const navigateur = await ouvrirChromium();
+  const contexte = await navigateur.newContext({ viewport: { width: 1280, height: 900 } });
+  const onglet = await contexte.newPage();
+  const erreurs = [];
+  onglet.on('pageerror', (e) => erreurs.push(e.message));
+  // On ecarte les echecs de CHARGEMENT DE RESSOURCE : une police absente n'est
+  // pas une erreur de script, et les ressources servies sont deja controlees
+  // par le harnais des pages. Melanger les deux rendrait ce controle bruyant,
+  // et un controle bruyant finit par etre ignore.
+  onglet.on('console', (m) => {
+    if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) {
+      erreurs.push(m.text());
+    }
+  });
+  await onglet.goto(`http://127.0.0.1:${PORT}/voir-mon-logo/`);
+  await onglet.waitForTimeout(1200);
+
+  controle('la page se charge sans erreur de script', erreurs.length === 0,
+           erreurs.slice(0, 2).join(' | '));
+
+  const monte = await onglet.evaluate(() => ({
+    canvas: Boolean(document.querySelector('.simu-scene canvas')),
+    puces: document.querySelectorAll('.simu-puce').length,
+    zones: document.querySelectorAll('#simulateur select option').length,
+    attente: Boolean(document.querySelector('.simu-attente')),
+  }));
+  const panneauMonte = monte.canvas && monte.puces >= 6 && monte.zones >= 1 && !monte.attente;
+  controle('le panneau est monte : une scene, des objets, des emplacements',
+           panneauMonte, JSON.stringify(monte));
+
+  // SI LE PANNEAU N'EST PAS MONTE, ON S'ARRETE ICI ET ON LE DIT. Continuer
+  // ferait planter le harnais sur un element absent, et un harnais qui plante
+  // cache ses autres resultats : on ne saurait plus si l'echec est le seul.
+  if (!panneauMonte) {
+    for (const restant of ['la distinction simulation contre validation est visible',
+                           'un seul bouton orange sur la page',
+                           'la reglette deplace les millimetres',
+                           'le trait le plus fin est mesure dans les deux sens']) {
+      controle(restant, false, 'non controle : le panneau n\'est pas monte');
+    }
+    await navigateur.close();
+    serveur.close();
+    return;
+  }
+
+  // LA MENTION EST AU DESSUS DE L'IMAGE, pas en note de bas de page. Charte
+  // §11 : un ecran de simulation ne sert jamais de preuve de marquabilite, et
+  // la distinction se dit avant que le visiteur ait vu son logo sur un objet.
+  const mention = await onglet.evaluate(() => {
+    const m = document.querySelector('.mention-simulation');
+    const scene = document.querySelector('.simu-scene');
+    if (!m || !scene) return null;
+    return { texte: m.innerText, haut: m.getBoundingClientRect().top,
+             image: scene.getBoundingClientRect().top,
+             visible: m.offsetParent !== null };
+  });
+  controle('la distinction simulation contre validation est visible, et avant l\'image',
+           Boolean(mention) && mention.visible && mention.haut < mention.image
+             && /pas une validation/i.test(mention.texte),
+           mention ? `haut=${Math.round(mention.haut)} image=${Math.round(mention.image)}` : 'absente');
+
+  // UN SEUL BOUTON ORANGE PAR ECRAN, arbitrage de charte du 18/08. Les
+  // commandes du simulateur sont des reglages, pas des conversions.
+  const oranges = await onglet.evaluate(() => [...document.querySelectorAll('a, button')]
+    .filter((n) => {
+      const f = getComputedStyle(n).backgroundColor;
+      return f === 'rgb(255, 106, 0)';
+    }).map((n) => n.textContent.trim().slice(0, 30)));
+  controle('un seul bouton orange sur la page', oranges.length === 1, oranges.join(' | '));
+
+  // LA REGLETTE CHANGE LES MILLIMETRES. Une reglette qui bouge sans rien
+  // deplacer serait exactement l'illustration decorative qu'on refuse.
+  // ON DEPOSE UN LOGO. La page n'en affiche aucun par defaut, et c'est
+  // voulu : rien ne s'invente avant que le visiteur ait donne quelque chose,
+  // la meme regle que sur l'accueil. Un controle qui mesurerait sans deposer
+  // mesurerait donc le vide.
+  await onglet.setInputFiles('#fichier', {
+    name: 'temoin.png', mimeType: 'image/png',
+    buffer: Buffer.from(LOGO_TEMOIN, 'base64'),
+  });
+  await onglet.waitForTimeout(500);
+
+  const millimetres = async () => onglet.evaluate(() => {
+    const l = [...document.querySelectorAll('.simu-mesures li')]
+      .find((n) => /en vrai/.test(n.textContent));
+    return l ? l.querySelector('b').textContent : null;
+  });
+  const avant = await millimetres();
+  await onglet.evaluate(() => {
+    const r = document.querySelector('#simulateur input[type=range]');
+    r.value = '25';
+    r.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  await onglet.waitForTimeout(300);
+  const apres = await millimetres();
+  controle('la reglette deplace les millimetres, elle n\'illustre pas',
+           Boolean(avant) && Boolean(apres) && avant !== apres, `${avant} puis ${apres}`);
+
+  // LE TRAIT LE PLUS FIN EST CELUI QU'ON A DESSINE. Le logo temoin porte une
+  // barre de 8 pixels de haut sur 320 de large : elle n'est fine que dans un
+  // sens, et c'est exactement le cas qu'un balayage par lignes seules ratait.
+  const trait = await onglet.evaluate(() => {
+    const l = [...document.querySelectorAll('.simu-mesures li')]
+      .find((n) => /trait le plus fin/.test(n.textContent));
+    return l ? l.querySelector('b').textContent : null;
+  });
+  const largeur = await millimetres();
+  const attendu = largeur ? (8 / 400) * parseFloat(largeur) : null;
+  const lu = trait ? parseFloat(trait.replace(',', '.')) : null;
+  controle('le trait le plus fin est mesure dans les deux sens',
+           lu !== null && attendu !== null && Math.abs(lu - attendu) < 0.06,
+           `lu ${trait} pour ${largeur}, attendu ${attendu ? attendu.toFixed(2) : '?'} mm`);
+
+  // AUCUN POINT DECIMAL ANGLAIS dans ce qui s'affiche.
+  const anglais = await onglet.evaluate(() =>
+    [...document.querySelectorAll('.simu-mesures b')].map((n) => n.textContent)
+      .filter((t) => /\d\.\d/.test(t)));
+  controle('aucun point decimal anglais dans les mesures', anglais.length === 0,
+           anglais.join(', '));
+
+  await navigateur.close();
+  serveur.close();
+}
+
+await controlerLaPage();
+
+// ------------------------------------------------------------------------
 console.log('');
 console.log('  HARNAIS DU SIMULATEUR');
 console.log('  ' + '-'.repeat(66));

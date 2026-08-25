@@ -619,4 +619,95 @@ div.encadre.verdict-inconnu { background: #f4f6f9; }
 
 #verdict .resume { font-size: 15px; margin: 10px 0 0; }
 #verdict .note { font-size: 13px; color: #5b6470; margin-top: 14px; }
+
+/* ------------------------------------------------------------------ SIMULATION
+   La page /voir-mon-logo. Aucune couleur nouvelle, aucun rayon nouveau : tout
+   vient des variables posees en haut de cette feuille. Un ecran de plus ne
+   justifie pas une palette de plus.
+
+   PAS DE BOUTON ORANGE ICI. L'entete en porte deja un, celui qui ramene a
+   l'outil, et la charte n'en autorise qu'un par ecran. Les commandes du
+   simulateur sont des reglages, pas des conversions. */
+
+.mention-simulation {
+  border-left: 4px solid var(--orange);
+  background: #FDF0E6;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 14.5px;
+  line-height: 1.5;
+  margin: 14px 0 0;
+  max-width: 62ch;
+}
+.mention-simulation a { color: var(--encre); }
+
+.simu { display: grid; gap: 24px; align-items: start; margin: 8px 0 32px; }
+@media (min-width: 900px) {
+  .simu { grid-template-columns: minmax(0, 1fr) 340px; }
+  /* L'objet suit le regard. Le panneau de droite est plus haut que l'image,
+     et sans ca on fait defiler les mesures en perdant de vue ce qu'elles
+     mesurent. */
+  .simu-scene { position: sticky; top: 16px; }
+}
+.simu-attente { color: var(--gris); font-size: 14px; margin: 0; }
+
+.simu-scene {
+  border: 1px solid var(--trait);
+  border-radius: 10px;
+  background: var(--gris-clair);
+  padding: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 320px;
+}
+.simu-scene canvas { max-width: 100%; max-height: 520px; display: block; }
+
+.simu-panneau { display: flex; flex-direction: column; gap: 16px; }
+.simu-bloc { border: 1px solid var(--trait); border-radius: 10px; padding: 14px 16px; }
+.simu-bloc h2 {
+  font-size: 11.5px; text-transform: uppercase; letter-spacing: .03em;
+  color: var(--gris); margin: 0 0 10px; font-weight: 700; font-family: inherit;
+}
+
+.simu-puces { display: flex; flex-wrap: wrap; gap: 6px; }
+/* Un bouton a fond blanc DOIT poser sa couleur de texte : la regle globale
+   button du site met du blanc sur navy, et sans cette ligne la puce serait
+   blanche sur blanc. Ce defaut a deja ete paye une fois. */
+.simu-puce {
+  border: 1px solid var(--trait); border-radius: 999px; padding: 5px 11px;
+  font: inherit; font-size: 13px; background: var(--papier); color: var(--encre);
+  cursor: pointer;
+}
+.simu-puce:hover { border-color: var(--gris); }
+.simu-puce[aria-pressed="true"] {
+  background: var(--navy); border-color: var(--navy); color: var(--papier);
+}
+
+.simu-bloc select {
+  width: 100%; padding: 8px; border: 1px solid var(--trait); border-radius: 8px;
+  font: inherit; background: var(--papier); color: var(--encre);
+}
+.simu-bloc label { display: block; font-size: 13.5px; margin: 14px 0 6px; }
+.simu-bloc input[type="range"] { width: 100%; accent-color: var(--navy); }
+.simu-bornes { display: flex; justify-content: space-between; font-size: 12px; color: var(--gris); }
+
+.simu-mesures { list-style: none; padding: 0; margin: 0; font-size: 14px; }
+.simu-mesures li {
+  display: flex; justify-content: space-between; gap: 12px;
+  padding: 6px 0; border-bottom: 1px solid var(--trait);
+}
+.simu-mesures li:last-child { border-bottom: 0; }
+.simu-mesures b { font-variant-numeric: tabular-nums; }
+
+.simu-avert {
+  border-left: 4px solid var(--orange); background: #FDF0E6;
+  border-radius: 8px; padding: 10px 12px; font-size: 13.5px;
+  line-height: 1.5; margin-top: 12px;
+}
+.simu-note { color: var(--gris); font-size: 13px; line-height: 1.5; margin: 10px 0 0; }
+
+.simu-apres { max-width: 68ch; margin: 0 0 40px; }
+.simu-apres h2 { font-size: 21px; margin: 0 0 10px; }
+.simu-apres p { margin: 0 0 12px; }
 `;
