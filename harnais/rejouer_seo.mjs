@@ -89,9 +89,20 @@ for (const f of pages.sort()) {
     // renommage se rate toujours au meme endroit : une metadonnee que
     // personne ne relit, un JSON-LD, un attribut alt. Le visiteur ne le voit
     // pas, le moteur si, et le site s'annonce alors sous deux noms.
+    //
+    // ET LE MOTIF TRAVERSE LES BALISES, parce que la premiere version ne le
+    // faisait pas et a laisse passer exactement ce qu'elle devait attraper :
+    // le logotype s'ecrit « Vecto<br>Facile » sur deux lignes, et un \s+ ne
+    // franchit pas un <br>. Trois pages d'outil sont parties en production
+    // sous l'ancien nom, avec un controle au vert.
+    //
+    // ET LE SEPARATEUR EST OBLIGATOIRE, un + et non un * : avec un *, le
+    // motif attrapait « vectofacile » tout court, donc le domaine en
+    // service, donc les vingt-deux canoniques. Le temoin l'a vu.
+    //
     // `vectofacile.netlify.app` reste legitime tant que le site y repond :
     // c'est le NOM et l'ancien domaine en .fr qu'on traque.
-    ancienNom: [...h.matchAll(/Vecto\s+Facile|vectofacile\.fr/gi)].map((m) => m[0]),
+    ancienNom: [...h.matchAll(/Vecto(?:\s|&nbsp;|<[^>]{1,12}>)+Facile|vectofacile\.fr/gi)].map((m) => m[0]),
     renvoi: (corps.match(RENVOIS) || [])[0] || null,
   });
 }
@@ -178,12 +189,18 @@ console.log('  ' + '-'.repeat(74));
   // ce controle passe au vert sans rien regarder : il faut donc lui prouver
   // qu'il sait encore voir. On lui donne les deux formes qu'il traque, et une
   // troisieme qui doit le laisser indifferent.
-  const essai = 'Vecto Facile et contact@vectofacile.fr, mais vectofacile.netlify.app est legitime';
-  const vus = [...essai.matchAll(/Vecto\s+Facile|vectofacile\.fr/gi)].map((m) => m[0]);
-  if (vus.length !== 2) {
-    ajouter('(temoin)', `le detecteur d'ancien nom voit ${vus.length} formes au lieu de 2`);
+  const essai = 'Vecto Facile, Vecto<br>Facile et contact@vectofacile.fr, '
+    + 'mais vectofacile.netlify.app est legitime';
+  const vus = [...essai.matchAll(/Vecto(?:\s|&nbsp;|<[^>]{1,12}>)+Facile|vectofacile\.fr/gi)].map((m) => m[0]);
+  if (vus.length !== 3) {
+    ajouter('(temoin)', `le detecteur d'ancien nom voit ${vus.length} formes au lieu de 3`);
   }
-  if (/Vecto\s+Facile|vectofacile\.fr/i.test('https://vectofacile.netlify.app/')) {
+  // ET IL NE CONFOND PAS LE NOM AVEC LE VERBE : « vectoriser » commence
+  // pareil, et le site en est plein.
+  if (/Vecto(?:\s|&nbsp;|<[^>]{1,12}>)+Facile/i.test('Vectoriser un logo, vectoriel, vectorisation')) {
+    ajouter('(temoin)', 'le detecteur d\'ancien nom se declenche sur « vectoriser »');
+  }
+  if (/Vecto(?:\s|&nbsp;|<[^>]{1,12}>)+Facile|vectofacile\.fr/i.test('https://vectofacile.netlify.app/')) {
     ajouter('(temoin)', 'le detecteur d\'ancien nom se declenche sur le domaine en service');
   }
 }

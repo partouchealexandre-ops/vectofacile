@@ -15,6 +15,7 @@
  */
 import { produits, vuesDuProduit, restituer, plafondsDe } from './simulateur.js';
 import { dessiner, mesurerTraitPx, luminanceDeLEncre } from './rendu_simulation.js';
+import { auditerBlanc, retirerBlanc } from './detourage.js';
 
 /**
  * PART PAR DEFAUT, ARBITREE le 25/08/2026 faute de preference exprimee.
@@ -56,7 +57,8 @@ export function monterPanneau({ hote, lot, cheminImages = '/simulation/',
   if (!objets.length) throw new Error('lot de simulation vide');
 
   const etat = { produit: objets[0].id, vue: 0, part: PART_PAR_DEFAUT,
-                 logo: null, traitPx: null, photo: null };
+                 logo: null, logoOrigine: null, traitPx: null, photo: null,
+                 detourage: 'aucun', blanc: null };
 
   hote.innerHTML = '';
   const scene = el('div', 'simu-scene');
@@ -65,6 +67,20 @@ export function monterPanneau({ hote, lot, cheminImages = '/simulation/',
   scene.append(toile);
 
   const panneau = el('div', 'simu-panneau');
+
+  // LE BLOC DU FOND BLANC. Il n'existe a l'ecran QUE si le logo depose porte
+  // du blanc qui touche le bord : proposer de retirer un fond qui n'existe pas
+  // ferait douter le visiteur de ce qu'il voit.
+  const blocBlanc = el('div', 'simu-bloc');
+  blocBlanc.hidden = true;
+  blocBlanc.append(el('h2', null, 'Le fond blanc de votre logo'));
+  const choixBlanc = el('div', 'simu-puces');
+  blocBlanc.append(choixBlanc, el('p', 'simu-note',
+    'Sur un objet écru ou foncé, un fond blanc se voit. « Autour du dessin » '
+    + 'ne retire que le blanc qui touche le bord ; « partout » retire aussi '
+    + 'celui qui est enfermé dans le dessin, et troue les contre-formes. '
+    + 'Votre fichier n’est pas modifié : cela ne change que cet aperçu.'));
+
   const blocObjet = el('div', 'simu-bloc');
   blocObjet.append(el('h2', null, 'Objet'));
   const puces = el('div', 'simu-puces');
@@ -103,8 +119,56 @@ export function monterPanneau({ hote, lot, cheminImages = '/simulation/',
     + 'technique : le même mot peut plafonner à quatre couleurs ici et à une '
     + 'seule ailleurs sur le même objet.'));
 
-  panneau.append(blocObjet, blocZone, blocMesures, blocTechniques);
+  panneau.append(blocBlanc, blocObjet, blocZone, blocMesures, blocTechniques);
   hote.append(scene, panneau);
+
+  const MODES = [
+    ['aucun', 'Le garder'],
+    ['contour', 'Retirer autour du dessin'],
+    ['complet', 'Retirer partout'],
+  ];
+
+  function majBlanc() {
+    blocBlanc.hidden = !(etat.blanc && etat.blanc.toucheLeBord);
+    choixBlanc.innerHTML = '';
+    for (const [mode, libelle] of MODES) {
+      const b = el('button', 'simu-puce', libelle);
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String(mode === etat.detourage));
+      b.onclick = () => { etat.detourage = mode; appliquerDetourage(); };
+      choixBlanc.append(b);
+    }
+  }
+
+  /**
+   * REMESURER APRES DETOURAGE, et pas seulement redessiner.
+   *
+   * Retirer un fond blanc change le trait le plus fin : ce qui n'etait qu'une
+   * frontiere entre deux aplats devient un bord de dessin. Garder l'ancienne
+   * mesure afficherait un millimetre qui ne correspond plus a l'image posee.
+   */
+  function appliquerDetourage() {
+    if (!etat.logoOrigine) return;
+    etat.logo = etat.detourage === 'aucun'
+      ? etat.logoOrigine
+      : retirerBlanc(etat.logoOrigine, etat.detourage);
+    etat.traitPx = mesurerTrait(etat.logo);
+    majBlanc();
+    rendre();
+  }
+
+  /** Le trait le plus fin, mesure sur une reduction pour rester rapide. */
+  function mesurerTrait(source) {
+    const t = document.createElement('canvas');
+    t.width = Math.min(source.width, 400);
+    t.height = Math.max(1, Math.round(t.width * source.height / source.width));
+    const c = t.getContext('2d', { willReadFrequently: true });
+    c.drawImage(source, 0, 0, t.width, t.height);
+    try {
+      const brut = mesurerTraitPx(c.getImageData(0, 0, t.width, t.height));
+      return brut === null ? null : brut * (source.width / t.width);
+    } catch (e) { return null; }
+  }
 
   function vueCourante() {
     return vuesDuProduit(lot, etat.produit)[etat.vue] ?? null;
@@ -221,6 +285,7 @@ export function monterPanneau({ hote, lot, cheminImages = '/simulation/',
 
   majPuces();
   majZones();
+  majBlanc();
   chargerPhoto();
 
   return {
@@ -228,20 +293,25 @@ export function monterPanneau({ hote, lot, cheminImages = '/simulation/',
     poserLogo(source) {
       const i = new Image();
       i.onload = () => {
-        etat.logo = i;
+        etat.logoOrigine = i;
+        etat.detourage = 'aucun';
+        // On regarde le blanc sur une reduction : la reponse est la meme et
+        // elle arrive tout de suite, meme sur un logo de quatre mille pixels.
         const t = document.createElement('canvas');
         t.width = Math.min(i.width, 400);
         t.height = Math.max(1, Math.round(t.width * i.height / i.width));
         const c = t.getContext('2d', { willReadFrequently: true });
         c.drawImage(i, 0, 0, t.width, t.height);
-        try {
-          const brut = mesurerTraitPx(c.getImageData(0, 0, t.width, t.height));
-          etat.traitPx = brut === null ? null : brut * (i.width / t.width);
-        } catch (e) { etat.traitPx = null; }
-        rendre();
+        try { etat.blanc = auditerBlanc(c.getImageData(0, 0, t.width, t.height)); }
+        catch (e) { etat.blanc = null; }
+        appliquerDetourage();
       };
       i.src = source;
     },
+    /** Ce que le visiteur a choisi de faire du blanc. */
+    detourage: () => etat.detourage,
+    /** Le logo tel qu'il est pose, detourage compris. */
+    logoPose: () => etat.logo,
     /** La donnee de sortie a l'instant present. */
     etat: () => restituer({ vue: vueCourante(),
                             pose: dessiner({ toile, vue: vueCourante(), photo: etat.photo,

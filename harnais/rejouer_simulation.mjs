@@ -29,6 +29,7 @@ import { verifierLotDerive, produits, vuesDuProduit, echelleMmParPixel, poserLog
          plafondsDe, techniquesQuiAcceptent, restituer, luminanceRelative,
          rapportDeContraste } from '../src/simulation/simulateur.js';
 import { TECHNIQUES } from '../src/verdict/techniques.js';
+import { appliquer, auditerBlanc, BLANC_MINIMUM } from '../src/simulation/detourage.js';
 
 const ICI = path.dirname(fileURLToPath(import.meta.url));
 const LOT = JSON.parse(fs.readFileSync(
@@ -235,7 +236,105 @@ const vueOu = (predicat) => LOT.vues.find(predicat);
            absentes.slice(0, 4).join(', '));
 }
 
+// ----------------------------------------------------------------------- 17
+// LE FOND BLANC S'EN VA, ET LA CONTRE-FORME RESTE.
+//
+// C'est toute la difference entre les deux modes, et c'est le seul controle
+// qui la voit. Un logo synthetique : fond blanc, anneau fonce, blanc ENFERME
+// au centre. Le mode contour ne doit atteindre que le fond ; le mode complet
+// doit troue le centre aussi.
+function logoAvecContreForme(n = 41) {
+  const data = new Uint8ClampedArray(n * n * 4);
+  const poser = (x, y, c) => {
+    const i = (y * n + x) * 4;
+    data[i] = c[0]; data[i + 1] = c[1]; data[i + 2] = c[2]; data[i + 3] = 255;
+  };
+  for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) poser(x, y, [255, 255, 255]);
+  const c = (n - 1) / 2;
+  for (let y = 0; y < n; y++) {
+    for (let x = 0; x < n; x++) {
+      const d = Math.hypot(x - c, y - c);
+      if (d >= 8 && d <= 13) poser(x, y, [10, 45, 77]);
+    }
+  }
+  return { data, width: n, height: n, centre: c };
+}
+const opaqueEn = (im, x, y) => im.data[(y * im.width + x) * 4 + 3] > 16;
+const compterOpaques = (im) => {
+  let t = 0;
+  for (let i = 0; i < im.data.length; i += 4) if (im.data[i + 3] > 16) t++;
+  return t;
+};
+
+{
+  const im = logoAvecContreForme();
+  appliquer(im, 'contour');
+  controle('le mode contour retire le fond et GARDE la contre-forme',
+           !opaqueEn(im, 0, 0) && opaqueEn(im, im.centre, im.centre),
+           `coin ${opaqueEn(im, 0, 0)} centre ${opaqueEn(im, im.centre, im.centre)}`);
+}
+
+// ----------------------------------------------------------------------- 18
+{
+  const im = logoAvecContreForme();
+  appliquer(im, 'complet');
+  controle('le mode complet retire les deux, contre-forme comprise',
+           !opaqueEn(im, 0, 0) && !opaqueEn(im, im.centre, im.centre),
+           `coin ${opaqueEn(im, 0, 0)} centre ${opaqueEn(im, im.centre, im.centre)}`);
+}
+
+// ----------------------------------------------------------------------- 19
+// TEMOIN. Les deux controles precedents passeraient au vert sur un module qui
+// ne fait rien du tout, si le logo n'avait pas de blanc. On verifie donc que
+// le mode inconnu ne touche a rien, et que les deux modes retirent bien des
+// pixels, dans le bon ordre de grandeur.
+{
+  const avant = compterOpaques(logoAvecContreForme());
+  const rien = logoAvecContreForme(); appliquer(rien, 'zorglub');
+  const contour = logoAvecContreForme(); appliquer(contour, 'contour');
+  const complet = logoAvecContreForme(); appliquer(complet, 'complet');
+  controle('temoin : un mode inconnu ne touche a rien, et complet retire plus que contour',
+           compterOpaques(rien) === avant
+             && compterOpaques(contour) < avant
+             && compterOpaques(complet) < compterOpaques(contour),
+           `avant ${avant} inconnu ${compterOpaques(rien)} contour ${compterOpaques(contour)} complet ${compterOpaques(complet)}`);
+}
+
+// ----------------------------------------------------------------------- 20
+// ON NE PROPOSE LE DETOURAGE QUE S'IL Y A DU BLANC A RETIRER. Un bouton qui
+// ne fait rien est pire qu'un bouton absent.
+{
+  const avecBlanc = auditerBlanc(logoAvecContreForme());
+  const sansBlanc = logoAvecContreForme();
+  for (let i = 0; i < sansBlanc.data.length; i += 4) {
+    if (sansBlanc.data[i] >= BLANC_MINIMUM) sansBlanc.data[i + 3] = 0;
+  }
+  const audit = auditerBlanc(sansBlanc);
+  controle('le blanc au bord est detecte, et son absence aussi',
+           avecBlanc.toucheLeBord && avecBlanc.partBlanche > 0.5
+             && !audit.toucheLeBord && audit.blancs === 0,
+           `avec ${JSON.stringify(avecBlanc)} sans ${JSON.stringify(audit)}`);
+}
+
 // ------------------------------------------------------------------------
+const LOGO_FOND_BLANC = [
+  'iVBORw0KGgoAAAANSUhEUgAAAMgAAADICAIAAAAiOjnJAAADvUlEQVR42u3dTW7bQBBE4bjhne+So+SwOYrvkrW8yCaB',
+  'YQeRNcPpru/tBYg1j9WkfoZPt9vtG/BoSgQgFogFYgHEArFALIBYIBaIBRALxAKxAGKBWCAWQCwQC8QCiAVigVgAsUAs',
+  'EAsgFogFYgHEwlk8i+A9L99//O9Lfr3+lNufPNnG6A6NqEasrTKRLFSszT4lGxYh1uU+BRo2WawDfcoxbKZYLZSardc0',
+  'sdopNVWvOWK1VmqeXhPEGqPUJL2KVY5LY0UoNaO6ilWOVGNlKdW6uopVjj1drGSr2iXQYxRSqt1YLFaprkSxWNU0mZId',
+  't7LEYlXrlEpe3EoRi1UDEisZcWu+WKwak17JhVtZd4VoTTnVlNZYsVg1L8+SArdcY8E1lrrKLq1iFbeMQhiF6iq7tIpV',
+  '3DIKYRSqq+zS0lgYIZa6CiktjYX+YqmrnNLSWGgulrqKKi2NhSV4SNM/+GT7DR38CZt2m+m1Bnfs5TL+ADXWNYn/fqEO',
+  'I9aSk5heW0fh4UEvmguZR+2ucHm+4Q/CLFa1vkbOFevYibBn1Y91a/W6hDbWzvXO7K1iFbeI1XiN09xaK9ZpF1jXru5p',
+  'bi1dHV9Cg1j9CyNnIGosEGtEVYSUlsZCN7HOuSU8rSTOeT/r1khjgVggFojlftC7IhaIBWIBxAKxQCyAWCAWiDWTM/9/',
+  'Nv5v+BoLxAKxQKxVJPycrfv7WbdGGgvEGlESIduyaSwQq39V5OwiqbHQUKyobTDa1dXS1YlrrKtWN20r5cRRuH+NAzfo',
+  'Dr3G2rnSmdu+LxcrdnfXw62yz3vjVU9+REX6xw3r1j78wSee/vX40RB1sB/hIU1/2fDFxD2eiVgP1otS14zCvtHPe8Lq',
+  'nvt0jaWK3BWCWFc1MA5ZBY2F/mIprZC60liYIpbSSqgrjYVBYimthMw1FgaJpbTGp11RR8sqoxBGodJSV6c1FremZmsU',
+  'YqhYSmtkqiUFVk0ehdwalqRrLEwXS2lNyrDkwqqIUcitGbmVjFgVdPHOre5ZlbxYlSUWt1rnU7JjVaJY3Gqayb7dZr6O',
+  '/TkanWYlUwmkixXuVq9j7zQKY8dix9OpZO1INVZWdbU+eUr6jktjRVTXjFNljlgD9JrUvtPEaqrXvIE+U6xGek29Rpws',
+  '1smGjf+4JEKscwzL+fgtS6yrDAv8JipUrA2ShX9lTqzHqOaXF8TCDvzFHsQCsUAsgFggFogFEAvEArEAYoFYIBZALBAL',
+  'xAKIBWKBWACxQCwQCyAWiAViAcQCsUAs4H7eAJXGt70WMP/DAAAAAElFTkSuQmCC',
+].join('');
+
 // LE LOGO TEMOIN, 400 par 400, avec une barre de 8 pixels de haut : c'est
 // elle qui donne au trait le plus fin une valeur qu'on peut predire a la main.
 // Il est ecrit ici plutot que lu sur le disque pour que le harnais ne depende
@@ -400,6 +499,59 @@ async function controlerLaPage() {
   controle('le trait le plus fin est mesure dans les deux sens',
            lu !== null && attendu !== null && Math.abs(lu - attendu) < 0.06,
            `lu ${trait} pour ${largeur}, attendu ${attendu ? attendu.toFixed(2) : '?'} mm`);
+
+  // LA ZONE DE DEPOT MONTRE CE QU'ON LUI A DONNE. Sans ca elle reclame encore
+  // un fichier qu'on vient de lui remettre.
+  const depot = await onglet.evaluate(() => ({
+    vignette: Boolean(document.querySelector('#depot .vignette')),
+    nom: document.querySelector('#depot strong')?.textContent ?? '',
+    reclameEncore: /Déposez votre logo ici/.test(document.querySelector('#depot')?.textContent ?? ''),
+  }));
+  controle('la zone de depot montre le logo depose, et cesse d\'en reclamer un',
+           depot.vignette && depot.nom === 'temoin.png' && !depot.reclameEncore,
+           JSON.stringify(depot));
+
+  // LE BLOC DU FOND BLANC N'APPARAIT QUE S'IL Y A DU BLANC. Le logo temoin
+  // pose plus haut est sur fond transparent : le bloc doit rester cache.
+  const blancAvant = await onglet.evaluate(() =>
+    !document.querySelector('.simu-panneau > .simu-bloc').hidden);
+  controle('sans fond blanc, aucun bloc de detourage n\'est propose',
+           blancAvant === false, `bloc visible : ${blancAvant}`);
+
+  // ET IL APPARAIT SUR UN LOGO QUI EN A. Meme controle, temoin inverse : sans
+  // ce second depot, le precedent passerait au vert sur un bloc casse.
+  await onglet.setInputFiles('#fichier', {
+    name: 'fond_blanc.png', mimeType: 'image/png',
+    buffer: Buffer.from(LOGO_FOND_BLANC, 'base64'),
+  });
+  await onglet.waitForTimeout(500);
+  const avecBlanc = await onglet.evaluate(() => ({
+    bloc: !document.querySelector('.simu-panneau > .simu-bloc').hidden,
+    modes: [...document.querySelectorAll('.simu-panneau > .simu-bloc:first-child .simu-puce')].length,
+  }));
+  controle('avec un fond blanc, les trois choix sont proposes',
+           avecBlanc.bloc && avecBlanc.modes === 3, JSON.stringify(avecBlanc));
+
+  // LE TRAIT SE REMESURE APRES DETOURAGE. Un fond blanc opaque fait de tout le
+  // rectangle un seul « trait » : tant qu'il est la, la mesure decrit la
+  // vignette et pas le dessin. La garder apres detourage afficherait un
+  // millimetre qui ne correspond plus a ce qui est pose.
+  const traitAvec = await onglet.evaluate(() => {
+    const l = [...document.querySelectorAll('.simu-mesures li')]
+      .find((n) => /trait le plus fin/.test(n.textContent));
+    return l ? l.querySelector('b').textContent : null;
+  });
+  await onglet.evaluate(() => [...document.querySelectorAll('.simu-puce')]
+    .find((b) => /autour du dessin/i.test(b.textContent)).click());
+  await onglet.waitForTimeout(400);
+  const traitSans = await onglet.evaluate(() => {
+    const l = [...document.querySelectorAll('.simu-mesures li')]
+      .find((n) => /trait le plus fin/.test(n.textContent));
+    return l ? l.querySelector('b').textContent : null;
+  });
+  controle('le trait se remesure quand le fond blanc part',
+           Boolean(traitAvec) && Boolean(traitSans) && traitAvec !== traitSans,
+           `${traitAvec} puis ${traitSans}`);
 
   // LE TABLEAU DES OBJETS DIT LA MEME CHOSE QUE LE LOT.
   //

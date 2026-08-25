@@ -641,7 +641,22 @@ div.encadre.verdict-inconnu { background: #f4f6f9; }
 }
 .mention-simulation a { color: var(--encre); }
 
-.simu { display: grid; gap: 24px; align-items: start; margin: 8px 0 32px; }
+/* LE PRODUIT DOIT SE VOIR SANS FAIRE DEFILER, arbitrage Alex du 25/08.
+   Mesure sur un ecran de 860 px de haut : la scene commencait a 528 px, il
+   n'en restait qu'un tiers. Quatre gains cumules, aucun sur le fond :
+   le titre tient sur une ligne parce que sa colonne s'elargit, les deux
+   paragraphes gagnent la meme largeur donc une ligne chacun, et les marges
+   verticales du bandeau se resserrent. */
+body[data-mode="simulation"] .wrap { padding-top: 18px; }
+body[data-mode="simulation"] .bandeau { margin: 10px 0 16px; }
+@media (min-width: 1000px) {
+  body[data-mode="simulation"] .bandeau { grid-template-columns: 1.45fr 1fr; gap: 40px; }
+}
+body[data-mode="simulation"] .accroche,
+body[data-mode="simulation"] .mention-simulation { max-width: none; }
+body[data-mode="simulation"] #depot { padding: 40px 24px; }
+
+.simu { display: grid; gap: 24px; align-items: start; margin: 0 0 32px; }
 @media (min-width: 900px) {
   .simu { grid-template-columns: minmax(0, 1fr) 340px; }
   /* L'objet suit le regard. Le panneau de droite est plus haut que l'image,
@@ -655,11 +670,11 @@ div.encadre.verdict-inconnu { background: #f4f6f9; }
   border: 1px solid var(--trait);
   border-radius: 10px;
   background: var(--gris-clair);
-  padding: 18px;
+  padding: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 320px;
+  min-height: 260px;
 }
 .simu-scene canvas { max-width: 100%; max-height: 520px; display: block; }
 

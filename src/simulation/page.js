@@ -50,6 +50,29 @@ try {
   const champ = document.getElementById('fichier');
   const depot = document.getElementById('depot');
 
+  /**
+   * LA ZONE DE DEPOT MONTRE LE LOGO DEPOSE.
+   *
+   * Sans ca, elle continue de reclamer un fichier qu'on vient de lui donner :
+   * le logo apparait sur l'objet, mais rien ne dit que c'est bien LE fichier
+   * choisi qui est parti. Meme regle que sur l'accueil, ou la vignette
+   * remplace l'appel au depot une fois l'analyse faite.
+   */
+  const montrerLeLogo = (source, nom) => {
+    if (!depot) return;
+    depot.classList.add('depot-analyse');
+    depot.innerHTML = '';
+    const vignette = document.createElement('img');
+    vignette.className = 'vignette';
+    vignette.src = source;
+    vignette.alt = '';
+    const titre = document.createElement('strong');
+    titre.textContent = nom || 'Votre logo';
+    const aide = document.createElement('span');
+    aide.textContent = 'Cliquez pour en déposer un autre.';
+    depot.append(vignette, titre, aide);
+  };
+
   const poser = (fichier) => {
     if (!fichier) return;
     if (!/^image\//.test(fichier.type)) {
@@ -58,9 +81,14 @@ try {
     }
     if (zoneErreur) zoneErreur.hidden = true;
     const lecteur = new FileReader();
-    lecteur.onload = () => panneau.poserLogo(lecteur.result);
+    lecteur.onload = () => {
+      panneau.poserLogo(lecteur.result);
+      // LE NOM DU FICHIER RESTE DANS LA PAGE ET N'EN SORT PAS. Il sert au
+      // visiteur a reconnaitre ce qu'il a depose ; il n'est ni enregistre, ni
+      // transmis, comme le reste.
+      montrerLeLogo(lecteur.result, fichier.name);
+    };
     lecteur.readAsDataURL(fichier);
-    if (depot) depot.classList.add('depot-servi');
   };
 
   if (depot && champ) {
