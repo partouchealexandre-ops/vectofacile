@@ -29,9 +29,18 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+// LA SEULE CHOSE QU'ON IMPORTE DE LA SOURCE, et c'est volontaire : le harnais
+// lit le HTML servi, mais il lui faut une ATTENTE a quoi le comparer. Le
+// domaine attendu ne peut pas etre recopie ici, sinon il vit a deux endroits,
+// exactement le defaut que la constante existe pour empecher.
+import { DOMAINE } from '../outils/entetes.mjs';
 
 const ICI = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC = path.join(ICI, '..', 'public');
+const HOTE = new URL(DOMAINE).host;
+
+/** L'hote d'une adresse, ou null si elle est illisible. */
+const hoteDe = (adresse) => { try { return new URL(adresse).host; } catch { return null; } };
 
 const TITRE_MIN = 30, TITRE_MAX = 65;
 const DESCRIPTION_MIN = 110, DESCRIPTION_MAX = 165;
@@ -122,6 +131,14 @@ for (const l of lignes) {
   if (!l.canonique.endsWith(l.url) && !l.canonique.endsWith(l.url.replace(/\/$/, ''))) {
     ajouter(l.url, `adresse canonique incoherente : ${l.canonique || 'absente'}`);
   }
+  // ET SUR LE BON HOTE. Le controle ci-dessus ne regarde que la FIN de
+  // l'adresse : le 25/08, au moment de basculer le domaine, une canonique
+  // juste en chemin et fausse en domaine serait passee au vert sur les vingt
+  // deux pages. Une canonique qui designe un autre hote que le sitemap est la
+  // faute qui se corrige en une ligne et se paie en mois de reindexation.
+  if (l.canonique && hoteDe(l.canonique) !== HOTE) {
+    ajouter(l.url, `canonique sur ${hoteDe(l.canonique) || 'une adresse illisible'}, attendu ${HOTE}`);
+  }
   // METADONNEES DE PARTAGE, trouvaille de l'audit du 21/08 : aucune page n'en
   // portait. Un lien envoye sur LinkedIn ou dans une conversation sortait NU,
   // sans titre ni image. Pour un outil dont on attend qu'il circule entre
@@ -202,6 +219,18 @@ console.log('  ' + '-'.repeat(74));
   }
   if (/Vecto(?:\s|&nbsp;|<[^>]{1,12}>)+Facile|vectofacile\.fr/i.test('https://vectofacile.netlify.app/')) {
     ajouter('(temoin)', 'le detecteur d\'ancien nom se declenche sur le domaine en service');
+  }
+  // TEMOIN DU CONTROLE D'HOTE, dans les deux sens. Il doit REFUSER une adresse
+  // dont le chemin est juste et le domaine faux, et RECONNAITRE le sien : un
+  // controle qui ne fait que l'un des deux est soit aveugle, soit bavard.
+  if (hoteDe('https://vectofacile.netlify.app/vectoriser') === HOTE) {
+    ajouter('(temoin)', 'le controle d\'hote canonique ne distingue plus les domaines');
+  }
+  if (hoteDe(`${DOMAINE}/vectoriser`) !== HOTE) {
+    ajouter('(temoin)', 'le controle d\'hote canonique ne reconnait pas son propre domaine');
+  }
+  if (hoteDe('pas une adresse') !== null) {
+    ajouter('(temoin)', 'le lecteur d\'hote ne signale pas une adresse illisible');
   }
 }
 

@@ -95,7 +95,7 @@ interdit à cette page d'envoyer quoi que ce soit vers un autre serveur que celu
 servie. Si notre code essayait, votre navigateur refuserait la connexion.</p>
 <p><b>En une commande</b>, qui lit les entêtes que notre serveur envoie réellement, sans
 passer par nous.</p>
-<pre><code>curl -sSI https://vectofacile.netlify.app/ | grep -i content-security-policy</code></pre>
+<pre><code>curl -sSI https://bonamarquer.fr/ | grep -i content-security-policy</code></pre>
 <table>
 <thead><tr><th>Directive</th><th>Ce qu'elle interdit</th></tr></thead>
 <tbody>

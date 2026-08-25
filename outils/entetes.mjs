@@ -14,33 +14,38 @@
 /**
  * Le site est il ouvert aux moteurs de recherche ?
  *
- * A FAUX pour l'instant, et c'est une decision, pas un oubli. Le diagnostic
- * par technique n'existe pas encore, et aucune des pages de contenu prevues
- * n'est ecrite. Publier maintenant en indexable ferait crawler un site dont la
- * seule page dit "pas encore disponible" : on brulerait la premiere impression
- * du domaine pour rien, alors que tout le trafic du projet doit venir du
- * referencement.
+ * A VRAI depuis le 25/08/2026. La condition posee quand ce booleen a ete cree
+ * etait double : la couche verdict et les guides. Les deux existent, les trois
+ * outils repondent, et le domaine definitif est branche. La derniere raison
+ * d'attendre etait justement ce domaine : ouvrir plus tot aurait construit
+ * l'autorite sur l'adresse de deploiement, c'est-a-dire au mauvais endroit, et
+ * rien ne se transfere proprement apres coup.
  *
- * A passer a VRAI le jour ou la couche verdict et les six guides existent.
- * Ce seul booleen bascule les entetes ET le robots.txt.
+ * Ce seul booleen bascule les entetes ET le robots.txt. Le repasser a FAUX
+ * referme les deux d'un coup, ce qui est la seule facon sure de refermer.
  */
-export const INDEXABLE = false;
+export const INDEXABLE = true;
 
 /**
  * LE DOMAINE, EN UN SEUL ENDROIT.
  *
  * Trouvaille de l'audit du 21/08 : les canonicals, le sitemap et les URL du
- * JSON-LD pointent vers vectofacile.netlify.app. C'est normal aujourd'hui et
- * c'est un piege demain. Le jour du .fr, ces trois choses doivent basculer
- * ENSEMBLE ; si elles vivent a trois endroits, l'une des trois sera oubliee, et
- * une canonique qui pointe ailleurs que le sitemap est la faute qui coute le
- * plus longtemps.
+ * JSON-LD pointaient vers l'adresse de deploiement. C'etait normal alors et
+ * c'etait un piege pour le jour du .fr : ces trois choses devaient basculer
+ * ENSEMBLE, sans quoi l'une des trois serait oubliee, et une canonique qui
+ * pointe ailleurs que le sitemap est la faute qui coute le plus longtemps.
+ *
+ * Bascule faite le 25/08/2026. Et le piege s'etait deja reforme ailleurs : le
+ * robots.txt ouvert ecrivait son adresse de sitemap EN DUR, donc une deuxieme
+ * source pour la meme verite, dans le fichier meme qui interdit d'en avoir
+ * deux. Il lit desormais cette constante. Le harnais SEO, lui, verifie l'HOTE
+ * de chaque canonique servie, et plus seulement la fin de son chemin.
  *
  * Les gabarits d'outil, contenu/accueil.html et contenu/vectoriser.html,
  * portent le jeton {{DOMAINE}} et la construction le remplace. Personne ne
  * recopie une URL a la main nulle part.
  */
-export const DOMAINE = 'https://vectofacile.netlify.app';
+export const DOMAINE = 'https://bonamarquer.fr';
 
 /**
  * LES METADONNEES DE PARTAGE. Sans elles, un lien envoye sur LinkedIn ou dans
@@ -166,7 +171,7 @@ export function fichierRobots() {
     'User-agent: *',
     'Allow: /',
     '',
-    'Sitemap: https://bonamarquer.fr/sitemap.xml',
+    `Sitemap: ${DOMAINE}/sitemap.xml`,
     '',
   ].join('\n');
 }

@@ -1,5 +1,5 @@
 import fs from 'node:fs'; import { chromium } from 'playwright';
-const BASE = process.argv[2] || 'https://vectofacile.netlify.app';
+const BASE = process.argv[2] || 'https://bonamarquer.fr';
 let nav; try { nav = await chromium.launch(); } catch { nav = await chromium.launch({executablePath:'/opt/pw-browsers/chromium-1194/chrome-linux/chrome'}); }
 const page = await nav.newPage();
 const reseau = [];
