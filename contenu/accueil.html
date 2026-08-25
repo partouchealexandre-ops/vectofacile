@@ -92,10 +92,6 @@
 
   <div id="travail" hidden></div>
   <div id="erreur" hidden></div>
-  <!-- Les avertissements passent AVANT les mesures et le resultat. Un
-       avertissement qui arrive apres le bouton de telechargement n'est pas un
-       avertissement, c'est une note de bas de page. -->
-  <div id="avertissements" hidden></div>
 
   <!-- L'ORDRE DE LECTURE, structure C du brief du 21/08 « le site de
        reference ». Ce n'est pas une question de gout, c'est le test du
@@ -122,6 +118,19 @@
   </details>
 
   <section id="verdict" hidden></section>
+
+  <!-- L'AVERTISSEMENT DE VECTORISATION, DESCENDU LE 25/08/2026.
+       Il ouvrait la page, et il la contredisait : « votre image est trop
+       petite » juste au dessus de « bonne nouvelle, votre logo part tel quel
+       sur 2 des 7 techniques ». Les deux disaient vrai, et ils ne parlaient
+       pas de la meme chose. Le premier juge le TRACE que nous produirions ;
+       le second juge le FICHIER que le visiteur possede deja. Une image de
+       652 pixels s'imprime tres bien en numerique et se vectorise mal : ce
+       n'est pas une contradiction, c'est deux questions.
+       Il vit donc la ou il est vrai, contre le fichier vectoriel, et la
+       promesse d'origine tient toujours : personne ne telecharge un fichier
+       decevant sans avoir ete prevenu, puisqu'il est juste au dessus. -->
+  <div id="avertissements" hidden></div>
 
   <div id="telechargements" hidden>
     <button id="telecharger_eps">Télécharger le .eps</button>

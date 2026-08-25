@@ -211,6 +211,13 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
     border-left: 4px solid var(--gris); border-radius: 10px; background: #fff; }
   .eps-limite p { margin: 0 0 10px; font-size: 15px; line-height: 1.55; max-width: 68ch; }
   .eps-limite p:last-child { margin-bottom: 0; }
+  /* LES CONSEILS, DANS LA REPONSE depuis le 25/08. Trois au maximum, en
+     retrait sous le bloc d'etat : ils prolongent la reponse, ils ne la
+     concurrencent pas. */
+  .fait-conseils { margin: 0 0 18px; padding: 0 18px; }
+  .fait-conseils p { margin: 10px 0 0; font-size: 14.5px; line-height: 1.55;
+    max-width: 68ch; color: var(--gris); }
+  .fait-conseils b { color: var(--encre); }
   /* Le volet des couleurs est monte juste sous la reponse : il se pose comme
      une ligne discrete, pas comme un bloc de plus. */
   #volet_couleurs { margin: 0 0 18px; }

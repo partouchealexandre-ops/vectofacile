@@ -117,15 +117,20 @@ export function optionsDepuisMesures(mesures, reglages = {}) {
       : 'de petite taille';
     avertissements.push({
       gravite: traitBasse <= 1 ? 'grave' : 'notable',
+      // LE TITRE DIT DE QUOI ON PARLE, corrige le 25/08/2026. « Votre image
+      // est trop petite pour son propre dessin » etait juste et obscur : le
+      // visiteur ne savait pas si on parlait de son marquage ou de notre
+      // travail. On parle de NOTRE travail, et le titre le dit.
       titre: traitBasse <= 1
-        ? "Votre image est trop petite pour son propre dessin"
-        : "Votre image est juste a la limite",
-      texte: `Elle mesure ${dimensions}, et son trait le plus fin y fait `
+        ? "Le fichier vectoriel que nous produirons sera decevant"
+        : "Le fichier vectoriel sera juste a la limite",
+      texte: `Votre image mesure ${dimensions}, et son trait le plus fin y fait `
         + `${traitBasse} pixel${traitBasse > 1 ? 's' : ''}. A cette taille, le trace ne `
         + `peut pas restituer le detail : les petits textes se remplissent et les `
         + `courbes deviennent anguleuses. Nous vectorisons quand meme, en contours `
-        + `droits et sans lissage pour ne rien inventer, mais le resultat sera `
-        + `decevant.`,
+        + `droits et sans lissage pour ne rien inventer. Cela ne dit rien de votre `
+        + `logo lui meme, ni des techniques qui l'impriment directement : c'est le `
+        + `FICHIER VECTORIEL, et lui seul, qui sera decevant.`,
       remede: `Cherchez une version au moins ${facteur} fois plus large de votre logo : `
         + `le PDF d'une plaquette, l'export d'origine, ou le fichier de votre graphiste. `
         + `Aucun reglage ne remplace des pixels absents.`,

@@ -28,6 +28,17 @@ import { rendreFeux, rendreFaitPrincipal, pointsAttention, rendrePointsAttention
   from './rendu_feux.js';
 
 /**
+ * LES CONSEILS ONT REMONTE, arbitrage Alex du 25/08/2026. Ils vivent
+ * desormais dans le bloc de reponse, en tete de page, parce que celui qui lit
+ * « bonne nouvelle » s'arrete la et ne descend pas sous sept cartes.
+ *
+ * Ce qui reste ICI est le SURPLUS : les points au dela des trois premiers.
+ * Il n'y en a presque jamais, et quand il y en a, ils ne meritent pas le haut
+ * de page. La section garde donc son titre, et disparait quand elle est vide.
+ */
+const CONSEILS_EN_TETE = 3;
+
+/**
  * L'ORDRE DE LA PAGE, §6 du lot 1 du 21/08/2026.
  *
  *   1  le fait le plus actionnable, le nombre de couleurs reelles. C'est ce
@@ -46,7 +57,7 @@ import { rendreFeux, rendreFaitPrincipal, pointsAttention, rendrePointsAttention
  */
 export function rendreVerdict(mesures, feux = [], fichier = null) {
   if (!feux.length) return '';
-  const points = pointsAttention(mesures);
+  const points = pointsAttention(mesures, feux).slice(CONSEILS_EN_TETE);
   // Les cartes de feu orange portent deja le bouton de conversion depuis le
   // 24/08/2026. Le bandeau du bas ne le repete pas : voir rendreActionFichier.
   const ctaDejaPorte = feux.some((f) => f.feu === 'orange' && f.nuance === 'format');

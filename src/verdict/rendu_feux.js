@@ -330,8 +330,24 @@ export function rendreFaitPrincipal(nCouleurs, feux = [], mesures = null) {
       blanc ? ', et elle est blanche : il ne se marque que sur un support foncé'
             : ''}.</p>`
     : '';
+
+  // LES CONSEILS REMONTENT DANS LA REPONSE, arbitrage Alex du 25/08/2026.
+  //
+  // Ils vivaient sous la grille, dans « À savoir avant de commander ». Celui
+  // qui lit « bonne nouvelle, votre logo part tel quel » s'arrete la : il ne
+  // descendra pas sous sept cartes pour apprendre que sa couleur unique
+  // meriterait un ton direct, ou que son logo blanc ne se marque que sur du
+  // fonce. Un conseil qu'on ne lit pas n'est pas un conseil.
+  //
+  // TROIS AU MAXIMUM. Au dela, le bloc cesse d'etre une reponse et redevient
+  // une page. Les points sont deja produits par ordre d'importance.
+  const conseils = pointsAttention(mesures, feux).slice(0, 3);
+  const suite = conseils.length
+    ? `<div class="fait-conseils">${conseils.map((c) =>
+      `<p><b>${echapper(c.titre)}.</b> ${echapper(c.texte)}</p>`).join('')}</div>`
+    : '';
   return `<div class="verdict-tete ${classe}"><p class="fait-reponse">${titre}</p>
-  ${couleurs}</div>`;
+  ${couleurs}</div>${suite}`;
 }
 
 export function rendreFeux(feux) {
@@ -390,7 +406,7 @@ export function logoClair(mesures) {
   return ratio >= PART_CLAIRE ? { part: ratio, couleurs: palette.length } : null;
 }
 
-export function pointsAttention(mesures) {
+export function pointsAttention(mesures, feux = []) {
   const points = [];
   const palette = mesures?.m2Couleurs?.palette ?? [];
   const n = mesures?.m2Couleurs?.couleursReelles ?? 0;
@@ -438,7 +454,44 @@ export function pointsAttention(mesures) {
     });
   }
 
-  // 3. LA PROPORTION, qui exclut des familles entieres. Un logo deux fois plus
+  // 3. LE TON DIRECT, releve par Alex le 25/08/2026 sur un cas reel.
+  //
+  // CE QUI CLOCHAIT. Un logo d'une seule couleur recevait « bonne nouvelle,
+  // votre logo part tel quel sur 2 des 7 techniques », et ces deux techniques
+  // etaient l'impression numerique et le transfert. C'est vrai, et c'est le
+  // plus mauvais conseil qu'on puisse lui donner : ce sont les deux SEULES qui
+  // n'exigent pas de fichier vectoriel, donc elles sortent gagnantes par
+  // defaut, pas par merite.
+  //
+  // Un logo a une ou deux couleurs est le cas ideal de la serigraphie et de la
+  // tampographie, qui posent la couleur en TON DIRECT : l'encre est melangee a
+  // la teinte voulue avant impression. Le numerique, lui, la reconstitue par
+  // superposition, et une teinte de marque y derive toujours un peu.
+  //
+  // LE SITE DIT CE QUI PASSE. Il doit aussi dire ce qui est BON, sinon il
+  // laisse partir quelqu'un sur la technique la moins adaptee a son logo en
+  // croyant l'avoir bien conseille.
+  const TON_DIRECT = ['serigraphie', 'tampographie'];
+  const tonDirect = feux.filter((f) => TON_DIRECT.includes(f.cle));
+  if (n >= 1 && n <= 2 && tonDirect.length) {
+    const ouvertes = tonDirect.filter((f) => f.feu === 'vert');
+    const aFabriquer = tonDirect.filter((f) => f.feu === 'orange' && f.nuance === 'format');
+    if (ouvertes.length || aFabriquer.length) {
+      points.push({
+        cle: 'ton_direct',
+        titre: n === 1 ? 'Une seule couleur : pensez au ton direct'
+                       : 'Deux couleurs : le ton direct vous va bien',
+        texte: 'La sérigraphie et la tampographie posent une encre mélangée à votre '
+          + 'teinte : la couleur sera exactement la vôtre, et sur une série c\'est aussi '
+          + 'le moins cher. Le numérique la reconstitue par superposition, et une couleur '
+          + 'de marque y dérive toujours un peu.'
+          + (aFabriquer.length && !ouvertes.length
+            ? ' Le fichier vectoriel vous les ouvre.' : ''),
+      });
+    }
+  }
+
+  // 4. LA PROPORTION, qui exclut des familles entieres. Un logo deux fois plus
   // large que haut est inexploitable sur un stylo, dont les zones font sept
   // millimetres de haut : ce n'est pas un defaut du logo, c'est un fait de
   // geometrie, et il vaut mieux le savoir avant de commander mille stylos.

@@ -336,18 +336,34 @@ console.log('');
     // n'est plus le bouton, c'est l'APPEL qui y mene. On verifie les deux, dans
     // l'ordre reel du parcours : l'alerte au dessus de l'appel, puis, une fois
     // l'appel clique, l'alerte toujours au dessus des boutons.
+    // L'AVERTISSEMENT A CHANGE DE PLACE LE 25/08/2026, et ce controle avec
+    // lui. Il ouvrait la page et la contredisait : « votre image est trop
+    // petite » au dessus de « bonne nouvelle, votre logo part tel quel ». Les
+    // deux disaient vrai sur DEUX QUESTIONS differentes, le trace que nous
+    // produirions et le fichier que le visiteur possede.
+    //
+    // Ce que le controle protegeait reste protege, et c'est le seul point qui
+    // comptait : personne ne telecharge un fichier decevant sans avoir ete
+    // prevenu. L'avertissement est desormais colle AUX BOUTONS, ce qui est
+    // meme plus sur qu'en tete de page, ou il pouvait etre lu vingt secondes
+    // avant le clic et deja oublie.
     const appel = document.querySelector('a[href="#telechargements"]');
-    const avantL_appel = Boolean(alerte && appel
-      && alerte.getBoundingClientRect().top < appel.getBoundingClientRect().top);
     appel?.click();
     const bouton = document.getElementById('telecharger_eps');
     return {
       alerte: Boolean(alerte && alerte.offsetParent !== null),
       remede: Boolean(document.querySelector('.alerte-remede')),
       appelPresent: Boolean(appel),
-      avantL_appel,
       avantLeBouton: Boolean(alerte && bouton && bouton.offsetParent !== null
         && alerte.getBoundingClientRect().top < bouton.getBoundingClientRect().top),
+      // LA REPONSE PASSE LA PREMIERE. C'est ce qui manquait : un visiteur qui
+      // lit d'abord un probleme sur son fichier, puis « bonne nouvelle », a
+      // recu deux messages contraires et n'en garde aucun.
+      reponseAvantAlerte: (() => {
+        const tete = document.querySelector('#fait_principal .verdict-tete');
+        return Boolean(tete && alerte
+          && tete.getBoundingClientRect().top < alerte.getBoundingClientRect().top);
+      })(),
     };
   }, petit.toString('base64'));
   await page.close();
@@ -360,8 +376,8 @@ console.log('');
     ['il dit quoi faire, pas seulement ce qui ne va pas', constat.remede],
     ['un appel au fichier existe bien : le controle a quelque chose a mesurer',
       constat.appelPresent],
-    ['l\'avertissement apparait AVANT l\'appel au fichier', constat.avantL_appel],
-    ['et toujours avant les boutons, une fois l\'appel clique', constat.avantLeBouton],
+    ['il est colle aux boutons, et au dessus d\'eux', constat.avantLeBouton],
+    ['il ne contredit plus la reponse en tete de page', constat.reponseAvantAlerte],
   ]) {
     console.log(`  ${ok ? 'ok   ' : 'ECHEC'} ${libelle}`);
     if (!ok) echecs++;
@@ -675,6 +691,9 @@ console.log('');
       tete: document.getElementById('fait_principal')?.innerText ?? '',
       teteClasse: document.querySelector('#fait_principal .verdict-tete')?.className ?? '',
       points: bloc.querySelectorAll('.points-attention li').length,
+      // LES CONSEILS ONT REMONTE DANS LA REPONSE le 25/08 : celui qui lit
+      // « bonne nouvelle » s'arrete la, il ne descend pas sous sept cartes.
+      conseilsEnTete: document.querySelectorAll('#fait_principal .fait-conseils p').length,
       // Ce qui ne doit PLUS exister sur cet ecran.
       cartesProduits: bloc.querySelectorAll('.produit').length,
       ordre: [...document.querySelectorAll(
@@ -717,8 +736,12 @@ console.log('');
     ['« bonne nouvelle » ne s\'ecrit pas quand aucune technique ne passe',
       constat.feux.includes('vert') || !/bonne nouvelle/i.test(constat.tete)],
     ['le compte de couleurs reste, en second', /couleurs? réelles?/.test(constat.tete)],
-    ['les points d\'attention suivent la grille, et restent courts',
-      constat.points >= 1 && constat.points <= 5, `${constat.points} points`],
+    ['les conseils sont DANS la reponse, pas sous la grille',
+      constat.conseilsEnTete >= 1, `${constat.conseilsEnTete} conseil(s) en tete`],
+    ['et ils ne depassent jamais trois, sinon la reponse redevient une page',
+      constat.conseilsEnTete <= 3, `${constat.conseilsEnTete}`],
+    ['le surplus, s\'il existe, reste sous la grille et ne remonte pas',
+      constat.points <= 2, `${constat.points} point(s) en surplus`],
     ['la grille de produits a quitte l\'ecran principal', constat.cartesProduits === 0],
     ['la reponse ouvre la page, les codes couleur suivent, puis la grille',
       constat.ordre.join(' ') === 'fait_principal volet_couleurs verdict volet_mesures',
