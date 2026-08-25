@@ -20,14 +20,14 @@
  * recopier celui de l'autre site aurait ete une faute autant qu'une fuite.
  */
 
-const CONTACT = 'contact@vectofacile.fr';
+const CONTACT = 'contact@bonamarquer.fr';
 
 export const QUI_SOMMES_NOUS = {
   url: '/qui-sommes-nous',
-  titre: 'Qui est derrière Vecto Facile',
-  meta: "Vecto Facile est un outil gratuit édité par Bytouch, société parisienne. "
+  titre: 'Qui est derrière Bon à Marquer',
+  meta: "Bon à Marquer est un outil gratuit édité par Bytouch, société parisienne. "
     + "Voici pourquoi il existe, comment il se finance, et ce qu'il ne fait pas.",
-  h1: 'Qui est derrière Vecto Facile',
+  h1: 'Qui est derrière Bon à Marquer',
   chapo: "Un outil gratuit édité par Bytouch. Cette page dit d'où il vient, ce qu'il "
     + "sait faire aujourd'hui, et ce qu'il ne prétend pas faire.",
   sections: [
@@ -44,7 +44,7 @@ plus fin, la présence d'un dégradé, la taille utile du fichier : tout cela se
 depuis l'image, en quelques dizaines de millisecondes. C'est ce que fait cet outil.</p>`,
     },
     {
-      h2: 'Ce que Vecto Facile fait, et ce qu\'il ne fait pas',
+      h2: 'Ce que Bon à Marquer fait, et ce qu\'il ne fait pas',
       html: `
 <table>
 <thead><tr><th>Il fait</th><th>Il ne fait pas</th></tr></thead>
@@ -94,13 +94,13 @@ passer les cas que nous n'avons pas prévus.</p>`,
   ],
   faq: [
     {
-      q: 'Vecto Facile est-il vraiment gratuit ?',
+      q: 'Bon à Marquer est-il vraiment gratuit ?',
       r: "Oui, sans compte, sans adresse e-mail et sans limite de nombre de fichiers. Le "
         + "calcul se fait sur votre machine, ce qui ne nous coûte pratiquement rien à faire "
         + "tourner : il n'y a donc rien à faire payer.",
     },
     {
-      q: 'Qui édite Vecto Facile ?',
+      q: 'Qui édite Bon à Marquer ?',
       r: "Bytouch SARL, société à responsabilité limitée au capital de 5 000 €, immatriculée "
         + "au RCS de Paris sous le numéro 794 283 804, siège social 4 rue Lemercier, 75017 "
         + "Paris. Contact : " + CONTACT + ".",
@@ -117,7 +117,7 @@ passer les cas que nous n'avons pas prévus.</p>`,
 export const MENTIONS = {
   url: '/mentions-legales',
   titre: 'Mentions légales',
-  meta: "Mentions légales de Vecto Facile : éditeur Bytouch SARL, hébergeur, "
+  meta: "Mentions légales de Bon à Marquer : éditeur Bytouch SARL, hébergeur, "
     + "responsabilité, propriété intellectuelle et droit applicable.",
   h1: 'Mentions légales',
   chapo: "Éditeur, hébergeur et responsabilité.",
@@ -174,7 +174,7 @@ garantir qu'elles le soient en toutes circonstances.</p>`,
 <p>Les marques et logos déposés par les visiteurs dans l'outil restent leur propriété
 pleine et entière. Le traitement étant local, l'éditeur n'en reçoit ni n'en conserve
 aucune copie.</p>
-<p>Le nom Vecto Facile, son logotype et le contenu rédactionnel de ce site sont la propriété
+<p>Le nom Bon à Marquer, son logotype et le contenu rédactionnel de ce site sont la propriété
 de Bytouch SARL.</p>`,
     },
     {

@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Vecto Facile : diagnostic de marquabilite d'un logo, tout en navigateur.",
+  "description": "Bon a Marquer : diagnostic de marquabilite d'un logo, tout en navigateur.",
   "scripts": {
     "corpus:generer": "python3 harnais/corpus_synthetique/generer.py",
     "vtracer:web": "node outils/construire_vtracer_web.mjs",

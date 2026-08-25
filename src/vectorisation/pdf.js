@@ -56,7 +56,7 @@ export function versPdf(programme, options = {}) {
     `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${nb(cadre.largeurPt)} ${nb(cadre.hauteurPt)}] `
       + '/Contents 4 0 R /Resources << /ProcSet [/PDF] >> >>',
     `<< /Length ${octets(flux)} >>\nstream\n${flux}endstream`,
-    `<< /Producer (Vecto Facile) /Title (${titre}) /CreationDate (${date}) >>`,
+    `<< /Producer (Bon a Marquer) /Title (${titre}) /CreationDate (${date}) >>`,
   ];
 
   let sortie = '%PDF-1.4\n%âãÏÓ\n';

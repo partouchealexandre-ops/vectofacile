@@ -1176,7 +1176,7 @@ function corpsDeLaDemande(email, objet) {
   const lignes = ['Bonjour,', ''];
   lignes.push(objet ? `Je voudrais un prix pour : ${objet}.` : 'Je voudrais un prix pour un marquage.');
   lignes.push('');
-  lignes.push('Voici le diagnostic de mon logo, fait sur vectofacile.fr :');
+  lignes.push('Voici le diagnostic de mon logo, fait sur bonamarquer.fr :');
   if (m?.m2Couleurs) lignes.push(`- ${m.m2Couleurs.couleursReelles} couleur(s) réelle(s)`);
   if (etat.fichierEtat) {
     lignes.push(etat.fichierEtat.origine === 'vectoriel'

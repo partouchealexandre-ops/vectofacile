@@ -16,7 +16,7 @@ const [entree, base, mmStr] = process.argv.slice(2);
 const svg = fs.readFileSync(entree, 'utf-8');
 const programme = construireProgramme(svg);
 const mm = Number(mmStr) || null;
-const options = { titre: 'Vecto Facile symbole', date: '2026-08-18T00:00:00Z', largeurMm: mm };
+const options = { titre: 'Bon a Marquer symbole', date: '2026-08-18T00:00:00Z', largeurMm: mm };
 fs.writeFileSync(base + '.eps', versEps(programme, options));
 fs.writeFileSync(base + '.pdf', versPdf(programme, options));
 console.log(JSON.stringify(inventaire(programme)), mm ? `livre a ${mm} mm de large` : '');

@@ -51,7 +51,7 @@ export const DOMAINE = 'https://vectofacile.netlify.app';
 export function partage({ titre, description, url }) {
   return [
     `<meta property="og:type" content="website">`,
-    `<meta property="og:site_name" content="Vecto Facile">`,
+    `<meta property="og:site_name" content="Bon à Marquer">`,
     `<meta property="og:locale" content="fr_FR">`,
     `<meta property="og:title" content="${titre}">`,
     `<meta property="og:description" content="${description}">`,
@@ -166,7 +166,7 @@ export function fichierRobots() {
     'User-agent: *',
     'Allow: /',
     '',
-    'Sitemap: https://www.vectofacile.fr/sitemap.xml',
+    'Sitemap: https://bonamarquer.fr/sitemap.xml',
     '',
   ].join('\n');
 }

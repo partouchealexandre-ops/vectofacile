@@ -101,7 +101,7 @@ son trait le plus fin se situe dans ces valeurs.</p>
 ${lignes}
 </tbody>
 </table>
-<p class="note">Relevé du référentiel Vecto Facile. Une valeur dont la source ne nomme
+<p class="note">Relevé du référentiel Bon à Marquer. Une valeur dont la source ne nomme
 aucun support n'entre pas dans ce tableau, quelle que soit sa notoriété : une règle de
 préparation de fichier d'imprimerie n'est pas une contrainte de marquage d'objet.</p>`,
   };
@@ -115,7 +115,7 @@ const PUBLIC = path.join(RACINE, 'public');
 const symbole = fs.readFileSync(path.join(RACINE, 'identite', 'symbole.svg'), 'utf-8')
   .replace(/<\?xml[^>]*\?>\s*/, '')
   .replace(/\s(width|height)="[\d.]+"/g, '')
-  .replace(/<title>[^<]*<\/title>/, '<title>Vecto Facile</title>')
+  .replace(/<title>[^<]*<\/title>/, '<title>Bon à Marquer</title>')
   .replace(/\n/g, '');
 
 const echapper = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -128,7 +128,7 @@ function entete(urlCourante, publiees) {
   // sont deux promesses differentes. Chaque bouton mene en HAUT de sa page,
   // jamais vers une ancre qui ferait atterrir au milieu.
   return `<header class="entete">
-  <a class="lockup" href="/">${symbole}<span class="mot">Vecto<br>Facile</span></a>
+  <a class="lockup" href="/">${symbole}<span class="mot">Bon à<br>Marquer</span></a>
   <nav class="nav-site">${liens}</nav>
   <div class="droite"><a class="cta-secondaire" href="/">Évaluer votre logo</a><a class="cta-entete" href="/vectoriser">Vectoriser mon logo</a></div>
 </header>`;
@@ -177,7 +177,7 @@ function pied(publiees, pagesPubliees = []) {
   }).join('');
   return `<footer class="pied-site">
   <div class="colonnes">${colonnes}</div>
-  <p class="mention">Vecto Facile est une initiative Bytouch. Votre logo n'est jamais
+  <p class="mention">Bon à Marquer est une initiative Bytouch. Votre logo n'est jamais
   envoyé : l'analyse se fait dans votre navigateur.</p>
 </footer>`;
 }
@@ -194,7 +194,7 @@ function pied(publiees, pagesPubliees = []) {
  */
 function balises(page) {
   const morceaux = [page.url.replace(/^\/|\/$/g, '')].filter(Boolean);
-  const fil = [{ '@type': 'ListItem', position: 1, name: 'Vecto Facile', item: `${DOMAINE}/` }];
+  const fil = [{ '@type': 'ListItem', position: 1, name: 'Bon à Marquer', item: `${DOMAINE}/` }];
   if (morceaux.length > 0) {
     const parts = morceaux[0].split('/');
     let chemin = '';
@@ -234,7 +234,7 @@ function faqVisible(page) {
 }
 
 function filVisible(page, publiees) {
-  const morceaux = ['<a href="/">Vecto Facile</a>'];
+  const morceaux = ['<a href="/">Bon à Marquer</a>'];
   const parent = page.url.replace(/[^/]+$/, '');
   if (parent !== '/' && publiees.has(parent) && parent !== page.url) {
     const nomRubrique = parent === '/guide/' ? 'Techniques de marquage'
@@ -267,7 +267,7 @@ function rendre(page, publiees, questions = [], toutesPages = []) {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${echapper(page.titre)} | Vecto Facile</title>
+<title>${echapper(page.titre)} | Bon à Marquer</title>
 <meta name="description" content="${echapper(page.meta)}">
 <link rel="canonical" href="${DOMAINE}${page.url}">
 ${partage({ titre: echapper(page.titre), description: echapper(page.meta), url: page.url })}

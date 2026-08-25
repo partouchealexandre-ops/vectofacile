@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Dessin VECTORIEL du symbole Vecto Facile, en courbes exactes.
+Dessin VECTORIEL du symbole Bon a Marquer, en courbes exactes.
 
 Pourquoi ce fichier existe. L'analyse de la charte v2 pose le point bloquant :
 il n'existe aucun vectoriel du logo. Tous les fichiers livres sont des PNG
@@ -292,9 +292,9 @@ def svg(couleur_anneau, couleur_coche, titre):
 
 
 for nom, contenu in {
-    "symbole.svg": svg(NAVY, ORANGE, "Vecto Facile, symbole"),
-    "symbole_monochrome.svg": svg("#000000", "#000000", "Vecto Facile, symbole monochrome"),
-    "symbole_negatif.svg": svg("#FFFFFF", "#FFFFFF", "Vecto Facile, symbole en negatif"),
+    "symbole.svg": svg(NAVY, ORANGE, "Bon a Marquer, symbole"),
+    "symbole_monochrome.svg": svg("#000000", "#000000", "Bon a Marquer, symbole monochrome"),
+    "symbole_negatif.svg": svg("#FFFFFF", "#FFFFFF", "Bon a Marquer, symbole en negatif"),
 }.items():
     with open(os.path.join(ICI, nom), "w", encoding="utf-8") as f:
         f.write(contenu)

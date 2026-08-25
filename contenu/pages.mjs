@@ -94,7 +94,7 @@ export const PIED = [
     ],
   },
   {
-    titre: 'Vecto Facile',
+    titre: 'Bon à Marquer',
     liens: [
       { titre: 'Une initiative Bytouch', url: '/qui-sommes-nous' },
       { titre: 'Mentions légales', url: '/mentions-legales' },

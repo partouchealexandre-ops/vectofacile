@@ -438,13 +438,15 @@ export function rendreActionFichier(fichier, ctaDejaPorte = false) {
  * qu'elles ne divergent pas : deux adresses de contact sur un site, c'est une
  * de trop et c'est toujours la mauvaise qui reste.
  */
-export const CONTACT = 'contact@vectofacile.fr';
+export const CONTACT = 'contact@bonamarquer.fr';
 
 /**
  * ET L'ADRESSE NE RECOIT RIEN AUJOURD'HUI.
  *
- * Tour de site du 21/08 : le domaine vectofacile.fr n'est pas achete, donc
- * contact@vectofacile.fr ne peut pas recevoir de courrier. L'adresse est deja
+ * Le domaine bonamarquer.fr est achete depuis le 25/08/2026, mais la boite
+ * n'existe pas encore, donc contact@bonamarquer.fr ne peut pas recevoir de
+ * courrier. Ce n'est plus le domaine qui bloque, c'est la boite : la raison a
+ * change, le blocage tient toujours. L'adresse est deja
  * publiee dans les mentions legales, ce qui est un probleme en soi, mais ce
  * n'est pas une raison pour en fabriquer un second : un formulaire qui ecrit
  * dans le vide est PIRE que pas de formulaire. Le visiteur croit avoir demande

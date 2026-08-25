@@ -166,7 +166,7 @@ survivent mal aux conversions et se rendent différemment d'une machine à l'aut
 </ul>`,
       },
       {
-        h2: 'Ce que produit Vecto Facile, et pourquoi',
+        h2: 'Ce que produit Bon à Marquer, et pourquoi',
         html: `
 <p>L'outil vous rend un <b>.eps</b> et un <b>.pdf</b>, générés depuis le même tracé, à partir
 de votre image. L'EPS pour votre marqueur, le PDF pour que vous puissiez regarder avant

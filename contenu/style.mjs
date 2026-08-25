@@ -3,7 +3,7 @@
  *
  * Elle sert l'outil ET les pages de contenu. Le site en aura cinquante a
  * quatre vingts : une palette dupliquee est une palette qui derive, et
- * l'identite Vecto Facile a deja paye ce defaut sur ses PNG, avec trois navys
+ * l'identite du site a deja paye ce defaut sur ses PNG, avec trois navys
  * differents dans une meme livraison.
  *
  * La construction l'ecrit dans public/vecto.css, et l'outil comme les pages la

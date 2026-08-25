@@ -113,7 +113,7 @@ votre identité visuelle.</li>
       },
       {
         q: 'Comment compter les couleurs de mon logo gratuitement ?',
-        r: "Déposez-le sur Vecto Facile : la mesure se fait dans votre navigateur, sans compte "
+        r: "Déposez-le sur Bon à Marquer : la mesure se fait dans votre navigateur, sans compte "
           + "et sans envoi. Vous obtenez les teintes brutes présentes dans le fichier et la "
           + "palette réelle du dessin, c'est-à-dire les couleurs qu'il faudra séparer au marquage.",
       },

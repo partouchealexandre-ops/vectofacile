@@ -85,6 +85,13 @@ for (const f of pages.sort()) {
     tableaux: (h.match(/<table/g) || []).length,
     listes: (h.match(/<[ou]l/g) || []).length,
     chapo: /class="chapo"/.test(h) || /class="accroche"/.test(h),
+    // L'ANCIEN NOM, dans le HTML SERVI et pas dans le code source. Un
+    // renommage se rate toujours au meme endroit : une metadonnee que
+    // personne ne relit, un JSON-LD, un attribut alt. Le visiteur ne le voit
+    // pas, le moteur si, et le site s'annonce alors sous deux noms.
+    // `vectofacile.netlify.app` reste legitime tant que le site y repond :
+    // c'est le NOM et l'ancien domaine en .fr qu'on traque.
+    ancienNom: [...h.matchAll(/Vecto\s+Facile|vectofacile\.fr/gi)].map((m) => m[0]),
     renvoi: (corps.match(RENVOIS) || [])[0] || null,
   });
 }
@@ -131,6 +138,9 @@ for (const l of lignes) {
   if (!l.chapo) ajouter(l.url, 'pas de chapeau : la reponse n\'arrive pas des les premieres lignes');
   // GEO : une phrase citee hors contexte doit rester vraie.
   if (l.renvoi) ajouter(l.url, `renvoi interne « ${l.renvoi} » : illisible une fois cite seul`);
+  if (l.ancienNom.length > 0) {
+    ajouter(l.url, `ancien nom servi : ${[...new Set(l.ancienNom)].join(', ')}`);
+  }
 }
 
 const grouper = (cle) => {
@@ -163,6 +173,18 @@ console.log('  ' + '-'.repeat(74));
   const pleine = '<meta property="og:title" content="x">';
   if ([...pleine.matchAll(/<meta (?:property|name)="((?:og|twitter):[^"]+)"/g)].length !== 1) {
     ajouter('(temoin)', 'le detecteur de metadonnees de partage ne trouve pas');
+  }
+  // TEMOIN DU DETECTEUR D'ANCIEN NOM. Le jour ou plus aucune page ne le porte,
+  // ce controle passe au vert sans rien regarder : il faut donc lui prouver
+  // qu'il sait encore voir. On lui donne les deux formes qu'il traque, et une
+  // troisieme qui doit le laisser indifferent.
+  const essai = 'Vecto Facile et contact@vectofacile.fr, mais vectofacile.netlify.app est legitime';
+  const vus = [...essai.matchAll(/Vecto\s+Facile|vectofacile\.fr/gi)].map((m) => m[0]);
+  if (vus.length !== 2) {
+    ajouter('(temoin)', `le detecteur d'ancien nom voit ${vus.length} formes au lieu de 2`);
+  }
+  if (/Vecto\s+Facile|vectofacile\.fr/i.test('https://vectofacile.netlify.app/')) {
+    ajouter('(temoin)', 'le detecteur d\'ancien nom se declenche sur le domaine en service');
   }
 }
 

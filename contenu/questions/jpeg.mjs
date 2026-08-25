@@ -96,7 +96,7 @@ d'abord, c'est de savoir dans quel cas vous êtes avant de payer.</p>`,
     faq: [
       {
         q: 'Peut-on vectoriser un JPEG gratuitement ?',
-        r: "Oui. Vecto Facile le fait dans votre navigateur, sans compte et sans envoi de "
+        r: "Oui. Bon à Marquer le fait dans votre navigateur, sans compte et sans envoi de "
           + "fichier, et vous rend un .eps et un .pdf. La limite n'est pas le prix mais la "
           + "qualité de l'image de départ : aucun outil, gratuit ou payant, ne récupère un "
           + "détail absent du fichier d'origine.",

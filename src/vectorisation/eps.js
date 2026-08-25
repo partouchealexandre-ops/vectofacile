@@ -28,7 +28,7 @@ export function versEps(programme, options = {}) {
     '%!PS-Adobe-3.0 EPSF-3.0',
     `%%BoundingBox: 0 0 ${Math.ceil(cadre.largeurPt)} ${Math.ceil(cadre.hauteurPt)}`,
     `%%HiResBoundingBox: 0 0 ${nb(cadre.largeurPt)} ${nb(cadre.hauteurPt)}`,
-    '%%Creator: Vecto Facile',
+    '%%Creator: Bon a Marquer',
     `%%Title: ${titre}`,
     `%%CreationDate: ${date}`,
     '%%LanguageLevel: 2',
