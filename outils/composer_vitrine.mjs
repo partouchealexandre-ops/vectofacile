@@ -77,9 +77,14 @@ window.composer = async (vitrine) => {
     // cadre: false. Le cadre pointille appartient a l'outil, ou il dit « voici
     // la zone ». Sur une vitrine il ne dirait rien et salirait l'image.
     const r = dessiner({ toile, vue, photo, logo: logos[v.encre], part: v.part, cadre: false });
+    // LA TAILLE REELLE DE LA PHOTO ENTIERE, en millimetres. C'est elle qui
+    // decide de la taille relative des objets sur l'accueil : sans elle, un
+    // carnet A5 paraitrait aussi grand qu'un t-shirt.
     sorties.push({
       image: v.image, donnees: toile.toDataURL('image/jpeg', 0.92).split(',')[1],
       largeurPx: toile.width, hauteurPx: toile.height,
+      largeurMmPhoto: Math.round(toile.width * r.mmParPixel),
+      hauteurMmPhoto: Math.round(toile.height * r.mmParPixel),
       largeurMm: Math.round(r.pose.largeurMm), hauteurMm: Math.round(r.pose.hauteurMm),
       objet: vue.objet, zone: vue.zone,
     });
@@ -134,6 +139,7 @@ for (const s of sorties) {
   const attendu = VITRINE.find((v) => v.image === s.image);
   const octets = fs.statSync(path.join(CIBLE, s.image)).size;
   console.log(`  ${s.image}  ${s.largeurPx}x${s.hauteurPx} px  ${Math.round(octets / 1024)} ko`
+    + `  objet ${s.largeurMmPhoto}x${s.hauteurMmPhoto} mm`
     + `  logo ${s.largeurMm} x ${s.hauteurMm} mm  ${s.objet}, ${s.zone.toLowerCase()}`);
   // LES DIMENSIONS DECLAREES DOIVENT ETRE LES VRAIES. Elles servent aux
   // attributs width et height de la page, qui reservent la place avant que
@@ -141,6 +147,16 @@ for (const s of sorties) {
   if (attendu.largeurPx !== s.largeurPx || attendu.hauteurPx !== s.hauteurPx) {
     console.error(`  ECHEC ${s.image} : contenu/vitrine.mjs annonce `
       + `${attendu.largeurPx}x${attendu.hauteurPx}, l'image fait ${s.largeurPx}x${s.hauteurPx}`);
+    fautes++;
+  }
+  // ET LES MILLIMETRES DECLARES SONT CEUX DU LOT. Ils commandent la taille
+  // relative des objets sur l'accueil : recopies a la main et jamais
+  // reverifies, ils vieilliraient a la premiere rederivation du lot, en
+  // silence, et l'accueil mentirait sur des tailles.
+  if (attendu.largeurMmPhoto !== s.largeurMmPhoto || attendu.hauteurMmPhoto !== s.hauteurMmPhoto) {
+    console.error(`  ECHEC ${s.image} : contenu/vitrine.mjs annonce `
+      + `${attendu.largeurMmPhoto}x${attendu.hauteurMmPhoto} mm, le lot donne `
+      + `${s.largeurMmPhoto}x${s.hauteurMmPhoto} mm`);
     fautes++;
   }
 }

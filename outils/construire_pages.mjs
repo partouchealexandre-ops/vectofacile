@@ -26,7 +26,7 @@ import { fileURLToPath } from 'node:url';
 import { STYLE } from '../contenu/style.mjs';
 import { RUBRIQUES, PIED, EN_ATTENTE } from '../contenu/pages.mjs';
 import { DOMAINE, partage } from './entetes.mjs';
-import { LEGENDE, VITRINE } from '../contenu/vitrine.mjs';
+import { LEGENDE, VITRINE, partsDeHauteur } from '../contenu/vitrine.mjs';
 import { CONFIDENTIALITE } from '../contenu/confidentialite.mjs';
 import { QUI_SOMMES_NOUS, MENTIONS } from '../contenu/institution.mjs';
 import { QUESTIONS } from '../contenu/questions/vectoriel.mjs';
@@ -166,8 +166,10 @@ function actionsEntete(urlCourante) {
  * chargement, ce que les moteurs mesurent et sanctionnent.
  */
 function vitrine() {
+  const parts = partsDeHauteur();
   const images = VITRINE.map((v) =>
     `<img src="/vitrine/${v.image}" width="${v.largeurPx}" height="${v.hauteurPx}"`
+    + ` style="--part:${parts.get(v.image).toFixed(4)}"`
     + ` alt="${echapper(v.alt)}" decoding="async">`).join('');
   return `<figure class="vitrine">${images}<figcaption>${echapper(LEGENDE)}</figcaption></figure>`;
 }

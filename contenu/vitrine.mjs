@@ -37,21 +37,41 @@
  *   du flux fournisseur cuite dans l'image.
  */
 
+/*
+ * LES OBJETS SONT A LEUR TAILLE RELATIVE REELLE, arbitrage Alex du 26/08.
+ *
+ * La premiere version rendait les trois photos a la MEME largeur de tuile. Un
+ * carnet A5 y paraissait aussi grand qu'un t-shirt. Sur un site dont toute la
+ * doctrine dit que le millimetre est la verite, c'est une image fausse, et
+ * c'est celle qu'un acheteur voit en premier.
+ *
+ * Les millimetres ci-dessous ne sont pas estimes : ils se deduisent du lot.
+ * Chaque vue porte les dimensions de sa zone en mm et en pixels, donc une
+ * echelle, donc la taille reelle de la photo entiere. Le composeur recalcule
+ * ces valeurs a chaque passage et refuse celles qui ne correspondent plus.
+ *
+ * Controle de vraisemblance, fait a la main une fois : le rapport carnet sur
+ * t-shirt sort a 0,32. Un carnet A5 mesure 210 mm, un t-shirt a plat environ
+ * 700, soit 0,30. La derivation dit donc la meme chose que le metre.
+ */
 export const VITRINE = [
   {
     image: 'p01_01.jpg', part: 0.58, encre: 'navy',
     largeurPx: 700, hauteurPx: 882,
+    largeurMmPhoto: 495, hauteurMmPhoto: 623,
     alt: 'Le logo Bon à Marquer imprimé sur le devant d\'un tote bag en coton écru, '
        + 'à 174 millimètres de large.',
   },
   {
     image: 'p02_05.jpg', part: 0.85, encre: 'navy',
     largeurPx: 700, hauteurPx: 708,
+    largeurMmPhoto: 727, hauteurMmPhoto: 736,
     alt: 'Le même logo en marquage poitrine sur un t-shirt blanc, à 85 millimètres de large.',
   },
   {
     image: 'p04_13.jpg', part: 0.80, encre: 'blanc',
     largeurPx: 659, hauteurPx: 1000,
+    largeurMmPhoto: 154, hauteurMmPhoto: 234,
     alt: 'Le logo dans sa version blanche sur la couverture bleu marine d\'un carnet A5, '
        + 'à 64 millimètres de large.',
   },
@@ -66,3 +86,15 @@ export const VITRINE = [
  */
 export const LEGENDE = 'Ces trois images sont produites par cet outil, sur des zones aux '
   + 'dimensions déclarées par les fabricants. C\'est une simulation, pas une validation.';
+
+/**
+ * LA PART DE HAUTEUR DE CHAQUE OBJET, entre 0 et 1, le plus grand valant 1.
+ *
+ * C'est la seule chose que la feuille de style a besoin de savoir : elle
+ * multiplie une hauteur de reference par cette part. Le rapport largeur sur
+ * hauteur, lui, vient de l'image elle-meme, donc il ne peut pas se tromper.
+ */
+export function partsDeHauteur() {
+  const plusGrand = Math.max(...VITRINE.map((v) => v.hauteurMmPhoto));
+  return new Map(VITRINE.map((v) => [v.image, v.hauteurMmPhoto / plusGrand]));
+}

@@ -130,15 +130,24 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
      davantage, parce que ce sont les premieres images de la page la plus vue.
      En dessous de 760 px, une colonne : trois objets cote a cote sur un
      telephone ne montrent plus aucun logo. */
-  .vitrine { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
-             margin: 0 0 30px; }
-  .vitrine img { display: block; width: 100%; height: auto; border-radius: 10px;
+  /* LA VITRINE, A L'ECHELLE RELATIVE REELLE.
+     Chaque image porte sa part de hauteur, calculee a la construction depuis
+     les millimetres du lot. La feuille ne fixe QUE la hauteur : la largeur
+     suit le rapport de l'image, donc elle ne peut pas mentir.
+     Les objets sont alignes en BAS, comme poses sur une meme table. Centres,
+     un carnet flotterait au milieu du vide a cote d'un t-shirt.
+     La hauteur de reference est le seul reglage. Elle vaut ce qu'il faut pour
+     que le bloc ne mange pas l'ecran juste sous la zone de depot. */
+  .vitrine { --hauteur-vitrine: 330px;
+             display: flex; align-items: flex-end; justify-content: center;
+             flex-wrap: wrap; gap: 28px; margin: 0 0 30px; }
+  .vitrine img { display: block; width: auto; border-radius: 10px;
+                 height: calc(var(--hauteur-vitrine) * var(--part, 1));
                  background: var(--gris-clair); }
-  .vitrine figcaption { grid-column: 1 / -1; color: var(--gris); font-size: 14px;
-                        line-height: 1.5; margin: -4px 0 0; }
-  @media (max-width: 760px) {
-    .vitrine { grid-template-columns: 1fr; gap: 16px; }
-  }
+  .vitrine figcaption { flex-basis: 100%; color: var(--gris); font-size: 14px;
+                        line-height: 1.5; margin: 4px 0 0; text-align: center; }
+  @media (max-width: 900px) { .vitrine { --hauteur-vitrine: 250px; gap: 20px; } }
+  @media (max-width: 620px) { .vitrine { --hauteur-vitrine: 180px; gap: 14px; } }
 
   .bandeau { display: grid; gap: 28px; align-items: center; margin: 4px 0 16px; }
   .bandeau h1 { margin-top: 0; }
