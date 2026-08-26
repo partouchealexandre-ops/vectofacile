@@ -524,6 +524,62 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
   #apercu svg { max-width: 100%; height: auto; display: block; margin: 0 auto; }
   #telechargements { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
 
+  /* --------------------------------------- LE PASSAGE VERS L'OBJET, 27/08/2026
+
+     ARBITRAGE D'ALEX, EN REGARDANT L'ECRAN : « le CTA voir ce logo sur un
+     objet est trop trop discret, ca devrait etre le plus gros et flashy CTA
+     du site ». Il l'etait au contraire le plus faible, en style de lien
+     secondaire : quatorze pixels, un filet gris, la meme allure qu'un lien de
+     service dans l'entete. On venait d'ecrire que la suite du parcours
+     passait par la, et on l'ecrivait dans le style reserve a ce qui ne
+     compte pas.
+
+     CE QUE LE POIDS VISUEL DOIT DIRE. A ce point de la page, le fichier est
+     livre : la tache pour laquelle le visiteur est venu est finie. Ce qui
+     reste n'est pas une option de plus au milieu des autres, c'est LA suite,
+     et c'est la seule. Un panneau pleine largeur, le orange de la charte en
+     fond, le bouton en blanc dessus : rien d'autre sur cette page ne peut
+     etre confondu avec ca.
+
+     LE BOUTON EST BLANC SUR ORANGE, ET CE N'EST PAS UN GOUT. Le orange est
+     deja la couleur d'action du site : l'entete, la demande de fichier. Un
+     bouton orange de plus se serait range parmi eux. En inversant, le panneau
+     prend le orange et le bouton prend le blanc : il devient le seul element
+     blanc sur fond plein de la page, donc le seul qu'on ne peut pas confondre
+     avec un autre bouton.
+
+     LE RAPPEL DES FICHIERS EST LA CONTREPARTIE DU BRUIT QU'ON FAIT. Un appel
+     a l'action de cette taille, place SOUS les boutons de telechargement,
+     peut faire partir quelqu'un avant qu'il ait pris son .eps ; et cette page
+     ne les garde pas, il faudrait tout redeposer. Le panneau porte donc une
+     ligne de rappel tant que rien n'a ete telecharge, et elle disparait des
+     que le premier fichier est pris. */
+  .passage-objet { margin: 34px 0 6px; padding: 30px 28px 26px; border-radius: 16px;
+    background: linear-gradient(135deg, #FF6A00 0%, #FF8C2B 100%); color: #fff;
+    text-align: center; box-shadow: 0 14px 34px rgba(255, 106, 0, .26); }
+  .passage-etape { margin: 0 0 8px; font-size: 12.5px; font-weight: 700;
+    letter-spacing: .09em; text-transform: uppercase; color: rgba(255, 255, 255, .85); }
+  .passage-objet h2 { margin: 0 0 12px; color: #fff; line-height: 1.12;
+    font-size: clamp(25px, 3.1vw, 34px); }
+  .passage-objet .passage-note { margin: 0 auto 22px; max-width: 58ch; font-size: 15.5px;
+    line-height: 1.55; color: rgba(255, 255, 255, .93); }
+  /* La taille du bouton est ce qui a ete demande : elle depasse celle de tout
+     autre bouton ou lien de la page, et le harnais le MESURE au lieu de le
+     croire. */
+  .cta-geant { display: inline-flex; align-items: center; justify-content: center; gap: 12px;
+    padding: 18px 36px; border-radius: 999px; background: #fff; color: var(--orange);
+    font-family: 'Poppins', var(--pile-systeme); font-weight: 700;
+    font-size: clamp(18px, 1.7vw, 22px); line-height: 1.15; text-decoration: none;
+    box-shadow: 0 8px 20px rgba(10, 45, 77, .18); }
+  .cta-geant:hover { background: #FFF6EF; box-shadow: 0 10px 26px rgba(10, 45, 77, .24); }
+  .cta-geant .fleche { font-size: .9em; }
+  .passage-rappel { margin: 18px 0 0; font-size: 13.5px; line-height: 1.5;
+    color: rgba(255, 255, 255, .9); }
+  @media (max-width: 520px) {
+    .passage-objet { padding: 24px 18px 22px; border-radius: 14px; }
+    .cta-geant { display: flex; padding: 17px 20px; }
+  }
+
   /* L'attribut hidden ne resiste pas a une regle display, et le navigateur ne
      previent pas. En production, le 19/08 : les trois boutons de
      telechargement etaient AFFICHES avant tout depot de fichier, parce que

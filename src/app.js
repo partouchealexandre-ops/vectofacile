@@ -52,7 +52,8 @@ const modeVectoriser = () => document.body?.dataset?.mode === 'vectoriser';
 
 let etat = { nom: null, image: null, fiche: null, mesures: null, programme: null, svg: null,
              verdict: null, selection: null, fichierEtat: null, grille: null,
-             telechargementDemande: false, avertissements: [] };
+             telechargementDemande: false, avertissements: [],
+             logoSuit: false, fichierPris: false };
 
 function texte(valeur, unite = '') {
   if (valeur === null || valeur === undefined) return 'non mesuré';
@@ -494,8 +495,28 @@ function afficherDecouverte() {
     // propose alors le simulateur sans lui promettre que son logo suit.
     suit = false;
   }
-  $('decouverte').innerHTML = rendreDecouverte(suit);
+  etat.logoSuit = suit;
+  peindreDecouverte();
   $('decouverte').hidden = false;
+}
+
+/**
+ * REDESSINE LA DECOUVERTE SANS REFAIRE LE VOYAGE, 27/08/2026.
+ *
+ * Le premier fichier telecharge efface la ligne de rappel, et c'est la seule
+ * chose qui change : le logo est deja depose, la toile deja rendue. Repasser
+ * par `afficherDecouverte` redessinerait le programme entier dans une toile a
+ * chaque clic, pour reecrire deux phrases. On separe donc le VOYAGE, qui n'a
+ * lieu qu'une fois par fichier, de la PEINTURE, qui peut avoir lieu autant de
+ * fois qu'on veut.
+ *
+ * Cette fonction ne montre pas le bloc : elle le redessine. Un bloc cache le
+ * reste, sinon un clic n'importe ou ferait apparaitre une decouverte sans
+ * fichier derriere.
+ */
+function peindreDecouverte() {
+  if (!$('decouverte')) return;
+  $('decouverte').innerHTML = rendreDecouverte(etat.logoSuit === true, etat.fichierPris === true);
 }
 
 /**
@@ -772,7 +793,8 @@ function reinitialiser() {
   rendreLaZoneDeDepot();
   etat = { nom: null, image: null, fiche: null, mesures: null, programme: null, svg: null,
            verdict: null, selection: null, fichierEtat: null,
-           telechargementDemande: false, avertissements: [] };
+           telechargementDemande: false, avertissements: [],
+           logoSuit: false, fichierPris: false };
 }
 
 /**
@@ -1238,16 +1260,27 @@ function brancher() {
   // au diagnostic et s'arretait la : les deux appels ci-dessous ne passaient
   // que le titre. Une personne qui prend la peine de dire « je marque sur
   // 60 mm » recevait un fichier qui l'ignorait.
+  // LE RAPPEL DES FICHIERS S'EFFACE QUAND ILS SONT PRIS, 27/08/2026. Le
+  // panneau du simulateur est desormais le plus gros appel a l'action de la
+  // page, et il est place SOUS ces trois boutons : il peut faire partir
+  // quelqu'un avant qu'il ait pris son fichier, et cette page ne le garde pas.
+  // Le rappel s'ecrit donc tant que rien n'est pris. Il vient d'un CLIC, pas
+  // d'une intention : la promesse ne se separe jamais du fait, ici comme pour
+  // le logo qui suit.
+  const fichierEstPris = () => { etat.fichierPris = true; peindreDecouverte(); };
   $('telecharger_eps').addEventListener('click', () => {
     telecharger(versEps(etat.programme, { titre: etat.nom, largeurMm: largeurDeMarquage() }),
                 `${etat.nom}.eps`, 'application/postscript');
+    fichierEstPris();
   });
   $('telecharger_pdf').addEventListener('click', () => {
     telecharger(versPdf(etat.programme, { titre: etat.nom, largeurMm: largeurDeMarquage() }),
                 `${etat.nom}.pdf`, 'application/pdf');
+    fichierEstPris();
   });
   $('telecharger_svg').addEventListener('click', () => {
     telecharger(etat.svg, `${etat.nom}.svg`, 'image/svg+xml');
+    fichierEstPris();
   });
 
   // LE BOUTON DE COPIE DU BRIEF, lot 1 du 21/08. La personne colle le texte

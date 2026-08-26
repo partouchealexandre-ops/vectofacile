@@ -889,8 +889,52 @@ console.log('');
                    nom: v.nom ?? null };
         } catch (e) { return null; }
       })(),
+      // LE PLUS GROS APPEL A L'ACTION DE LA PAGE, ET ON LE MESURE, 27/08/2026.
+      //
+      // Alex, en regardant l'ecran : « le CTA voir ce logo sur un objet est
+      // trop trop discret, ca devrait etre le plus gros et flashy CTA du
+      // site ». Une classe CSS attendue dans le balisage ne prouverait rien :
+      // elle dirait qu'on a ecrit le nom du style, pas que le bouton est
+      // grand. On lit donc la taille CALCULEE par le navigateur, et on la
+      // compare a celle de tous les autres boutons et liens VISIBLES de la
+      // page. Le jour ou un style ailleurs grossira, ce temoin tombera, et
+      // c'est exactement ce qu'on lui demande.
+      //
+      // On ne compare qu'a des ACTIONS, pas aux titres : un h1 est plus gros
+      // que n'importe quel bouton sur toutes les pages du monde, et ce n'est
+      // pas une hierarchie d'action.
+      tailles: (() => {
+        const cta = document.querySelector('#decouverte a[href="/voir-mon-logo"]');
+        if (!cta) return null;
+        const taille = (el) => parseFloat(getComputedStyle(el).fontSize) || 0;
+        let rival = 0;
+        let nomRival = '';
+        for (const el of document.querySelectorAll('a, button')) {
+          if (el === cta || cta.contains(el) || el.contains(cta)) continue;
+          if (el.offsetWidth === 0 && el.offsetHeight === 0) continue;
+          const t = taille(el);
+          if (t > rival) { rival = t; nomRival = (el.textContent || '').trim().slice(0, 28); }
+        }
+        return { cta: taille(cta), rival, nomRival };
+      })(),
+      // LE RAPPEL DES FICHIERS, contrepartie du bruit qu'on fait : le panneau
+      // est sous les boutons de telechargement et peut faire partir quelqu'un
+      // avant qu'il ait pris son .eps.
+      rappelFichiers: /juste au-dessus/i.test(
+        document.getElementById('decouverte')?.innerText ?? ''),
     };
   }, octets.toString('base64'));
+
+  // ET IL S'EFFACE QUAND LE FICHIER EST PRIS. On CLIQUE sur le bouton du .eps
+  // au lieu de pousser l'etat a la main : c'est le clic qui doit compter, et
+  // c'est lui qu'on eprouve. On n'attend pas le fichier lui meme, seulement
+  // l'ecran : ce temoin porte sur ce que la page dit, pas sur les octets, et
+  // un harnais qui attend un telechargement qui n'arriverait pas resterait
+  // suspendu au lieu d'echouer.
+  await page.click('#telecharger_eps');
+  await page.waitForTimeout(200);
+  const rappelApres = await page.evaluate(() => /juste au-dessus/i.test(
+    document.getElementById('decouverte')?.innerText ?? ''));
   await page.close();
 
   console.log('');
@@ -919,6 +963,16 @@ console.log('');
       constat.logoDepose !== null && constat.logoDepose.png.startsWith('data:image/png;base64')],
     ['et la phrase ne le promet que si c\'est vrai',
       /vous suit/i.test(constat.texteDecouverte) === (constat.logoDepose !== null)],
+    // ARBITRAGE D'ALEX DU 27/08 : c'est le plus gros appel a l'action du site.
+    [`son bouton est le plus gros de la page (${constat.tailles
+        ? `${constat.tailles.cta} px contre ${constat.tailles.rival} px`
+          + ` pour « ${constat.tailles.nomRival} »`
+        : 'non mesure'})`,
+      constat.tailles !== null && constat.tailles.cta > constat.tailles.rival],
+    ['tant que rien n\'est pris, elle rappelle d\'emporter ses fichiers',
+      constat.rappelFichiers === true],
+    ['et ce rappel s\'efface des que le premier fichier est pris',
+      rappelApres === false],
   ]) {
     console.log(`  ${ok ? 'ok   ' : 'ECHEC'} ${libelle}`);
     if (!ok) echecs++;

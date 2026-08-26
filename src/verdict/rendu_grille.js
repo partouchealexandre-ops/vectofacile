@@ -505,15 +505,39 @@ export function rendreSuite() {
  * dit, mais seulement quand c'est vrai : `logoSuit` vient du depot, pas d'une
  * intention. Un ecran qui promet un transport qui n'a pas eu lieu vaut moins
  * qu'un ecran qui demande un fichier.
+ *
+ * LE POIDS VISUEL, ARBITRAGE D'ALEX DU 27/08/2026 : « le CTA voir ce logo sur
+ * un objet est trop trop discret, ca devrait etre le plus gros et flashy CTA
+ * du site ». Il portait `cta-secondaire`, c'est a dire le style le plus faible
+ * de la feuille, celui des liens de service de l'entete. On ecrivait que la
+ * suite du parcours passait par la, et on l'ecrivait dans le style reserve a
+ * ce qui ne compte pas. Le bloc devient un panneau orange pleine largeur avec
+ * un bouton blanc dessus (`passage-objet`, `cta-geant`).
+ *
+ * ET LE RAPPEL DES FICHIERS EST LA CONTREPARTIE DE CE BRUIT. Un appel a
+ * l'action de cette taille, place SOUS les boutons de telechargement, peut
+ * faire partir quelqu'un avant qu'il ait pris son .eps ; cette page ne les
+ * garde pas, il faudrait redeposer l'image et tout refaire. Le rappel s'ecrit
+ * donc tant que rien n'a ete telecharge, et il s'efface des que le premier
+ * fichier est pris : `fichierPris` vient du clic, pas d'une intention, comme
+ * `logoSuit` vient du depot.
  */
-export function rendreDecouverte(logoSuit = false) {
-  return `<h2>Voyez ce logo sur un objet</h2>
-<p class="note">Votre fichier est fait. Posez-le sur un objet : la zone de marquage et ses
+export function rendreDecouverte(logoSuit = false, fichierPris = false) {
+  return `<div class="passage-objet">
+<p class="passage-etape">Étape suivante</p>
+<h2>Voyez ce logo sur un objet</h2>
+<p class="passage-note">Votre fichier est fait. Posez-le sur un objet : la zone de marquage et ses
 dimensions sont celles du fabricant, et la taille obtenue s'affiche en millimètres.
 ${logoSuit
   ? 'Votre logo vous suit, vous n\'avez rien à redéposer.'
   : 'Vous y déposerez votre logo.'}</p>
-<p><a class="cta-secondaire" href="/voir-mon-logo">Voir ce logo sur un objet</a></p>`;
+<p><a class="cta-geant" href="/voir-mon-logo">Voir ce logo sur un objet<span
+class="fleche" aria-hidden="true">→</span></a></p>${fichierPris
+  ? ''
+  : `
+<p class="passage-rappel">Prenez d'abord vos fichiers, juste au-dessus :
+cette page ne les garde pas.</p>`}
+</div>`;
 }
 
 /**
