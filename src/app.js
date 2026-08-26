@@ -17,9 +17,10 @@ import { lireVectoriel, reconnaitre, FichierVectorielNonLu } from './adaptateurs
 import { lireEnteteEps } from './adaptateurs/eps_entete.js';
 import { mesurer } from './moteur/mesures.js';
 import { juger } from './verdict/juger.js';
-import { jugerGrille, choisirPourContraste } from './verdict/grille.js';
 import { jugerFeux } from './verdict/feux.js';
 import { CONTACT, rendreDecouverte } from './verdict/rendu_grille.js';
+import { programmeVersPng } from './vectorisation/toile.js';
+import { deposerLogo } from './simulation/passage.js';
 import { rendreVerdict } from './verdict/rendu.js';
 import { rendreFaitPrincipal, logoClair } from './verdict/rendu_feux.js';
 import { conseiller } from './conseils/conseils.js';
@@ -465,28 +466,35 @@ const NOMS_PAR_FAMILLE = Object.freeze({
  * du suivant. Ni a l'ecran, ni en memoire.
  */
 /**
- * LA DECOUVERTE DE /VECTORISER, partie D du brief du 21/08.
+ * LA DECOUVERTE DE /VECTORISER, partie D du brief du 21/08, REECRITE LE
+ * 26/08/2026 (arbitrage Alex).
  *
  * Elle n'existe que sur cette page, et seulement une fois le fichier remis.
- * Elle passe par le MEME moteur que l'accueil : meme grille, meme jugement,
- * meme regle de contraste. Deux mises en scene, une seule verite.
+ * Elle ne montre plus deux cartes de matieres : elle propose le simulateur,
+ * et elle y envoie le fichier qu'on vient de fabriquer.
+ *
+ * L'ORDRE COMPTE, ET IL EST L'INVERSE DE CELUI QU'ON ECRIRAIT SPONTANEMENT.
+ * On depose le logo D'ABORD, on ecrit la phrase ENSUITE, parce que la phrase
+ * depend du depot : elle ne promet que le rendu de la toile a tenu et que le
+ * stockage a accepte. Ecrire d'abord et deposer apres, c'est risquer un ecran
+ * qui annonce un transport qui n'a pas eu lieu.
+ *
+ * LE LOGO NE PART PAS SUR UN SERVEUR. Il passe par le stockage de session,
+ * qui appartient a l'onglet et meurt avec lui : voir `simulation/passage.js`.
  */
-async function afficherDecouverte(mesures) {
+function afficherDecouverte() {
   if (!modeVectoriser() || !$('decouverte')) return;
-  const grille = await chargerGrille().catch(() => null);
-  if (!grille) return;
-  const rapport = mesures?.boiteEncre?.rapport ?? mesures?.m1Dimensions?.rapport ?? 1;
-  // Le fichier vectoriel vient d'etre fabrique : c'est LUI qu'on juge, pas
-  // l'image de depart. Annoncer ce que l'image ouvrait serait sous-vendre ce
-  // qu'on vient de lui donner.
-  const juges = jugerGrille(grille, {
-    nCouleurs: mesures?.m2Couleurs?.couleursReelles ?? null,
-    ratio: rapport,
-    fichierVectoriel: true,
-  });
-  const html = rendreDecouverte(choisirPourContraste(juges).choisis);
-  if (!html) return;
-  $('decouverte').innerHTML = html;
+  let suit = false;
+  try {
+    const png = etat.programme ? programmeVersPng(etat.programme) : null;
+    suit = png ? deposerLogo(png, etat.nom) : false;
+  } catch (e) {
+    // Une toile qui ne se dessine pas ne doit pas emporter la remise du
+    // fichier avec elle : le visiteur a deja son .eps et son .pdf. On lui
+    // propose alors le simulateur sans lui promettre que son logo suit.
+    suit = false;
+  }
+  $('decouverte').innerHTML = rendreDecouverte(suit);
   $('decouverte').hidden = false;
 }
 
@@ -1160,9 +1168,9 @@ async function traiter(fichier) {
     rendreLeVerdict();
     // PARTIE D DU BRIEF DU 21/08 : sur /vectoriser, la decouverte arrive APRES
     // la remise du fichier, jamais avant. Le visiteur a ce qu'il venait
-    // chercher ; deux cartes lui montrent ce que son fichier vient d'ouvrir,
-    // et un lien mene au diagnostic complet. Un moteur, deux mises en scene.
-    await afficherDecouverte(mesures);
+    // chercher ; on lui propose alors de voir CE logo sur un objet reel, et le
+    // fichier qu'on vient de fabriquer part avec lui.
+    afficherDecouverte();
   } catch (e) {
     terminerAttente();
     $('erreur').hidden = false;

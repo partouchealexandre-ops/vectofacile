@@ -478,27 +478,42 @@ export function rendreSuite() {
 }
 
 /**
- * LA DECOUVERTE APRES LA REMISE DU FICHIER, partie D du brief du 21/08.
+ * LA DECOUVERTE APRES LA REMISE DU FICHIER, partie D du brief du 21/08,
+ * REECRITE LE 26/08/2026 (arbitrage Alex).
  *
  * `/vectoriser` fait une chose et une seule : deposer, convertir, telecharger,
  * trois clics, aucun diagnostic impose. C'est la page d'atterrissage du trafic
  * « vectoriser un JPEG », et lui imposer un verdict avant son fichier serait
- * lui faire payer sa visite.
+ * lui faire payer sa visite. APRES la remise, c'est autre chose : le visiteur
+ * a ce qu'il venait chercher, et on peut lui montrer la suite.
  *
- * APRES la remise, c'est autre chose : le visiteur a ce qu'il venait chercher,
- * et deux cartes lui montrent ce que son fichier vient d'ouvrir. Deux, pas
- * huit : ce n'est pas le diagnostic, c'est une porte vers le diagnostic.
+ * CE QUI ETAIT PROPOSE, ET POURQUOI CA NE TENAIT PLUS. Deux cartes de
+ * matieres, « sac shopping en coton », « textile en coton », avec un badge
+ * OUI, et un bouton « voir toutes les matieres pour ce logo » qui pointait
+ * vers la page d'accueil. Le bouton ne menait donc pas au diagnostic de CE
+ * logo : il menait a une page ou il fallait tout redeposer. Alex l'a dit le
+ * 26/08 en regardant l'ecran : ca ne correspond plus a ce qu'on propose.
+ *
+ * CE QU'ON PROPOSE VRAIMENT. Le site porte un simulateur qui pose un logo sur
+ * la photo d'un objet reel, dans la zone que le fabricant autorise, et qui
+ * annonce la taille obtenue en millimetres. Apres avoir donne le fichier,
+ * c'est LA la suite naturelle, et elle est concrete : on ne montre plus deux
+ * vignettes de matiere, on montre son logo sur un objet.
+ *
+ * ET LE LOGO SUIT. Le fichier qu'on vient de fabriquer part avec le visiteur
+ * (voir `simulation/passage.js`), sans quitter son navigateur. La phrase le
+ * dit, mais seulement quand c'est vrai : `logoSuit` vient du depot, pas d'une
+ * intention. Un ecran qui promet un transport qui n'a pas eu lieu vaut moins
+ * qu'un ecran qui demande un fichier.
  */
-export function rendreDecouverte(produits) {
-  const passe = (produits ?? []).filter((p) => groupeDe(p) !== 'coince').slice(0, 2);
-  if (passe.length < 2) return '';
-  return `<h2>Votre logo passe aussi sur ces objets</h2>
-<p class="note">Votre fichier vectoriel vient d'ouvrir ces marquages. Voici deux exemples,
-sur des matières réelles.</p>
-<div class="grille-produits">
-${passe.map((p) => rendreCarte(p, true)).join('\n')}
-</div>
-<p><a class="cta-secondaire" href="/">Voir toutes les matières pour ce logo</a></p>`;
+export function rendreDecouverte(logoSuit = false) {
+  return `<h2>Voyez ce logo sur un objet</h2>
+<p class="note">Votre fichier est fait. Posez-le sur un objet : la zone de marquage et ses
+dimensions sont celles du fabricant, et la taille obtenue s'affiche en millimètres.
+${logoSuit
+  ? 'Votre logo vous suit, vous n\'avez rien à redéposer.'
+  : 'Vous y déposerez votre logo.'}</p>
+<p><a class="cta-secondaire" href="/voir-mon-logo">Voir ce logo sur un objet</a></p>`;
 }
 
 /**

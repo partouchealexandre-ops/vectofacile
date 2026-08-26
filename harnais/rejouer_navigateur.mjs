@@ -849,13 +849,24 @@ console.log('');
       blocsDiagnostic: ['fiche', 'couleurs', 'verdict', 'conseils', 'mesures', 'largeur']
         .filter((id) => document.getElementById(id) !== null),
       programme: globalThis.vecto.etat().programme !== null,
-      // PARTIE D du brief du 21/08 : la decouverte, APRES la remise du
-      // fichier. Deux cartes, pas huit : c'est une porte vers le diagnostic,
-      // pas le diagnostic.
+      // PARTIE D du brief du 21/08, REECRITE LE 26/08/2026 : la decouverte
+      // arrive APRES la remise du fichier, et elle propose le simulateur.
       decouverte: document.getElementById('decouverte')?.hidden === false,
-      cartesDecouverte: document.querySelectorAll('#decouverte .produit').length,
-      lienEvaluation: document.querySelectorAll('#decouverte a[href="/"]').length,
+      lienSimulateur: document.querySelectorAll('#decouverte a[href="/voir-mon-logo"]').length,
+      lienMort: document.querySelectorAll('#decouverte a[href="/"]').length,
       texteDecouverte: document.getElementById('decouverte')?.innerText ?? '',
+      // LE LOGO SUIT, ET ON LE VERIFIE LA OU IL EST DEPOSE. Le texte promet
+      // le transport : si la promesse est ecrite, le dessin doit etre dans le
+      // stockage de session, et il doit etre un PNG.
+      logoDepose: (() => {
+        try {
+          const brut = sessionStorage.getItem('bonamarquer.logo-vectorise.v1');
+          if (!brut) return null;
+          const v = JSON.parse(brut);
+          return { png: String(v.png ?? '').slice(0, 22), octets: String(v.png ?? '').length,
+                   nom: v.nom ?? null };
+        } catch (e) { return null; }
+      })(),
     };
   }, octets.toString('base64'));
   await page.close();
@@ -871,18 +882,83 @@ console.log('');
     ['aucun bloc de diagnostic n\'existe dans le document',
       constat.blocsDiagnostic.length === 0],
     // La decouverte n'est pas un diagnostic : elle arrive APRES la remise du
-    // fichier, elle tient en deux cartes, et elle mene a l'evaluation.
+    // fichier, et depuis le 26/08 elle propose le simulateur avec le logo
+    // dedans, au lieu de deux cartes de matieres et d'un lien vers l'accueil.
     ['la decouverte apparait une fois le fichier remis', constat.decouverte === true],
-    ['elle tient en deux cartes, pas en huit', constat.cartesDecouverte === 2],
-    ['elle mene a l\'evaluation complete', constat.lienEvaluation >= 1],
-    ['et elle dit ce que le fichier vient d\'ouvrir',
-      /passe aussi sur/i.test(constat.texteDecouverte)],
+    ['elle mene au simulateur', constat.lienSimulateur >= 1],
+    ['et plus vers l\'accueil, ou il fallait tout redeposer', constat.lienMort === 0],
+    ['elle propose de voir CE logo sur un objet',
+      /voyez ce logo sur un objet/i.test(constat.texteDecouverte)],
+    // LA PROMESSE ET LE FAIT SONT LE MEME CONTROLE. Si l'ecran ecrit que le
+    // logo suit, le dessin doit etre depose ; s'il ne le dit pas, c'est que le
+    // depot a echoue, et alors rien ne doit trainer.
+    [`le logo est depose pour le simulateur, en PNG`
+      + ` (${constat.logoDepose ? `${Math.round(constat.logoDepose.octets / 1024)} Ko` : 'rien'})`,
+      constat.logoDepose !== null && constat.logoDepose.png.startsWith('data:image/png;base64')],
+    ['et la phrase ne le promet que si c\'est vrai',
+      /vous suit/i.test(constat.texteDecouverte) === (constat.logoDepose !== null)],
   ]) {
     console.log(`  ${ok ? 'ok   ' : 'ECHEC'} ${libelle}`);
     if (!ok) echecs++;
   }
   if (constat.blocsDiagnostic.length) {
     console.log(`         blocs trouves : ${constat.blocsDiagnostic.join(', ')}`);
+  }
+  console.log('  ' + '-'.repeat(66));
+  console.log('');
+}
+
+// LE LOGO ARRIVE VRAIMENT SUR L'OBJET, temoin de bout en bout du 26/08/2026.
+//
+// Les deux pages se parlent par le stockage de session, et deux controles
+// separes, un de chaque cote, ne prouveraient rien : ils passeraient tous les
+// deux avec deux cles differentes. Celui ci fait le trajet. On depose une
+// image sur /vectoriser, on suit le lien vers /voir-mon-logo DANS LE MEME
+// ONGLET, et on regarde si le logo est pose sur l'objet sans que personne
+// n'ait redepose quoi que ce soit.
+//
+// Le controle a ete verifie dans les deux sens : sans le depot, la zone de
+// depot reste vierge et ce temoin tombe.
+{
+  const page = await navigateur.newPage();
+  await page.goto(`http://127.0.0.1:${PORT}/vectoriser/`, { waitUntil: 'networkidle' });
+  await page.waitForTimeout(900);
+  const octets = fs.readFileSync(path.join(IMAGES, 'couleurs_09_plat.png'));
+  await page.evaluate(async (b64) => {
+    const fichier = new File(
+      [Uint8Array.from(atob(b64), (c) => c.charCodeAt(0))], 'mon-logo.png', { type: 'image/png' });
+    await globalThis.vecto.traiter(fichier);
+  }, octets.toString('base64'));
+
+  // On CLIQUE, on ne fabrique pas l'adresse : si le lien changeait, ce temoin
+  // doit tomber avec lui.
+  await page.click('#decouverte a[href="/voir-mon-logo"]');
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(900);
+  const arrivee = await page.evaluate(() => ({
+    adresse: location.pathname,
+    depotAnalyse: document.getElementById('depot')?.classList.contains('depot-analyse') === true,
+    vignette: document.querySelector('#depot img.vignette')?.src?.slice(0, 22) ?? null,
+    nomMontre: document.querySelector('#depot strong')?.textContent ?? '',
+    erreurVisible: document.getElementById('erreur')?.hidden === false,
+  }));
+  await page.close();
+
+  console.log('');
+  console.log('  LE LOGO VECTORISE SUIT JUSQU\'A L\'OBJET');
+  console.log('  ' + '-'.repeat(66));
+  for (const [libelle, ok] of [
+    ['le lien de la decouverte mene bien au simulateur',
+      arrivee.adresse.startsWith('/voir-mon-logo')],
+    ['la zone de depot montre le logo au lieu de le reclamer',
+      arrivee.depotAnalyse === true],
+    ['et c\'est bien une image posee, pas un texte',
+      arrivee.vignette === 'data:image/png;base64'],
+    ['elle porte le nom du fichier vectorise', /mon-logo/.test(arrivee.nomMontre)],
+    ['aucune erreur ne s\'affiche', arrivee.erreurVisible === false],
+  ]) {
+    console.log(`  ${ok ? 'ok   ' : 'ECHEC'} ${libelle}`);
+    if (!ok) echecs++;
   }
   console.log('  ' + '-'.repeat(66));
   console.log('');

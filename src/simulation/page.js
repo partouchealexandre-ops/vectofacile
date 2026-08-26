@@ -11,6 +11,7 @@ import { monterPanneau } from './panneau.js';
 import { verifierLotDerive } from './simulateur.js';
 import { reconnaitre, lireVectoriel, FichierVectorielNonLu }
   from '../adaptateurs/pdf_navigateur.js';
+import { reprendreLogo } from './passage.js';
 
 const hote = document.getElementById('simulateur');
 const zoneErreur = document.getElementById('erreur');
@@ -218,6 +219,26 @@ try {
     };
     lecteur.readAsDataURL(fichier);
   };
+
+  /**
+   * LE LOGO QUI ARRIVE DE /VECTORISER EST DEJA LA, 26/08/2026.
+   *
+   * Le visiteur vient de recevoir son fichier et a cliqué sur « voir ce logo
+   * sur un objet » : lui redemander son fichier serait lui faire refaire ce
+   * qu'il vient de faire. Le dessin l'a suivi dans le stockage de session de
+   * son onglet, jamais par le reseau (voir `passage.js`), et il se pose ici
+   * comme s'il venait d'etre depose : meme chemin, meme vignette, meme
+   * possibilite d'en deposer un autre par dessus.
+   *
+   * S'il n'y a rien, il n'y a rien : la page reste exactement celle qu'elle
+   * etait, avec sa zone de depot. Cette reprise n'ajoute pas d'etat, elle en
+   * consomme un s'il existe.
+   */
+  const repris = reprendreLogo();
+  if (repris) {
+    panneau.poserLogo(repris.png);
+    montrerLeLogo(repris.png, repris.nom ? `${repris.nom} (vectorisé)` : 'Votre logo vectorisé');
+  }
 
   if (depot && champ) {
     depot.addEventListener('click', () => champ.click());
