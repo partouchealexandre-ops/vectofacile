@@ -960,7 +960,10 @@ console.log('');
   const arrivee = await page.evaluate(() => ({
     adresse: location.pathname,
     depotAnalyse: document.getElementById('depot')?.classList.contains('depot-analyse') === true,
-    vignette: document.querySelector('#depot img.vignette')?.src?.slice(0, 22) ?? null,
+    // ON GARDE L'ENTETE, PAS L'IMAGE ENTIERE : une vignette de logo pese des
+    // centaines de kilo octets, et ce controle ne demande qu'une chose, savoir
+    // si c'est bien une image et non un texte.
+    vignette: document.querySelector('#depot img.vignette')?.src?.slice(0, 40) ?? null,
     nomMontre: document.querySelector('#depot strong')?.textContent ?? '',
     erreurVisible: document.getElementById('erreur')?.hidden === false,
   }));
@@ -974,8 +977,15 @@ console.log('');
       arrivee.adresse.startsWith('/voir-mon-logo')],
     ['la zone de depot montre le logo au lieu de le reclamer',
       arrivee.depotAnalyse === true],
+    // LE PREFIXE SE COMPARE PAR DEBUT, PAS PAR EGALITE, correctif du
+    // 27/08/2026. Ecrit en egalite, ce controle comparait vingt deux
+    // caracteres coupes a un motif qui en fait vingt et un, et il tombait sur
+    // la virgule qui separe l'entete des donnees. Le logo etait bien pose, la
+    // vignette bien affichee : c'est le controle qui avait tort. Un temoin
+    // faux est plus couteux qu'un temoin absent, parce qu'on cherche le
+    // defaut dans le produit.
     ['et c\'est bien une image posee, pas un texte',
-      arrivee.vignette === 'data:image/png;base64'],
+      String(arrivee.vignette ?? '').startsWith('data:image/png;base64,')],
     ['elle porte le nom du fichier vectorise', /mon-logo/.test(arrivee.nomMontre)],
     ['aucune erreur ne s\'affiche', arrivee.erreurVisible === false],
   ]) {
