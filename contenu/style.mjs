@@ -171,6 +171,20 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
     font-size: 13px; line-height: 1.45; }
   #depot .vignette { display: block; max-width: 150px; max-height: 150px;
     margin: 0 auto 10px; }
+  /* L'ATTENTE SE VOIT, 26/08/2026. Elle se pose DANS la zone de depot, la ou
+     le regard vient de se poser, et pas dans une ligne grise sous la page.
+     Le disque est navy : l'orange dit commencer, il ne dit pas patienter. */
+  #depot.depot-attente { border-style: solid; border-color: var(--trait);
+    background: var(--gris-clair); cursor: progress; }
+  #depot.depot-attente strong { color: var(--encre); }
+  .sablier { display: block; width: 26px; height: 26px; margin: 0 auto 12px;
+    border: 3px solid var(--trait); border-top-color: var(--navy);
+    border-radius: 50%; animation: tourner .8s linear infinite; }
+  @keyframes tourner { to { transform: rotate(360deg); } }
+  /* Une rotation rapide declenche des malaises chez une partie des visiteurs.
+     On ne supprime pas le mouvement, qui EST l'information ici : on le ralentit
+     jusqu'a ce qu'il cesse d'agresser. */
+  @media (prefers-reduced-motion: reduce) { .sablier { animation-duration: 2.4s; } }
   #depot span { color: var(--gris); font-size: 14px; }
   input[type=file] { display: none; }
   .ligne { display: flex; align-items: baseline; gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--trait); }

@@ -522,10 +522,73 @@ function devoiler(id) {
  * demarrage, et on ne le remplace pas, on change ce qu'il montre.
  */
 let depotOrigine = null;
+
+/**
+ * L'ATTENTE SE VOIT, arbitrage Alex du 26/08/2026.
+ *
+ * CE QUI N'ALLAIT PAS. Entre le depot et le verdict il se passe parfois
+ * plusieurs secondes : lecture, mesure, chargement du vectoriseur, trace. La
+ * page ne montrait rien pendant ce temps la, sinon une ligne grise de 14 px
+ * posee SOUS la zone de depot, hors du champ ou le regard vient de se poser.
+ * Un visiteur qui depose un fichier et ne voit rien bouger croit que le site
+ * n'a pas pris son fichier, et il redepose.
+ *
+ * OU L'INDICATEUR SE POSE. Dans la zone de depot elle meme, a l'endroit exact
+ * ou la personne vient de lacher son fichier. C'est le meme raisonnement que
+ * la vignette du 20/08 : la zone de depot montre l'etat courant du fichier au
+ * lieu de reclamer une action deja accomplie.
+ *
+ * CE QU'IL DIT. L'etape en cours, parce qu'une attente nommee se supporte, et
+ * la promesse de confidentialite, parce que c'est la seconde exacte ou
+ * quelqu'un se demande ou part son logo. La ligne #travail reste en place et
+ * garde le meme texte : elle sert aux rapports de panne.
+ */
+let attenteEnCours = false;
+
+function poserAttente(texte) {
+  const zone = $('depot');
+  if (!zone) return;
+  if (depotOrigine === null) depotOrigine = zone.innerHTML;
+  attenteEnCours = true;
+  zone.classList.remove('depot-analyse');
+  zone.classList.add('depot-attente');
+  zone.setAttribute('aria-busy', 'true');
+  zone.innerHTML = `<span class="sablier" aria-hidden="true"></span>
+    <strong id="attente_etape">${echapperTexte(texte)}</strong>
+    <span>Tout se passe dans votre navigateur. Le fichier ne part nulle part.</span>`;
+}
+
+/** L'etape courante, dite aux DEUX endroits : la zone de depot et #travail. */
+function direEtape(texte) {
+  const suivi = $('travail');
+  if (suivi) suivi.textContent = texte;
+  const etiquette = $('attente_etape');
+  if (etiquette) etiquette.textContent = texte;
+}
+
+/**
+ * FIN D'ATTENTE. Elle ne touche la zone de depot QUE si l'attente y est encore
+ * affichee : quand la vignette a deja pris la place, la restaurer effacerait le
+ * logo que le visiteur vient de voir apparaitre.
+ */
+function terminerAttente() {
+  const suivi = $('travail');
+  if (suivi) suivi.hidden = true;
+  const zone = $('depot');
+  if (!zone || !attenteEnCours) return;
+  attenteEnCours = false;
+  zone.removeAttribute('aria-busy');
+  zone.classList.remove('depot-attente');
+  if (depotOrigine !== null) zone.innerHTML = depotOrigine;
+}
+
 function poserVignette(image, mesures = null) {
   const zone = $('depot');
   if (!zone || !image) return;
   if (depotOrigine === null) depotOrigine = zone.innerHTML;
+  attenteEnCours = false;
+  zone.classList.remove('depot-attente');
+  zone.removeAttribute('aria-busy');
   const COTE = 150;
 
   // DEUX DEFAUTS CUMULES, CORRIGES LE 24/08/2026. La vignette sortait
@@ -570,7 +633,7 @@ function poserVignette(image, mesures = null) {
     src="${toile.toDataURL('image/png')}">
     ${teinte ? `<span class="vignette-teinte">Votre logo est blanc. Il est affiché
     en rose pour être visible ici : ce n'est pas sa couleur.</span>` : ''}
-    <span>Analysé sur cette page. Cliquez pour essayer un autre logo.</span>`;
+    <span>Cliquez pour essayer un autre logo.</span>`;
 }
 
 /**
@@ -636,7 +699,10 @@ function rendreLaZoneDeDepot() {
   const zone = $('depot');
   passerEnModeResultat(false);
   if (!zone || depotOrigine === null) return;
+  attenteEnCours = false;
+  zone.removeAttribute('aria-busy');
   zone.classList.remove('depot-analyse');
+  zone.classList.remove('depot-attente');
   zone.innerHTML = depotOrigine;
 }
 
@@ -892,13 +958,14 @@ function afficherConseils(mesures, fiche) {
 async function traiter(fichier) {
   reinitialiser();
   $('travail').hidden = false;
+  poserAttente('Lecture du fichier');
   // L'etape courante est suivie explicitement : quand quelque chose casse chez
   // un visiteur, savoir A QUEL MOMENT vaut plus que le message d'erreur lui
   // meme. Le 18/08, un rapport disant seulement "TextDecoder" a coute une heure
   // de recherche faute de savoir si la lecture, la mesure ou la vectorisation
   // avait echoue.
   let etape = 'lecture du fichier';
-  $('travail').textContent = 'Lecture du fichier';
+  direEtape('Lecture du fichier');
 
   try {
     // DEUX CHEMINS, ET LE VISITEUR N'A PAS A CHOISIR.
@@ -922,7 +989,7 @@ async function traiter(fichier) {
       const entete = lireEnteteEps(await fichier.arrayBuffer());
       if (entete) {
         afficherFichePostscript(entete);
-        $('travail').hidden = true;
+        terminerAttente();
         return;
       }
     }
@@ -930,7 +997,7 @@ async function traiter(fichier) {
     let image;
     if (nature === 'pdf') {
       etape = 'lecture du fichier vectoriel';
-      $('travail').textContent = 'Lecture du fichier vectoriel';
+      direEtape('Lecture du fichier vectoriel');
       const lu = await lireVectoriel(fichier);
       image = lu.image;
       etat.fiche = lu.fiche;
@@ -939,7 +1006,7 @@ async function traiter(fichier) {
     }
 
     etape = 'mesure';
-    $('travail').textContent = 'Mesure';
+    direEtape('Mesure');
     const mesures = mesurer(image, { largeurImprimeeMm: largeurDeMarquage() });
     etat.image = image;
     etat.mesures = mesures;
@@ -987,7 +1054,7 @@ async function traiter(fichier) {
           <a href="/">évaluez votre logo</a>.</p>`;
         devoiler('resultat');
       }
-      $('travail').hidden = true;
+      terminerAttente();
       return;
     }
 
@@ -1000,18 +1067,18 @@ async function traiter(fichier) {
         <h2>Pas de fichier vectoriel pour celui-ci</h2>
         <p class="gris">${prepare.refus.texte}</p>`;
       devoiler('resultat');
-      $('travail').hidden = true;
+      terminerAttente();
       etat.fichierEtat = { origine: 'image', vectorise: false };
       rendreLeVerdict();
       return;
     }
 
     etape = 'chargement du vectoriseur';
-    $('travail').textContent = 'Chargement du vectoriseur';
+    direEtape('Chargement du vectoriseur');
     await chargerVectoriseur();
 
     etape = 'vectorisation';
-    $('travail').textContent = 'Vectorisation';
+    direEtape('Vectorisation');
     const svg = vectorize_rgba(new Uint8Array(prepare.pixels.buffer), image.largeur, image.hauteur, prepare.options);
     etape = 'lecture des chemins';
     etat.programme = construireProgramme(svg);
@@ -1029,7 +1096,7 @@ async function traiter(fichier) {
         Aucune technique de marquage ne sait rendre ça, et aucun atelier n'ouvrira
         le fichier. Le diagnostic ci-dessus reste valable, il décrit bien votre fichier.</p>`;
       devoiler('resultat');
-      $('travail').hidden = true;
+      terminerAttente();
       etat.fichierEtat = { origine: 'image', vectorise: false };
       rendreLeVerdict();
       return;
@@ -1048,7 +1115,7 @@ async function traiter(fichier) {
     `;
     devoiler('resultat');
     revelerTelechargements();
-    $('travail').hidden = true;
+    terminerAttente();
     // Le .eps existe desormais : l'action peut le promettre et pointer vers le
     // bas de page.
     etat.fichierEtat = { origine: 'image', vectorise: true };
@@ -1059,7 +1126,7 @@ async function traiter(fichier) {
     // et un lien mene au diagnostic complet. Un moteur, deux mises en scene.
     await afficherDecouverte(mesures);
   } catch (e) {
-    $('travail').hidden = true;
+    terminerAttente();
     $('erreur').hidden = false;
     if (e instanceof FichierNonSupporte || e instanceof FichierVectorielNonLu) {
       $('erreur').textContent = e.message;
