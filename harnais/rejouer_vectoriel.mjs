@@ -177,8 +177,14 @@ await page.waitForTimeout(900);
   bloc('UN PDF VECTORIEL EST AUDITE, PAS VECTORISE', [
     ['il est lu sans erreur', r.erreur === null],
     ['sa fiche apparait', r.ficheVisible === true],
-    ['sa taille reelle est lue dans le fichier',
-      r.fiche?.largeurMm > 100 && r.fiche?.largeurMm < 200],
+    // LA TAILLE LUE EST CELLE QUE LE FICHIER DECLARE, et depuis le 26/08 ce
+    // n'est plus un accident. Ce PDF est l'un des NOTRES, produit deux harnais
+    // plus tot : il est donc livre a cent millimetres sur sa plus grande
+    // dimension, et `capitales_20px` est plus large que haut. Avant, la valeur
+    // valait 141 mm parce que le fichier faisait un point par pixel : la borne
+    // large de ce controle cachait donc une taille tiree au sort.
+    ['sa taille reelle est lue dans le fichier, et c\'est celle qu\'il declare',
+      Math.abs((r.fiche?.largeurMm ?? 0) - 100) < 1],
     ['ses traces sont comptes', r.fiche?.traces > 0],
     ['il n\'est PAS pris pour un faux vectoriel', r.fiche?.faux_vectoriel === false],
     ['aucun bouton de telechargement n\'apparait', r.telechargements === false],

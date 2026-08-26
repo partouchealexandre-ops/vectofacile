@@ -82,11 +82,23 @@ function gsDisponible() {
  */
 const ZOOM = 4;
 
-function rasteriser(fichier, largeur, hauteur) {
+function rasteriser(fichier, largeur, hauteur, largeurPt) {
   const sortie = fichier + '.ppm';
+  // LA RESOLUTION SE CALCULE, ELLE NE SE SUPPOSE PLUS, 26/08/2026.
+  //
+  // Elle valait 72 dpi, ce qui marchait par coincidence : le fichier livre
+  // faisait alors UN POINT PAR PIXEL, donc 72 dpi redonnait exactement la
+  // taille de depart. Depuis que la taille declaree vaut cent millimetres sur
+  // la plus grande dimension, cette coincidence n'existe plus, et rasteriser a
+  // 72 dpi comparerait une image de 284 pixels a une image de 1 270.
+  //
+  // On lit donc la taille que le FICHIER porte, et on en deduit la resolution
+  // qui redonne la taille du cas. Le harnais suit le fichier au lieu de lui
+  // dicter une convention.
+  const resolution = (72 * ZOOM * largeur) / (largeurPt || largeur);
   const communs = [
     '-dSAFER', '-dBATCH', '-dNOPAUSE', '-dQUIET',
-    '-sDEVICE=ppmraw', `-r${72 * ZOOM}`, `-g${largeur * ZOOM}x${hauteur * ZOOM}`,
+    '-sDEVICE=ppmraw', `-r${resolution}`, `-g${largeur * ZOOM}x${hauteur * ZOOM}`,
     '-dGraphicsAlphaBits=1', '-dTextAlphaBits=1',
     `-sOutputFile=${sortie}`,
   ];
@@ -217,6 +229,43 @@ for (const cas of verite.cas) {
 
   const problemes = [];
 
+  // CONTROLE DE LA TAILLE DECLAREE, ajoute le 26/08/2026 apres un defaut vu en
+  // production par Alex : un logo de 1 270 px ressortait en page de 448 mm,
+  // parce que personne ne passait de largeur et que le cadre retombait sur un
+  // point par pixel. La taille du fichier livre n'etait donc pas une decision,
+  // c'etait le nombre de pixels du fichier depose.
+  //
+  // On lit la BoundingBox de l'EPS, en points, et on verifie qu'elle vaut cent
+  // millimetres sur la PLUS GRANDE DIMENSION. Le controle porte sur le fichier
+  // ecrit, pas sur la fonction qui l'ecrit : un script n'est jamais son propre
+  // juge.
+  const enteteEps = fs.readFileSync(base + '.eps', 'utf-8').slice(0, 400);
+  const bb = enteteEps.match(/%%BoundingBox: 0 0 (\d+) (\d+)/);
+  if (!bb) {
+    problemes.push('l\'EPS livre ne porte pas de BoundingBox lisible');
+  } else {
+    const mm = (pt) => (Number(pt) * 25.4) / 72;
+    const grand = Math.max(mm(bb[1]), mm(bb[2]));
+    // Un point d'arrondi de chaque cote : la BoundingBox est entiere en points,
+    // et un point vaut 0,353 mm.
+    if (Math.abs(grand - 100) > 0.5) {
+      problemes.push(
+        `le fichier livre declare ${mm(bb[1]).toFixed(1)} x ${mm(bb[2]).toFixed(1)} mm, `
+        + `soit ${grand.toFixed(1)} mm sur sa plus grande dimension au lieu de 100`
+      );
+    }
+  }
+
+  // ET LA LARGEUR DEMANDEE COMMANDE, quand elle est donnee. C'est l'autre
+  // moitie du defaut : la valeur saisie par le visiteur servait au diagnostic
+  // et n'atteignait jamais le fichier.
+  const surMesure = versEps(programme, { titre: cas.nom, date: DATE_FIGEE, largeurMm: 60 });
+  const bb60 = surMesure.match(/%%BoundingBox: 0 0 (\d+) (\d+)/);
+  if (!bb60 || Math.abs((Number(bb60[1]) * 25.4) / 72 - 60) > 0.5) {
+    problemes.push(`une largeur demandee de 60 mm ne se retrouve pas dans le fichier livre, `
+      + `BoundingBox ${bb60 ? bb60[1] : 'illisible'} pt`);
+  }
+
   // Controle 3 : le fichier livre porte la palette annoncee.
   // Il ne s'applique qu'aux dessins a aplats. Sur un degrade, le nombre de
   // couleurs annonce n'a pas de sens metier et sera traite par le verdict,
@@ -235,8 +284,9 @@ for (const cas of verite.cas) {
   if (avecGs) {
     let rEps, rPdf;
     try {
-      rEps = rasteriser(base + '.eps', cas.largeur, cas.hauteur);
-      rPdf = rasteriser(base + '.pdf', cas.largeur, cas.hauteur);
+      const largeurPt = bb ? Number(bb[1]) : null;
+      rEps = rasteriser(base + '.eps', cas.largeur, cas.hauteur, largeurPt);
+      rPdf = rasteriser(base + '.pdf', cas.largeur, cas.hauteur, largeurPt);
     } catch (e) {
       const message = (e.stdout ? e.stdout.toString() : e.message).split('\n').slice(0, 2).join(' ');
       problemes.push(`fichier illisible par le rasteriseur : ${message.trim()}`);

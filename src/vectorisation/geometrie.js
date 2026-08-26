@@ -13,6 +13,42 @@
 
 export const POINTS_PAR_MM = 72 / 25.4;
 
+/**
+ * LA TAILLE DECLAREE DU FICHIER LIVRE, arbitrage Alex du 26/08/2026.
+ *
+ * CE QUI N'ALLAIT PAS, et Alex l'a vu sur un vrai fichier. Ni versEps ni
+ * versPdf ne recevaient jamais de largeur : l'appel etait
+ * `versPdf(programme, { titre })`, sans plus. Le cadre retombait donc sur son
+ * echelle par defaut, UN POINT PAR PIXEL, et la taille physique du fichier
+ * livre n'etait plus une decision mais le nombre de pixels de ce que le
+ * visiteur avait depose. Un logo de 1 270 px ressortait en page de 448 mm ;
+ * le meme logo en 500 px serait ressorti en 176 mm. Deux personnes, le meme
+ * dessin, deux fichiers qu'un marqueur place a des tailles differentes.
+ *
+ * Le pire est que l'intention etait ecrite : les deux formats portent une
+ * branche « taille de marquage demandee » qui ne s'executait jamais, faute que
+ * la valeur arrive. Du code ecrit pour une chose qui n'etait pas branchee.
+ *
+ * CENT MILLIMETRES SUR LA PLUS GRANDE DIMENSION quand personne n'a rien
+ * demande. Le nombre est rond, neutre, et dans l'ordre de grandeur d'un
+ * marquage courant. Il ne pretend rien : un fichier vectoriel se redimensionne
+ * sans perte, et ce que la page declare est un point de depart lisible, pas
+ * une contrainte. Ce qu'on gagne, c'est que deux visiteurs avec le meme logo
+ * recoivent desormais le meme fichier.
+ *
+ * SUR LA PLUS GRANDE DIMENSION, et c'est la meme regle que partout ailleurs
+ * dans ce projet : elle porte le moins d'erreur relative. Un logo plus haut
+ * que large sort donc a cent millimetres de HAUT.
+ */
+export const TAILLE_LIVREE_MM = 100;
+
+export function largeurLivreeMm(programme, largeurDemandeeMm = null) {
+  if (Number.isFinite(largeurDemandeeMm) && largeurDemandeeMm > 0) return largeurDemandeeMm;
+  const { largeur, hauteur } = programme ?? {};
+  if (!(largeur > 0) || !(hauteur > 0)) return TAILLE_LIVREE_MM;
+  return largeur >= hauteur ? TAILLE_LIVREE_MM : (TAILLE_LIVREE_MM * largeur) / hauteur;
+}
+
 /** Arrondi d'affichage, trois decimales, sans zeros inutiles. */
 export function nb(valeur) {
   const arrondi = Math.round(valeur * 1000) / 1000;

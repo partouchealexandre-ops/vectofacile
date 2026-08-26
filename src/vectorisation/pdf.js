@@ -12,7 +12,7 @@
  * disponible dans le navigateur via CompressionStream.
  */
 
-import { calculerCadre, emettreForme, nb } from './geometrie.js';
+import { calculerCadre, emettreForme, largeurLivreeMm, nb } from './geometrie.js';
 
 const MOTS = { allerA: 'm', ligne: 'l', courbe: 'c', fermer: 'h' };
 
@@ -27,13 +27,20 @@ function dateP(iso) {
 }
 
 export function versPdf(programme, options = {}) {
-  const cadre = calculerCadre(programme, options);
+  // LA TAILLE SE RESOUT ICI, PAS CHEZ L'APPELANT. C'est la lecon du defaut du
+  // 26/08 : l'appelant avait oublie de passer la largeur, et rien ne le
+  // signalait. Un appelant qui ne dit rien obtient maintenant la taille par
+  // defaut, jamais un point par pixel.
+  const cadre = calculerCadre(programme, {
+    ...options,
+    largeurMm: largeurLivreeMm(programme, options.largeurMm ?? null),
+  });
   const titre = (options.titre || 'logo').replace(/[()\\]/g, '').replace(/[^\x20-\x7E]/g, '');
   const date = dateP(options.date || new Date().toISOString());
 
   const contenu = [];
   if (cadre.largeurMm) {
-    contenu.push(`% taille de marquage demandee : ${nb(cadre.largeurMm)} x ${nb(cadre.hauteurMm)} mm`);
+    contenu.push(`% taille declaree du fichier : ${nb(cadre.largeurMm)} x ${nb(cadre.hauteurMm)} mm`);
   }
   for (const forme of programme.formes) {
     const [r, v, b] = forme.rvb;

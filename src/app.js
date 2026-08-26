@@ -28,6 +28,7 @@ import { construireProgramme, inventaire } from './vectorisation/programme.js';
 import { versEps } from './vectorisation/eps.js';
 import { versPdf } from './vectorisation/pdf.js';
 import { versSvg } from './vectorisation/svg.js';
+import { largeurLivreeMm } from './vectorisation/geometrie.js';
 import { initialiser, vectorize_rgba } from './vectorisation/vtracer_web.js';
 
 const $ = (id) => document.getElementById(id);
@@ -824,6 +825,20 @@ function largeurDeMarquage() {
   return Number.isFinite(n) && n > 0 ? n : null;
 }
 
+/**
+ * LA TAILLE QUE PORTERA LE FICHIER LIVRE, dite au visiteur avant qu'il clique.
+ *
+ * Elle se lit dans la MEME fonction que celle qui ecrit les fichiers : une
+ * seule source, sinon la page annoncerait une taille et le fichier en porterait
+ * une autre, ce qui est exactement le genre d'ecart qui ne se voit jamais.
+ */
+function tailleLivree(programme) {
+  if (!programme?.largeur || !programme?.hauteur) return null;
+  const largeurMm = largeurLivreeMm(programme, largeurDeMarquage());
+  const hauteurMm = (programme.hauteur / programme.largeur) * largeurMm;
+  return `${nb(largeurMm, 1)} × ${nb(hauteurMm, 1)} mm`;
+}
+
 /** Re-mesure a partir de l'image deja lue, sans redemander le fichier. */
 function remesurer() {
   if (!etat.image) return;
@@ -1107,6 +1122,9 @@ async function traiter(fichier) {
       ${ligne('Formes', nb(inv.formes))}
       ${ligne('Couleurs du fichier livré', nb(inv.couleurs))}
       ${ligne('Segments', nb(inv.segments))}
+      ${ligne('Taille déclarée du fichier', tailleLivree(etat.programme),
+              largeurDeMarquage() ? 'la largeur que vous avez indiquée'
+                                  : 'un point de départ, à redimensionner sans perte')}
       <p class="note">
         Les fabricants de goodies demandent du .eps ou du .ai, et refusent le
         SVG dans la plupart des cas. Le SVG reste téléchargeable, pour votre
@@ -1188,11 +1206,17 @@ function brancher() {
   // Les appels a l'action ne s'affichent pas tout seuls : ils se demandent.
   ecouterLaDemandeDeFichier();
 
+  // LA LARGEUR SAISIE ATTEINT ENFIN LE FICHIER LIVRE, 26/08/2026. Elle servait
+  // au diagnostic et s'arretait la : les deux appels ci-dessous ne passaient
+  // que le titre. Une personne qui prend la peine de dire « je marque sur
+  // 60 mm » recevait un fichier qui l'ignorait.
   $('telecharger_eps').addEventListener('click', () => {
-    telecharger(versEps(etat.programme, { titre: etat.nom }), `${etat.nom}.eps`, 'application/postscript');
+    telecharger(versEps(etat.programme, { titre: etat.nom, largeurMm: largeurDeMarquage() }),
+                `${etat.nom}.eps`, 'application/postscript');
   });
   $('telecharger_pdf').addEventListener('click', () => {
-    telecharger(versPdf(etat.programme, { titre: etat.nom }), `${etat.nom}.pdf`, 'application/pdf');
+    telecharger(versPdf(etat.programme, { titre: etat.nom, largeurMm: largeurDeMarquage() }),
+                `${etat.nom}.pdf`, 'application/pdf');
   });
   $('telecharger_svg').addEventListener('click', () => {
     telecharger(etat.svg, `${etat.nom}.svg`, 'image/svg+xml');
