@@ -335,9 +335,26 @@ export function rendreFaitPrincipal(nCouleurs, feux = [], mesures = null) {
   let classe = '';
   if (verts > 0) {
     classe = 'reponse-oui';
+    // « PART TEL QUEL » PROMETTAIT PLUS QUE CE QU'ON SAIT, arbitrage Alex du
+    // 26/08/2026.
+    //
+    // La phrase disait que le logo PART, au present, ce qui se lit comme une
+    // acceptation acquise chez le marqueur. Or ce que nous savons s'arrete au
+    // fichier : rien dedans ne bloque cette technique. La suite appartient a
+    // l'atelier, a ses presses et a ses encres, et le site le repete partout
+    // ailleurs, « nous lisons un fichier, pas une machine ». La tete de page
+    // etait le seul endroit qui l'oubliait.
+    //
+    // « pourrait partir en fabrication » dit exactement ce qui est mesure, et
+    // « etudiees » dit ce que nous avons fait : les sept techniques ont ete
+    // regardees, pas seulement celles qui passent. L'etiquette de la carte
+    // verte, elle, garde son imperatif « Envoyez tel quel » : elle porte une
+    // action sur UNE technique, la tete de page porte un bilan sur les sept.
     titre = verts === total
-      ? `Bonne nouvelle : votre logo part tel quel sur les ${total} techniques.`
-      : `Bonne nouvelle : votre logo part tel quel sur ${verts} des ${total} techniques.`;
+      ? `Bonne nouvelle : votre logo pourrait partir en fabrication sur les ${total} `
+        + 'techniques étudiées.'
+      : `Bonne nouvelle : votre logo pourrait partir en fabrication sur ${verts} des `
+        + `${total} techniques étudiées.`;
   } else if (formats > 0) {
     // PAS DE « BONNE NOUVELLE » ICI, et c'est delibere : aucune technique ne
     // prend le fichier en l'etat. Mais l'obstacle est le notre, pas le sien,
@@ -371,7 +388,7 @@ export function rendreFaitPrincipal(nCouleurs, feux = [], mesures = null) {
   // LES CONSEILS REMONTENT DANS LA REPONSE, arbitrage Alex du 25/08/2026.
   //
   // Ils vivaient sous la grille, dans « À savoir avant de commander ». Celui
-  // qui lit « bonne nouvelle, votre logo part tel quel » s'arrete la : il ne
+  // qui lit « bonne nouvelle, votre logo pourrait partir » s'arrete la : il ne
   // descendra pas sous sept cartes pour apprendre que sa couleur unique
   // meriterait un ton direct, ou que son logo blanc ne se marque que sur du
   // fonce. Un conseil qu'on ne lit pas n'est pas un conseil.
@@ -494,7 +511,7 @@ export function pointsAttention(mesures, feux = []) {
   // 3. LE TON DIRECT, releve par Alex le 25/08/2026 sur un cas reel.
   //
   // CE QUI CLOCHAIT. Un logo d'une seule couleur recevait « bonne nouvelle,
-  // votre logo part tel quel sur 2 des 7 techniques », et ces deux techniques
+  // votre logo pourrait partir sur 2 des 7 techniques », et ces deux techniques
   // etaient l'impression numerique et le transfert. C'est vrai, et c'est le
   // plus mauvais conseil qu'on puisse lui donner : ce sont les deux SEULES qui
   // n'exigent pas de fichier vectoriel, donc elles sortent gagnantes par

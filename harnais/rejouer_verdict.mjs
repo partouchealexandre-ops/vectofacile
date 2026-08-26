@@ -1093,6 +1093,33 @@ const controle = (libelle, ok, detail) => resultats.push({ libelle, ok, detail }
   controle('et elle ne le dit pas quand le logo n\'est pas blanc',
            !/support foncé/.test(rendreFaitPrincipal(2,
              [{ feu: 'vert' }, { feu: 'vert' }], lettrage)));
+  // LA TETE DE PAGE NE PROMET PLUS UNE ACCEPTATION, arbitrage Alex du
+  // 26/08/2026. Elle disait « votre logo part tel quel sur 3 des 7 techniques »,
+  // au present, ce qui se lit comme une acceptation deja acquise chez le
+  // marqueur. Ce que nous savons s'arrete au FICHIER : rien dedans ne bloque
+  // ces techniques. La suite appartient a l'atelier, a ses presses et a ses
+  // encres, et le site le dit partout ailleurs. La tete de page etait le seul
+  // endroit qui l'oubliait.
+  const troisVerts = [
+    { feu: 'vert' }, { feu: 'vert' }, { feu: 'vert' },
+    { feu: 'orange' }, { feu: 'orange' }, { feu: 'rouge' }, { feu: 'rouge' },
+  ];
+  const teteTrois = rendreFaitPrincipal(2, troisVerts, lettrage);
+  controle('la tete de page compte les techniques qui passent, et le total',
+           /3 des 7 techniques/.test(teteTrois),
+           teteTrois.match(/Bonne nouvelle[^<]*/)?.[0] ?? teteTrois.slice(0, 80));
+  controle('elle dit que le logo POURRAIT partir, elle ne l\'affirme pas',
+           /pourrait partir en fabrication/.test(teteTrois));
+  controle('et elle dit que les sept ont ete etudiees, pas seulement celles qui passent',
+           /techniques étudiées/.test(teteTrois));
+  controle('(temoin) elle ne promet plus que le logo « part tel quel »',
+           !/part tel quel/.test(teteTrois));
+  // L'ETIQUETTE DE LA CARTE, ELLE, GARDE SON IMPERATIF. Elle porte une action
+  // sur UNE technique ; la tete de page porte un bilan sur les sept. Affaiblir
+  // les deux retirerait au visiteur la seule phrase qui lui dit quoi faire.
+  controle('la carte verte, elle, dit toujours « Envoyez tel quel »',
+           /Envoyez tel quel/.test(rendreFeux([{ ...TECHNIQUES_FEUX[0], feu: 'vert' }])));
+
   // TEMOIN. Un logo fonce portant un lettrage blanc de 25 % n'est PAS un logo
   // blanc : c'est le cas le plus ordinaire qui soit, et une fausse alerte
   // dessus decredibiliserait toutes les vraies.
