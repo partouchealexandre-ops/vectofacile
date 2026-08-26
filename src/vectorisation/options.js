@@ -115,6 +115,12 @@ export function optionsDepuisMesures(mesures, reglages = {}) {
     const dimensions = mesures.m1Dimensions
       ? `${mesures.m1Dimensions.largeurPx} par ${mesures.m1Dimensions.hauteurPx} pixels`
       : 'de petite taille';
+    // LES ACCENTS, corriges le 26/08/2026. Ce bloc avait ete ecrit dans le
+    // style des COMMENTAIRES du projet, qui sont sans accent par convention.
+    // Ce sont des phrases VUES par le visiteur : « sera decevant », « le trace
+    // ne peut pas restituer le detail », « quand meme », « aucun reglage ». Le
+    // seul endroit du site ou l'on annonce une mauvaise nouvelle etait aussi le
+    // seul ecrit en style telegraphique.
     avertissements.push({
       gravite: traitBasse <= 1 ? 'grave' : 'notable',
       // LE TITRE DIT DE QUOI ON PARLE, corrige le 25/08/2026. « Votre image
@@ -122,18 +128,18 @@ export function optionsDepuisMesures(mesures, reglages = {}) {
       // visiteur ne savait pas si on parlait de son marquage ou de notre
       // travail. On parle de NOTRE travail, et le titre le dit.
       titre: traitBasse <= 1
-        ? "Le fichier vectoriel que nous produirons sera decevant"
-        : "Le fichier vectoriel sera juste a la limite",
+        ? "Le fichier vectoriel que nous produirons sera décevant"
+        : "Le fichier vectoriel sera juste à la limite",
       texte: `Votre image mesure ${dimensions}, et son trait le plus fin y fait `
-        + `${traitBasse} pixel${traitBasse > 1 ? 's' : ''}. A cette taille, le trace ne `
-        + `peut pas restituer le detail : les petits textes se remplissent et les `
-        + `courbes deviennent anguleuses. Nous vectorisons quand meme, en contours `
+        + `${traitBasse} pixel${traitBasse > 1 ? 's' : ''}. À cette taille, le tracé ne `
+        + `peut pas restituer le détail : les petits textes se remplissent et les `
+        + `courbes deviennent anguleuses. Nous vectorisons quand même, en contours `
         + `droits et sans lissage pour ne rien inventer. Cela ne dit rien de votre `
-        + `logo lui meme, ni des techniques qui l'impriment directement : c'est le `
-        + `FICHIER VECTORIEL, et lui seul, qui sera decevant.`,
+        + `logo lui-même, ni des techniques qui l'impriment directement : c'est le `
+        + `FICHIER VECTORIEL, et lui seul, qui sera décevant.`,
       remede: `Cherchez une version au moins ${facteur} fois plus large de votre logo : `
         + `le PDF d'une plaquette, l'export d'origine, ou le fichier de votre graphiste. `
-        + `Aucun reglage ne remplace des pixels absents.`,
+        + `Aucun réglage ne remplace des pixels absents.`,
     });
   }
 

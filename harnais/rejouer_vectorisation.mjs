@@ -229,6 +229,23 @@ for (const cas of verite.cas) {
 
   const problemes = [];
 
+  // LES PHRASES VUES PAR LE VISITEUR PORTENT LEURS ACCENTS, 26/08/2026.
+  //
+  // L'avertissement sur le trait limite avait ete ecrit dans le style des
+  // COMMENTAIRES du projet, qui sont sans accent par convention. Il est reste
+  // des semaines en production a dire « sera decevant », « le trace ne peut pas
+  // restituer le detail », « aucun reglage ». Le seul endroit du site ou l'on
+  // annonce une mauvaise nouvelle etait aussi le seul ecrit en telegramme.
+  //
+  // Le controle ne juge pas l'orthographe : il cherche une liste courte de mots
+  // qui, dans un texte francais, ne peuvent PAS s'ecrire sans accent.
+  const SANS_ACCENT = /\b(decevant|trace ne|detail|quand meme|lui meme|reglage|A cette taille)\b/;
+  for (const a of prepare.avertissements ?? []) {
+    const entier = `${a.titre} ${a.texte} ${a.remede ?? ''}`;
+    const faute = entier.match(SANS_ACCENT);
+    if (faute) problemes.push(`un avertissement montre au visiteur perd ses accents : « ${faute[0]} »`);
+  }
+
   // CONTROLE DE LA TAILLE DECLAREE, ajoute le 26/08/2026 apres un defaut vu en
   // production par Alex : un logo de 1 270 px ressortait en page de 448 mm,
   // parce que personne ne passait de largeur et que le cadre retombait sur un
