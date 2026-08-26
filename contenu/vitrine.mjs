@@ -77,9 +77,15 @@ export const VITRINE = [
     // soit soixante-dix pour cent. Le marquage y est donc nettement plus grand
     // sans qu'aucune echelle ait bouge, et la surface y est unie, sans la
     // poche diagonale ni le passant du devant.
+    // 236 ET NON 235, corrige le 26/08/2026 par le controle du composeur.
+    // J'avais calcule l'echelle sur la LARGEUR de la zone, 110 mm pour 467 px.
+    // Elle se lit sur la PLUS GRANDE DIMENSION, ici la hauteur, 180 mm pour
+    // 763 px, et c'est une regle du projet, pas un detail : la plus grande
+    // dimension porte le moins d'erreur relative. Les deux calculs donnent
+    // 235,31 et 235,67 mm, qui n'arrondissent pas au meme entier.
     image: 'p04_16.jpg', part: 0.80, encre: 'blanc',
     largeurPx: 663, hauteurPx: 999,
-    largeurMmPhoto: 156, hauteurMmPhoto: 235,
+    largeurMmPhoto: 156, hauteurMmPhoto: 236,
     alt: 'Le logo dans sa version blanche sur le dos d\'un carnet A5 à couverture souple, '
        + 'à 88 millimètres de large.',
   },
