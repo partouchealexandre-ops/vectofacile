@@ -290,9 +290,21 @@ export function monterPanneau({ hote, lot, cheminImages = '/simulation/',
 
   return {
     /** Pose le logo du visiteur. `source` est une URL, un data: ou un Blob. */
+    /**
+     * SOURCE OU DESSIN DEJA PRET, 26/08/2026.
+     *
+     * Une chaine reste une adresse d'image a charger, comme avant. Mais depuis
+     * que la page accepte les PDF et les .ai, elle arrive avec une toile deja
+     * peinte et deja recadree : la recharger par une adresse la ferait passer
+     * une seconde fois par un encodage, pour rien.
+     *
+     * Tout ce que la suite demande, c'est un objet dessinable qui connaisse sa
+     * largeur et sa hauteur. Une toile en est un, exactement comme une image :
+     * c'est deja ce que le composeur de la vitrine fournit pour notre propre
+     * logotype.
+     */
     poserLogo(source) {
-      const i = new Image();
-      i.onload = () => {
+      const pret = (i) => {
         etat.logoOrigine = i;
         etat.detourage = 'aucun';
         // On regarde le blanc sur une reduction : la reponse est la meme et
@@ -306,7 +318,13 @@ export function monterPanneau({ hote, lot, cheminImages = '/simulation/',
         catch (e) { etat.blanc = null; }
         appliquerDetourage();
       };
-      i.src = source;
+      if (typeof source === 'string') {
+        const i = new Image();
+        i.onload = () => pret(i);
+        i.src = source;
+        return;
+      }
+      pret(source);
     },
     /** Ce que le visiteur a choisi de faire du blanc. */
     detourage: () => etat.detourage,

@@ -581,6 +581,66 @@ async function controlerLaPage() {
   controle('aucun point decimal anglais dans les mesures', anglais.length === 0,
            anglais.join(', '));
 
+  // UN VECTORIEL SE POSE SUR UN OBJET, correctif du 26/08/2026.
+  //
+  // Le site acceptait un PDF sur l'accueil et le refusait ici, un clic plus
+  // loin. Ce n'etait pas une regle, c'etait un trou : cette page ne regardait
+  // que le type declare et exigeait `image/`.
+  //
+  // Le PDF utilise est celui que NOTRE chaine vient de produire, deux harnais
+  // plus tot. Il n'y a donc aucun fichier de test a maintenir a la main, et le
+  // jour ou notre ecriture de PDF casserait, ce controle le dirait aussi.
+  const PDF_TEMOIN = path.join(ICI, 'sorties', 'capitales_20px.pdf');
+  if (fs.existsSync(PDF_TEMOIN)) {
+    await onglet.setInputFiles('#fichier', {
+      name: 'logo.pdf', mimeType: 'application/pdf',
+      buffer: fs.readFileSync(PDF_TEMOIN),
+    });
+    // Le lecteur de PDF se charge a la demande : il faut lui laisser le temps,
+    // et c'est justement la preuve qu'il n'est PAS charge pour un PNG.
+    await onglet.waitForTimeout(2500);
+    const vectoriel = await onglet.evaluate(() => ({
+      erreur: document.getElementById('erreur')?.hidden === false,
+      message: document.getElementById('erreur')?.textContent?.trim().slice(0, 80) ?? '',
+      vignette: Boolean(document.querySelector('#depot .vignette')),
+      nom: document.querySelector('#depot strong')?.textContent ?? '',
+      millimetres: [...document.querySelectorAll('.simu-mesures li')]
+        .find((n) => /en vrai/.test(n.textContent))?.querySelector('b')?.textContent ?? null,
+    }));
+    controle('un PDF depose n\'est plus refuse sur le simulateur',
+             vectoriel.erreur === false, vectoriel.message);
+    controle('il se pose comme un logo, avec son nom dans la zone de depot',
+             vectoriel.vignette && vectoriel.nom === 'logo.pdf',
+             `${vectoriel.vignette} / ${vectoriel.nom}`);
+    controle('et il est mesure en millimetres comme n\'importe quelle image',
+             Boolean(vectoriel.millimetres), vectoriel.millimetres ?? 'aucune mesure');
+  } else {
+    controle('(saute) le PDF temoin n\'a pas ete produit par le harnais precedent',
+             false, PDF_TEMOIN);
+  }
+
+  // ET UN EPS N'EST PAS RENVOYE COMME UN FORMAT INVALIDE. Il a sa sortie : un
+  // EPS est un programme, aucun navigateur ne l'execute, et la personne qui en
+  // tient un tient justement le fichier que son marqueur reclame.
+  await onglet.setInputFiles('#fichier', {
+    name: 'logo.eps', mimeType: 'application/postscript',
+    buffer: Buffer.from('%!PS-Adobe-3.0 EPSF-3.0\n%%BoundingBox: 0 0 100 50\n%%EOF\n'),
+  });
+  await onglet.waitForTimeout(400);
+  const eps = await onglet.evaluate(() =>
+    document.getElementById('erreur')?.textContent?.trim() ?? '');
+  controle('un EPS recoit sa propre explication, pas « format invalide »',
+           /PostScript/.test(eps) && /PDF/.test(eps), eps.slice(0, 90));
+  controle('(temoin) et cette explication ne dit jamais que c\'est impossible',
+           !/impossible/i.test(eps));
+  // ET LE SIMULATEUR SURVIT AU MAUVAIS FICHIER. L'ancien code vidait l'hote
+  // pour tout message d'erreur : deposer un PDF detruisait le panneau, les
+  // objets, les emplacements, tout. On retirait l'outil au visiteur pour le
+  // punir d'avoir essaye.
+  const survit = await onglet.evaluate(() =>
+    Boolean(document.querySelector('.simu-panneau')));
+  controle('le panneau survit a un fichier refuse, il n\'est plus detruit', survit);
+
   await navigateur.close();
   serveur.close();
 }

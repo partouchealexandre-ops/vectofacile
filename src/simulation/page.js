@@ -9,12 +9,30 @@
  */
 import { monterPanneau } from './panneau.js';
 import { verifierLotDerive } from './simulateur.js';
+import { reconnaitre, lireVectoriel, FichierVectorielNonLu }
+  from '../adaptateurs/pdf_navigateur.js';
 
 const hote = document.getElementById('simulateur');
 const zoneErreur = document.getElementById('erreur');
 
+/**
+ * DEUX PANNES, ET ELLES N'ONT PAS LA MEME REPONSE. Separees le 26/08/2026.
+ *
+ * `echouer` est pour une panne FATALE : le lot ne se charge pas, le panneau ne
+ * peut pas exister. Vider l'hote est alors correct, il n'y a rien a montrer.
+ *
+ * `signaler` est pour un FICHIER qui ne convient pas. Le panneau, lui, va tres
+ * bien : les objets sont charges, les emplacements sont la, il suffit de
+ * deposer autre chose. L'ancien code appelait `echouer` dans ce cas, et
+ * detruisait donc tout le simulateur parce qu'un visiteur avait depose un PDF.
+ * On lui retirait l'outil pour le punir d'avoir essaye.
+ */
 function echouer(message) {
   if (hote) hote.innerHTML = '';
+  signaler(message);
+}
+
+function signaler(message) {
   if (!zoneErreur) return;
   zoneErreur.hidden = false;
   zoneErreur.textContent = message;
@@ -29,6 +47,61 @@ function echouer(message) {
  */
 let derniereSortie = null;
 export const sortieCourante = () => derniereSortie;
+
+/**
+ * LA BOITE D'ENCRE D'UNE TOILE, et pourquoi elle est indispensable ici.
+ *
+ * Un PDF, c'est une PAGE, pas un dessin. Un logo exporte tout seul remplit sa
+ * page ; un logo pris dans une plaquette flotte au milieu d'un A4. Poser la
+ * page entiere dans la zone de marquage y mettrait les marges, et annoncerait
+ * les millimetres du PAPIER au lieu de ceux du logo.
+ *
+ * On recadre donc AVANT de poser, jamais apres : recadrer, c'est recalculer,
+ * et le calcul qui compte est celui qui suit le recadrage.
+ *
+ * Le fond rendu par le lecteur est transparent, jamais blanc, decision du
+ * module PDF : l'opacite suffit donc a separer l'encre du vide, sans regarder
+ * une seule couleur.
+ */
+function recadrerSurLEncre(toile) {
+  const c = toile.getContext('2d', { willReadFrequently: true });
+  const { data, width, height } = c.getImageData(0, 0, toile.width, toile.height);
+  let gauche = width;
+  let haut = height;
+  let droite = -1;
+  let bas = -1;
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      if (data[(y * width + x) * 4 + 3] < 8) continue;
+      if (x < gauche) gauche = x;
+      if (x > droite) droite = x;
+      if (y < haut) haut = y;
+      if (y > bas) bas = y;
+    }
+  }
+  // Page entierement vide : on ne recadre pas sur rien. La toile part telle
+  // quelle, et le visiteur voit qu'il n'y a pas de dessin dedans.
+  if (droite < 0 || bas < 0) return toile;
+  const largeur = droite - gauche + 1;
+  const hauteur = bas - haut + 1;
+  if (largeur === width && hauteur === height) return toile;
+  const coupee = document.createElement('canvas');
+  coupee.width = largeur;
+  coupee.height = hauteur;
+  coupee.getContext('2d')
+    .drawImage(toile, gauche, haut, largeur, hauteur, 0, 0, largeur, hauteur);
+  return coupee;
+}
+
+/** Les pixels rendus par le lecteur, remis dans une toile posable. */
+function toileDepuisImage(image) {
+  const t = document.createElement('canvas');
+  t.width = image.largeur;
+  t.height = image.hauteur;
+  t.getContext('2d').putImageData(
+    new ImageData(new Uint8ClampedArray(image.donnees), image.largeur, image.hauteur), 0, 0);
+  return t;
+}
 
 try {
   const reponse = await fetch('/src/simulation/lot1.json');
@@ -73,10 +146,65 @@ try {
     depot.append(vignette, titre, aide);
   };
 
-  const poser = (fichier) => {
+  /**
+   * LE DEPOT ACCEPTE MAINTENANT LES VECTORIELS, correctif du 26/08/2026.
+   *
+   * CE QUI N'ALLAIT PAS, et Alex l'a dit franchement : le site acceptait un
+   * PDF ou un .ai sur l'accueil et le refusait un clic plus loin. Ce n'etait
+   * pas une regle, c'etait un trou. Cette page testait `fichier.type`, exigeait
+   * qu'il commence par `image/`, puis mettait le fichier dans une balise img.
+   * Un navigateur ne sait pas afficher un PDF dans une balise img : le fichier
+   * le plus propre du parcours, celui de la personne qui a deja son vectoriel,
+   * se faisait donc renvoyer.
+   *
+   * ON LIT LES OCTETS, PAS L'ETIQUETTE. Meme doctrine que sur l'accueil, et
+   * pour la meme raison mesuree le 19/08 : le systeme d'Alex annonce un .ai
+   * comme `application/postscript` alors que son contenu commence par %PDF.
+   * Se fier au type declare refuserait le fichier pour la raison exactement
+   * inverse de la vraie.
+   *
+   * pdf.js pese 3,5 Mo et n'est charge QUE si quelqu'un depose un vectoriel.
+   * Qui arrive avec un PNG ne telecharge rien de plus qu'avant.
+   */
+  const poser = async (fichier) => {
     if (!fichier) return;
+
+    let nature = null;
+    try { nature = reconnaitre(await fichier.slice(0, 1024).arrayBuffer()); }
+    catch (e) { nature = null; }
+
+    // L'EPS N'EST PAS UN REFUS SEC, il a sa propre sortie. Un EPS est un
+    // programme PostScript : pour savoir ce qu'il dessine il faut l'executer,
+    // et aucun navigateur ne le fait. On ne dit donc pas « format invalide » a
+    // quelqu'un qui tient le fichier que son marqueur reclame ; on lui dit ce
+    // qui bloque et ce qui marche.
+    if (nature === 'postscript') {
+      signaler('Un EPS est un programme PostScript, et aucun navigateur ne sait '
+        + 'l’exécuter : nous ne pouvons donc pas en tirer une image à poser. '
+        + 'Réenregistrez le même logo en PDF depuis votre logiciel, ou demandez '
+        + 'le PDF à qui vous a fourni cet EPS. Tout fonctionnera.');
+      return;
+    }
+
+    if (nature === 'pdf') {
+      if (zoneErreur) zoneErreur.hidden = true;
+      try {
+        const { image } = await lireVectoriel(fichier);
+        const toile = recadrerSurLEncre(toileDepuisImage(image));
+        panneau.poserLogo(toile);
+        montrerLeLogo(toile.toDataURL('image/png'), fichier.name);
+      } catch (e) {
+        signaler(e instanceof FichierVectorielNonLu
+          ? `Ce fichier vectoriel n’a pas pu être lu : ${e.message}`
+          : 'Ce fichier vectoriel n’a pas pu être lu. Réenregistrez-le en PDF, '
+            + 'ou déposez une image.');
+      }
+      return;
+    }
+
     if (!/^image\//.test(fichier.type)) {
-      echouer('Ce format n’est pas une image. Déposez un PNG, un JPEG, un GIF ou un WEBP.');
+      signaler('Ce format n’est pas reconnu. Déposez un PNG, un JPEG, un GIF, '
+        + 'un WEBP, un PDF ou un fichier Illustrator.');
       return;
     }
     if (zoneErreur) zoneErreur.hidden = true;
