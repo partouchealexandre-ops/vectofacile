@@ -63,17 +63,25 @@ export const VITRINE = [
        + 'à 174 millimètres de large.',
   },
   {
-    image: 'p02_05.jpg', part: 0.85, encre: 'navy',
+    image: 'p02_05.jpg', part: 0.92, encre: 'navy',
     largeurPx: 700, hauteurPx: 708,
     largeurMmPhoto: 727, hauteurMmPhoto: 736,
-    alt: 'Le même logo en marquage poitrine sur un t-shirt blanc, à 85 millimètres de large.',
+    alt: 'Le même logo en marquage poitrine sur un t-shirt blanc, à 92 millimètres de large.',
   },
   {
-    image: 'p04_13.jpg', part: 0.80, encre: 'blanc',
-    largeurPx: 659, hauteurPx: 1000,
-    largeurMmPhoto: 154, hauteurMmPhoto: 234,
-    alt: 'Le logo dans sa version blanche sur la couverture bleu marine d\'un carnet A5, '
-       + 'à 64 millimètres de large.',
+    // LE DOS PLUTOT QUE LE DEVANT, arbitrage Alex du 26/08/2026 : « le carnet est
+    // trop petit, ce n'est pas parlant ». La taille du carnet, elle, ne se
+    // negocie pas, c'est celle d'un A5 a cote d'un t-shirt. Ce qui se negocie,
+    // c'est l'EMPLACEMENT : le devant en haut n'offre que 80 x 70 mm, soit la
+    // moitie de la largeur de la couverture, quand le dos en offre 110 x 180,
+    // soit soixante-dix pour cent. Le marquage y est donc nettement plus grand
+    // sans qu'aucune echelle ait bouge, et la surface y est unie, sans la
+    // poche diagonale ni le passant du devant.
+    image: 'p04_16.jpg', part: 0.80, encre: 'blanc',
+    largeurPx: 663, hauteurPx: 999,
+    largeurMmPhoto: 156, hauteurMmPhoto: 235,
+    alt: 'Le logo dans sa version blanche sur le dos d\'un carnet A5 à couverture souple, '
+       + 'à 88 millimètres de large.',
   },
 ];
 
@@ -85,7 +93,8 @@ export const VITRINE = [
  * ne casse, et c'est exactement pour ca qu'un controle la garde.
  */
 export const LEGENDE = 'Ces trois images sont produites par cet outil, sur des zones aux '
-  + 'dimensions déclarées par les fabricants. C\'est une simulation, pas une validation.';
+  + 'dimensions déclarées par les fabricants, et les objets sont à leur taille relative '
+  + 'réelle. C\'est une simulation, pas une validation.';
 
 /**
  * LA PART DE HAUTEUR DE CHAQUE OBJET, entre 0 et 1, le plus grand valant 1.

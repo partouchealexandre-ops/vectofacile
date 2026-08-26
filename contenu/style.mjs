@@ -136,9 +136,14 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
      suit le rapport de l'image, donc elle ne peut pas mentir.
      Les objets sont alignes en BAS, comme poses sur une meme table. Centres,
      un carnet flotterait au milieu du vide a cote d'un t-shirt.
-     La hauteur de reference est le seul reglage. Elle vaut ce qu'il faut pour
-     que le bloc ne mange pas l'ecran juste sous la zone de depot. */
-  .vitrine { --hauteur-vitrine: 330px;
+     La hauteur de reference est le seul reglage, et il est CONTRAINT, 26/08/2026.
+     A l'echelle vraie, la zone poitrine d'un t-shirt ne fait que quatorze pour
+     cent de la largeur du vetement, et un carnet A5 fait moins d'un tiers de sa
+     hauteur. Trop bas, plus aucun des deux marquages ne se lit ; trop haut, le
+     bloc mange l'ecran juste sous la zone de depot. 460 est le compromis
+     mesure : le marquage poitrine y tient sur une soixantaine de pixels, celui
+     du carnet sur soixante-dix. */
+  .vitrine { --hauteur-vitrine: 460px;
              display: flex; align-items: flex-end; justify-content: center;
              flex-wrap: wrap; gap: 28px; margin: 0 0 30px; }
   .vitrine img { display: block; width: auto; border-radius: 10px;
@@ -146,8 +151,8 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
                  background: var(--gris-clair); }
   .vitrine figcaption { flex-basis: 100%; color: var(--gris); font-size: 14px;
                         line-height: 1.5; margin: 4px 0 0; text-align: center; }
-  @media (max-width: 900px) { .vitrine { --hauteur-vitrine: 250px; gap: 20px; } }
-  @media (max-width: 620px) { .vitrine { --hauteur-vitrine: 180px; gap: 14px; } }
+  @media (max-width: 900px) { .vitrine { --hauteur-vitrine: 340px; gap: 20px; } }
+  @media (max-width: 620px) { .vitrine { --hauteur-vitrine: 240px; gap: 14px; } }
 
   .bandeau { display: grid; gap: 28px; align-items: center; margin: 4px 0 16px; }
   .bandeau h1 { margin-top: 0; }
