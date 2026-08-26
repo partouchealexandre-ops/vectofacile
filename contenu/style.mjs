@@ -598,12 +598,32 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
    1017 px pour un cadre qui n'en offre que 976 a cette largeur. On resserre
    les gouttieres et les boutons plutot que de couper un libelle, et le
    controle mesure desormais les deux largeurs. */
-@media (max-width: 1100px) {
-  .entete { gap: 10px; }
-  .nav-site { gap: 12px; }
-  .entete .droite { gap: 10px; }
-  .cta-entete, .cta-secondaire { padding: 9px 11px; }
-  .nav-site a.nav-action { padding: 7px 10px; }
+/* L'ENTETE SE RESSERRE EN CONTINU, ET PLUS PAR PALIER.
+   Deuxieme tentative, et la premiere merite d'etre racontee.
+
+   J'avais pose un palier a 1100 px, calcule sur une mesure prise dans un
+   conteneur Linux. Il tenait la. Il debordait sur la machine d'Alex, a 114 px
+   au lieu de 67, parce que la pile systeme n'est pas la meme police d'un
+   systeme a l'autre : le texte de la navigation et des boutons, qui fait
+   l'essentiel de la largeur, n'a pas la meme chasse sous San Francisco et
+   sous une police de substitution. J'avais mesure mon instrument, pas
+   l'objet. Le harnais, lui, mesurait l'objet, et il a dit non.
+
+   D'ou le changement de methode. Un palier suppose qu'on connaisse la largeur
+   du texte, ce qui est faux d'un systeme a l'autre. Une interpolation, non :
+   elle rend de la place proportionnellement a l'ecran, sans jamais supposer
+   de combien on a besoin. Les bornes hautes sont les valeurs de la charte,
+   les bornes basses sont le plancher de lisibilite. */
+@media (max-width: 1180px) {
+  .entete { gap: clamp(7px, 1vw, 16px); }
+  .entete .droite { gap: clamp(7px, 1vw, 14px); }
+  .nav-site { gap: clamp(8px, 1.15vw, 18px); font-size: clamp(12px, 1.02vw, 14px); }
+  .nav-site a.nav-action { padding: clamp(5px, .55vw, 7px) clamp(7px, .95vw, 13px); }
+  .cta-entete, .cta-secondaire { font-size: clamp(12px, 1.02vw, 14px);
+                                 padding: clamp(7px, .7vw, 9px) clamp(8px, 1.1vw, 15px); }
+  .lockup { gap: 8px; }
+  .lockup svg { width: 30px; height: 30px; }
+  .lockup .mot { font-size: 16px; }
 }
 .pied-site { border-top: 1px solid var(--trait); margin-top: 60px; padding: 30px 20px 40px;
   background: var(--gris-clair); }

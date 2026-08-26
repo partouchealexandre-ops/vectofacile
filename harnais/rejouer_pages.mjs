@@ -241,19 +241,35 @@ for (const url of URLS) {
   // regarde qu'une largeur ne controle pas une mise en page qui depend de la
   // largeur, exactement comme une mesure de trait qui ne balaie qu'une
   // direction ne mesure pas une epaisseur.
-  const hauteurDeLEntete = async () => page.evaluate(() => {
+  //
+  // ET LA FAUTE DIT DE COMBIEN, pas seulement que. Le 26/08, ce controle a
+  // rejete un entete vingt-deux fois en repetant « 114 px » sans dire ce qui
+  // debordait. Il a fallu deviner, et j'ai devine faux une fois. Un controle
+  // qui refuse sans chiffrer coute un aller-retour a chaque tentative.
+  const mesurerEntete = async () => page.evaluate(() => {
     const e = document.querySelector('.entete');
-    return e ? Math.round(e.getBoundingClientRect().height) : null;
+    if (!e) return null;
+    const l = (s) => {
+      const n = document.querySelector(s);
+      return n ? Math.round(n.getBoundingClientRect().width) : 0;
+    };
+    return {
+      hauteur: Math.round(e.getBoundingClientRect().height),
+      lockup: l('.lockup'), nav: l('.nav-site'), droite: l('.entete .droite'),
+      cadre: Math.round(e.getBoundingClientRect().width),
+    };
   });
-  const hauteurEntete = await hauteurDeLEntete();
-  if (hauteurEntete !== null && hauteurEntete > 100) {
-    fautes.push(`entete sur deux lignes : ${hauteurEntete} px a 1280 de large`);
-  }
+  const juger = (m, largeur) => {
+    if (!m || m.hauteur <= 100) return;
+    const somme = m.lockup + m.nav + m.droite;
+    fautes.push(`entete sur deux lignes a ${largeur} de large : ${m.hauteur} px. `
+      + `Logotype ${m.lockup} + navigation ${m.nav} + actions ${m.droite} = ${somme} px `
+      + `demandes pour ${m.cadre} px de cadre, soit ${somme - m.cadre} px de trop `
+      + `avant les gouttieres.`);
+  };
+  juger(await mesurerEntete(), '1280');
   await page.setViewportSize({ width: 1024, height: 900 });
-  const hauteurEtroite = await hauteurDeLEntete();
-  if (hauteurEtroite !== null && hauteurEtroite > 100) {
-    fautes.push(`entete sur deux lignes : ${hauteurEtroite} px a 1024 de large`);
-  }
+  juger(await mesurerEntete(), '1024');
   await page.setViewportSize({ width: 1280, height: 900 });
 
   // UN SEUL BOUTON ORANGE DANS L'ENTETE, arbitrage Alex du 18/08.
