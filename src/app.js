@@ -1094,7 +1094,9 @@ async function traiter(fichier) {
 
     etape = 'vectorisation';
     direEtape('Vectorisation');
-    const svg = vectorize_rgba(new Uint8Array(prepare.pixels.buffer), image.largeur, image.hauteur, prepare.options);
+    // Les dimensions viennent de la PREPARATION, pas de l'image : le tampon
+    // peut etre la grille fine du sur echantillonnage.
+    const svg = vectorize_rgba(new Uint8Array(prepare.pixels.buffer), prepare.largeur, prepare.hauteur, prepare.options);
     etape = 'lecture des chemins';
     etat.programme = construireProgramme(svg, prepare.options);
     // On n'affiche ni ne livre JAMAIS le SVG brut du vectoriseur : il contient

@@ -285,11 +285,27 @@ export function optionsDepuisMesures(mesures, reglages = {}) {
  */
 export function preparerVectorisation(image, mesures, reglages = {}) {
   const refus = refusDeVectorisation(mesures);
-  if (refus) return { refus, options: null, pixels: null, avertissements: [] };
+  if (refus) return { refus, options: null, pixels: null, largeur: null, hauteur: null, avertissements: [] };
   const options = optionsDepuisMesures(mesures, reglages);
   const avertissements = options._avertissements;
   delete options._avertissements;
-  return { refus: null, options, pixels: pixelsPourVectorisation(image, mesures), avertissements };
+  // LA GRILLE FINE, ET SES DIMENSIONS AVEC ELLE. Le vectoriseur ne devine pas
+  // la taille du tampon qu'on lui tend : l'appelant DOIT lire largeur et
+  // hauteur ici, jamais celles de l'image d'origine. Les rendre obligatoires
+  // plutot que facultatives est delibere : un appelant qui les oublierait
+  // ferait un fichier faux en silence, alors qu'un tampon lu au mauvais
+  // format echoue bruyamment.
+  const pixels = pixelsPourVectorisation(image, mesures);
+  const k = facteurSurEchantillon(image.largeur, image.hauteur);
+  options.surEchantillon = k;
+  return {
+    refus: null,
+    options,
+    pixels: k > 1 ? surEchantillonner(pixels, image, k) : pixels,
+    largeur: image.largeur * k,
+    hauteur: image.hauteur * k,
+    avertissements,
+  };
 }
 
 /**
@@ -502,4 +518,193 @@ export function pixelsPourVectorisation(image, mesures) {
   }
 
   return propre;
+}
+
+/* ------------------------------------------------- SUR ECHANTILLONNAGE */
+
+/**
+ * LE BORD SE REPLACE AU SOUS PIXEL AVANT D'ETRE TRACE, 26/08/2026.
+ *
+ * DEUX DEFAUTS, UNE SEULE CAUSE. Le vectoriseur recoit une image OU CHAQUE
+ * PIXEL A DEJA CHOISI SON CAMP, et il trace le contour de cette grille. Deux
+ * consequences, mesurees sur le logo Choose Chicago, 416 x 300 :
+ *
+ *   L'ESCALIER. Sur un cercle de 12 pixels de rayon, la grille impose des
+ *   marches d'un pixel. L'ajustement les prend pour du dessin et les suit :
+ *   les « O » du mot CHOOSE sortaient bosselees.
+ *
+ *   L'ENGRAISSEMENT. Le masque d'encre repond « il y a de l'encre ici » des
+ *   qu'un pixel s'ecarte du fond de plus de six unites Lab, ce qui arrive des
+ *   quatorze pour cent de couverture. C'est le bon seuil pour MESURER : on ne
+ *   veut manquer aucun element. Ce n'est pas le bon pour TRACER : le bord se
+ *   retrouve pose 0,7 pixel trop loin, tout autour de chaque forme. Surface
+ *   d'encre livree sur Chicago : 46 972 pixels pour 42 283 de couverture
+ *   reelle, onze pour cent de trop. Sur un fut de lettre de quatre pixels,
+ *   c'est trente pour cent de graisse en plus, et le mot devient une bouillie.
+ *
+ * LE MASQUE DIT OU IL Y A DE L'ENCRE, IL NE DIT PAS OU PASSE LE BORD. Le bord,
+ * lui, est ecrit dans l'antialiasing de la source : la rampe entre l'encre et
+ * le fond porte, en clair, la position sous pixel du contour. On la lisait puis
+ * on la jetait.
+ *
+ * LA REGLE. Sur une image assez petite pour que la grille soit le facteur
+ * limitant, on fabrique une grille k fois plus fine. Chaque sous pixel garde la
+ * couleur de son pixel parent tant que le voisinage est uniforme ; sur les
+ * bords, il choisit, PARMI LES SEULES COULEURS DEJA PRESENTES AUTOUR, celle
+ * dont il est le plus proche dans la source interpolee. Aucune couleur n'est
+ * inventee, aucune region n'apparait ni ne disparait : seul le bord se deplace,
+ * vers l'endroit ou la source dit qu'il est.
+ *
+ * Resultat sur Chicago : surface d'encre a 0,3 pour cent de la couverture
+ * reelle au lieu de onze, et les « O » redeviennent rondes.
+ *
+ * Les coordonnees redescendent en pixels de la source dans construireProgramme,
+ * AVANT la poussiere et avant l'ajustement : toutes les tolerances du metier
+ * restent exprimees dans l'unite du client, et l'escalier qu'elles voient ne
+ * fait plus qu'un k-ieme de pixel.
+ */
+
+/** Au dela, la grille n'est plus le facteur limitant : on ne sur echantillonne pas. */
+export const SURFACE_SANS_SUR_ECHANTILLON_PX = 1500000;
+
+/** Plafond de travail du vectoriseur, en pixels de la grille fine. */
+export const BUDGET_SUR_ECHANTILLON_PX = 4000000;
+
+/** Rayon du voisinage qui fournit les couleurs candidates d'un sous pixel. */
+const RAYON_CANDIDATS = 2;
+
+/**
+ * Le facteur k. Deux au minimum quand on sur echantillonne, quatre au plus :
+ * la rampe d'antialiasing fait un pixel de large, la decouper en huit ne dit
+ * plus rien de neuf, et le vectoriseur travaille alors pour rien.
+ */
+export function facteurSurEchantillon(largeur, hauteur) {
+  const surface = largeur * hauteur;
+  if (!(surface > 0) || surface > SURFACE_SANS_SUR_ECHANTILLON_PX) return 1;
+  return Math.max(2, Math.min(4, Math.floor(Math.sqrt(BUDGET_SUR_ECHANTILLON_PX / surface))));
+}
+
+/**
+ * La grille fine. `propre` est l'image quantifiee, `image` la source d'origine.
+ */
+export function surEchantillonner(propre, image, k) {
+  const { largeur, hauteur, donnees } = image;
+  const total = largeur * hauteur;
+  if (k <= 1) return propre;
+
+  // L'etiquette d'un pixel : sa couleur quantifiee, ou -1 s'il est transparent.
+  const cles = new Int32Array(total);
+  for (let i = 0; i < total; i++) {
+    const p = i * 4;
+    cles[i] = propre[p + 3] === 0 ? -1 : (propre[p] << 16) | (propre[p + 1] << 8) | propre[p + 2];
+  }
+
+  // Ou le voisinage est uniforme, il n'y a pas de bord a replacer : le sous
+  // pixel recopie son parent. Le test se fait en deux temps, lignes puis
+  // colonnes, pour ne pas relire vingt cinq voisins par pixel.
+  const R = RAYON_CANDIDATS;
+  const ligneUnie = new Uint8Array(total);
+  for (let y = 0; y < hauteur; y++) {
+    for (let x = 0; x < largeur; x++) {
+      const i = y * largeur + x;
+      const v = cles[i];
+      let unie = 1;
+      for (let dx = -R; dx <= R && unie; dx++) {
+        const xx = Math.max(0, Math.min(largeur - 1, x + dx));
+        if (cles[y * largeur + xx] !== v) unie = 0;
+      }
+      ligneUnie[i] = unie;
+    }
+  }
+  const uniforme = new Uint8Array(total);
+  for (let y = 0; y < hauteur; y++) {
+    for (let x = 0; x < largeur; x++) {
+      const i = y * largeur + x;
+      const v = cles[i];
+      let unie = 1;
+      for (let dy = -R; dy <= R && unie; dy++) {
+        const yy = Math.max(0, Math.min(hauteur - 1, y + dy));
+        const j = yy * largeur + x;
+        if (!ligneUnie[j] || cles[j] !== v) unie = 0;
+      }
+      uniforme[i] = unie;
+    }
+  }
+
+  const labs = new Map();
+  const labDe = (cle) => {
+    let v = labs.get(cle);
+    if (v === undefined) {
+      v = versLab((cle >> 16) & 255, (cle >> 8) & 255, cle & 255);
+      labs.set(cle, v);
+    }
+    return v;
+  };
+  // La source, echantillonnee bilineairement au centre du sous pixel.
+  const source = (x, y, c) => {
+    const x0 = Math.max(0, Math.min(largeur - 1, Math.floor(x)));
+    const y0 = Math.max(0, Math.min(hauteur - 1, Math.floor(y)));
+    const x1 = Math.min(largeur - 1, x0 + 1);
+    const y1 = Math.min(hauteur - 1, y0 + 1);
+    const fx = Math.max(0, Math.min(1, x - x0));
+    const fy = Math.max(0, Math.min(1, y - y0));
+    const a = donnees[(y0 * largeur + x0) * 4 + c];
+    const b = donnees[(y0 * largeur + x1) * 4 + c];
+    const d = donnees[(y1 * largeur + x0) * 4 + c];
+    const e = donnees[(y1 * largeur + x1) * 4 + c];
+    return (a * (1 - fx) + b * fx) * (1 - fy) + (d * (1 - fx) + e * fx) * fy;
+  };
+
+  const L = largeur * k;
+  const gros = new Uint8ClampedArray(L * hauteur * k * 4);
+  const candidats = [];
+  for (let y = 0; y < hauteur; y++) {
+    for (let x = 0; x < largeur; x++) {
+      const i = y * largeur + x;
+      const centre = cles[i];
+      let transparentPossible = centre < 0;
+      if (!uniforme[i]) {
+        candidats.length = 0;
+        transparentPossible = false;
+        for (let dy = -R; dy <= R; dy++) {
+          const yy = y + dy;
+          if (yy < 0 || yy >= hauteur) continue;
+          for (let dx = -R; dx <= R; dx++) {
+            const xx = x + dx;
+            if (xx < 0 || xx >= largeur) continue;
+            const c = cles[yy * largeur + xx];
+            if (c < 0) { transparentPossible = true; continue; }
+            if (!candidats.includes(c)) candidats.push(c);
+          }
+        }
+      }
+      for (let sy = 0; sy < k; sy++) {
+        for (let sx = 0; sx < k; sx++) {
+          const P = ((y * k + sy) * L + (x * k + sx)) * 4;
+          let cle = centre;
+          if (!uniforme[i]) {
+            const ux = x + (sx + 0.5) / k - 0.5;
+            const uy = y + (sy + 0.5) / k - 0.5;
+            if (transparentPossible && (candidats.length === 0 || source(ux, uy, 3) < 128)) {
+              cle = -1;
+            } else {
+              const t = versLab(source(ux, uy, 0), source(ux, uy, 1), source(ux, uy, 2));
+              let meilleure = Infinity;
+              for (let q = 0; q < candidats.length; q++) {
+                const e = ecartLab(t, labDe(candidats[q]));
+                if (e < meilleure) { meilleure = e; cle = candidats[q]; }
+              }
+            }
+          }
+          if (cle < 0) {
+            gros[P] = 0; gros[P + 1] = 0; gros[P + 2] = 0; gros[P + 3] = 0;
+          } else {
+            gros[P] = (cle >> 16) & 255; gros[P + 1] = (cle >> 8) & 255;
+            gros[P + 2] = cle & 255; gros[P + 3] = 255;
+          }
+        }
+      }
+    }
+  }
+  return gros;
 }

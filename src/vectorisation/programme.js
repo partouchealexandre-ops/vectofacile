@@ -191,6 +191,31 @@ export function construireProgramme(svg, options = {}) {
     throw new SvgNonSupporte("dimensions du SVG introuvables ou nulles.");
   }
 
+  // LES COORDONNEES REDESCENDENT EN PIXELS DE LA SOURCE, 26/08/2026.
+  //
+  // Quand le vectoriseur a travaille sur la grille fine (surEchantillonner),
+  // il rend un trace k fois trop grand. On le ramene ICI, avant la poussiere
+  // et avant l'ajustement, et pour une raison de fond : toutes les tolerances
+  // du metier, le cote minimal d'une forme, l'ecart admis a une droite, la
+  // tolerance d'ellipse, sont exprimees en pixels de l'image du client. Les
+  // laisser voir une grille quatre fois plus fine reviendrait a les multiplier
+  // par quatre en silence. Ramene ici, l'escalier de la grille ne pese plus
+  // qu'un quart de pixel devant elles : elles le traversent sans le suivre.
+  const k = options.surEchantillon ?? 1;
+  if (k > 1) {
+    for (const forme of formes) {
+      for (const sousChemin of forme.sousChemins) {
+        for (const s of sousChemin.segments) {
+          for (const cle of ['x', 'y', 'x1', 'y1', 'x2', 'y2']) {
+            if (Number.isFinite(s[cle])) s[cle] /= k;
+          }
+        }
+      }
+    }
+    largeur /= k;
+    hauteur /= k;
+  }
+
   // LE NETTOYAGE SE FAIT ICI, PAS CHEZ L'APPELANT. Deux appelants, la page et
   // le harnais, et un seul qui y penserait serait deux fichiers differents pour
   // le meme logo. La lecon du 26/08 sur la taille des fichiers livres.

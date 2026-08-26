@@ -502,6 +502,36 @@ function ajusterEllipse(S) {
   // d'echantillons du meme cote est une bosse dessinee, pas du bruit : le
   // bruit alterne, un galbe insiste. Sans ce second critere, une bosse de
   // 3 px se fondait dans la tolerance et le haricot devenait une ellipse.
+  // ET LA BOUCLE DOIT FAIRE LE TOUR DE L'ELLIPSE QU'ELLE PRETEND ETRE.
+  //
+  // La lecon du 26/08/2026, sur le logo Pelican : un COPEAU, une boucle fine
+  // et legerement courbe comme un trait de hachure, a ses deux bords sur la
+  // meme courbe. Une ellipse enorme passant par ce copeau reste a moins de
+  // deux pixels de tous ses points, et l'allongement d'un cercle vaut un :
+  // les deux gardes precedentes la laissaient passer. Le copeau ressortait en
+  // disque noir de cent pixels au milieu du dessin.
+  //
+  // Une boucle qui EST une ellipse en fait le tour : vue du centre, ses points
+  // couvrent les trois cent soixante degres sans trou. Un copeau, lui, tient
+  // dans un secteur etroit. On mesure donc le plus grand vide angulaire, dans
+  // le repere de l'ellipse ou elle devient un cercle, et on refuse au dela
+  // d'un sixieme de tour.
+  {
+    const cta = Math.cos(theta), sta = Math.sin(theta);
+    const angles = [];
+    for (const p of S) {
+      const dx = p.x - cx, dy = p.y - cy;
+      angles.push(Math.atan2((-dx * sta + dy * cta) / b, (dx * cta + dy * sta) / a));
+    }
+    angles.sort((u, v) => u - v);
+    let vide = angles[0] + 2 * Math.PI - angles[angles.length - 1];
+    for (let i = 1; i < angles.length; i++) {
+      const e = angles[i] - angles[i - 1];
+      if (e > vide) vide = e;
+    }
+    if (vide > Math.PI / 3) return null;
+  }
+
   const ct = Math.cos(theta), st = Math.sin(theta);
   let suitePos = 0, suiteNeg = 0;
   for (const p of S) {

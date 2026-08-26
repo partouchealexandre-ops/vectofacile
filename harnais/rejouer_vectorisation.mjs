@@ -33,7 +33,10 @@ import { mesurer } from '../src/moteur/mesures.js';
 import { construireProgramme, inventaire } from '../src/vectorisation/programme.js';
 import { versEps } from '../src/vectorisation/eps.js';
 import { versPdf } from '../src/vectorisation/pdf.js';
-import { preparerVectorisation, reglagesDuTrait, SURFACE_MAX_AJUSTEMENT_PX } from '../src/vectorisation/options.js';
+import {
+  preparerVectorisation, reglagesDuTrait, SURFACE_MAX_AJUSTEMENT_PX,
+  pixelsPourVectorisation, facteurSurEchantillon, SURFACE_SANS_SUR_ECHANTILLON_PX,
+} from '../src/vectorisation/options.js';
 import { lisserBoucle } from '../src/vectorisation/lissage.js';
 
 const require = createRequire(import.meta.url);
@@ -81,7 +84,35 @@ function gsDisponible() {
  * A 4x, chaque pixel d'origine couvre 16 pixels de rendu et la comparaison
  * cesse de mesurer l'echantillonnage du rasteriseur.
  */
-const ZOOM = 4;
+const ZOOM = 5;
+
+/**
+ * ON JUGE AU CENTRE DU PIXEL, 26/08/2026.
+ *
+ * CE QUI N'ALLAIT PAS. Le recouvrement comparait le rendu du fichier livre,
+ * agrandi ZOOM fois, a la source agrandie de la meme facon, pixel de rendu
+ * contre pixel de rendu. Tant que nos contours tombaient n'importe ou dans la
+ * grille, ca marchait. Depuis que le bord se pose EXACTEMENT sur le bord du
+ * pixel d'origine, chaque arete du fichier tombe pile sur une frontiere de la
+ * grille de rendu, et c'est le rasteriseur qui tranche : Ghostscript peint la
+ * rangee limite, la reference ne la compte pas. Un trait de 1 px parfaitement
+ * juste tombait a 91 pour cent, et le meme controle a ZOOM 8 le remontait a
+ * 94 en faisant chuter le trait de 3 px de 99 a 94. Un chiffre qui bouge quand
+ * on change la loupe ne mesure pas le fichier, il mesure la loupe.
+ *
+ * LA REGLE. Un pixel de l'image d'origine est de l'encre ou il ne l'est pas ;
+ * la bonne question est donc « au CENTRE de ce pixel, le fichier livre pose t
+ * il de l'encre ». Le centre est a un demi pixel de toute arete entiere : plus
+ * aucune egalite a departager. Le zoom devient impair pour qu'un pixel de
+ * rendu tombe exactement au centre.
+ *
+ * CE QUE CE CONTROLE NE VOIT PLUS, ET QUI A DONC SON PROPRE TEMOIN. Juger au
+ * centre rend le recouvrement AVEUGLE a un engraissement de moins d'un demi
+ * pixel : c'est precisement le defaut corrige le meme jour. Il est mesure a
+ * part, par LE POIDS DU TRAIT, qui compare la surface d'encre livree a la
+ * couverture reelle de la source. Un controle qui perd une sensibilite doit
+ * dire ou elle est reprise.
+ */
 
 function rasteriser(fichier, largeur, hauteur, largeurPt) {
   const sortie = fichier + '.ppm';
@@ -161,6 +192,19 @@ function masqueDepuisRvba(donnees, largeur, hauteur, zoom) {
       const a = donnees[p + 3];
       masque[y * largeur * zoom + x] =
         (a < 128 || (donnees[p] > 245 && donnees[p + 1] > 245 && donnees[p + 2] > 245)) ? 0 : 1;
+    }
+  }
+  return masque;
+}
+
+/** Le rendu, echantillonne au centre de chaque pixel de l'image d'origine. */
+function masqueAuCentre(pixels, largeur, hauteur, zoom) {
+  const masque = new Uint8Array(largeur * hauteur);
+  const milieu = (zoom - 1) >> 1;
+  for (let y = 0; y < hauteur; y++) {
+    for (let x = 0; x < largeur; x++) {
+      const p = ((y * zoom + milieu) * largeur * zoom + (x * zoom + milieu)) * 3;
+      masque[y * largeur + x] = (pixels[p] > 245 && pixels[p + 1] > 245 && pixels[p + 2] > 245) ? 0 : 1;
     }
   }
   return masque;
@@ -406,6 +450,18 @@ let echecs = 0;
        `plafond ${SURFACE_MAX_AJUSTEMENT_PX} px`);
   dire(!('simplify' in filiforme) && !('simplify' in courant) && !('simplify' in geant),
        '(temoin) le reglage mort `simplify`, que VTracer ignorait, a disparu');
+
+  // LA GRILLE FINE, decidee par la table elle aussi.
+  dire(facteurSurEchantillon(416, 300) >= 3 && facteurSurEchantillon(416, 300) <= 4,
+       'un petit logo recoit une grille trois a quatre fois plus fine',
+       `416 x 300 : k = ${facteurSurEchantillon(416, 300)}`);
+  dire(facteurSurEchantillon(1000, 1000) === 2,
+       'un logo moyen en recoit une deux fois plus fine');
+  dire(facteurSurEchantillon(2008, 1468) === 1,
+       'au dela du plafond, la grille de la source suffit',
+       `plafond ${SURFACE_SANS_SUR_ECHANTILLON_PX} px`);
+  dire(facteurSurEchantillon(416, 300) * facteurSurEchantillon(416, 300) * 416 * 300 <= 4200000,
+       '(temoin) le travail demande au vectoriseur reste borne');
 
   const boucleDe = (segments) => segments.filter((g) => g.type === 'courbe');
   const long = (v) => Math.hypot(v.x, v.y);
@@ -685,6 +741,137 @@ let echecs = 0;
     dire(rate === 0, 'les dix pointes d\'une etoile restent des pointes',
          `${rate} emoussee(s)`);
   }
+  // LE COPEAU N'EST PAS UN DISQUE, la lecon du logo Pelican.
+  //
+  // Une boucle fine et legerement courbe, comme un trait de hachure, a ses deux
+  // bords sur la meme courbe. Une ellipse ENORME passant par ce copeau reste a
+  // moins de deux pixels de tous ses points, et son allongement vaut un : ni la
+  // tolerance ni la borne d'allongement ne la refusaient. Trois copeaux du logo
+  // Pelican ressortaient en disques noirs de cent pixels poses sur le dessin.
+  // Une boucle qui EST une ellipse en fait le tour ; celle ci tient dans un
+  // secteur etroit vu du centre de l'ellipse qu'on lui propose.
+  {
+    const pts = [];
+    const RC = 250, A0 = -0.15, A1 = 0.15;
+    for (let i = 0; i <= 90; i++) {
+      const a = A0 + (A1 - A0) * (i / 90);
+      pts.push({ x: 300 + RC * Math.cos(a), y: 300 + RC * Math.sin(a) });
+    }
+    for (let i = 90; i >= 0; i--) {
+      const a = A0 + (A1 - A0) * (i / 90);
+      pts.push({ x: 300 + (RC - 1) * Math.cos(a), y: 300 + (RC - 1) * Math.sin(a) });
+    }
+    const segments = lisserBoucle(pts, {});
+    let xMin = Infinity, xMax = -Infinity, yMin = Infinity, yMax = -Infinity;
+    for (const g of segments ?? []) {
+      for (const v of [[g.x, g.y], [g.x1, g.y1], [g.x2, g.y2]]) {
+        if (!Number.isFinite(v[0])) continue;
+        xMin = Math.min(xMin, v[0]); xMax = Math.max(xMax, v[0]);
+        yMin = Math.min(yMin, v[1]); yMax = Math.max(yMax, v[1]);
+      }
+    }
+    // Le copeau fait soixante quinze pixels de long pour un de large : c'est sa
+    // LARGEUR qui dit s'il a enfle. Verifie dans les deux sens : 94 px de large
+    // sans la garde, 6 avec.
+    dire(segments !== null && xMax - xMin < 15,
+         'un copeau fin ne devient pas un disque',
+         `largeur ${(xMax - xMin).toFixed(1)} px pour ${(yMax - yMin).toFixed(1)} de long`);
+  }
+
+  console.log('  ' + '-'.repeat(72));
+}
+
+// LE POIDS DU TRAIT, 26/08/2026.
+//
+// CE QU'IL GARDE. Le masque d'encre repond « il y a de l'encre ici » des qu'un
+// pixel s'ecarte du fond de plus de six unites Lab, ce qui arrive des quatorze
+// pour cent de couverture : c'est le bon seuil pour MESURER, on ne veut manquer
+// aucun element du dessin. Tant que le vectoriseur tracait le contour de ce
+// masque, le bord du fichier livre se posait 0,7 pixel trop loin, TOUT AUTOUR
+// de chaque forme. Mesure sur le logo Choose Chicago : 46 972 pixels d'encre
+// livres pour 42 283 de couverture reelle, onze pour cent de trop. Sur un fut
+// de lettre de quatre pixels, cela fait trente pour cent de graisse.
+//
+// Le dessin de reference est trace EN COUVERTURE EXACTE, seize sous echantillons
+// par pixel : sa surface vraie n'est donc pas estimee, elle est connue. Et la
+// surface livree se calcule sur la GEOMETRIE du programme, pas sur un rendu :
+// un rasteriseur qui arrondirait dans le meme sens que nous ferait un juge
+// complaisant.
+//
+// Verifie dans les deux sens avant d'etre pose : + 10,6 pour cent avec la
+// regle d'avant, + 0,3 avec celle d'apres.
+{
+  const L = 160, H = 160;
+  const d = new Uint8ClampedArray(L * H * 4).fill(255);
+  const SS = 16;
+  const R = 18, CX = 55, CY = 55;
+  const BX0 = 100.3, BX1 = 106.7, BY0 = 20.4, BY1 = 130.6;
+  let vraie = 0;
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < L; x++) {
+      let dedans = 0;
+      for (let sy = 0; sy < SS; sy++) {
+        for (let sx = 0; sx < SS; sx++) {
+          const ux = x + (sx + 0.5) / SS, uy = y + (sy + 0.5) / SS;
+          if (Math.hypot(ux - CX, uy - CY) <= R) dedans++;
+          else if (ux >= BX0 && ux <= BX1 && uy >= BY0 && uy <= BY1) dedans++;
+        }
+      }
+      const couverture = dedans / (SS * SS);
+      vraie += couverture;
+      const v = Math.round(255 * (1 - couverture));
+      const p = (y * L + x) * 4;
+      d[p] = v; d[p + 1] = v; d[p + 2] = v; d[p + 3] = 255;
+    }
+  }
+  const image = { largeur: L, hauteur: H, donnees: d, reduction: 1,
+                  largeurOrigine: L, hauteurOrigine: H };
+  const prepare = preparerVectorisation(image, mesurer(image));
+  const svg = vtracer.convertPixels(Buffer.from(prepare.pixels.buffer),
+                                    prepare.largeur, prepare.hauteur, prepare.options);
+  const programme = construireProgramme(svg, prepare.options);
+
+  // Surface signee d'un sous chemin, cubiques aplaties : les contre formes
+  // comptent en negatif, comme il se doit.
+  const aireSousChemin = (segments) => {
+    const pts = [];
+    let x = 0, y = 0;
+    for (const g of segments) {
+      if (g.type === 'courbe') {
+        for (let i = 1; i <= 16; i++) {
+          const t = i / 16, u = 1 - t;
+          pts.push({
+            x: u * u * u * x + 3 * u * u * t * g.x1 + 3 * u * t * t * g.x2 + t * t * t * g.x,
+            y: u * u * u * y + 3 * u * u * t * g.y1 + 3 * u * t * t * g.y2 + t * t * t * g.y,
+          });
+        }
+      } else if (g.x !== undefined) {
+        pts.push({ x: g.x, y: g.y });
+      }
+      if (g.x !== undefined) { x = g.x; y = g.y; }
+    }
+    let aire = 0;
+    for (let i = 0; i < pts.length; i++) {
+      const a = pts[i], b = pts[(i + 1) % pts.length];
+      aire += a.x * b.y - b.x * a.y;
+    }
+    return aire / 2;
+  };
+  let livree = 0;
+  for (const forme of programme.formes) {
+    if (forme.rvb[0] > 128 && forme.rvb[1] > 128 && forme.rvb[2] > 128) continue;
+    for (const sc of forme.sousChemins) livree += aireSousChemin(sc.segments);
+  }
+  livree = Math.abs(livree);
+  const derive = livree / vraie - 1;
+  console.log('');
+  console.log("  LE POIDS DU TRAIT, la surface livree contre la couverture reelle");
+  console.log('  ' + '-'.repeat(72));
+  const bon = Math.abs(derive) <= 0.03;
+  console.log(`  ${bon ? 'ok   ' : 'ECHEC'} le fichier livre ne grossit pas le dessin`
+    + `  [${Math.round(vraie)} px reels, ${Math.round(livree)} livres,`
+    + ` ${derive >= 0 ? '+' : ''}${(100 * derive).toFixed(1)} pour cent]`);
+  if (!bon) echecs++;
   console.log('  ' + '-'.repeat(72));
 }
 
@@ -722,7 +909,10 @@ let echecs = 0;
 
   const image = { largeur: L, hauteur: H, donnees: d, reduction: 1,
                   largeurOrigine: L, hauteurOrigine: H };
-  const px = preparerVectorisation(image, mesurer(image)).pixels;
+  // Ce temoin juge la QUANTIFICATION, qui se decide sur la grille de la
+  // source : on l'appelle donc directement, sans passer par la grille fine
+  // du sur echantillonnage, dont les indices ne sont plus ceux de l'image.
+  const px = pixelsPourVectorisation(image, mesurer(image));
   const estCyan = (x, y) => {
     const p = (y * L + x) * 4;
     return Math.abs(px[p] - CYAN[0]) < 8 && Math.abs(px[p + 1] - CYAN[1]) < 8
@@ -764,7 +954,7 @@ for (const cas of verite.cas) {
 
   let svg;
   try {
-    svg = vtracer.convertPixels(Buffer.from(prepare.pixels.buffer), cas.largeur, cas.hauteur, prepare.options);
+    svg = vtracer.convertPixels(Buffer.from(prepare.pixels.buffer), prepare.largeur, prepare.hauteur, prepare.options);
   } catch (e) {
     console.log(`  ECHEC ${cas.nom} : vectorisation impossible, ${e.message}`);
     echecs++;
@@ -932,10 +1122,9 @@ for (const cas of verite.cas) {
     }
 
     // Controle 2 : ressemblance a l'original.
-    const n = cas.largeur * ZOOM * cas.hauteur * ZOOM;
     taux = recouvrement(
-      masqueDepuisRvba(donnees, cas.largeur, cas.hauteur, ZOOM),
-      masqueDepuisRvb(rPdf.pixels, n)
+      masqueDepuisRvba(donnees, cas.largeur, cas.hauteur, 1),
+      masqueAuCentre(rPdf.pixels, cas.largeur, cas.hauteur, ZOOM)
     );
     if (taux < RECOUVREMENT_MINIMAL) {
       problemes.push(`recouvrement de ${(100 * taux).toFixed(1)} pour cent avec l'original, sous le plancher de ${100 * RECOUVREMENT_MINIMAL}`);
