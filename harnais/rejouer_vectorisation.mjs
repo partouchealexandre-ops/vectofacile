@@ -229,6 +229,37 @@ for (const cas of verite.cas) {
 
   const problemes = [];
 
+  // LA POUSSIERE PART, LE FILET RESTE. Mesure du 26/08/2026 sur huit logos
+  // clients : notre sortie sur un logo de fondation comptait 3 652 formes dont
+  // 84 pour cent tenaient dans 2 x 2 pixels, pour 0,08 pour cent de la surface
+  // d'encre. Le filtre les retire, et il ne juge une forme que si elle est
+  // petite DANS LES DEUX DIRECTIONS : un filet de 1 px sur 220 garde une boite
+  // longue, il survit. C'est ce que le cas trait_01px verifie ici meme.
+  //
+  // Le compte est un CONTRAT, pas une trace : un nettoyage muet est un mensonge
+  // par omission, et c'est deja la doctrine de nettoyerSalissures.
+  if (!programme.poussiere) {
+    problemes.push('le programme ne dit pas ce qu\'il a retire comme poussiere');
+  }
+  if (/^trait_0[12]px$/.test(cas.nom)) {
+    const large = programme.formes.some((f) => {
+      let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+      for (const sc of f.sousChemins) for (const sg of sc.segments) {
+        for (const x of [sg.x, sg.x1, sg.x2]) if (Number.isFinite(x)) {
+          if (x < x0) x0 = x; if (x > x1) x1 = x;
+        }
+        for (const y of [sg.y, sg.y1, sg.y2]) if (Number.isFinite(y)) {
+          if (y < y0) y0 = y; if (y > y1) y1 = y;
+        }
+      }
+      return Math.max(x1 - x0, y1 - y0) > 20 && Math.min(x1 - x0, y1 - y0) <= 3;
+    });
+    if (!large) {
+      problemes.push('le trait fin a disparu du fichier livre : le filtre de poussiere '
+        + 'ne doit JAMAIS retirer une forme longue dans une direction');
+    }
+  }
+
   // LES PHRASES VUES PAR LE VISITEUR PORTENT LEURS ACCENTS, 26/08/2026.
   //
   // L'avertissement sur le trait limite avait ete ecrit dans le style des

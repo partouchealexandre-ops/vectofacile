@@ -1120,6 +1120,11 @@ async function traiter(fichier) {
     $('resultat').innerHTML = `
       <h2>Votre fichier vectoriel</h2>
       ${ligne('Formes', nb(inv.formes))}
+      ${etat.programme.poussiere?.formes
+        ? ligne('Poussière retirée', nb(etat.programme.poussiere.formes) + ' formes',
+                'des taches plus petites que deux pixels dans les deux sens, '
+                + 'issues de la compression de votre image')
+        : ''}
       ${ligne('Couleurs du fichier livré', nb(inv.couleurs))}
       ${ligne('Segments', nb(inv.segments))}
       ${ligne('Taille déclarée du fichier', tailleLivree(etat.programme),

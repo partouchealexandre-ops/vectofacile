@@ -17,6 +17,89 @@
 
 export class SvgNonSupporte extends Error {}
 
+/**
+ * LE COTE MINIMAL D'UNE FORME LIVREE, en pixels de l'image d'origine.
+ *
+ * MESURE DU 26/08/2026, sur huit logos clients reels. Notre sortie sur le logo
+ * de la Fondation de Nice comptait 3 652 formes la ou un dessin propre du meme
+ * logo en compte une centaine. Distribution des tailles : 84 pour cent des
+ * formes tenaient dans une boite de 2 x 2 pixels, et TOUTES les formes sous
+ * 5 x 5 reunies pesaient 0,08 pour cent de la surface d'encre. Ce n'etait pas
+ * du dessin, c'etait de la poussiere de compression JPEG transformee en
+ * geometrie, et elle partait chez le marqueur.
+ *
+ * POURQUOI ON NE REACTIVE PAS filterSpeckle POUR AUTANT. Le filtre de VTracer
+ * avait ete coupe le 18/08 parce qu'il supprimait un trait de 1 px de large sur
+ * 221 de long. C'est normal : IL FILTRE PAR AIRE, et un filet a une petite
+ * aire. Ce filtre ci regarde la BOITE ENGLOBANTE, et il ne retire une forme que
+ * si elle est petite DANS LES DEUX DIRECTIONS. Une poussiere l'est ; un filet
+ * ne l'est pas, sa boite reste longue, il survit. C'est la meme doctrine que
+ * pour la mesure du trait : un controle qui ne regarde qu'une direction ne
+ * mesure pas une epaisseur.
+ *
+ * ET IL COMPTE CE QU'IL RETIRE. Un nettoyage muet est un mensonge par omission.
+ */
+export const COTE_MINIMAL_FORME = 2;
+
+/** La boite englobante d'une forme, tous sous chemins confondus. */
+function boiteDeLaForme(forme) {
+  let x0 = Infinity;
+  let y0 = Infinity;
+  let x1 = -Infinity;
+  let y1 = -Infinity;
+  for (const sousChemin of forme.sousChemins) {
+    for (const s of sousChemin.segments) {
+      for (const x of [s.x, s.x1, s.x2]) {
+        if (!Number.isFinite(x)) continue;
+        if (x < x0) x0 = x;
+        if (x > x1) x1 = x;
+      }
+      for (const y of [s.y, s.y1, s.y2]) {
+        if (!Number.isFinite(y)) continue;
+        if (y < y0) y0 = y;
+        if (y > y1) y1 = y;
+      }
+    }
+  }
+  if (!Number.isFinite(x0) || !Number.isFinite(y0)) return null;
+  return { largeur: x1 - x0, hauteur: y1 - y0 };
+}
+
+/**
+ * Retire les formes petites dans les deux directions, et dit combien.
+ *
+ * La forme ENTIERE est jugee, jamais un sous chemin isole : le trou d'un « o »
+ * est un sous chemin minuscule dans une forme qui ne l'est pas, et le retirer
+ * boucherait la contre forme.
+ */
+export function retirerLaPoussiere(programme, cote = COTE_MINIMAL_FORME) {
+  if (!(cote > 0)) return { ...programme, poussiere: { formes: 0, surface: 0 } };
+  const gardees = [];
+  let retirees = 0;
+  let surfaceRetiree = 0;
+  let surfaceTotale = 0;
+  for (const forme of programme.formes) {
+    const boite = boiteDeLaForme(forme);
+    const aire = boite ? Math.max(boite.largeur, 0) * Math.max(boite.hauteur, 0) : 0;
+    surfaceTotale += aire;
+    if (boite && Math.max(boite.largeur, boite.hauteur) < cote) {
+      retirees += 1;
+      surfaceRetiree += aire;
+      continue;
+    }
+    gardees.push(forme);
+  }
+  return {
+    ...programme,
+    formes: gardees,
+    poussiere: {
+      formes: retirees,
+      cote,
+      part: surfaceTotale > 0 ? surfaceRetiree / surfaceTotale : 0,
+    },
+  };
+}
+
 import { lireChemin } from './chemins.js';
 
 const BALISES_ADMISES = new Set(['svg', 'path', 'g', 'title', 'desc', 'defs', 'metadata']);
@@ -62,7 +145,7 @@ function couleurVersRvb(valeur) {
  * erreur nommee plutot que d'etre ignoree. Une balise ignoree, c'est un morceau
  * de logo qui disparait du fichier livre sans que personne ne s'en apercoive.
  */
-export function construireProgramme(svg) {
+export function construireProgramme(svg, options = {}) {
   const balises = svg.match(/<[^>?!][^>]*>/g) || [];
   const formes = [];
   let largeur = null, hauteur = null;
@@ -107,7 +190,10 @@ export function construireProgramme(svg) {
     throw new SvgNonSupporte("dimensions du SVG introuvables ou nulles.");
   }
 
-  return { largeur, hauteur, formes };
+  // LE NETTOYAGE SE FAIT ICI, PAS CHEZ L'APPELANT. Deux appelants, la page et
+  // le harnais, et un seul qui y penserait serait deux fichiers differents pour
+  // le meme logo. La lecon du 26/08 sur la taille des fichiers livres.
+  return retirerLaPoussiere({ largeur, hauteur, formes }, options.cote ?? COTE_MINIMAL_FORME);
 }
 
 /** Inventaire du programme, utile au harnais et a l'affichage. */
