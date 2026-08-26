@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "note": "ETAT REEL AU 19/08/2026, deuxieme version du jour. Presque aucun critere ne sert encore, et ce fichier le dit au lieu de le cacher. Les valeurs presentes portent leur etat : seuls SOURCE et ARBITRE ALEX produisent un verdict, tout le reste rend « nous ne savons pas encore ». P0.1 (hauteur de capitale en mm), P0.2 (rapport negatif sur positif de 2,0) et P0.3 (une source qui ne nomme aucun support ne peut pas alimenter un seuil) ONT ETE TRANCHES le 19/08. Ils ne suffisent pas : il manque P0.7, la regle qui transforme N valeurs sourcees en UN seuil. Vingt-trois valeurs admissibles en serigraphie, de 0,13 a 1,00 mm, ne deviennent pas un chiffre toutes seules. Tant que P0.7 n'est pas rendu, aucun trait_minimal n'entre ici.",
+  "note": "ETAT REEL AU 19/08/2026, deuxieme version du jour. Presque aucun critere ne sert encore, et ce fichier le dit au lieu de le cacher. Les valeurs presentes portent leur etat : seuls SOURCE et ARBITRE ALEX produisent un verdict, tout le reste rend « nous ne savons pas encore ». P0.1 (hauteur de capitale en mm), P0.2 (rapport negatif sur positif de 2,0) et P0.3 (une source qui ne nomme aucun support ne peut pas alimenter un seuil) ONT ETE TRANCHES le 19/08. Ils ne suffisent pas : il manque P0.7, la regle qui transforme N valeurs sourcees en UN seuil. Vingt-trois valeurs admissibles en serigraphie, de 0,13 a 1,00 mm, ne deviennent pas un chiffre toutes seules. Tant que P0.7 n'est pas rendu, aucun trait_minimal n'entre ici. AJOUT DU 26/08/2026 : le nombre de couleurs ne se lit plus dans ce fichier mais sur les EMPLACEMENTS d'archetypes.json, qui portent chacun leur couleursMax. Les valeurs 'couleurs' ci-dessous restent en documentation de leur etat ; elles ne servent plus qu'en secours, quand la grille des archetypes n'est pas chargee.",
   "regle": "Une valeur absente n'est PAS une autorisation. Aucun critere ne passe par defaut. Le rapport negatif sur positif de 2,0 est ARBITRE ALEX du 19/08 : il s'applique a toutes les techniques, mais il ne sert a rien tant qu'aucun trait minimal positif n'est arbitre, puisqu'il multiplie une valeur qui n'existe pas encore.",
   "techniques": {
     "serigraphie": {
@@ -66,5 +66,13 @@
       "libelle": "Marquage à chaud",
       "criteres": {}
     }
+  },
+  "realisme_couleurs": {
+    "etat": "ARBITRÉ ALEX",
+    "date": "26/08/2026",
+    "source": "Arbitrage Alex du 26/08/2026",
+    "vert_jusqua": 2,
+    "exempt_a_partir_de": 8,
+    "commentaire": "SEUIL DE REALISME, et il ne se confond pas avec le plafond technique. Le plafond dit ce que l'emplacement AUTORISE ; le realisme dit a partir de quand plus personne ne le fait. Sur un emplacement ou chaque couleur demande son propre ecran, son propre passage et son propre calage, le cout du marquage croit presque proportionnellement au nombre de couleurs : au dela de deux, le marquage cesse d'etre anodin dans un devis. Il ne devient jamais impossible, et le feu correspondant est donc ORANGE, jamais rouge. L'EXEMPTION A HUIT n'est pas une tolerance, c'est un autre procede : les emplacements qui declarent huit couleurs relevent de chaines ou les ecrans se montent sur un meme carrousel et ou l'objet ne passe qu'une fois, si bien que la couleur suivante n'y coute presque rien. La broderie declare huit partout : elle est exempte par cette regle, et non par exception. Mesure sous-jacente : relevé du fil meta du 26/08/2026, conserve hors du depot avec ses tarifs. Aucun montant, aucun code de procede fournisseur n'entre ici."
   }
 }

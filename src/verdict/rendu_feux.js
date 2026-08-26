@@ -136,6 +136,27 @@ function raison(ligne) {
       + 'des courbes, pas une image. Cela s\'appelle un fichier vectoriel, et nous '
       + 'vous le fabriquons ici, gratuitement.';
   }
+  // LE TROISIEME ORANGE, 26/08/2026. Il ne se compose pas d'une phrase toute
+  // faite mais de DEUX FAITS COMPTES, parce qu'un seul mot ne sait pas decrire
+  // un partage. Aucun seuil n'y est publie : ce qui est dit, c'est le nombre
+  // d'emplacements, lu dans archetypes.json, et la mecanique qui l'explique.
+  // Le mot « impossible » n'y figure jamais, arbitrage P0.5.
+  if (ligne.feu === 'orange' && ligne.nuance === 'couleurs') {
+    const { couleurs, accepte, confortable, total } = ligne.chiffres;
+    const en = (n) => `${n} emplacement${n > 1 ? 's' : ''}`;
+    const debut = `Sur les ${total} emplacements que nous connaissons pour cette technique, `
+      + `${accepte} acceptent ${couleurs} couleurs.`;
+    if (confortable === 0) {
+      return `${debut} Aucun ne le fait sans un écran, un passage et un calage par `
+        + 'couleur : le marquage pèsera lourd dans le devis.';
+    }
+    if (confortable < accepte) {
+      return `${debut} ${en(confortable)} le font sans surcoût notable ; sur les autres, `
+        + 'chaque couleur demande son propre écran, son propre passage et son propre calage.';
+    }
+    return `${debut} Les autres n'en acceptent pas autant : c'est l'emplacement qui décide, `
+      + 'pas la technique.';
+  }
   if (ligne.feu === 'orange' && ligne.nuance === 'definition') {
     return `Votre image est trop petite pour un marquage de ${ligne.chiffres.tailleMm} mm, `
       + 'la taille courante sur cette technique : elle sortirait floue.';
@@ -277,6 +298,7 @@ function rendreLigne(ligne, index) {
     </div>
     <p class="feu-etat">${ETIQUETTE_FEU[ligne.feu]}</p>
     <p class="feu-definition">${echapper(ligne.definition)}</p>
+    ${ligne.reserve ? `<p class="feu-reserve">${echapper(ligne.reserve)}</p>` : ''}
     ${r ? `<p class="feu-raison">${echapper(r)}</p>` : ''}
     ${produits(ligne)}
     ${action(ligne)}

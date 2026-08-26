@@ -883,6 +883,119 @@ const controle = (libelle, ok, detail) => resultats.push({ libelle, ok, detail }
   controle('(temoin) la phrase ne pose plus le plafond comme un fait etabli',
            !/Les ateliers en acceptent 4 :/.test(rendreFeux([neuf.tampographie])));
 
+  // 5 bis. LE NOMBRE DE COULEURS SE LIT SUR LES EMPLACEMENTS, 26/08/2026.
+  //
+  // Les controles ci-dessus passent une grille NULLE : ils testent le secours,
+  // celui qui retombe sur le chiffre unique de seuils.json. Ceux qui suivent
+  // passent la VRAIE grille, celle que la page charge, et c'est le seul moyen
+  // de verifier ce que verra un visiteur.
+  //
+  // Ce qui se joue ici : un chiffre unique par technique etait contraire a la
+  // doctrine du site depuis le premier jour. Le plafond appartient a
+  // l'EMPLACEMENT. Nos propres archetypes le prouvent : sous le mot
+  // « serigraphie » cohabitent des emplacements a une couleur, a quatre et a
+  // huit.
+  {
+    const grille = GRILLE;
+    const NOMS = {
+      serigraphie: ['Sérigraphie', 'Sérigraphie circulaire', 'Transfert sérigraphique'],
+      tampographie: ['Tampographie'],
+      gravure_laser: ['Gravure laser', 'Gravure laser 360'],
+      broderie: ['Broderie'],
+      numerique_uv: ['Impression numérique', 'Impression numérique 360',
+                     'Étiquette numérique', 'Doming'],
+      transfert_dtf: ['Transfert numérique', 'Sublimation'],
+      marquage_a_chaud: ['Embossage', 'Marquage à chaud'],
+    };
+    const surGrille = (n) => par(jugerFeux(
+      { ...base, nCouleurs: n, fichierVectoriel: true, nomsParFamille: NOMS }, grille));
+
+    // LA REGLE DE REALISME EXISTE ET ELLE EST ARBITREE. Si elle perdait son
+    // etat, le moteur cesserait silencieusement de prononcer ses oranges.
+    controle('le seuil de realisme est ARBITRÉ ALEX, sinon il ne sert pas',
+             seuils.realisme_couleurs?.etat === 'ARBITRÉ ALEX'
+               && Number.isFinite(seuils.realisme_couleurs?.vert_jusqua),
+             seuils.realisme_couleurs?.etat ?? 'absent');
+    controle('et il ne publie aucun montant ni aucun code de procede fournisseur',
+             !/[0-9][0-9,.]*\s*(€|EUR)|\b(ST1|S1|S2|S3|S4|P4)\b/
+               .test(JSON.stringify(seuils.realisme_couleurs ?? {})));
+
+    // LE CAS D'ALEX DU 26/08 : un vectoriel a sept couleurs. La serigraphie
+    // etait VERTE, parce qu'aucun plafond ne servait pour elle. Elle est
+    // desormais orange, et pour la bonne raison : une partie des emplacements
+    // l'accepte, l'autre non.
+    const sept = surGrille(7);
+    controle('sept couleurs mettent la serigraphie en orange, plus en vert',
+             sept.serigraphie.feu === 'orange' && sept.serigraphie.nuance === 'couleurs',
+             `${sept.serigraphie.feu} / ${sept.serigraphie.nuance ?? ''}`);
+    controle('et l\'orange compte les emplacements au lieu d\'annoncer un seuil',
+             sept.serigraphie.chiffres.accepte > 0
+               && sept.serigraphie.chiffres.accepte < sept.serigraphie.chiffres.total,
+             `${sept.serigraphie.chiffres.accepte}/${sept.serigraphie.chiffres.total}`);
+    controle('la tampographie, elle, reste rouge : aucun emplacement n\'en prend sept',
+             sept.tampographie.feu === 'rouge' && sept.tampographie.cause === 'couleurs');
+    // LA BRODERIE DECLARE HUIT PARTOUT. Elle est donc exempte de seuil de
+    // realisme par la REGLE, et non par exception : sa chaine monte les fils
+    // ensemble. Ce qui la limite est ailleurs, dans le rendu en fils, et cela
+    // ne se dit pas par un feu.
+    controle('la broderie reste verte a sept couleurs : ses emplacements montent a huit',
+             sept.broderie.feu === 'vert', sept.broderie.feu);
+
+    // LE TEXTE NE PUBLIE AUCUN SEUIL. Il compte des emplacements et il explique
+    // une mecanique. Et il ne prononce jamais le mot interdit, arbitrage P0.5.
+    const texteSept = rendreFeux([sept.serigraphie]);
+    controle('l\'orange couleurs nomme les emplacements, pas un chiffre de metier',
+             /emplacements que nous connaissons/.test(texteSept));
+    controle('(temoin) et il ne dit jamais qu\'un marquage est impossible',
+             !/impossible/i.test(texteSept));
+
+    // LES TECHNIQUES A UNE TEINTE NE SE JUGENT PAS AU NOMBRE DE COULEURS. Un
+    // logo a sept couleurs grave au laser sort en monochrome, c'est le cas
+    // standard, et c'est la FUSION qui decide, jamais le compte.
+    controle('la gravure et le marquage a chaud ignorent le compte de couleurs',
+             sept.gravure_laser.feu === 'vert' && sept.marquage_a_chaud.feu === 'vert',
+             `${sept.gravure_laser.feu} / ${sept.marquage_a_chaud.feu}`);
+    // ET LES DEUX NUMERIQUES IMPRIMENT TOUT EN UN PASSAGE. couleursMax y vaut
+    // null, jamais zero : la quadrichromie n'est pas une absence de couleur.
+    controle('les deux numeriques restent vertes quel que soit le compte',
+             sept.numerique_uv.feu === 'vert' && sept.transfert_dtf.feu === 'vert');
+
+    // LES BORNES. Une couleur ne derange personne ; neuf ne passent nulle part
+    // la ou un plafond existe.
+    const une = surGrille(1);
+    controle('un logo en une seule couleur passe partout',
+             compterFeux(Object.values(une)).vert === 7,
+             JSON.stringify(compterFeux(Object.values(une))));
+    const neufSurGrille = surGrille(9);
+    controle('neuf couleurs ferment la serigraphie, la tampographie et la broderie',
+             ['serigraphie', 'tampographie', 'broderie']
+               .every((c) => neufSurGrille[c].feu === 'rouge'
+                          && neufSurGrille[c].cause === 'couleurs'));
+    controle('et le brief demande le plus grand plafond rencontre, pas le plus petit',
+             /Une version à 8 couleurs maximum/.test(rendreFeux([neufSurGrille.serigraphie])),
+             rendreFeux([neufSurGrille.serigraphie]).match(/Une version à \d+ couleurs?/)?.[0] ?? '');
+
+    // LA RESERVE DE BRODERIE EST PERMANENTE, elle ne depend d'aucun feu. Le
+    // rendu en fils n'est pas un obstacle a lever, c'est une propriete du
+    // procede : l'atelier reconstruit le logo en points de couture, et le
+    // resultat n'est pas la meme image. Elle doit donc se lire AUSSI sur un
+    // vert, sinon elle ne servirait qu'a ceux qui ont deja un probleme.
+    const brodVert = rendreFeux([une.broderie]);
+    controle('la broderie porte sa reserve de rendu meme au feu vert',
+             /feu-reserve/.test(brodVert) && /points de couture/.test(brodVert));
+    controle('et elle est la SEULE : une reserve sur chaque ligne ne serait plus lue',
+             Object.values(une).filter((l) => l.reserve).length === 1);
+
+    // LE FORMAT GARDE LA PRIORITE SUR LE COMPTE DE COULEURS. C'est un choix, et
+    // il se justifie : la conversion est gratuite et immediate, elle se fait
+    // ici, alors qu'une version a moins de couleurs demande un graphiste. Un
+    // visiteur qui a les deux problemes doit regler le notre d'abord.
+    const imageSept = par(jugerFeux({ ...base, nCouleurs: 7, fichierVectoriel: false,
+                                      largeurPx: 4000, nomsParFamille: NOMS }, grille));
+    controle('une image a sept couleurs montre d\'abord le format, que nous reglons',
+             imageSept.serigraphie.nuance === 'format', imageSept.serigraphie.nuance ?? '');
+  }
+
   // 6. ROUGE R2, LE LOGO CASSE EN MONOCHROME. C'est la mesure qui distingue le
   // site de tout ce qui existe, et elle ne se pose QUE sur les techniques qui
   // ne posent qu'une matiere. Un logo a trois couleurs grave au laser n'est

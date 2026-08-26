@@ -100,6 +100,20 @@ export const TECHNIQUES_FEUX = Object.freeze([
     nom: 'Broderie',
     guide: '/guide/broderie',
     definition: 'Le dessin est cousu fil par fil : chaque couleur est une bobine.',
+    // LA SEULE RESERVE PERMANENTE DE LA GRILLE, arbitrage Alex du 26/08/2026.
+    //
+    // Elle ne depend d'aucune mesure et d'aucun seuil : elle est vraie de TOUS
+    // les logos brodes, y compris ceux qui obtiennent un vert. C'est pour cela
+    // qu'elle n'est pas un feu. Un feu repond a « puis-je envoyer ce fichier
+    // tel quel », et en broderie la reponse reste oui : l'atelier redessine le
+    // logo en points de couture, c'est son metier. Ce qui doit se savoir avant
+    // de commander, c'est que le resultat ne sera pas la meme image.
+    //
+    // Aucune autre technique n'en porte, et c'est voulu. Une reserve sur
+    // chaque ligne serait un bandeau d'avertissement, donc plus rien.
+    reserve: 'Le rendu ne peut pas être fidèle au dessin : un atelier reconstruit '
+      + 'le logo en points de couture. Les détails fins se referment, le petit texte '
+      + 'se comble, et les couleurs sont celles des fils disponibles.',
     produits: 'casquette, polo, sweat, serviette, sac en toile, bonnet',
     exigeVectoriel: true,
     monochrome: false,
@@ -183,6 +197,98 @@ export function tailleCourante(grille, nomsTechnique) {
 }
 
 /**
+ * LES PLAFONDS DE COULEURS DES EMPLACEMENTS ou cette technique est proposee.
+ *
+ * POURQUOI ON NE LIT PLUS UN CHIFFRE PAR TECHNIQUE, arbitrage Alex du
+ * 26/08/2026. seuils.json portait UN plafond par technique, et c'etait
+ * contraire a la doctrine du site depuis le premier jour : le plafond
+ * appartient a l'EMPLACEMENT, jamais a la technique. Nos propres archetypes le
+ * demontrent. Sous le mot « serigraphie » cohabitent des emplacements a une
+ * couleur, a quatre, et a huit ; un chiffre unique aurait refuse un six
+ * couleurs sur t-shirt, qui est un marquage parfaitement banal, ou laisse
+ * passer un six couleurs sur stylo, que personne ne prendra.
+ *
+ * `couleursMax` vaut null pour la quadrichromie : un seul passage, aucun
+ * plafond. Il ne vaut JAMAIS zero, la derivation le traduit une fois pour
+ * toutes.
+ */
+export function plafondsDesEmplacements(grille, nomsTechnique) {
+  const plafonds = [];
+  for (const a of grille?.archetypes ?? []) {
+    for (const z of a.zones) {
+      for (const t of z.techniques) {
+        if (nomsTechnique.has(t.technique)) {
+          plafonds.push(Object.prototype.hasOwnProperty.call(t, 'couleursMax')
+            ? t.couleursMax : null);
+        }
+      }
+    }
+  }
+  return plafonds;
+}
+
+/** La regle de realisme, et elle ne sert que si elle est ARBITRÉE. */
+function regleDeRealisme(seuils) {
+  const r = seuils?.realisme_couleurs;
+  if (!r || r.etat !== 'ARBITRÉ ALEX') return null;
+  if (!Number.isFinite(r.vert_jusqua) || !Number.isFinite(r.exempt_a_partir_de)) return null;
+  return r;
+}
+
+/**
+ * COMBIEN DE COULEURS CET EMPLACEMENT ACCEPTE SANS QUE LE DEVIS S'ENVOLE.
+ *
+ * Trois regimes, et ils ne se devinent pas, ils se lisent sur le plafond que
+ * l'emplacement declare :
+ *   quadrichromie   un seul passage, la couleur suivante ne coute rien ;
+ *   plafond eleve   carrousel : les ecrans se montent ensemble, passage unique ;
+ *   plafond bas     un ecran, un passage et un calage PAR couleur.
+ * Seul le troisieme porte un seuil de realisme.
+ */
+function realismeDe(plafond, regle) {
+  if (plafond === null) return Infinity;
+  if (plafond >= regle.exempt_a_partir_de) return plafond;
+  return Math.min(regle.vert_jusqua, plafond);
+}
+
+/**
+ * LE VERDICT COULEUR D'UNE TECHNIQUE, lu sur ses emplacements.
+ *
+ * Il rend DEUX COMPTES, et c'est volontaire : un seul mot ne sait pas decrire
+ * un partage.
+ *   `accepte`      combien d'emplacements autorisent ce nombre de couleurs ;
+ *   `confortable`  combien l'autorisent SANS que le devis s'envole.
+ *
+ * Aucun emplacement n'accepte : rouge, et le brief du graphiste s'ecrit.
+ * Tous sont confortables : rien a dire, on continue vers le format.
+ * Entre les deux : orange, et le texte compose sa phrase avec les deux
+ * comptes, parce que « 31 emplacements sur 56 » et « tous, mais chacun demande
+ * un ecran de plus » ne disent pas la meme chose au visiteur.
+ */
+export function jugerCouleursSurEmplacements(plafonds, nCouleurs, regle) {
+  if (!regle || !plafonds.length || !Number.isInteger(nCouleurs)) return null;
+  let accepte = 0;
+  let confortable = 0;
+  // Le plus GRAND plafond fini rencontre. Il sert au brief du rouge, qui doit
+  // demander la version la moins amputee possible : si un emplacement de la
+  // technique monte a quatre, on ne fait pas redessiner le logo pour deux.
+  let plafondMax = null;
+  for (const p of plafonds) {
+    if (p === null) { accepte += 1; confortable += 1; continue; }
+    plafondMax = plafondMax === null ? p : Math.max(plafondMax, p);
+    if (nCouleurs <= p) {
+      accepte += 1;
+      if (nCouleurs <= realismeDe(p, regle)) confortable += 1;
+    }
+  }
+  const total = plafonds.length;
+  const chiffres = { couleurs: nCouleurs, accepte, confortable, total, plafond: plafondMax };
+  if (accepte === 0) return { etat: 'rouge', chiffres };
+  if (confortable === total) return null;
+  return { etat: 'orange', chiffres };
+}
+
+/**
  * Juge UNE technique. Rend le feu, sa raison, et de quoi ecrire le brief.
  *
  * L'ordre des questions n'est pas negociable : le ROUGE d'abord, parce qu'un
@@ -191,16 +297,29 @@ export function tailleCourante(grille, nomsTechnique) {
  * que c'est au visiteur d'aller chercher son fichier.
  */
 export function jugerTechnique(technique, contexte) {
-  const { nCouleurs, fichierVectoriel, largeurPx, fusion, degrade, seuils, tailleMm } = contexte;
+  const { nCouleurs, fichierVectoriel, largeurPx, fusion, degrade, seuils, tailleMm,
+          plafonds } = contexte;
 
-  // R1. TROP DE COULEURS POUR LA TECHNIQUE.
-  const plafond = plafondQuiSert(seuils, technique.cle);
-  if (plafond !== null && Number.isInteger(nCouleurs) && nCouleurs > plafond) {
-    return {
-      feu: 'rouge',
-      cause: CAUSES.couleurs,
-      chiffres: { couleurs: nCouleurs, plafond },
-    };
+  // R1. LE NOMBRE DE COULEURS, LU SUR LES EMPLACEMENTS.
+  //
+  // Il ne se pose PAS sur les techniques qui ne rendent qu'une teinte : un logo
+  // a trois couleurs grave au laser n'est pas un refus, il sort en monochrome,
+  // et c'est le cas standard. Ce qui se juge la, c'est la fusion, plus bas.
+  const surEmplacements = technique.monochrome
+    ? null
+    : jugerCouleursSurEmplacements(plafonds ?? [], nCouleurs, regleDeRealisme(seuils));
+  if (surEmplacements?.etat === 'rouge') {
+    return { feu: 'rouge', cause: CAUSES.couleurs, chiffres: surEmplacements.chiffres };
+  }
+
+  // SECOURS, quand la grille des archetypes n'est pas chargee : on retombe sur
+  // le chiffre unique de seuils.json, qui ne produit qu'un rouge. Il ne sait
+  // pas distinguer les emplacements, donc il ne prononce aucun orange.
+  if (!plafonds?.length) {
+    const plafond = plafondQuiSert(seuils, technique.cle);
+    if (plafond !== null && Number.isInteger(nCouleurs) && nCouleurs > plafond) {
+      return { feu: 'rouge', cause: CAUSES.couleurs, chiffres: { couleurs: nCouleurs, plafond } };
+    }
   }
 
   // R2. LE LOGO CASSE EN MONOCHROME. Il ne se pose QUE sur les techniques qui
@@ -235,6 +354,19 @@ export function jugerTechnique(technique, contexte) {
     }
   }
 
+  // ORANGE C, LE NOMBRE DE COULEURS. Il vient EN DERNIER des trois oranges, et
+  // c'est un choix qui se justifie. Personne ne repare rien ici : le fichier
+  // est bon, la technique sait faire, et ce sont l'objet puis le devis qui
+  // parlent. Les deux oranges precedents, eux, ont une suite immediate : la
+  // conversion est gratuite et se fait sur cette page, et chercher un fichier
+  // plus grand ne coute rien. Un visiteur qui cumule les deux problemes doit
+  // regler le notre d'abord ; celui la l'attendra, il ne bougera pas.
+  // « Un obstacle, surmontable » reste exact, et le mot « impossible » ne doit
+  // jamais s'en approcher, arbitrage P0.5.
+  if (surEmplacements) {
+    return { feu: 'orange', nuance: 'couleurs', chiffres: surEmplacements.chiffres };
+  }
+
   return { feu: 'vert' };
 }
 
@@ -247,9 +379,13 @@ export function jugerFeux(contexte, grille = null) {
   return TECHNIQUES_FEUX.map((technique) => {
     const noms = new Set((contexte.nomsParFamille?.[technique.cle]) ?? []);
     const tailleMm = grille && noms.size ? tailleCourante(grille, noms) : MARQUAGE_COURANT_MM;
+    // Les plafonds viennent de la MEME lecture que les tailles de zone : une
+    // seule source de donnees pour toute la page, et elle est deja publique.
+    const plafonds = grille && noms.size ? plafondsDesEmplacements(grille, noms) : [];
     return {
       ...technique,
-      ...jugerTechnique(technique, { ...contexte, tailleMm: tailleMm ?? MARQUAGE_COURANT_MM }),
+      ...jugerTechnique(technique, {
+        ...contexte, plafonds, tailleMm: tailleMm ?? MARQUAGE_COURANT_MM }),
     };
   });
 }

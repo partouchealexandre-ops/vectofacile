@@ -341,6 +341,13 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
   .feu-rouge .feu-etat { color: #9c3722; }
   .feu-definition { margin: 0; font-size: 14px; line-height: 1.45; }
   .feu-raison { margin: 0; font-size: 14px; line-height: 1.45; color: var(--gris); }
+  /* LA RESERVE PERMANENTE, 26/08/2026. Une seule ligne la porte, la broderie,
+     et elle s'affiche meme sur un feu vert. Elle se distingue de la raison par
+     un filet a gauche, parce qu'elle ne parle PAS de ce logo la : elle parle du
+     procede, et elle sera la au fichier suivant. Aucune couleur d'etat : ce
+     n'est ni un obstacle ni un refus, c'est une propriete du metier. */
+  .feu-reserve { margin: 0; padding-left: 11px; border-left: 2px solid var(--trait);
+                 font-size: 13.5px; line-height: 1.45; color: var(--gris); }
   /* LES OBJETS FREQUENTS. C'est la traduction de la technique, et le picto la
      rend balayable. Il reste PETIT : sa fonction n'est pas de faire grossir la
      carte. */
