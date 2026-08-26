@@ -315,6 +315,45 @@ let echecs = 0;
     }
   }
 
+  // LA COULEUR SANS INTERIEUR, 26/08/2026, la lecon du mot « Eiffage ». La
+  // palette se decide sur les pixels stables, et un texte en traits de deux
+  // pixels n'en a aucun : sa couleur n'entrait jamais dans la palette, et le
+  // vote de bord fondait le mot dans le cartouche qui le porte. Un mot
+  // entier disparaissait du fichier livre, sans un avertissement. La mesure
+  // repasse sur toute l'encre : une teinte assez couvrante, loin de chaque
+  // couleur retenue, loin de chaque melange de deux couleurs retenues et du
+  // fond, posee d'un seul tenant sur UNE seule couleur, est une couleur
+  // reelle. Le temoin d'en face : des paillettes eparses de sonnerie JPEG
+  // ne le sont pas.
+  {
+    const L = 200, H = 200;
+    const d = new Uint8ClampedArray(L * H * 4).fill(255);
+    const poser = (x, y, r, v, b) => {
+      const p = (y * L + x) * 4;
+      d[p] = r; d[p + 1] = v; d[p + 2] = b; d[p + 3] = 255;
+    };
+    // un aplat rouge, la couleur principale
+    for (let y = 20; y < 100; y++) for (let x = 20; x < 100; x++) poser(x, y, 227, 73, 39);
+    // un « mot » en marine, traits de 2 px poses sur le blanc : sans interieur
+    for (const x0 of [120, 130, 140, 150]) {
+      for (let y = 120; y < 150; y++) for (let x = x0; x < x0 + 2; x++) poser(x, y, 19, 35, 91);
+    }
+    for (let x = 120; x < 152; x++) for (let y = 150; y < 152; y++) poser(x, y, 19, 35, 91);
+    // des paillettes eparses d'une teinte etrangere, facon sonnerie JPEG
+    for (let k = 0; k < 60; k++) {
+      const x = 12 + (k * 29) % 170, y = 160 + (k * 13) % 30;
+      poser(x, y, 0, 140, 90); poser(x + 1, y, 0, 140, 90);
+    }
+    const image = { largeur: L, hauteur: H, donnees: d, reduction: 1, largeurOrigine: L, hauteurOrigine: H };
+    const palette = mesurer(image).m2Couleurs.palette.map((c) => c.rvb);
+    const proche = (rvb, cible, tol) => Math.hypot(rvb[0] - cible[0], rvb[1] - cible[1], rvb[2] - cible[2]) < tol;
+    dire(palette.some((c) => proche(c, [19, 35, 91], 40)),
+         'une couleur sans interieur stable entre quand meme dans la palette',
+         palette.map((c) => '#' + c.map((v) => v.toString(16).padStart(2, '0')).join('')).join(' '));
+    dire(!palette.some((c) => proche(c, [0, 140, 90], 40)),
+         '(temoin) des paillettes eparses n\'y entrent pas');
+  }
+
   // LE TON. On enonce un fait sur notre outil, pas un verdict sur le logo, et
   // on donne les deux sorties du metier au lieu d'un seul ordre.
   const image = dessiner((poser) => {
@@ -808,7 +847,7 @@ for (const cas of verite.cas) {
   // ecrit, pas sur la fonction qui l'ecrit : un script n'est jamais son propre
   // juge.
   const enteteEps = fs.readFileSync(base + '.eps', 'utf-8').slice(0, 400);
-  // LA BOITE HAUTE RESOLUTION, ET PAS L'ENTIERE, 27/08/2026.
+  // LA BOITE HAUTE RESOLUTION, ET PAS L'ENTIERE, 26/08/2026.
   //
   // Un EPS porte les deux. %%BoundingBox est ARRONDIE AU POINT SUPERIEUR, parce
   // que la specification l'exige entiere ; %%HiResBoundingBox porte la vraie

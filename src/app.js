@@ -1117,6 +1117,19 @@ async function traiter(fichier) {
       return;
     }
     $('apercu').innerHTML = etat.svg;
+    // L'APERCU NE GROSSIT JAMAIS LA SOURCE, idee d'Alexandre du 26/08. Un
+    // logo de 416 px etire sur toute la colonne montre chaque defaut a
+    // 220 pour cent ; affiche a sa taille, il montre ce que le fichier sait
+    // faire. L'agrandissement reste possible dans le logiciel du client,
+    // c'est son geste, pas le notre.
+    {
+      const svgApercu = $('apercu').querySelector('svg');
+      if (svgApercu && etat.programme?.largeur) {
+        svgApercu.style.maxWidth = etat.programme.largeur + 'px';
+        svgApercu.style.width = '100%';
+        svgApercu.style.height = 'auto';
+      }
+    }
     $('resultat').innerHTML = `
       <h2>Votre fichier vectoriel</h2>
       ${ligne('Formes', nb(inv.formes))}

@@ -25,7 +25,7 @@ import {
   fondExterieur, composantesConnexes, masqueStable, boucherTrous, aireMinimalePour,
 } from './image.js';
 import {
-  histogramme, regrouperCouleurs, ecartLab, creerCacheLab, ECART_FUSION,
+  histogramme, regrouperCouleurs, ecartLab, creerCacheLab, ECART_FUSION, versLab, COUVERTURE_MINIMALE,
 } from './couleurs.js';
 import { transformeeDistance, pointsDeCrete, cotesOpposes } from './distance.js';
 
@@ -113,7 +113,7 @@ export function m1Dimensions(image) {
 
 /* ------------------------------------------------------------------ M2 */
 
-export function m2Couleurs(image, masque, stable, options) {
+export function m2Couleurs(image, masque, stable, options, fond = null) {
   // On ne compte que les pixels PLEINEMENT OPAQUES, et il y a deux raisons.
   //
   // Metier : la teinte d'un pixel a moitie transparent n'est une couleur voulue
@@ -142,6 +142,128 @@ export function m2Couleurs(image, masque, stable, options) {
   // compression. Le nombre de couleurs brutes, lui, se compte sur toute
   // l'encre : c'est le nombre que le client voit dans son logiciel.
   const g = regrouperCouleurs(stables.size ? stables : brutes, options);
+
+  // LES COULEURS SANS INTERIEUR, 26/08/2026. La palette se decide sur les
+  // pixels stables, et c'est juste : les rampes de compression n'ont pas le
+  // droit d'y entrer. Mais un TRAIT FIN n'a pas d'interieur stable : chacun
+  // de ses pixels touche un bord. Sur le logo UNSA, le mot « Eiffage »,
+  // 984 pixels de bleu marine en lettres de deux pixels d'epais, n'entrait
+  // jamais dans la palette, et la quantification fondait le mot dans le
+  // blanc du cartouche. Un mot entier disparaissait du fichier livre, sans
+  // un avertissement.
+  //
+  // On repasse donc sur TOUTE l'encre : une teinte qui couvre assez de
+  // pixels, LOIN de chaque couleur retenue ET loin de chaque melange de
+  // deux couleurs retenues, est une couleur reelle qui n'avait simplement
+  // pas d'interieur. Le test du melange est ce qui tient les rampes dehors :
+  // une rampe vit ENTRE deux couleurs de la palette, un trait fin d'une
+  // couleur propre vit ailleurs.
+  {
+    const labsRetenues = g.couleursReelles.map((c) => c.lab);
+    // Le FOND est une couleur comme une autre pour ce test : la sonnerie
+    // JPEG deborde aussi sur lui, en teintes presque blanches sur fond
+    // blanc, et sans lui ces teintes passaient toutes les gardes.
+    if (fond && fond.type === 'couleur' && fond.rvb) {
+      labsRetenues.push(versLab(fond.rvb[0], fond.rvb[1], fond.rvb[2]));
+    }
+    const loinDesMelanges = (lab) => {
+      for (const A of labsRetenues) {
+        if (ecartLab(lab, A) < 2 * ECART_FUSION) return false;
+      }
+      for (let i = 0; i < labsRetenues.length; i++) {
+        for (let j = i + 1; j < labsRetenues.length; j++) {
+          const A = labsRetenues[i], B = labsRetenues[j];
+          const ab = [B[0] - A[0], B[1] - A[1], B[2] - A[2]];
+          const nab = ab[0] * ab[0] + ab[1] * ab[1] + ab[2] * ab[2];
+          if (!nab) continue;
+          const am = [lab[0] - A[0], lab[1] - A[1], lab[2] - A[2]];
+          const t = Math.max(0, Math.min(1, (am[0] * ab[0] + am[1] * ab[1] + am[2] * ab[2]) / nab));
+          const px = A[0] + t * ab[0], py = A[1] + t * ab[1], pz = A[2] + t * ab[2];
+          if (Math.hypot(lab[0] - px, lab[1] - py, lab[2] - pz) < 12) return false;
+        }
+      }
+      return true;
+    };
+    const residu = new Map();
+    for (const [cle, n] of brutes) {
+      const r = (cle >> 16) & 255, v = (cle >> 8) & 255, b = cle & 255;
+      if (loinDesMelanges(versLab(r, v, b))) residu.set(cle, n);
+    }
+    if (residu.size) {
+      const encre = Array.from(brutes.values()).reduce((a, b) => a + b, 0);
+      const gr = regrouperCouleurs(residu, options);
+      const candidats = gr.couleursReelles
+        .filter((c) => c.pixels >= COUVERTURE_MINIMALE * encre)
+        .slice(0, 3);
+      // CE QUI DEPARTAGE LE TRAIT FIN DE LA SONNERIE JPEG : le voisinage.
+      // Un depassement de compression vit SUR une frontiere, il touche donc
+      // DEUX couleurs de la palette. Un texte fin d'une encre propre est
+      // pose SUR une seule couleur : les lettres d'« Eiffage » ne touchent
+      // que le blanc de leur cartouche. On n'ajoute une teinte que si elle
+      // possede une composante d'au moins 30 pixels dont le bord donne sur
+      // UNE seule couleur retenue. Sans ce test, couleurs_09_jpeg annoncait
+      // onze couleurs pour un dessin qui en porte neuf.
+      const { largeur, hauteur } = image;
+      const classeVoisin = new Map();
+      const classer = (i) => {
+        const p = i * 4;
+        const cle = (image.donnees[p] << 16) | (image.donnees[p + 1] << 8) | image.donnees[p + 2];
+        let k = classeVoisin.get(cle);
+        if (k === undefined) {
+          const lab = versLab(image.donnees[p], image.donnees[p + 1], image.donnees[p + 2]);
+          k = -1;
+          let meilleure = Infinity;
+          for (let q = 0; q < labsRetenues.length; q++) {
+            const d = ecartLab(lab, labsRetenues[q]);
+            if (d < meilleure) { meilleure = d; k = q; }
+          }
+          classeVoisin.set(cle, k);
+        }
+        return k;
+      };
+      for (const c of candidats) {
+        const membre = new Uint8Array(largeur * hauteur);
+        for (let i = 0; i < largeur * hauteur; i++) {
+          if (!selection[i]) continue;
+          const p = i * 4;
+          const lab = versLab(image.donnees[p], image.donnees[p + 1], image.donnees[p + 2]);
+          if (ecartLab(lab, c.lab) < ECART_FUSION) membre[i] = 1;
+        }
+        let retenue = false;
+        const vu = new Uint8Array(largeur * hauteur);
+        const pile = [];
+        for (let depart = 0; depart < largeur * hauteur && !retenue; depart++) {
+          if (!membre[depart] || vu[depart]) continue;
+          let taille = 0;
+          const contacts = new Map();
+          pile.push(depart); vu[depart] = 1;
+          while (pile.length) {
+            const i = pile.pop();
+            taille++;
+            const x = i % largeur, y = (i / largeur) | 0;
+            for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+              const xx = x + dx, yy = y + dy;
+              if (xx < 0 || yy < 0 || xx >= largeur || yy >= hauteur) continue;
+              const j = yy * largeur + xx;
+              if (membre[j]) { if (!vu[j]) { vu[j] = 1; pile.push(j); } continue; }
+              if (!selection[j]) continue;
+              const k = classer(j);
+              contacts.set(k, (contacts.get(k) ?? 0) + 1);
+            }
+          }
+          if (taille < 30) continue;
+          const totalContacts = [...contacts.values()].reduce((a, b) => a + b, 0);
+          if (!totalContacts) continue;
+          const dominante = Math.max(...contacts.values());
+          if (dominante / totalContacts >= 0.85) retenue = true;
+        }
+        if (retenue) {
+          g.couleursReelles.push({ ...c, part: c.pixels / encre });
+        }
+      }
+    }
+  }
+
   return {
     couleursBrutes: brutes.size,
     couleursReelles: g.couleursReelles.length,
@@ -904,7 +1026,7 @@ export function mesurer(image, options = {}) {
 
   const m1 = m1Dimensions(image);
   const stable = masqueStable(image, masque, lab);
-  const m2 = m2Couleurs(image, masque, stable, options);
+  const m2 = m2Couleurs(image, masque, stable, options, fond);
   const m5 = m5TraitLePlusFin(masque, largeur, hauteur);
   const purete = analyserPurete(image, masque, fond, m2._interne, boite, m5.distanceEncre, lab);
   const m4 = m4Transparence(image);
