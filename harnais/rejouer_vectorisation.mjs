@@ -373,15 +373,58 @@ let echecs = 0;
     for (let i = 0; i < C; i++) pts.push({ x: 20 + C - i, y: 20 + C });
     for (let i = 0; i < C; i++) pts.push({ x: 20, y: 20 + C - i });
     const segments = lisserBoucle(pts);
-    const courbes = boucleDe(segments);
+    const traces = segments.filter((g) => g.type !== 'depart');
+    const lignes = traces.filter((g) => g.type === 'ligne');
     const vrais = [[20, 20], [20 + C, 20], [20 + C, 20 + C], [20, 20 + C]];
     const ancres = segments.filter((g) => g.x !== undefined).map((g) => [g.x, g.y]);
     const rate = vrais.filter(([vx, vy]) =>
       !ancres.some(([ax, ay]) => Math.hypot(ax - vx, ay - vy) < 1)).length;
     dire(rate === 0, 'les quatre coins d\'un carre restent des coins, poses au pixel',
-         `${courbes.length} courbes`);
-    dire(courbes.length === 4, 'et un carre tient en quatre segments, un par cote',
-         `${courbes.length}`);
+         `${traces.length} segments`);
+    dire(traces.length === 4 && lignes.length === 4,
+         'et un carre tient en quatre DROITES, une par cote',
+         `${traces.length} segments dont ${lignes.length} droites`);
+  }
+
+  // LE BORD DROIT BRUITE : la lecon du logo U*BREW, 26/08 au soir. Le bord
+  // haut du E est droit au pixel pres dans le masque, et l'ajustement le
+  // livrait « presque droit », un flottement d'un pixel tolere par l'erreur
+  // bornee. L'oeil lit ce flottement comme une vague sur un trait qu'il sait
+  // droit. Ici : un rectangle dont chaque bord porte un bruit de un demi
+  // pixel, comme en laisse l'antialiasing. Chaque cote doit sortir en DROITE
+  // exacte, pas en courbe qui suit le bruit.
+  {
+    const L = 160, H = 60, pts = [];
+    const bruit = (k) => 0.5 * Math.sin(k * 1.7);
+    for (let i = 0; i < L; i++) pts.push({ x: 20 + i, y: 20 + bruit(i) });
+    for (let i = 0; i < H; i++) pts.push({ x: 20 + L + bruit(i + 7), y: 20 + i });
+    for (let i = 0; i < L; i++) pts.push({ x: 20 + L - i, y: 20 + H + bruit(i + 3) });
+    for (let i = 0; i < H; i++) pts.push({ x: 20 + bruit(i + 11), y: 20 + H - i });
+    const segments = lisserBoucle(pts);
+    const traces = segments.filter((g) => g.type !== 'depart');
+    const lignes = traces.filter((g) => g.type === 'ligne');
+    // Chaque bord doit etre UNE droite. Le bruit peut arrondir un coin d'un
+    // ou deux pixels, on tolere une petite courbe de raccord, jamais une
+    // vague : au moins quatre droites, et jamais plus de six segments.
+    dire(lignes.length >= 4 && traces.length <= 6,
+         'un bord droit sous le bruit sort en droite exacte, pas en vague',
+         `${traces.length} segments dont ${lignes.length} droites`);
+  }
+
+  // LE GALBE VOULU, temoin de l'autre sens : un arc bombe de 3 px n'est pas
+  // une droite qui a bouge, c'est un dessin. Il doit RESTER une courbe,
+  // sinon on n'aurait pas pose un detecteur de droites, on aurait aplati le
+  // dessin de tout le monde.
+  {
+    const pts = [];
+    const L = 120, F = 3;
+    for (let i = 0; i <= L; i++) pts.push({ x: 20 + i, y: 40 - F * Math.sin(Math.PI * i / L) });
+    for (let i = L; i >= 0; i--) pts.push({ x: 20 + i, y: 44 + F * Math.sin(Math.PI * i / L) });
+    const segments = lisserBoucle(pts);
+    const traces = segments.filter((g) => g.type !== 'depart');
+    const courbes = traces.filter((g) => g.type === 'courbe');
+    dire(courbes.length >= 2, 'un galbe voulu de 3 px reste une courbe, il n\'est pas aplati',
+         `${courbes.length} courbe(s) sur ${traces.length} segment(s)`);
   }
 
   // L'ETOILE : dix pointes plus vives qu'un coin droit, aucune ne s'emousse.

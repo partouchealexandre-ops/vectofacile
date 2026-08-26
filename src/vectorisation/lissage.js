@@ -60,6 +60,27 @@ export const RAYON_LISSAGE = 2;
 // plus faux et chaque moitie est reajustee.
 export const TOLERANCE_AJUSTEMENT_PX = 1.0;
 
+// Les deux criteres qui font qu'un arc est livre comme une DROITE. Mesure du
+// 26/08/2026, soir, sur le logo U*BREW zoome par Alexandre : le bord haut du
+// E est droit AU PIXEL PRES dans le masque mesure (y = 78 sur 140 colonnes),
+// et l'ajustement le rendait « presque droit », un flottement d'un pixel
+// tolere par l'erreur bornee. Sur une courbe, ce flottement est invisible ;
+// sur un trait que l'oeil sait droit, il se lit comme une vague. L'acuite de
+// l'oeil sur l'alignement est superieure a son acuite sur tout le reste :
+// une droite doit sortir droite, exactement.
+//
+// L'ecart maximal seul ne suffit pas : un troncon de tres grand cercle tient
+// aussi contre sa corde, et le livrer en droite facetterait le cercle. La
+// difference est dans la FORME des ecarts : le bruit d'un bord droit oscille
+// des deux cotes sans structure, un arc de cercle bombe d'un seul cote en
+// parabole. On ajuste donc une parabole sur les ecarts : sa fleche mesure le
+// bombement reel, insensible au bruit qui s'annule dans la somme, et
+// insensible aussi a un coin que le bruit a decale, absorbe par le terme
+// lineaire. Un bord droit au coin pres passe ; un arc, meme discret, reste
+// une courbe.
+export const ECART_DROITE_PX = 0.85;
+export const FLECHE_DROITE_PX = 0.35;
+
 const ITERATIONS_REPARAMETRAGE = 4;
 const PROFONDEUR_MAXIMALE = 24;
 
@@ -237,7 +258,55 @@ function sEchappe(pts, courbe, tolerance) {
   return false;
 }
 
+/* Un arc dont tous les echantillons tiennent contre sa corde, et dont les
+ * tangentes imposees suivent cette corde, EST une droite : on la livre comme
+ * telle. Le double critere est necessaire : l'ecart seul accepterait un
+ * troncon de tres grand cercle et le facetterait ; l'angle des tangentes
+ * l'exclut, puisqu'elles divergent de la corde des que l'arc tourne. Un
+ * galbe voulu, lui, depasse l'ecart et reste une courbe. */
+function enDroite(pts, tolerance) {
+  const n = pts.length;
+  const p0 = pts[0], pN = pts[n - 1];
+  const cx = pN.x - p0.x, cy = pN.y - p0.y;
+  const lc = Math.hypot(cx, cy);
+  if (lc < 4 || n < 5) return null;
+  const ux = cx / lc, uy = cy / lc;
+  // Ecarts signes a la corde, en abscisse reduite s dans [-1, 1].
+  const e = new Float64Array(n);
+  for (let i = 0; i < n; i++) {
+    const dx = pts[i].x - p0.x, dy = pts[i].y - p0.y;
+    e[i] = dx * uy - dy * ux;
+    if (Math.abs(e[i]) > 2.5) return null;
+  }
+  // Parabole e ~ a + b s + c s2 par moindres carres (base symetrique).
+  let s0 = 0, s1 = 0, s2 = 0, s3 = 0, s4 = 0, y0 = 0, y1 = 0, y2 = 0;
+  for (let i = 0; i < n; i++) {
+    const t = (2 * i / (n - 1)) - 1;
+    const t2 = t * t;
+    s0 += 1; s1 += t; s2 += t2; s3 += t2 * t; s4 += t2 * t2;
+    y0 += e[i]; y1 += e[i] * t; y2 += e[i] * t2;
+  }
+  // Resolution 3x3 (symetrique) par Cramer.
+  const det = s0 * (s2 * s4 - s3 * s3) - s1 * (s1 * s4 - s3 * s2) + s2 * (s1 * s3 - s2 * s2);
+  if (Math.abs(det) < 1e-9) return null;
+  const a = (y0 * (s2 * s4 - s3 * s3) - s1 * (y1 * s4 - s3 * y2) + s2 * (y1 * s3 - s2 * y2)) / det;
+  const b = (s0 * (y1 * s4 - y2 * s3) - y0 * (s1 * s4 - s3 * s2) + s2 * (s1 * y2 - y1 * s2)) / det;
+  const c = (s0 * (s2 * y2 - s3 * y1) - s1 * (s1 * y2 - s3 * y0) + y0 * (s1 * s3 - s2 * s2)) / det;
+  // La fleche du bombement : la parabole c s2 varie de c entre le centre et
+  // les bords de [-1, 1].
+  if (Math.abs(c) > FLECHE_DROITE_PX) return null;
+  // Le bruit residuel, une fois la tendance retiree, reste borne.
+  const ecartMax = Math.min(tolerance * 0.85, ECART_DROITE_PX);
+  for (let i = 0; i < n; i++) {
+    const t = (2 * i / (n - 1)) - 1;
+    if (Math.abs(e[i] - (a + b * t + c * t * t)) > ecartMax) return null;
+  }
+  return { ligne: [p0, pN] };
+}
+
 function ajusterArc(pts, t1, t2, tolerance, sortie, profondeur = 0) {
+  const droite = enDroite(pts, tolerance);
+  if (droite) { sortie.push(droite); return; }
   if (pts.length === 2) {
     const d = norme(soustraire(pts[1], pts[0])) / 3;
     sortie.push([pts[0],
@@ -315,15 +384,22 @@ export function lisserBoucle(pts, options = {}) {
       for (let i = (debut + 1) % n; ; i = (i + 1) % n) { arc.push(S[i]); if (i === fin) break; }
       if (arc.length < 2) continue;
       // Aux coins, les tangentes sont unilaterales : le coin reste un coin.
-      const t1 = normaliser(soustraire(arc[1], arc[0]));
-      const t2 = normaliser(soustraire(arc[arc.length - 2], arc[arc.length - 1]));
+      // Elles se mesurent sur une corde de quelques pas, pas sur le premier
+      // pas seul : un echantillon voisin qui porte un demi pixel de bruit
+      // fait tourner une corde de 1 px de 17 degres, et une tangente fausse
+      // au depart d'un bord droit interdisait de le reconnaitre droit.
+      const base = Math.min(3, arc.length - 1);
+      const t1 = normaliser(soustraire(arc[base], arc[0]));
+      const t2 = normaliser(soustraire(arc[arc.length - 1 - base], arc[arc.length - 1]));
       ajusterArc(arc, t1, t2, tolerance, courbes);
     }
   }
   if (courbes.length === 0) return null;
-  const segments = [{ type: 'depart', x: courbes[0][0].x, y: courbes[0][0].y }];
-  for (const [, p1, p2, p3] of courbes) {
-    segments.push({ type: 'courbe', x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y, x: p3.x, y: p3.y });
+  const premier = courbes[0].ligne ? courbes[0].ligne[0] : courbes[0][0];
+  const segments = [{ type: 'depart', x: premier.x, y: premier.y }];
+  for (const c of courbes) {
+    if (c.ligne) segments.push({ type: 'ligne', x: c.ligne[1].x, y: c.ligne[1].y });
+    else segments.push({ type: 'courbe', x1: c[1].x, y1: c[1].y, x2: c[2].x, y2: c[2].y, x: c[3].x, y: c[3].y });
   }
   return segments;
 }
