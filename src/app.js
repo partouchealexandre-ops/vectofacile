@@ -1096,7 +1096,7 @@ async function traiter(fichier) {
     direEtape('Vectorisation');
     const svg = vectorize_rgba(new Uint8Array(prepare.pixels.buffer), image.largeur, image.hauteur, prepare.options);
     etape = 'lecture des chemins';
-    etat.programme = construireProgramme(svg);
+    etat.programme = construireProgramme(svg, prepare.options);
     // On n'affiche ni ne livre JAMAIS le SVG brut du vectoriseur : il contient
     // des chemins que la grammaire SVG interdit. Voir vectorisation/svg.js.
     etat.svg = versSvg(etat.programme, { titre: etat.nom });

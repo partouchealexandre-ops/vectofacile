@@ -101,6 +101,7 @@ export function retirerLaPoussiere(programme, cote = COTE_MINIMAL_FORME) {
 }
 
 import { lireChemin } from './chemins.js';
+import { lisserProgramme } from './lissage.js';
 
 const BALISES_ADMISES = new Set(['svg', 'path', 'g', 'title', 'desc', 'defs', 'metadata']);
 
@@ -193,7 +194,14 @@ export function construireProgramme(svg, options = {}) {
   // LE NETTOYAGE SE FAIT ICI, PAS CHEZ L'APPELANT. Deux appelants, la page et
   // le harnais, et un seul qui y penserait serait deux fichiers differents pour
   // le meme logo. La lecon du 26/08 sur la taille des fichiers livres.
-  return retirerLaPoussiere({ largeur, hauteur, formes }, options.cote ?? COTE_MINIMAL_FORME);
+  const programme = retirerLaPoussiere({ largeur, hauteur, formes }, options.cote ?? COTE_MINIMAL_FORME);
+
+  // L'AJUSTEMENT AUSSI, et pour la meme raison. Le drapeau vient des options
+  // du vectoriseur (reglagesDuTrait) : quand le trace est l'escalier pixel,
+  // c'est ici qu'il devient courbes. Apres la poussiere : ajuster des formes
+  // qui vont etre retirees serait du travail jete.
+  if (options.lissage) lisserProgramme(programme);
+  return programme;
 }
 
 /** Inventaire du programme, utile au harnais et a l'affichage. */

@@ -33,7 +33,8 @@ import { mesurer } from '../src/moteur/mesures.js';
 import { construireProgramme, inventaire } from '../src/vectorisation/programme.js';
 import { versEps } from '../src/vectorisation/eps.js';
 import { versPdf } from '../src/vectorisation/pdf.js';
-import { preparerVectorisation } from '../src/vectorisation/options.js';
+import { preparerVectorisation, reglagesDuTrait, SURFACE_MAX_AJUSTEMENT_PX } from '../src/vectorisation/options.js';
+import { lisserBoucle } from '../src/vectorisation/lissage.js';
 
 const require = createRequire(import.meta.url);
 
@@ -224,6 +225,7 @@ let echecs = 0;
       courant: m.m5TraitLePlusFin?.courantPx ?? null,
       alerte: (prep.avertissements ?? [])[0]?.gravite ?? 'aucune',
       mode: prep.options?.mode ?? null,
+      lissage: prep.options?.lissage ?? false,
     };
   };
 
@@ -259,8 +261,12 @@ let echecs = 0;
   dire(accident.min <= 1 && accident.alerte === 'aucune',
        'un dessin franc portant un accident de 1 px n\'est plus condamne',
        `min ${accident.min}, courant ${accident.courant}, alerte ${accident.alerte}`);
-  dire(accident.mode === 'spline',
-       'et il repasse en courbes lissees, au lieu de contours droits');
+  dire(accident.mode === 'pixel' && accident.lissage === true,
+       'et il repasse en courbes lissees, au lieu de contours droits',
+       `mode ${accident.mode}, lissage ${accident.lissage}`);
+  dire(filiforme.mode === 'polygon' && filiforme.lissage === false,
+       '(temoin) le dessin filiforme, lui, reste en contours exacts, sans ajustement',
+       `mode ${filiforme.mode}`);
   dire(filiforme.alerte === 'grave',
        '(temoin) un dessin vraiment filiforme reste averti, sinon on aurait '
        + 'simplement eteint l\'avertissement',
@@ -278,6 +284,128 @@ let echecs = 0;
        'et le texte dit que ce n\'est pas un defaut du logo du client');
   dire(!/décevant/.test(texte),
        '(temoin) il ne juge plus le fichier du client par un adjectif');
+  console.log('  ' + '-'.repeat(72));
+}
+
+// LES TEMOINS DE L'AJUSTEMENT DE COURBES, 26/08/2026.
+//
+// Les courbes du fichier livre ne viennent plus du mode spline de VTracer mais
+// de notre ajustement sur son trace pixel (lissage.js, qui raconte pourquoi).
+// Un ajusteur de courbes a trois manieres de mentir : arrondir un coin voulu,
+// cranter une courbe voulue lisse, ou laisser filer une cubique hors du dessin
+// entre deux points de mesure. Chacune a son temoin, et le troisieme a
+// vraiment eu lieu : une tangente retournee au point de coupe (convention de
+// Schneider) plantait une pointe de 150 px sous la serif du D pendant la mise
+// au point. L'ecart radial du cercle, mesure LE LONG des courbes et pas
+// seulement aux ancres, l'aurait attrapee.
+{
+  console.log('');
+  console.log("  L'AJUSTEMENT DE COURBES, nos courbes sur le trace pixel");
+  console.log('  ' + '-'.repeat(72));
+  const dire = (ok, libelle, detail) => {
+    console.log(`  ${ok ? 'ok   ' : 'ECHEC'} ${libelle}${detail ? `  [${detail}]` : ''}`);
+    if (!ok) echecs++;
+  };
+
+  // LA TABLE DE DECISION, testee par la table : fabriquer une image de 21
+  // megapixels pour voir le plafond agir serait le meme controle en 400 Mo.
+  const filiforme = reglagesDuTrait(true, 250000);
+  const courant = reglagesDuTrait(false, 250000);
+  const geant = reglagesDuTrait(false, SURFACE_MAX_AJUSTEMENT_PX + 1);
+  dire(filiforme.mode === 'polygon' && !filiforme.lissage,
+       'un trait limite trace en polygones exacts, sans ajustement');
+  dire(courant.mode === 'pixel' && courant.lissage === true,
+       'un dessin franc trace le pixel exact, et l\'ajustement s\'y applique');
+  dire(geant.mode === 'spline' && !geant.lissage,
+       'au dela du plafond de surface, le spline de VTracer reprend la main',
+       `plafond ${SURFACE_MAX_AJUSTEMENT_PX} px`);
+  dire(!('simplify' in filiforme) && !('simplify' in courant) && !('simplify' in geant),
+       '(temoin) le reglage mort `simplify`, que VTracer ignorait, a disparu');
+
+  const boucleDe = (segments) => segments.filter((g) => g.type === 'courbe');
+  const long = (v) => Math.hypot(v.x, v.y);
+
+  // LE CERCLE : lisse partout, fidele partout. L'ecart radial est mesure le
+  // long des courbes, pas seulement aux ancres : une cubique dont la poignee
+  // se retourne passe pres de ses ancres et bombe entre elles.
+  {
+    const R = 30, pts = [];
+    for (let a = 0; a < 720; a++) {
+      const rad = a * Math.PI / 360;
+      pts.push({ x: 100 + R * Math.cos(rad), y: 100 + R * Math.sin(rad) });
+    }
+    const segments = lisserBoucle(pts);
+    const courbes = boucleDe(segments);
+    let pire = 0;
+    let prec = { x: segments[0].x, y: segments[0].y };
+    for (const c of courbes) {
+      for (let t = 0; t <= 1.0001; t += 0.05) {
+        const u = 1 - t;
+        const x = u * u * u * prec.x + 3 * u * u * t * c.x1 + 3 * u * t * t * c.x2 + t * t * t * c.x;
+        const y = u * u * u * prec.y + 3 * u * u * t * c.y1 + 3 * u * t * t * c.y2 + t * t * t * c.y;
+        pire = Math.max(pire, Math.abs(Math.hypot(x - 100, y - 100) - R));
+      }
+      prec = { x: c.x, y: c.y };
+    }
+    // Cassures de tangente aux jonctions : sur un cercle, aucune n'est un coin.
+    let pireAngle = 0;
+    for (let i = 0; i < courbes.length; i++) {
+      const a = courbes[i], b = courbes[(i + 1) % courbes.length];
+      const tin = { x: a.x - a.x2, y: a.y - a.y2 };
+      const tout = { x: b.x1 - a.x, y: b.y1 - a.y };
+      const na = long(tin), nb = long(tout);
+      if (!na || !nb) continue;
+      const cos = Math.max(-1, Math.min(1, (tin.x * tout.x + tin.y * tout.y) / (na * nb)));
+      pireAngle = Math.max(pireAngle, Math.acos(cos) * 180 / Math.PI);
+    }
+    dire(pire < 0.4, 'un cercle reste un cercle, a moins de 0,4 px pres le long des courbes',
+         `ecart ${pire.toFixed(3)} px, ${courbes.length} courbes`);
+    dire(pireAngle < 5, 'et aucune jonction du cercle ne casse la tangente',
+         `pire cassure ${pireAngle.toFixed(2)} degres`);
+    dire(courbes.length <= 12, 'sans emietter le trace en confettis', `${courbes.length} courbes`);
+  }
+
+  // LE CARRE : quatre coins voulus, quatre coins rendus, aucun arrondi.
+  {
+    const C = 60, pts = [];
+    for (let i = 0; i < C; i++) pts.push({ x: 20 + i, y: 20 });
+    for (let i = 0; i < C; i++) pts.push({ x: 20 + C, y: 20 + i });
+    for (let i = 0; i < C; i++) pts.push({ x: 20 + C - i, y: 20 + C });
+    for (let i = 0; i < C; i++) pts.push({ x: 20, y: 20 + C - i });
+    const segments = lisserBoucle(pts);
+    const courbes = boucleDe(segments);
+    const vrais = [[20, 20], [20 + C, 20], [20 + C, 20 + C], [20, 20 + C]];
+    const ancres = segments.filter((g) => g.x !== undefined).map((g) => [g.x, g.y]);
+    const rate = vrais.filter(([vx, vy]) =>
+      !ancres.some(([ax, ay]) => Math.hypot(ax - vx, ay - vy) < 1)).length;
+    dire(rate === 0, 'les quatre coins d\'un carre restent des coins, poses au pixel',
+         `${courbes.length} courbes`);
+    dire(courbes.length === 4, 'et un carre tient en quatre segments, un par cote',
+         `${courbes.length}`);
+  }
+
+  // L'ETOILE : dix pointes plus vives qu'un coin droit, aucune ne s'emousse.
+  // C'est le cas du logo U*BREW, dont l'etoile est le motif central.
+  {
+    const pts = [];
+    const sommets = [];
+    for (let k = 0; k < 10; k++) {
+      const r = k % 2 === 0 ? 40 : 16;
+      const a = k * Math.PI / 5 - Math.PI / 2;
+      sommets.push({ x: 100 + r * Math.cos(a), y: 100 + r * Math.sin(a) });
+    }
+    for (let k = 0; k < 10; k++) {
+      const a = sommets[k], b = sommets[(k + 1) % 10];
+      const n = Math.ceil(Math.hypot(b.x - a.x, b.y - a.y));
+      for (let i = 0; i < n; i++) pts.push({ x: a.x + (b.x - a.x) * i / n, y: a.y + (b.y - a.y) * i / n });
+    }
+    const segments = lisserBoucle(pts);
+    const ancres = segments.filter((g) => g.x !== undefined).map((g) => [g.x, g.y]);
+    const rate = sommets.filter((v) =>
+      !ancres.some(([ax, ay]) => Math.hypot(ax - v.x, ay - v.y) < 1.2)).length;
+    dire(rate === 0, 'les dix pointes d\'une etoile restent des pointes',
+         `${rate} emoussee(s)`);
+  }
   console.log('  ' + '-'.repeat(72));
 }
 
@@ -366,7 +494,7 @@ for (const cas of verite.cas) {
 
   let programme, inv;
   try {
-    programme = construireProgramme(svg);
+    programme = construireProgramme(svg, prepare.options);
     inv = inventaire(programme);
   } catch (e) {
     console.log(`  ECHEC ${cas.nom} : lecture du SVG impossible, ${e.message}`);

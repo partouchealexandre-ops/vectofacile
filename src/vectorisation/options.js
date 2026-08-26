@@ -68,6 +68,33 @@ export function refusDeVectorisation(mesures) {
   return null;
 }
 
+/*
+ * Plafond de surface de l'ajustement de courbes, en pixels d'image.
+ *
+ * Le trace pixel d'une image de 21 megapixels (6 820 x 3 123, vu sur un
+ * logo client reel) fait exploser la memoire de l'onglet : le navigateur
+ * ferme la page. Au dela de ce plafond, on revient au mode spline de
+ * VTracer, et ce n'est pas un pis-aller : le defaut du spline est ABSOLU,
+ * un affaissement d'un a deux pixels entre deux ancres, tandis que l'oeil
+ * juge RELATIVEMENT a la taille du dessin. Sur une image de cette taille,
+ * l'affaissement est invisible ; c'est sur les images petites et moyennes,
+ * la ou il se voit, que l'ajustement travaille.
+ */
+export const SURFACE_MAX_AJUSTEMENT_PX = 6000000;
+
+/**
+ * La decision du mode de trace, seule et pure : le harnais la teste par la
+ * table, sans fabriquer une image de 21 megapixels.
+ */
+export function reglagesDuTrait(traitLimite, surfacePx) {
+  if (traitLimite) return { mode: 'polygon' };
+  if (surfacePx > SURFACE_MAX_AJUSTEMENT_PX) return { mode: 'spline' };
+  // Le mode pixel livre l'escalier exact ; l'ajustement (lissage.js) le
+  // transforme en courbes. Le drapeau `lissage` est lu par
+  // construireProgramme, VTracer ignore les cles qu'il ne connait pas.
+  return { mode: 'pixel', lissage: true };
+}
+
 /**
  * @param {object} mesures  sortie de mesurer()
  * @param {object} reglages surcharges eventuelles
@@ -93,6 +120,11 @@ export function optionsDepuisMesures(mesures, reglages = {}) {
   // Sous 3 px de trait, on renonce donc aux courbes. Le fichier est un peu plus
   // anguleux, il est JUSTE, et le diagnostic dira par ailleurs que le fichier
   // d'origine est trop petit pour ce qu'il contient.
+  //
+  // AU DESSUS de cette limite, les courbes ne viennent plus du mode spline de
+  // VTracer mais de notre propre ajustement sur son trace pixel : voir
+  // lissage.js, qui dit pourquoi, chiffres a l'appui. reglagesDuTrait,
+  // ci-dessus, porte la table de decision complete.
   // LA DECISION SE PREND SUR LE TRAIT COURANT, PLUS SUR LE MINIMUM, 26/08/2026.
   //
   // Mesure sur huit logos clients reels : six sur huit declenchaient cet
@@ -172,9 +204,12 @@ export function optionsDepuisMesures(mesures, reglages = {}) {
     });
   }
 
-  const reglagesTrait = traitLimite
-    ? { mode: 'polygon' }
-    : { mode: 'spline', simplify: Math.min(1.2, Math.max(0.3, traitCourant === null ? 1.2 : traitCourant / 4)) };
+  // Le reglage `simplify` qui accompagnait le mode spline etait un parametre
+  // MORT : VTracer ne connait pas ce nom et l'ignorait sans un mot. Toute la
+  // finesse du lissage tournait donc sur des valeurs par defaut que personne
+  // n'avait choisies. Un reglage qui ne regle rien est un mensonge de
+  // configuration ; il part avec le mode spline qu'il pretendait piloter.
+  const reglagesTrait = reglagesDuTrait(traitLimite, mesures.m1Dimensions?.pixels ?? 0);
 
   return {
     ...reglagesTrait,
