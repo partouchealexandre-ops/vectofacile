@@ -59,8 +59,16 @@ function texteRouge(ligne, contexte) {
     const { couleurs, plafond } = ligne.chiffres;
     return {
       titre: `En ${ligne.nom.toLowerCase()}, votre logo a trop de couleurs.`,
-      explication: `Il en compte ${couleurs}. Les ateliers en acceptent ${plafond} : `
-        + 'chaque couleur demande son propre outil et son propre passage de machine.',
+      // DEUX CORRECTIONS DU 26/08/2026, signalees par Alex sur un logo a sept
+      // couleurs. La phrase ne disait pas de QUOI elle comptait sept, alors
+      // qu'elle part telle quelle dans le presse papier et se lit sans son
+      // titre. Et elle posait le plafond comme une regle du metier, sans
+      // reserve, alors que la valeur qui la nourrit est un ARBITRÉ ALEX du
+      // 20/08 et non une valeur SOURCÉE : elle se dit donc au conditionnel de
+      // l'usage, « generalement », « au maximum », jamais comme une borne.
+      explication: `Votre logo compte ${couleurs} couleurs. Les ateliers en acceptent `
+        + `généralement ${plafond} au maximum : chaque couleur demande son propre outil `
+        + 'et son propre passage de machine.',
       demande: `Une version à ${plafond} couleur${plafond > 1 ? 's' : ''} maximum. `
         + 'C\'est un arbitrage graphique, il faut décider lesquelles fusionner : '
         + 'ce n\'est pas une conversion automatique.',
@@ -72,8 +80,15 @@ function texteRouge(ligne, contexte) {
       : 'deux formes se confondent';
     return {
       titre: 'En une seule couleur, votre logo perd son dessin.',
-      explication: `Cette technique ne pose qu'une matière : ${quoi}, et il ne resterait `
-        + 'qu\'une forme pleine.',
+      // « NE POSE QU'UNE MATIERE » ETAIT FAUX POUR LA MOITIE DES TECHNIQUES
+      // CONCERNEES, signale par Alex le 26/08/2026. La gravure laser ne pose
+      // rien : elle RETIRE de la matiere, et la teinte obtenue est celle du
+      // support mis a nu. La definition de la ligne le disait deja
+      // correctement, deux ecrans plus haut, et ce texte la contredisait.
+      // Ce qui est vrai des deux techniques monochromes, celle qui creuse
+      // comme celle qui presse une feuille, c'est le RESULTAT : une teinte.
+      explication: `Cette technique ne rend qu'une seule teinte : ${quoi}, et il ne `
+        + 'resterait qu\'une forme pleine.',
       demande: 'Une version monochrome, obtenue en général en ajoutant un contour aux '
         + 'zones claires pour qu\'elles restent distinctes.',
     };

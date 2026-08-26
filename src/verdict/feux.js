@@ -39,8 +39,10 @@ import { DPI_PLANCHER, dpiALaTaille } from './techniques.js';
  * lignes. Ce sont les sept familles du referentiel, celles qui ont un guide.
  *
  * `produits` est la traduction, et c'est la partie la plus utile de la ligne.
- * `monochrome` marque les techniques qui ne posent qu'une seule matiere : ce
- * sont les seules ou la fusion en monochrome se juge.
+ * `monochrome` marque les techniques qui ne rendent qu'une seule teinte : ce
+ * sont les seules ou la fusion en monochrome se juge. Le mot dit le RESULTAT,
+ * pas le geste : le laser retire de la matiere quand le marquage a chaud en
+ * pose une, et les deux finissent avec une teinte unique.
  */
 export const TECHNIQUES_FEUX = Object.freeze([
   {
@@ -202,7 +204,7 @@ export function jugerTechnique(technique, contexte) {
   }
 
   // R2. LE LOGO CASSE EN MONOCHROME. Il ne se pose QUE sur les techniques qui
-  // ne posent qu'une matiere. Un logo a trois couleurs grave au laser n'est pas
+  // ne rendent qu'une teinte. Un logo a trois couleurs grave au laser n'est pas
   // un rouge par principe : il sort en monochrome, et c'est le cas standard.
   // Le vrai rouge, c'est quand le dessin se referme sur lui-meme.
   if (technique.monochrome && fusion?.fusionne) {

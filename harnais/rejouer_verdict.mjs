@@ -870,7 +870,18 @@ const controle = (libelle, ok, detail) => resultats.push({ libelle, ok, detail }
            `${neuf.serigraphie.feu} / ${neuf.serigraphie.cause ?? ''}`);
   controle('et le rouge ecrit le brief du graphiste, avec le chiffre',
            /Une version à 4 couleurs maximum/.test(rendreFeux([neuf.tampographie]))
-             && /Il en compte 9/.test(rendreFeux([neuf.tampographie])));
+             && /Votre logo compte 9 couleurs/.test(rendreFeux([neuf.tampographie])));
+  // LA PHRASE DIT DE QUOI ELLE PARLE, et elle ne promet pas plus que le fichier
+  // de seuils ne contient. Le plafond de tampographie est un ARBITRÉ ALEX, pas
+  // une valeur SOURCÉE : aucune fiche d'atelier du referentiel ne le publie. Il
+  // se dit donc au regime de l'usage, jamais comme une borne du metier.
+  controle('le brief compte des COULEURS, il ne compte pas dans le vide',
+           /compte 9 couleurs/.test(rendreFeux([neuf.tampographie])));
+  controle('et le plafond arbitre se dit « generalement », « au maximum »',
+           /généralement 4 au maximum/.test(rendreFeux([neuf.tampographie])),
+           rendreFeux([neuf.tampographie]).match(/en acceptent[^:]*/)?.[0] ?? '');
+  controle('(temoin) la phrase ne pose plus le plafond comme un fait etabli',
+           !/Les ateliers en acceptent 4 :/.test(rendreFeux([neuf.tampographie])));
 
   // 6. ROUGE R2, LE LOGO CASSE EN MONOCHROME. C'est la mesure qui distingue le
   // site de tout ce qui existe, et elle ne se pose QUE sur les techniques qui
@@ -891,6 +902,16 @@ const controle = (libelle, ok, detail) => resultats.push({ libelle, ok, detail }
   controle('le rouge monochrome nomme ce qui se confond, et quoi demander',
            /partie claire/.test(rendreFeux([fusionne.gravure_laser]))
              && /ajoutant un contour/.test(rendreFeux([fusionne.gravure_laser])));
+  // LE LASER NE POSE PAS DE MATIERE, IL EN RETIRE, signale par Alex le
+  // 26/08/2026. Le texte partage par les deux techniques monochromes disait
+  // « ne pose qu'une matiere » : vrai du marquage a chaud, qui presse une
+  // feuille, faux du laser, qui creuse. Il contredisait la definition de sa
+  // propre ligne, deux blocs plus haut, sur le meme ecran.
+  controle('le texte monochrome dit le RESULTAT, une teinte, pas le geste',
+           /ne rend qu'une seule teinte/.test(rendreFeux([fusionne.gravure_laser])));
+  controle('(temoin) il ne fait plus poser de matiere a un laser qui en retire',
+           !/ne pose qu'une matière/.test(rendreFeux([fusionne.gravure_laser]))
+             && !/ne pose qu'une matière/.test(rendreFeux([fusionne.marquage_a_chaud])));
 
   // 7. ROUGE R6, LE DEGRADE, sur les techniques sans demi-teinte seulement.
   const degrade = par(jugerFeux({ ...base, nCouleurs: 3, fichierVectoriel: true,
