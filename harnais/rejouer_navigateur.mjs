@@ -83,9 +83,31 @@ function servir() {
       // Necessaire depuis que /vectoriser/ existe a cote de /.
       let chemin = url === '/' ? 'index.html' : url;
       if (chemin.endsWith('/')) chemin += 'index.html';
-      const fichier = url.startsWith('/apercus/')
+      let fichier = url.startsWith('/apercus/')
         ? path.join(IMAGES, url.slice('/apercus/'.length))
         : path.join(PUBLIC, chemin);
+
+      // ET SANS LA BARRE FINALE AUSSI, correctif du 26/08/2026.
+      //
+      // Tous les liens internes du site s'ecrivent SANS barre finale :
+      // /vectoriser, /voir-mon-logo, /guide/serigraphie. L'hebergeur sert
+      // alors le index.html du dossier, et le navigateur du visiteur ne voit
+      // aucune difference. Ce serveur ci, lui, exigeait la barre : il rendait
+      // donc 404 sur une adresse qui marche en production.
+      //
+      // Personne ne s'en etait apercu parce qu'aucun controle de ce harnais ne
+      // SUIVAIT un lien : chaque bloc ouvrait la page dont il avait besoin, en
+      // ecrivant l'adresse a la main, barre comprise. Le premier temoin qui
+      // clique sur un lien du site l'a trouve en une execution. Un serveur de
+      // harnais qui ne route pas comme l'hebergeur fabrique de faux echecs, et
+      // le jour ou il fabriquera un faux succes, personne ne le verra.
+      //
+      // La regle est celle qu'applique deja rejouer_pages.mjs : une adresse
+      // sans extension qui designe un dossier sert son index.html.
+      if (!url.startsWith('/apercus/') && !path.extname(fichier)
+          && fs.existsSync(path.join(fichier, 'index.html'))) {
+        fichier = path.join(fichier, 'index.html');
+      }
       const autorise = fichier.startsWith(PUBLIC) || fichier.startsWith(IMAGES);
       if (!autorise || !fs.existsSync(fichier) || fs.statSync(fichier).isDirectory()) {
         // Un 404 sur une ressource du harnais est une faute du harnais, pas un
