@@ -1,4 +1,4 @@
-import { versLab, ecartLab, creerCacheLab } from '../moteur/couleurs.js';
+import { versLab, ecartLab, creerCacheLab, ECART_FUSION } from '../moteur/couleurs.js';
 
 /**
  * Reglages du vectoriseur DEDUITS des mesures du moteur.
@@ -206,12 +206,85 @@ export function pixelsPourVectorisation(image, mesures) {
   const masque = mesures.masqueEncre;
   if (!masque) return donnees;
 
+  const propre = new Uint8ClampedArray(donnees.length);
+
+  // DEUX PASSES, ET LA SECONDE EST LA CORRECTION DU 26/08/2026.
+  //
+  // CE QUI N'ALLAIT PAS. Chaque pixel d'encre etait rabattu sur la couleur de
+  // palette la plus proche en Lab, sans regarder ses voisins. Or un pixel de
+  // BORD n'est pas une couleur : c'est un melange entre l'encre et le fond,
+  // fabrique par l'antialiasing ou par la compression. Le rabattre sur la
+  // palette entiere permet de lui donner une couleur qui n'existe nulle part
+  // autour de lui.
+  //
+  // Mesure sur le logo de la Fondation de Nice, gris #48555D, cyan #2FB4DF et
+  // bleu #107CBD. Le bord d'une lettre grise sur fond blanc passe par des gris
+  // clairs, et en Lab ces gris clairs sont PLUS PRES DU CYAN que du gris :
+  //   #E8EAEC  cyan 43,7   gris 57,6
+  //   #C3C7CA  cyan 37,4   gris 45,0
+  // Toutes les lettres sortaient donc bordees de bleu. C'est ce qu'Alex a vu en
+  // zoomant dans le PDF livre.
+  //
+  // LA REGLE : un pixel de bord prend la couleur de ce qu'il BORDE. Les pixels
+  // surs, ceux qui sont vraiment d'une couleur de la palette, sont poses
+  // d'abord ; les autres prennent la couleur dominante parmi leurs voisins
+  // surs, en elargissant la fenetre tant qu'aucun ne repond. Aucune couleur
+  // n'est inventee la ou elle n'est pas.
   const fondRvb = mesures.fond.type === 'couleur' ? mesures.fond.rvb : null;
   const palette = mesures.m2Couleurs.palette.map((c) => ({ rvb: c.rvb, lab: versLab(c.rvb[0], c.rvb[1], c.rvb[2]) }));
   const lab = creerCacheLab();
-  const propre = new Uint8ClampedArray(donnees.length);
+  const total = largeur * hauteur;
+  const choix = new Int32Array(total).fill(-1);
+  const sur = new Uint8Array(total);
 
-  for (let i = 0; i < largeur * hauteur; i++) {
+  for (let i = 0; i < total; i++) {
+    if (!masque[i] || palette.length === 0) continue;
+    const p = i * 4;
+    const teinte = lab(donnees[p], donnees[p + 1], donnees[p + 2]);
+    let meilleur = 0;
+    let distance = Infinity;
+    for (let k = 0; k < palette.length; k++) {
+      const d = ecartLab(teinte, palette[k].lab);
+      if (d < distance) { distance = d; meilleur = k; }
+    }
+    choix[i] = meilleur;
+    // SUR veut dire « ce pixel EST cette couleur », pas « c'est la moins pire ».
+    // Le seuil est celui qui sert deja a fusionner deux couleurs : en dessous,
+    // le moteur considere que deux teintes sont la meme encre.
+    if (distance <= ECART_FUSION) sur[i] = 1;
+  }
+
+  // Les bords prennent la couleur dominante de leur voisinage sur. La fenetre
+  // s'elargit tant que personne ne repond : un trait fin d'un pixel a toujours
+  // un voisin sur a deux ou trois pixels, sinon ce n'est pas un trait.
+  for (const rayon of [1, 2, 3]) {
+    for (let i = 0; i < total; i++) {
+      if (!masque[i] || sur[i] || choix[i] < 0) continue;
+      const x = i % largeur;
+      const y = (i / largeur) | 0;
+      const votes = new Int32Array(palette.length);
+      let vus = 0;
+      for (let dy = -rayon; dy <= rayon; dy++) {
+        const yy = y + dy;
+        if (yy < 0 || yy >= hauteur) continue;
+        for (let dx = -rayon; dx <= rayon; dx++) {
+          const xx = x + dx;
+          if (xx < 0 || xx >= largeur) continue;
+          const j = yy * largeur + xx;
+          if (!sur[j]) continue;
+          votes[choix[j]] += 1;
+          vus += 1;
+        }
+      }
+      if (!vus) continue;
+      let gagnant = 0;
+      for (let k = 1; k < palette.length; k++) if (votes[k] > votes[gagnant]) gagnant = k;
+      choix[i] = gagnant;
+      sur[i] = 2;
+    }
+  }
+
+  for (let i = 0; i < total; i++) {
     const p = i * 4;
     if (!masque[i]) {
       if (fondRvb) {
@@ -221,17 +294,13 @@ export function pixelsPourVectorisation(image, mesures) {
       }
       continue;
     }
-    if (palette.length === 0) {
+    if (choix[i] < 0) {
       propre[p] = donnees[p]; propre[p + 1] = donnees[p + 1]; propre[p + 2] = donnees[p + 2]; propre[p + 3] = 255;
       continue;
     }
-    const teinte = lab(donnees[p], donnees[p + 1], donnees[p + 2]);
-    let meilleur = palette[0], distance = Infinity;
-    for (const c of palette) {
-      const d = ecartLab(teinte, c.lab);
-      if (d < distance) { distance = d; meilleur = c; }
-    }
-    propre[p] = meilleur.rvb[0]; propre[p + 1] = meilleur.rvb[1]; propre[p + 2] = meilleur.rvb[2]; propre[p + 3] = 255;
+    const rvb = palette[choix[i]].rvb;
+    propre[p] = rvb[0]; propre[p + 1] = rvb[1]; propre[p + 2] = rvb[2]; propre[p + 3] = 255;
   }
+
   return propre;
 }

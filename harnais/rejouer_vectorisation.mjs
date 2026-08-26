@@ -172,7 +172,6 @@ const verite = JSON.parse(fs.readFileSync(path.join(IMAGES, 'verite_terrain.json
 fs.mkdirSync(SORTIES, { recursive: true });
 const avecGs = gsDisponible();
 
-console.log('');
 console.log('  HARNAIS DE LA CHAINE DE VECTORISATION');
 if (!avecGs) {
   console.log('  Ghostscript absent : les controles de rendu sont SAUTES, pas reussis.');
@@ -181,6 +180,58 @@ console.log('  ' + '-'.repeat(72));
 console.log('  cas                     formes  couleurs  segments   recouvrement  eps=pdf');
 
 let echecs = 0;
+// LE TEMOIN DE LA FRANGE, 26/08/2026.
+//
+// Un bloc gris fonce sur fond blanc, avec un bord adouci comme le fait tout
+// antialiasing, et un bloc cyan a l'autre bout de l'image. En Lab, les gris de
+// ce bord sont PLUS PRES DU CYAN que du gris fonce :
+//   #E8EAEC  cyan 43,7   gris 57,6
+//   #C3C7CA  cyan 37,4   gris 45,0
+// Tant que chaque pixel etait rabattu sur la palette entiere sans regarder ses
+// voisins, chaque lettre ressortait bordee d'une couleur absente autour d'elle.
+// Sur le logo de la Fondation de Nice, 18 208 pixels d'encre, soit neuf pour
+// cent, partaient en cyan. Alex l'a vu en zoomant dans le PDF livre.
+//
+// Le temoin a ete verifie DANS LES DEUX SENS avant d'etre pose : 412 pixels de
+// frange avec l'ancienne regle, zero avec la nouvelle.
+{
+  const L = 200, H = 200;
+  const d = new Uint8ClampedArray(L * H * 4).fill(255);
+  const poser = (x, y, rvb) => {
+    const p = (y * L + x) * 4;
+    d[p] = rvb[0]; d[p + 1] = rvb[1]; d[p + 2] = rvb[2]; d[p + 3] = 255;
+  };
+  const GRIS = [0x48, 0x55, 0x5D];
+  const CYAN = [0x2F, 0xB4, 0xDF];
+  const melange = (t) => GRIS.map((v) => Math.round(255 + (v - 255) * t));
+  for (let y = 30; y < 130; y++) for (let x = 30; x < 130; x++) poser(x, y, GRIS);
+  for (let y = 28; y < 132; y++) for (let x = 28; x < 132; x++) {
+    const bord = Math.min(x - 28, y - 28, 131 - x, 131 - y);
+    if (bord === 0) poser(x, y, melange(0.33));
+    else if (bord === 1) poser(x, y, melange(0.66));
+  }
+  for (let y = 150; y < 190; y++) for (let x = 30; x < 170; x++) poser(x, y, CYAN);
+
+  const image = { largeur: L, hauteur: H, donnees: d, reduction: 1,
+                  largeurOrigine: L, hauteurOrigine: H };
+  const px = preparerVectorisation(image, mesurer(image)).pixels;
+  const estCyan = (x, y) => {
+    const p = (y * L + x) * 4;
+    return Math.abs(px[p] - CYAN[0]) < 8 && Math.abs(px[p + 1] - CYAN[1]) < 8
+      && Math.abs(px[p + 2] - CYAN[2]) < 8;
+  };
+  let franges = 0;
+  for (let y = 26; y < 134; y++) for (let x = 26; x < 134; x++) if (estCyan(x, y)) franges++;
+  console.log('');
+  console.log('  LA FRANGE, un bord ne prend que la couleur de ce qu\'il borde');
+  console.log('  ' + '-'.repeat(72));
+  console.log(`  ${franges === 0 ? 'ok   ' : 'ECHEC'} aucun pixel cyan autour du bloc gris`
+    + `${franges ? ` (${franges} trouves)` : ''}`);
+  console.log('  ' + '-'.repeat(72));
+  if (franges !== 0) echecs++;
+}
+
+console.log('');
 const details = [];
 
 for (const cas of verite.cas) {
