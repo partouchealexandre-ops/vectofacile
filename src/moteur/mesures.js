@@ -862,16 +862,28 @@ export function mesurerParPlans(image, masque, palette, lab, largeur, hauteur, b
   // lettres, la vraie raison etait « aucune ligne de pied commune », le texte
   // courait sur un arc de cercle.
   let capitale = null;
+  let petiteCapitalePx = null;
   const candidats = plans
     .map((plan) => ({ plan, composantes: composantesConnexes(plan.masque, largeur, hauteur).composantes }))
     .sort((a, b) => b.composantes.length - a.composantes.length);
   for (const { plan, composantes } of candidats) {
     const essai = m7HauteurDeCapitale(composantes, boite);
-    if (essai.hauteurPx !== null) { capitale = { ...essai, rvb: plan.rvb }; break; }
+    if (essai.hauteurPx !== null) {
+      // LE PLUS PETIT TEXTE du logo, pas seulement le principal. Sur le logo
+      // U*BREW, la capitale principale fait 190 px et le mot HEINEKEN en fait
+      // 30 : c'est lui que la vectorisation restituera approximativement, et
+      // c'est donc lui que l'avertissement doit connaitre. La granularite est
+      // celle des plans de couleur : deux tailles de texte dans la MEME
+      // couleur ne sont pas separees, c'est la resolution de l'instrument.
+      if (petiteCapitalePx === null || essai.hauteurPx < petiteCapitalePx) {
+        petiteCapitalePx = essai.hauteurPx;
+      }
+      if (!capitale || capitale.hauteurPx === null) capitale = { ...essai, rvb: plan.rvb };
+    }
     if (!capitale) capitale = { ...essai, rvb: plan.rvb };
   }
 
-  return { trait, ecart, contreFormes, plusPetiteContreForme, capitale, parCouleur };
+  return { trait, ecart, contreFormes, plusPetiteContreForme, capitale, petiteCapitalePx, parCouleur };
 }
 
 /* ----------------------------------------------------------- assemblage */
@@ -1018,6 +1030,10 @@ export function mesurer(image, options = {}) {
         ? null
         : pxVersMm(m7.hauteurPx, largeur, largeurImprimeeMm),
       motif: m7.motif,
+      // La plus petite hauteur de texte plausible relevee sur les plans de
+      // couleur. Nulle part ailleurs : la recopie champ par champ est la
+      // regle de cette sortie, et un champ oublie disparait en silence.
+      petiteCapitalePx: plans?.petiteCapitalePx ?? m7.hauteurPx ?? null,
     },
     m8PlusGrandAplat: {
       airePx: m8.airePx,

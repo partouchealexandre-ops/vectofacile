@@ -82,6 +82,14 @@ export function refusDeVectorisation(mesures) {
  */
 export const SURFACE_MAX_AJUSTEMENT_PX = 6000000;
 
+/*
+ * Capitale en dessous de laquelle un texte sort approximatif d'un trace
+ * automatique. Parametre d'instrument : fût d'une lettre = capitale sur
+ * huit environ, et il faut au moins 5 px de fût pour tracer un dessin de
+ * lettre, pas seulement sa silhouette. Voir l'avertissement petits textes.
+ */
+export const CAPITALE_NETTE_MINIMALE_PX = 40;
+
 /**
  * La decision du mode de trace, seule et pure : le harnais la teste par la
  * table, sans fabriquer une image de 21 megapixels.
@@ -209,6 +217,34 @@ export function optionsDepuisMesures(mesures, reglages = {}) {
   // finesse du lissage tournait donc sur des valeurs par defaut que personne
   // n'avait choisies. Un reglage qui ne regle rien est un mensonge de
   // configuration ; il part avec le mode spline qu'il pretendait piloter.
+  // LES PETITS TEXTES, arbitrage Alex du 26/08/2026 au soir. Mesure sur le
+  // logo U*BREW : le mot HEINEKEN y fait 30 px de haut, ses fûts font 3 a
+  // 4 px, et aucun trace automatique, le notre comme un autre, ne restitue
+  // un dessin de lettre net avec 3 px d'information. Le fichier Superpictor
+  // qui, lui, est net a cet endroit est un redessin humain : c'est la sortie
+  // du metier, pas un reglage qui nous manque. On le DIT, plutot que de
+  // laisser le client le decouvrir en zoomant.
+  //
+  // Le seuil est un parametre d'instrument, pas un seuil de marquage : le
+  // fût d'une lettre fait environ un huitieme de sa capitale, il faut au
+  // moins 5 px de fût pour qu'un trace tienne, donc 40 px de capitale.
+  const petiteCapitale = mesures.m7HauteurDeCapitale?.petiteCapitalePx ?? null;
+  if (!traitLimite && petiteCapitale !== null && petiteCapitale < CAPITALE_NETTE_MINIMALE_PX) {
+    avertissements.push({
+      gravite: 'notable',
+      titre: 'Les petits textes sortiront approximatifs',
+      texte: `Votre logo porte des lettres d'environ ${Math.round(petiteCapitale)} pixels de haut. `
+        + `À cette taille, le trait d'une lettre fait deux à quatre pixels, et un tracé `
+        + `automatique en restitue la silhouette, pas le dessin exact : des fûts qui ondulent `
+        + `légèrement, des coins qui s'arrondissent. Les grandes formes de votre logo ne sont `
+        + `pas concernées.`,
+      remede: `Si ces textes restent lisibles à la taille de marquage prévue, le fichier `
+        + `convient souvent tel quel. Pour un rendu exact des petites lettres, la sortie du `
+        + `métier est un redessin, un travail de graphiste sur un logiciel vectoriel, qui `
+        + `vous resservira sur toutes vos commandes.`,
+    });
+  }
+
   const reglagesTrait = reglagesDuTrait(traitLimite, mesures.m1Dimensions?.pixels ?? 0);
 
   return {

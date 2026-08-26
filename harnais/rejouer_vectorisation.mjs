@@ -271,6 +271,49 @@ let echecs = 0;
        '(temoin) un dessin vraiment filiforme reste averti, sinon on aurait '
        + 'simplement eteint l\'avertissement',
        `courant ${filiforme.courant}, alerte ${filiforme.alerte}`);
+  // LES PETITS TEXTES SONT ANNONCES, arbitrage Alex du 26/08 au soir. Un mot
+  // de 30 px de haut, HEINEKEN sur le logo U*BREW, sort approximatif de tout
+  // trace automatique : ses fûts font 3 px. Le fichier concurrent qui est
+  // net a cet endroit est un redessin humain. On le dit AVANT que le client
+  // zoome, et on ne le dit pas quand le texte est grand. Il faut DEUX
+  // couleurs : la granularite de la mesure est le plan de couleur.
+  {
+    const deuxCouleurs = (hautPetit) => {
+      const L = 600, H = 600;
+      const d = new Uint8ClampedArray(L * H * 4).fill(255);
+      const poser = (x, y, r, v, b) => {
+        const p = (y * L + x) * 4;
+        d[p] = r; d[p + 1] = v; d[p + 2] = b; d[p + 3] = 255;
+      };
+      // six barres franches, la partie principale du dessin
+      for (const x0 of [40, 130, 220, 310, 400, 490]) {
+        for (let y = 40; y < 540; y++) for (let x = x0; x < x0 + 40; x++) poser(x, y, 20, 20, 20);
+      }
+      // quatre glyphes d'une autre couleur, pied commun, la petite mention
+      // (la mesure exige au moins trois composantes alignees, comme du texte)
+      for (const x0 of [60, 120, 180, 240]) {
+        for (let y = 580 - hautPetit; y < 580; y++) {
+          for (let x = x0; x < x0 + Math.round(hautPetit * 0.7); x++) poser(x, y, 180, 30, 30);
+        }
+      }
+      return { largeur: L, hauteur: H, donnees: d, reduction: 1, largeurOrigine: L, hauteurOrigine: H };
+    };
+    const averts = (image) => (preparerVectorisation(image, mesurer(image)).avertissements ?? []);
+    const petits = averts(deuxCouleurs(24));
+    const grands = averts(deuxCouleurs(80));
+    const avert = petits.find((a) => /petits textes/i.test(a.titre));
+    dire(Boolean(avert), 'un texte de 24 px declenche l\'avertissement petits textes',
+         petits.map((a) => a.titre).join(' | ') || 'aucun');
+    dire(!grands.some((a) => /petits textes/i.test(a.titre)),
+         '(temoin) le meme texte a 80 px ne le declenche pas');
+    if (avert) {
+      dire(/redessin/.test(avert.remede) && /graphiste/.test(avert.remede),
+           'et sa sortie nomme le redessin, le travail du metier');
+      dire(!/impossible|décevant|mauvais/i.test(avert.titre + avert.texte + avert.remede),
+           'sans juger le fichier du client, sans dire impossible');
+    }
+  }
+
   // LE TON. On enonce un fait sur notre outil, pas un verdict sur le logo, et
   // on donne les deux sorties du metier au lieu d'un seul ordre.
   const image = dessiner((poser) => {
@@ -425,6 +468,51 @@ let echecs = 0;
     const courbes = traces.filter((g) => g.type === 'courbe');
     dire(courbes.length >= 2, 'un galbe voulu de 3 px reste une courbe, il n\'est pas aplati',
          `${courbes.length} courbe(s) sur ${traces.length} segment(s)`);
+  }
+
+  // L'ELLIPSE EXACTE : un pois de bitmap est legerement patatoide, et l'oeil
+  // d'un graphiste le voit. Une boucle qui tient contre une ellipse a la
+  // tolerance pres sort en ellipse parfaite, quatre courbes symetriques.
+  {
+    const pts = [];
+    for (let d = 0; d < 360; d += 2) {
+      const t = d * Math.PI / 180, a = 31, b = 18.5, th = 0.35;
+      const u = a * Math.cos(t), v = b * Math.sin(t);
+      const bruit = 0.4 * Math.sin(d * 0.9);
+      pts.push({ x: 100 + u * Math.cos(th) - v * Math.sin(th) + bruit,
+                 y: 80 + u * Math.sin(th) + v * Math.cos(th) + bruit * 0.7 });
+    }
+    const segments = lisserBoucle(pts);
+    const courbes = boucleDe(segments);
+    // symetrie : le centre de la boite englobante des ancres est le centre
+    const xs = segments.filter((g) => g.x !== undefined).map((g) => g.x);
+    const ys = segments.filter((g) => g.y !== undefined).map((g) => g.y);
+    const centreX = (Math.min(...xs) + Math.max(...xs)) / 2;
+    const centreY = (Math.min(...ys) + Math.max(...ys)) / 2;
+    dire(courbes.length === 4, 'un pois au bruit pres sort en ellipse exacte, quatre courbes',
+         `${courbes.length} courbes`);
+    dire(Math.hypot(centreX - 100, centreY - 80) < 0.8, 'et elle est centree ou la mesure la voit',
+         `centre (${centreX.toFixed(1)}, ${centreY.toFixed(1)})`);
+  }
+
+  // LE TEMOIN DE L'AUTRE SENS : un haricot, une bosse de 3 px sur un rond,
+  // n'est PAS force a etre une ellipse. Sans ce temoin, la regularisation
+  // serait un rouleau qui aplatit le dessin de tout le monde.
+  {
+    const pts = [];
+    for (let d = 0; d < 360; d += 2) {
+      const t = d * Math.PI / 180;
+      const r = 25 + 3 * Math.exp(-((t - 1.2) ** 2) / 0.18);
+      pts.push({ x: 100 + r * Math.cos(t), y: 80 + r * Math.sin(t) });
+    }
+    const segments = lisserBoucle(pts);
+    const courbes = boucleDe(segments);
+    // la bosse doit survivre : un point du trace passe pres de son sommet
+    const apex = { x: 100 + 28 * Math.cos(1.2), y: 80 + 28 * Math.sin(1.2) };
+    const ancres = segments.filter((g) => g.x !== undefined);
+    const proche = ancres.some((g) => Math.hypot(g.x - apex.x, g.y - apex.y) < 3.5);
+    dire(courbes.length > 4 && proche, 'un haricot reste un haricot : la bosse voulue survit',
+         `${courbes.length} courbes, sommet ${proche ? 'garde' : 'PERDU'}`);
   }
 
   // L'ETOILE : dix pointes plus vives qu'un coin droit, aucune ne s'emousse.

@@ -343,6 +343,140 @@ function ajusterArc(pts, t1, t2, tolerance, sortie, profondeur = 0) {
   ajusterArc(pts.slice(centre), tc, t2, tolerance, sortie, profondeur + 1);
 }
 
+/*
+ * L'ELLIPSE EXACTE. Les pois du logo Fondation, les O, les contre-formes
+ * rondes : l'oeil d'un graphiste reconnait un ovale et attend un ovale
+ * parfait. Le trace fidele d'un rond de bitmap est legerement patatoide, et
+ * ce leger la suffit a faire juger le fichier « pas propre ». Meme principe
+ * que les droites : quand une boucle sans coin tient contre une ellipse a
+ * la tolerance de mesure pres, on livre l'ellipse, exacte et symetrique.
+ * Un galbe qui depasse la tolerance reste trace tel quel : on ne force pas
+ * un dessin a etre une ellipse, on reconnait celles qui en sont.
+ */
+// Tolerance mesuree sur le logo Fondation, 26/08/2026 : ses pois devies par
+// la compression tiennent contre leur meilleure ellipse a 1,45 px au pire ;
+// les boucles de LETTRES les plus rondes s'en ecartent d'au moins 2,4 px.
+// 1,6 se place dans ce vide : tous les pois deviennent des ellipses
+// exactes, aucune lettre n'est forcee a en etre une.
+export const TOLERANCE_ELLIPSE_PX = 1.6;
+
+function ajusterEllipse(S) {
+  const n = S.length;
+  if (n < 12) return null;
+  let cx = 0, cy = 0;
+  for (const p of S) { cx += p.x; cy += p.y; }
+  cx /= n; cy /= n;
+  let mxx = 0, myy = 0, mxy = 0;
+  for (const p of S) {
+    const dx = p.x - cx, dy = p.y - cy;
+    mxx += dx * dx; myy += dy * dy; mxy += dx * dy;
+  }
+  mxx /= n; myy /= n; mxy /= n;
+  let theta = 0.5 * Math.atan2(2 * mxy, mxx - myy);
+  // Echantillonnee a pas d'arc constant, une ellipse a une variance de a2/2
+  // sur son grand axe (exact sur le cercle, approche ailleurs) : bon depart.
+  let a = Math.sqrt(2 * Math.max(mxx * Math.cos(theta) ** 2 + myy * Math.sin(theta) ** 2 + mxy * Math.sin(2 * theta), 1e-6));
+  let b = Math.sqrt(2 * Math.max(mxx * Math.sin(theta) ** 2 + myy * Math.cos(theta) ** 2 - mxy * Math.sin(2 * theta), 1e-6));
+  // Gauss-Newton sur (cx, cy, a, b, theta), residu de Sampson : l'ecart
+  // algebrique a l'ellipse divise par son gradient approche la distance.
+  for (let iter = 0; iter < 12; iter++) {
+    const JtJ = [[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]];
+    const Jtr = [0,0,0,0,0];
+    const ct = Math.cos(theta), st = Math.sin(theta);
+    for (const p of S) {
+      const dx = p.x - cx, dy = p.y - cy;
+      const u = dx * ct + dy * st, v = -dx * st + dy * ct;
+      const fu = u / (a * a), fv = v / (b * b);
+      const g = Math.hypot(2 * fu * 1, 2 * fv * 1) || 1e-9;
+      const f = (u * u) / (a * a) + (v * v) / (b * b) - 1;
+      const r = f / g;
+      // derivees de f
+      const dfdcx = -2 * (fu * ct - fv * st);
+      const dfdcy = -2 * (fu * st + fv * ct);
+      const dfda = -2 * u * u / (a * a * a);
+      const dfdb = -2 * v * v / (b * b * b);
+      const dfdt = 2 * fu * v - 2 * fv * u;
+      const J = [dfdcx / g, dfdcy / g, dfda / g, dfdb / g, dfdt / g];
+      for (let i = 0; i < 5; i++) {
+        Jtr[i] += J[i] * r;
+        for (let j = 0; j < 5; j++) JtJ[i][j] += J[i] * J[j];
+      }
+    }
+    // resolution 5x5 par elimination de Gauss avec amortissement leger
+    for (let i = 0; i < 5; i++) JtJ[i][i] *= 1.001;
+    const M = JtJ.map((l, i) => [...l, Jtr[i]]);
+    for (let col = 0; col < 5; col++) {
+      let piv = col;
+      for (let l = col + 1; l < 5; l++) if (Math.abs(M[l][col]) > Math.abs(M[piv][col])) piv = l;
+      if (Math.abs(M[piv][col]) < 1e-12) return null;
+      [M[col], M[piv]] = [M[piv], M[col]];
+      for (let l = 0; l < 5; l++) {
+        if (l === col) continue;
+        const k = M[l][col] / M[col][col];
+        for (let c = col; c < 6; c++) M[l][c] -= k * M[col][c];
+      }
+    }
+    const delta = M.map((l, i) => l[5] / l[i]);
+    cx -= delta[0]; cy -= delta[1]; a -= delta[2]; b -= delta[3]; theta -= delta[4];
+    if (!(a > 0.5) || !(b > 0.5)) return null;
+    if (Math.max(...delta.map(Math.abs)) < 1e-4) break;
+  }
+  // Une ellipse tres allongee sait epouser un TRAIT : sur un trait de 3 px
+  // sur 200, l'ellipse de grand axe 100 et de petit axe 1,5 tient partout
+  // sous la tolerance, et le trait sortait en fuseau pointu. Mesure :
+  // trait_03px tombait a 73,7 pour cent de recouvrement. Un pois, un O, une
+  // contre-forme ronde n'ont jamais ce rapport : on borne l'allongement.
+  if (Math.max(a, b) > 3 * Math.min(a, b)) return null;
+  // Acceptation en deux temps. L'ecart maximal borne le bruit. Et une SUITE
+  // d'echantillons du meme cote est une bosse dessinee, pas du bruit : le
+  // bruit alterne, un galbe insiste. Sans ce second critere, une bosse de
+  // 3 px se fondait dans la tolerance et le haricot devenait une ellipse.
+  const ct = Math.cos(theta), st = Math.sin(theta);
+  let suitePos = 0, suiteNeg = 0;
+  for (const p of S) {
+    const dx = p.x - cx, dy = p.y - cy;
+    const u = dx * ct + dy * st, v = -dx * st + dy * ct;
+    const f = (u * u) / (a * a) + (v * v) / (b * b) - 1;
+    const g = Math.hypot(2 * u / (a * a), 2 * v / (b * b)) || 1e-9;
+    const e = f / g;
+    if (Math.abs(e) > TOLERANCE_ELLIPSE_PX) return null;
+    if (e > 0.9) { suitePos++; suiteNeg = 0; }
+    else if (e < -0.9) { suiteNeg++; suitePos = 0; }
+    else { suitePos = 0; suiteNeg = 0; }
+    if (suitePos >= 5 || suiteNeg >= 5) return null;
+  }
+  return { cx, cy, a, b, theta };
+}
+
+/* Les quatre cubiques d'une ellipse exacte, dans le sens de la boucle. */
+function segmentsEllipse(e, sens) {
+  const k = 0.5522847498;
+  const { cx, cy, a, b, theta } = e;
+  const ct = Math.cos(theta), st = Math.sin(theta);
+  const M = (u, v) => ({ x: cx + u * ct - v * st, y: cy + u * st + v * ct });
+  let quarts = [
+    [M(a, 0), M(a, k * b), M(k * a, b), M(0, b)],
+    [M(0, b), M(-k * a, b), M(-a, k * b), M(-a, 0)],
+    [M(-a, 0), M(-a, -k * b), M(-k * a, -b), M(0, -b)],
+    [M(0, -b), M(k * a, -b), M(a, -k * b), M(a, 0)],
+  ];
+  if (sens < 0) quarts = quarts.map((q) => [...q].reverse()).reverse();
+  const segments = [{ type: 'depart', x: quarts[0][0].x, y: quarts[0][0].y }];
+  for (const [, p1, p2, p3] of quarts) {
+    segments.push({ type: 'courbe', x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y, x: p3.x, y: p3.y });
+  }
+  return segments;
+}
+
+function sensDeBoucle(S) {
+  let aire = 0;
+  for (let i = 0; i < S.length; i++) {
+    const p = S[i], q = S[(i + 1) % S.length];
+    aire += p.x * q.y - q.x * p.y;
+  }
+  return aire >= 0 ? 1 : -1;
+}
+
 function tangenteCentrale(S, i) {
   const n = S.length;
   return normaliser(soustraire(S[(i + 1) % n], S[(i - 1 + n) % n]));
@@ -358,6 +492,14 @@ export function lisserBoucle(pts, options = {}) {
   const tolerance = options.tolerance ?? TOLERANCE_AJUSTEMENT_PX;
   const S0 = reechantillonner(pts, options.pas ?? PAS_ECHANTILLON_PX);
   if (!S0) return null;
+  // L'ellipse s'essaie AVANT les coins : une asperite de compression peut
+  // faire naitre un coin fantome sur un pois, et ce faux coin interdisait
+  // ensuite l'ellipse. Si toutes les positions de la boucle tiennent contre
+  // une ellipse a la tolerance pres, ce que le detecteur a pris pour un coin
+  // n'etait pas un coin : a la resolution de notre mesure, cette boucle EST
+  // une ellipse. Une vraie entaille, elle, sort de l'ellipse et la refuse.
+  const ellipse = ajusterEllipse(S0);
+  if (ellipse) return segmentsEllipse(ellipse, sensDeBoucle(S0));
   const coins = detecterCoins(S0, options.fenetreCoin ?? FENETRE_COIN, seuilCoin);
   const S = lisserPoints(S0, coins, options.rayonLissage ?? RAYON_LISSAGE);
   const n = S.length;
@@ -370,8 +512,9 @@ export function lisserBoucle(pts, options = {}) {
     liste.sort((a, b) => a - b);
   }
   if (liste.length === 0) {
-    // Boucle entierement lisse : deux arcs, tangentes centrales partagees
-    // aux deux points de couture, la boucle reste G1 partout.
+    // Boucle entierement lisse et pourtant pas une ellipse : deux arcs,
+    // tangentes centrales partagees aux deux points de couture, la boucle
+    // reste G1 partout.
     const moitie = Math.floor(n / 2);
     const t0 = tangenteCentrale(S, 0);
     const tm = tangenteCentrale(S, moitie);
