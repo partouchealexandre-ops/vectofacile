@@ -226,6 +226,7 @@ let echecs = 0;
       alerte: (prep.avertissements ?? [])[0]?.gravite ?? 'aucune',
       mode: prep.options?.mode ?? null,
       lissage: prep.options?.lissage ?? false,
+      serre: prep.options?.lissageReglages?.tolerance ?? null,
     };
   };
 
@@ -264,9 +265,9 @@ let echecs = 0;
   dire(accident.mode === 'pixel' && accident.lissage === true,
        'et il repasse en courbes lissees, au lieu de contours droits',
        `mode ${accident.mode}, lissage ${accident.lissage}`);
-  dire(filiforme.mode === 'polygon' && filiforme.lissage === false,
-       '(temoin) le dessin filiforme, lui, reste en contours exacts, sans ajustement',
-       `mode ${filiforme.mode}`);
+  dire(filiforme.mode === 'pixel' && filiforme.lissage === true && (filiforme.serre ?? 1) <= 0.6,
+       '(temoin) le dessin filiforme, lui, recoit l\'ajustement SERRE, au plus pres du pixel',
+       `mode ${filiforme.mode}, tolerance ${filiforme.serre}`);
   dire(filiforme.alerte === 'grave',
        '(temoin) un dessin vraiment filiforme reste averti, sinon on aurait '
        + 'simplement eteint l\'avertissement',
@@ -355,8 +356,10 @@ let echecs = 0;
   const filiforme = reglagesDuTrait(true, 250000);
   const courant = reglagesDuTrait(false, 250000);
   const geant = reglagesDuTrait(false, SURFACE_MAX_AJUSTEMENT_PX + 1);
-  dire(filiforme.mode === 'polygon' && !filiforme.lissage,
-       'un trait limite trace en polygones exacts, sans ajustement');
+  dire(filiforme.mode === 'pixel' && filiforme.lissage === true
+       && filiforme.lissageReglages?.tolerance <= 0.6,
+       'un trait limite trace le pixel exact et recoit l\'ajustement serre',
+       `tolerance ${filiforme.lissageReglages?.tolerance}`);
   dire(courant.mode === 'pixel' && courant.lissage === true,
        'un dessin franc trace le pixel exact, et l\'ajustement s\'y applique');
   dire(geant.mode === 'spline' && !geant.lissage,
@@ -452,6 +455,112 @@ let echecs = 0;
     dire(lignes.length >= 4 && traces.length <= 6,
          'un bord droit sous le bruit sort en droite exacte, pas en vague',
          `${traces.length} segments dont ${lignes.length} droites`);
+  }
+
+  // LA REMISE A L'APLOMB : un rectangle dessine avec 0,8 degre de derive,
+  // comme en laisse un scan, ressort EXACTEMENT vertical et horizontal.
+  // C'est la doctrine du 26/08 au soir : presque vertical EST vertical,
+  // chaque fut du logo Chicago l'a paye une fois.
+  {
+    const pts = [];
+    const a = 0.8 * Math.PI / 180, ca = Math.cos(a), sa = Math.sin(a);
+    const tourner = (x, y) => ({ x: 60 + x * ca - y * sa, y: 20 + x * sa + y * ca });
+    const C = [[0, 0], [22, 0], [22, 120], [0, 120]];
+    for (let k = 0; k < 4; k++) {
+      const [x1, y1] = C[k], [x2, y2] = C[(k + 1) % 4];
+      const nseg = Math.ceil(Math.hypot(x2 - x1, y2 - y1));
+      for (let i = 0; i < nseg; i++) pts.push(tourner(x1 + (x2 - x1) * i / nseg, y1 + (y2 - y1) * i / nseg));
+    }
+    const segments = lisserBoucle(pts);
+    const lignes = [];
+    let prec = { x: segments[0].x, y: segments[0].y };
+    for (const g of segments) {
+      if (g.type === 'ligne') lignes.push({ dx: Math.abs(g.x - prec.x), dy: Math.abs(g.y - prec.y) });
+      if (g.type !== 'depart') prec = { x: g.x, y: g.y };
+    }
+    const aplombees = lignes.filter((l) => (l.dy > 40 && l.dx < 0.01) || (l.dx > 15 && l.dy < 0.01)).length;
+    dire(lignes.length === 4 && aplombees === 4,
+         'un rectangle qui derive de 0,8 degre ressort d\'equerre, quatre droites exactes',
+         `${lignes.length} droites dont ${aplombees} a l'aplomb`);
+  }
+
+  // LE COIN PEU PRONONCE : la jonction fut-toit du logo Chicago tourne de
+  // 30 degres. Elle recoit un coin, et les deux cotes sortent en droites.
+  {
+    const pts = [];
+    const sommets = [[20, 140], [20, 20], [26, 20], [26, 80], [60, 138]];
+    for (let k = 0; k < sommets.length; k++) {
+      const [x1, y1] = sommets[k], [x2, y2] = sommets[(k + 1) % sommets.length];
+      const nseg = Math.ceil(Math.hypot(x2 - x1, y2 - y1));
+      for (let i = 0; i < nseg; i++) pts.push({ x: x1 + (x2 - x1) * i / nseg, y: y1 + (y2 - y1) * i / nseg });
+    }
+    const segments = lisserBoucle(pts);
+    const ancres = segments.filter((g) => g.x !== undefined).map((g) => [g.x, g.y]);
+    const auCoin = ancres.some(([x, y]) => Math.hypot(x - 26, y - 80) < 1.6);
+    dire(auCoin, 'une jonction a 30 degres recoit son coin, elle n\'est plus enjambee',
+         auCoin ? 'coin pose' : `ancres: ${ancres.map((p) => p.map((v) => v.toFixed(0)).join(',')).join(' ')}`);
+  }
+
+  // LE FLANC PLAT : un stade, flancs droits et bouts ronds raccordes sans
+  // coin. Le C du logo Chicago bombait la : une seule cubique enjambait le
+  // flanc et l'arrondi. La segmentation par courbure pose une DROITE sur le
+  // flanc, et la courbe s'y raccorde tangentiellement.
+  {
+    const pts = [];
+    const R = 25, x0 = 40, x1 = 100, y0 = 40, y1 = 180; // flancs verticaux de y0+R a y1-R
+    const arcPts = (cx, cy, a0, a1) => {
+      for (let d = 0; d <= 40; d++) { const t = a0 + (a1 - a0) * d / 40; pts.push({ x: cx + R * Math.cos(t), y: cy + R * Math.sin(t) }); }
+    };
+    for (let y = y0 + R; y < y1 - R; y++) pts.push({ x: x1, y });
+    arcPts(x1 - R, y1 - R, 0, Math.PI / 2);
+    for (let x = x1 - R; x > x0 + R; x--) pts.push({ x, y: y1 });
+    arcPts(x0 + R, y1 - R, Math.PI / 2, Math.PI);
+    for (let y = y1 - R; y > y0 + R; y--) pts.push({ x: x0, y });
+    arcPts(x0 + R, y0 + R, Math.PI, 3 * Math.PI / 2);
+    for (let x = x0 + R; x < x1 - R; x++) pts.push({ x, y: y0 });
+    arcPts(x1 - R, y0 + R, 3 * Math.PI / 2, 2 * Math.PI);
+    const segments = lisserBoucle(pts);
+    let flancs = 0;
+    let prec = { x: segments[0].x, y: segments[0].y };
+    for (const g of segments) {
+      if (g.type === 'ligne') {
+        const L = Math.hypot(g.x - prec.x, g.y - prec.y);
+        if (L > 55 && (Math.abs(g.x - x0) < 0.7 || Math.abs(g.x - x1) < 0.7 || Math.abs(g.y - y0) < 0.7 || Math.abs(g.y - y1) < 0.7)) flancs++;
+      }
+      if (g.type !== 'depart') prec = { x: g.x, y: g.y };
+    }
+    // le stade est plus haut que large : seuls les deux flancs verticaux
+    // depassent la longueur de droite, les bouts restent des arcs
+    dire(flancs >= 2, 'les flancs plats d\'un stade sortent en droites, les bouts restent ronds',
+         `${flancs} flancs droits`);
+  }
+
+  // LE COIN RECONSTRUIT : un carre aux coins ARRONDIS par deux pixels de
+  // rayon, la signature que l'antialiasing laisse toujours. Le vrai coin du
+  // dessin est a l'intersection des deux bords : il est repose la, pointe
+  // vive, comme le ferait un graphiste.
+  {
+    const pts = [];
+    const r = 2, x0 = 20, x1 = 100, y0 = 20, y1 = 100;
+    const arcQ = (cx, cy, a0) => {
+      for (let d = 1; d < 6; d++) { const t = a0 + (Math.PI / 2) * d / 6; pts.push({ x: cx + r * Math.cos(t), y: cy + r * Math.sin(t) }); }
+    };
+    for (let x = x0 + r; x <= x1 - r; x++) pts.push({ x, y: y0 });
+    arcQ(x1 - r, y0 + r, -Math.PI / 2);
+    for (let y = y0 + r; y <= y1 - r; y++) pts.push({ x: x1, y });
+    arcQ(x1 - r, y1 - r, 0);
+    for (let x = x1 - r; x >= x0 + r; x--) pts.push({ x, y: y1 });
+    arcQ(x0 + r, y1 - r, Math.PI / 2);
+    for (let y = y1 - r; y >= y0 + r; y--) pts.push({ x: x0, y });
+    arcQ(x0 + r, y0 + r, Math.PI);
+    const segments = lisserBoucle(pts);
+    const ancres = segments.filter((g) => g.x !== undefined).map((g) => [g.x, g.y]);
+    const vrais = [[x0, y0], [x1, y0], [x1, y1], [x0, y1]];
+    const reconstruits = vrais.filter(([vx, vy]) =>
+      ancres.some(([axx, ayy]) => Math.hypot(axx - vx, ayy - vy) < 1.0)).length;
+    dire(reconstruits === 4,
+         'un coin arrondi par l\'antialiasing est repose a l\'intersection des bords',
+         `${reconstruits} coins vifs sur 4`);
   }
 
   // LE GALBE VOULU, temoin de l'autre sens : un arc bombe de 3 px n'est pas

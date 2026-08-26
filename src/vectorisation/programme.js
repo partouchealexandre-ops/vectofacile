@@ -200,7 +200,7 @@ export function construireProgramme(svg, options = {}) {
   // du vectoriseur (reglagesDuTrait) : quand le trace est l'escalier pixel,
   // c'est ici qu'il devient courbes. Apres la poussiere : ajuster des formes
   // qui vont etre retirees serait du travail jete.
-  if (options.lissage) lisserProgramme(programme);
+  if (options.lissage) lisserProgramme(programme, options.lissageReglages ?? {});
   return programme;
 }
 

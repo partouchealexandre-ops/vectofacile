@@ -50,6 +50,18 @@ export const FENETRE_COIN = 3;
 // ronds ; a 75, plus aucun, et toutes les serifs restent vives.
 export const SEUIL_COIN_DEG = 75;
 
+// Les coins PEU PRONONCES. La jonction entre le fut vertical d'une lettre et
+// un toit pentu du logo Chicago tourne de 10 a 40 degres : sous le seuil
+// franc, aucun coin n'etait pose, un meme arc enjambait le fut et la pente,
+// et l'ajustement ondulait sur l'ensemble. Un tel coin n'est accepte que si
+// les DEUX cotes sont stables : direction posee et bord droit de part et
+// d'autre. C'est ce qui le distingue d'une asperite de compression, dont
+// les alentours churnent dans tous les sens.
+export const SEUIL_COIN_DOUX_DEG = 25;
+const COIN_DOUX_RETRAIT = 3;   // echantillons ignores autour du candidat
+const COIN_DOUX_FENETRE = 6;   // longueur des cordes laterales
+const COIN_DOUX_DROITURE = 0.7; // ecart max des cotes a leur corde
+
 // Demi-fenetre du lissage des echantillons entre les coins. Deux pixels
 // suffisent a fondre les marches ; les coins eux memes ne sont jamais
 // lisses, et le lissage ne traverse jamais un coin.
@@ -80,6 +92,25 @@ export const TOLERANCE_AJUSTEMENT_PX = 1.0;
 // une courbe.
 export const ECART_DROITE_PX = 0.85;
 export const FLECHE_DROITE_PX = 0.35;
+
+// L'acceptation s'elargit avec la LONGUEUR. Mesure sur le logo Chicago,
+// 416 px de large : le flou JPEG fait errer la frontiere d'un fut de lettre
+// de 1 a 2 px sur 150 px de haut, sans structure. Une tolerance fixe de
+// 0,85 refusait la droite et la courbe suivait l'erreur : les futs
+// ondulaient. Sur une grande longueur, une derive sans structure est du
+// bruit ; une vraie courbe, elle, accumule une fleche en L2/8R que le
+// critere de parabole detecte toujours.
+export function toleranceDroite(longueur) {
+  return Math.min(2.4, Math.max(ECART_DROITE_PX, ECART_DROITE_PX + 0.011 * (longueur - 40)));
+}
+
+// Remise a l'aplomb : une droite a moins de 1,3 degre de la verticale ou de
+// l'horizontale EST verticale ou horizontale. Les futs du logo Chicago sont
+// verticaux dans le dessin d'origine ; les rendre presque verticaux, chacun
+// avec sa derive, se lit immediatement comme un defaut. Une italique voulue
+// penche de plus de 2 degres : elle ne se fait pas redresser.
+export const APLOMB_DEG = 1.3;
+export const APLOMB_LONGUEUR_MIN_PX = 15;
 
 const ITERATIONS_REPARAMETRAGE = 4;
 const PROFONDEUR_MAXIMALE = 24;
@@ -133,8 +164,45 @@ function detecterCoins(S, fenetre, seuilDeg) {
   // 93,1 pour cent de recouvrement.
   const rayonSuppression = Math.max(1, fenetre - 1);
   const coins = [];
+  const cote = (i, sens) => {
+    // corde laterale : de retrait a retrait+fenetre, dans le sens demande
+    const a = S[(i + sens * COIN_DOUX_RETRAIT + n) % n];
+    const b = S[(i + sens * (COIN_DOUX_RETRAIT + COIN_DOUX_FENETRE) + n) % n];
+    const d = soustraire(b, a);
+    const l = norme(d);
+    if (!l) return null;
+    // droiture : chaque echantillon du cote tient contre la corde
+    for (let k = 1; k < COIN_DOUX_FENETRE; k++) {
+      const p = S[(i + sens * (COIN_DOUX_RETRAIT + k) + n) % n];
+      const e = ((p.x - a.x) * d.y - (p.y - a.y) * d.x) / l;
+      if (Math.abs(e) > COIN_DOUX_DROITURE) return null;
+    }
+    return { x: d.x / l, y: d.y / l };
+  };
   for (let i = 0; i < n; i++) {
-    if (angles[i] <= seuilDeg) continue;
+    if (angles[i] <= SEUIL_COIN_DOUX_DEG) continue;
+    let retenu = angles[i] > seuilDeg;
+    if (!retenu) {
+      // LE VIRAGE D'UN COIN EST LOCALISE, celui d'un petit arc est partout.
+      // Un arc de rayon 12 px tourne d'autant au centre qu'a six pas de la :
+      // si le virage persiste sur les cotes, ce n'est pas un coin, c'est une
+      // courbe serree, et on la laisse aux courbes. Un vrai coin doux a des
+      // cotes qui ne tournent presque plus.
+      const gauche = angles[(i - 2 * FENETRE_COIN + n) % n];
+      const droite = angles[(i + 2 * FENETRE_COIN) % n];
+      const isole = gauche < angles[i] * 0.4 && droite < angles[i] * 0.4;
+      if (isole) {
+        const g = cote(i, -1), dr = cote(i, +1);
+        if (g && dr) {
+          // direction entrante au coin : l'oppose de la corde arriere
+          let c = -(g.x * dr.x + g.y * dr.y);
+          c = Math.max(-1, Math.min(1, c));
+          const virage = Math.acos(c) * 180 / Math.PI;
+          retenu = virage > SEUIL_COIN_DOUX_DEG;
+        }
+      }
+    }
+    if (!retenu) continue;
     let max = true;
     for (let d = -rayonSuppression; d <= rayonSuppression && max; d++) {
       const j = (i + d + n) % n;
@@ -142,6 +210,7 @@ function detecterCoins(S, fenetre, seuilDeg) {
     }
     if (max) coins.push(i);
   }
+  coins.sort((a, b) => a - b);
   return coins;
 }
 
@@ -270,6 +339,7 @@ function enDroite(pts, tolerance) {
   const cx = pN.x - p0.x, cy = pN.y - p0.y;
   const lc = Math.hypot(cx, cy);
   if (lc < 4 || n < 5) return null;
+  const tolLongueur = toleranceDroite(lc);
   const ux = cx / lc, uy = cy / lc;
   // Ecarts signes a la corde, en abscisse reduite s dans [-1, 1].
   const e = new Float64Array(n);
@@ -293,10 +363,11 @@ function enDroite(pts, tolerance) {
   const b = (s0 * (y1 * s4 - y2 * s3) - y0 * (s1 * s4 - s3 * s2) + s2 * (s1 * y2 - y1 * s2)) / det;
   const c = (s0 * (s2 * y2 - s3 * y1) - s1 * (s1 * y2 - s3 * y0) + y0 * (s1 * s3 - s2 * s2)) / det;
   // La fleche du bombement : la parabole c s2 varie de c entre le centre et
-  // les bords de [-1, 1].
-  if (Math.abs(c) > FLECHE_DROITE_PX) return null;
+  // les bords de [-1, 1]. Sa limite suit un peu la tolerance en longueur,
+  // jamais plus de 0,7 px : une courbure reelle reste une courbe.
+  if (Math.abs(c) > Math.min(0.7, FLECHE_DROITE_PX * tolLongueur / ECART_DROITE_PX)) return null;
   // Le bruit residuel, une fois la tendance retiree, reste borne.
-  const ecartMax = Math.min(tolerance * 0.85, ECART_DROITE_PX);
+  const ecartMax = Math.max(Math.min(tolerance * 0.85, ECART_DROITE_PX), tolLongueur);
   for (let i = 0; i < n; i++) {
     const t = (2 * i / (n - 1)) - 1;
     if (Math.abs(e[i] - (a + b * t + c * t * t)) > ecartMax) return null;
@@ -477,6 +548,132 @@ function sensDeBoucle(S) {
   return aire >= 0 ? 1 : -1;
 }
 
+/*
+ * SEGMENTATION PAR COURBURE. Le C a flancs plats du logo Chicago l'a
+ * montre : entre deux coins, une seule cubique enjambe le flanc droit ET
+ * l'arrondi, et elle bombe d'un pixel sur le flanc, dans la tolerance mais
+ * sous l'oeil. Un arc se decoupe donc d'abord en zones DROITES, ou le
+ * virage local reste sous quelques degres de facon soutenue, et en zones
+ * COURBES. Les droites sont posees en premier, remises a l'aplomb quand
+ * elles y sont presque ; les courbes s'ajustent ensuite ENTRE les droites,
+ * en heritant leur direction au raccord : la transition reste tangente.
+ */
+const VIRAGE_DROIT_DEG = 6;      // sous ce virage local (fenetre 8), on est droit
+const FENETRE_COURBURE = 8;      // demi-fenetre des cordes de courbure
+const RUN_DROIT_MIN = 9;         // echantillons minimum d'une zone droite
+const RUN_COURBE_MIN = 4;        // en dessous, une zone courbe rejoint les droites
+
+/* Valide une droite et la remet a l'aplomb si elle y est presque. */
+function poserDroite(morceau, tolerance) {
+  const d = enDroite(morceau, tolerance);
+  if (!d) return null;
+  let [p0, pN] = d.ligne;
+  const L = Math.hypot(pN.x - p0.x, pN.y - p0.y);
+  if (L >= APLOMB_LONGUEUR_MIN_PX) {
+    const ang = Math.atan2(pN.y - p0.y, pN.x - p0.x) * 180 / Math.PI;
+    const mod = ((ang % 180) + 180) % 180;
+    const mx = (p0.x + pN.x) / 2, my = (p0.y + pN.y) / 2;
+    if (Math.abs(mod - 90) <= APLOMB_DEG) {
+      const demi = (pN.y - p0.y) >= 0 ? L / 2 : -L / 2;
+      p0 = { x: mx, y: my - demi }; pN = { x: mx, y: my + demi };
+    } else if (mod <= APLOMB_DEG || mod >= 180 - APLOMB_DEG) {
+      const demi = (pN.x - p0.x) >= 0 ? L / 2 : -L / 2;
+      p0 = { x: mx - demi, y: my }; pN = { x: mx + demi, y: my };
+    }
+  }
+  return { ligne: [p0, pN] };
+}
+
+function segmenterEtAjuster(arc, t1, t2, tolerance, sortie) {
+  const n = arc.length;
+  if (n < 2 * FENETRE_COURBURE + 4) { ajusterArc(arc, t1, t2, tolerance, sortie); return; }
+  // virage local par cordes encadrantes, bornees a l'arc (pas de bouclage)
+  const droit = new Uint8Array(n);
+  for (let i = 0; i < n; i++) {
+    const g = Math.max(0, i - FENETRE_COURBURE), d = Math.min(n - 1, i + FENETRE_COURBURE);
+    const av = soustraire(arc[i], arc[g]), ap = soustraire(arc[d], arc[i]);
+    const na = norme(av), nb = norme(ap);
+    if (!na || !nb) { droit[i] = 0; continue; }
+    let c = (av.x * ap.x + av.y * ap.y) / (na * nb);
+    c = Math.max(-1, Math.min(1, c));
+    droit[i] = (Math.acos(c) * 180 / Math.PI) < VIRAGE_DROIT_DEG ? 1 : 0;
+  }
+  // nettoyage des labels : les zones trop courtes basculent
+  const runs = [];
+  let debut = 0;
+  for (let i = 1; i <= n; i++) {
+    if (i === n || droit[i] !== droit[debut]) { runs.push([debut, i - 1, droit[debut]]); debut = i; }
+  }
+  for (const r of runs) {
+    const long = r[1] - r[0] + 1;
+    if (r[2] === 1 && long < RUN_DROIT_MIN) r[2] = 0;
+  }
+  // fusion des runs adjacents de meme label
+  const fusion = [];
+  for (const r of runs) {
+    const dernier = fusion[fusion.length - 1];
+    if (dernier && dernier[2] === r[2]) dernier[1] = r[1];
+    else fusion.push([...r]);
+  }
+  for (const r of fusion) {
+    const long = r[1] - r[0] + 1;
+    if (r[2] === 0 && long < RUN_COURBE_MIN && fusion.length > 1) r[2] = 1;
+  }
+  const zones = [];
+  for (const r of fusion) {
+    const dernier = zones[zones.length - 1];
+    if (dernier && dernier[2] === r[2]) dernier[1] = r[1];
+    else zones.push([...r]);
+  }
+  if (zones.length === 1) {
+    // tout droit : une seule droite, remise a l'aplomb ; tout courbe : le
+    // chemin classique sait faire
+    if (zones[0][2] === 1) {
+      const d = poserDroite(arc, tolerance * 2.5);
+      if (d) { sortie.push(d); return; }
+    }
+    ajusterArc(arc, t1, t2, tolerance, sortie);
+    return;
+  }
+  // PASSE 1 : les droites, validees et posees (aplomb compris)
+  const primitives = new Array(zones.length).fill(null);
+  for (let z = 0; z < zones.length; z++) {
+    if (zones[z][2] !== 1) continue;
+    const d = poserDroite(arc.slice(zones[z][0], zones[z][1] + 1), tolerance * 2.5);
+    if (!d) { zones[z][2] = 0; continue; }
+    primitives[z] = d;
+  }
+  // refusion : des zones redevenues courbes peuvent se toucher
+  // PASSE 2 : les courbes, ajustees entre les extremites FIXES des droites
+  for (let z = 0; z < zones.length; z++) {
+    if (zones[z][2] === 1 && primitives[z]) continue;
+    // etendre la zone courbe sur les voisines redevenues courbes
+    let z2 = z;
+    while (z2 + 1 < zones.length && (zones[z2 + 1][2] !== 1 || !primitives[z2 + 1])) z2++;
+    const morceau = arc.slice(zones[z][0], zones[z2][1] + 1);
+    const avant = z > 0 ? primitives[z - 1] : null;
+    const apres = z2 + 1 < zones.length ? primitives[z2 + 1] : null;
+    if (avant) morceau[0] = avant.ligne[1];
+    if (apres) morceau[morceau.length - 1] = apres.ligne[0];
+    const tD = avant
+      ? normaliser(soustraire(avant.ligne[1], avant.ligne[0]))
+      : t1;
+    const tF = apres
+      ? normaliser(soustraire(apres.ligne[0], apres.ligne[1]))
+      : t2;
+    const sortieZone = [];
+    ajusterArc(morceau, tD, tF, tolerance, sortieZone);
+    primitives[z] = { paquets: sortieZone };
+    for (let k = z + 1; k <= z2; k++) primitives[k] = { vide: true };
+    z = z2;
+  }
+  for (const p of primitives) {
+    if (!p || p.vide) continue;
+    if (p.paquets) sortie.push(...p.paquets);
+    else sortie.push(p);
+  }
+}
+
 function tangenteCentrale(S, i) {
   const n = S.length;
   return normaliser(soustraire(S[(i + 1) % n], S[(i - 1 + n) % n]));
@@ -518,9 +715,12 @@ export function lisserBoucle(pts, options = {}) {
     const moitie = Math.floor(n / 2);
     const t0 = tangenteCentrale(S, 0);
     const tm = tangenteCentrale(S, moitie);
-    ajusterArc(S.slice(0, moitie + 1), t0, { x: -tm.x, y: -tm.y }, tolerance, courbes);
-    ajusterArc(S.slice(moitie).concat([S[0]]), tm, { x: -t0.x, y: -t0.y }, tolerance, courbes);
+    segmenterEtAjuster(S.slice(0, moitie + 1), t0, { x: -tm.x, y: -tm.y }, tolerance, courbes);
+    segmenterEtAjuster(S.slice(moitie).concat([S[0]]), tm, { x: -t0.x, y: -t0.y }, tolerance, courbes);
   } else {
+    // Chaque arc garde sa propre liste : les jonctions entre arcs sont les
+    // COINS, et ils recoivent un traitement propre apres l'ajustement.
+    const arcs = [];
     for (let k = 0; k < liste.length; k++) {
       const debut = liste[k], fin = liste[(k + 1) % liste.length];
       const arc = [S[debut]];
@@ -534,8 +734,102 @@ export function lisserBoucle(pts, options = {}) {
       const base = Math.min(3, arc.length - 1);
       const t1 = normaliser(soustraire(arc[base], arc[0]));
       const t2 = normaliser(soustraire(arc[arc.length - 1 - base], arc[arc.length - 1]));
-      ajusterArc(arc, t1, t2, tolerance, courbes);
+      const sortie = [];
+      segmenterEtAjuster(arc, t1, t2, tolerance, sortie);
+      if (sortie.length) arcs.push(sortie);
     }
+    // LES MICRO-ARCS DE CHANFREIN S'EFFACENT D'ABORD : un chanfrein de deux
+    // pixels entre deux coins est la trace de l'antialiasing, pas un bord du
+    // dessin. On ne retire un micro-arc QUE si les deux bords voisins se
+    // croisent tout pres de lui : c'est la signature du coin emousse. Le
+    // bout d'un trait fin, lui, separe deux bords PARALLELES qui ne se
+    // croisent nulle part : il reste. Sans cette garde, trait_03px tombait
+    // de 99,2 a 73,6 pour cent, les bouts de traits se pincaient.
+    if (arcs.length > 2) {
+      const finDir = (A) => {
+        const f = A[A.length - 1];
+        const d = f.ligne ? soustraire(f.ligne[1], f.ligne[0]) : soustraire(f[3], f[2]);
+        const l = norme(d);
+        return l ? { x: d.x / l, y: d.y / l } : null;
+      };
+      const debutDir = (B) => {
+        const f = B[0];
+        const d = f.ligne ? soustraire(f.ligne[1], f.ligne[0]) : soustraire(f[1], f[0]);
+        const l = norme(d);
+        return l ? { x: d.x / l, y: d.y / l } : null;
+      };
+      const finPt = (A) => { const f = A[A.length - 1]; return f.ligne ? f.ligne[1] : f[3]; };
+      const debutPt = (B) => { const f = B[0]; return f.ligne ? f.ligne[0] : f[0]; };
+      for (let k = arcs.length - 1; k >= 0 && arcs.length > 2; k--) {
+        let longueur = 0;
+        for (const p of arcs[k]) {
+          if (p.ligne) longueur += Math.hypot(p.ligne[1].x - p.ligne[0].x, p.ligne[1].y - p.ligne[0].y);
+          else longueur += Math.hypot(p[3].x - p[0].x, p[3].y - p[0].y);
+        }
+        if (longueur >= 3.5) continue;
+        const avant = arcs[(k - 1 + arcs.length) % arcs.length];
+        const apres = arcs[(k + 1) % arcs.length];
+        const dA = finDir(avant), dB = debutDir(apres);
+        if (!dA || !dB) continue;
+        const det = dA.x * dB.y - dA.y * dB.x;
+        if (Math.abs(det) < 0.17) continue; // bords presque paralleles : bout de trait, on garde
+        const pA = finPt(avant), pB = debutPt(apres);
+        const rx = pB.x - pA.x, ry = pB.y - pA.y;
+        const t = (rx * dB.y - ry * dB.x) / det;
+        const P = { x: pA.x + t * dA.x, y: pA.y + t * dA.y };
+        const centre = debutPt(arcs[k]);
+        if (Math.hypot(P.x - centre.x, P.y - centre.y) > 3.5) continue;
+        arcs.splice(k, 1);
+      }
+    }
+    // LES COINS SE RECONSTRUISENT PAR INTERSECTION. Un coin pixelise est
+    // toujours EMOUSSE : l'antialiasing mange une a deux longueurs de pixel
+    // a la pointe, et l'echantillon de coin se pose sur ce chanfrein. Le
+    // vrai coin du dessin est a l'intersection des deux bords qui s'y
+    // rencontrent : on prolonge chacun le long de sa tangente et on pose le
+    // coin la ou ils se croisent. C'est ce que fait un graphiste, et c'est
+    // ce que l'oeil attend d'une pointe.
+    for (let k = 0; k < arcs.length; k++) {
+      const A = arcs[k], B = arcs[(k + 1) % arcs.length];
+      const finA = A[A.length - 1], debB = B[0];
+      const pA = finA.ligne ? finA.ligne[1] : finA[3];
+      const pB = debB.ligne ? debB.ligne[0] : debB[0];
+      let dA = finA.ligne ? soustraire(finA.ligne[1], finA.ligne[0]) : soustraire(finA[3], finA[2]);
+      if (!norme(dA) && !finA.ligne) dA = soustraire(finA[3], finA[1]);
+      let dB = debB.ligne ? soustraire(debB.ligne[1], debB.ligne[0]) : soustraire(debB[1], debB[0]);
+      if (!norme(dB) && !debB.ligne) dB = soustraire(debB[2], debB[0]);
+      const na = norme(dA), nb = norme(dB);
+      if (!na || !nb) continue;
+      dA = { x: dA.x / na, y: dA.y / na };
+      dB = { x: dB.x / nb, y: dB.y / nb };
+      let cos = dA.x * dB.x + dA.y * dB.y;
+      cos = Math.max(-1, Math.min(1, cos));
+      const virage = Math.acos(cos) * 180 / Math.PI;
+      // Si la reconstruction renonce, on SOUDE quand meme : la remise a
+      // l'aplomb a pu ecarter les deux bouts, et un trou dans le chemin est
+      // pire que tout.
+      const souder = () => {
+        if (pA.x === pB.x && pA.y === pB.y) return;
+        const M = { x: (pA.x + pB.x) / 2, y: (pA.y + pB.y) / 2 };
+        if (finA.ligne) finA.ligne[1] = M;
+        else { const d = { x: M.x - finA[3].x, y: M.y - finA[3].y }; finA[3] = M; finA[2] = { x: finA[2].x + d.x, y: finA[2].y + d.y }; }
+        if (debB.ligne) debB.ligne[0] = M;
+        else { const d = { x: M.x - debB[0].x, y: M.y - debB[0].y }; debB[0] = M; debB[1] = { x: debB[1].x + d.x, y: debB[1].y + d.y }; }
+      };
+      if (virage < 20 || virage > 160) { souder(); continue; }
+      const det = dA.x * dB.y - dA.y * dB.x;
+      if (Math.abs(det) < 1e-6) { souder(); continue; }
+      // pA + t dA = pB + s dB
+      const rx = pB.x - pA.x, ry = pB.y - pA.y;
+      const t = (rx * dB.y - ry * dB.x) / det;
+      const P = { x: pA.x + t * dA.x, y: pA.y + t * dA.y };
+      if (Math.hypot(P.x - pA.x, P.y - pA.y) > 3.5 || Math.hypot(P.x - pB.x, P.y - pB.y) > 3.5) { souder(); continue; }
+      if (finA.ligne) finA.ligne[1] = P;
+      else { const d = { x: P.x - finA[3].x, y: P.y - finA[3].y }; finA[3] = P; finA[2] = { x: finA[2].x + d.x, y: finA[2].y + d.y }; }
+      if (debB.ligne) debB.ligne[0] = P;
+      else { const d = { x: P.x - debB[0].x, y: P.y - debB[0].y }; debB[0] = P; debB[1] = { x: debB[1].x + d.x, y: debB[1].y + d.y }; }
+    }
+    for (const arc of arcs) courbes.push(...arc);
   }
   if (courbes.length === 0) return null;
   const premier = courbes[0].ligne ? courbes[0].ligne[0] : courbes[0][0];

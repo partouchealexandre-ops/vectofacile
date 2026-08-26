@@ -95,8 +95,16 @@ export const CAPITALE_NETTE_MINIMALE_PX = 40;
  * table, sans fabriquer une image de 21 megapixels.
  */
 export function reglagesDuTrait(traitLimite, surfacePx) {
-  if (traitLimite) return { mode: 'polygon' };
   if (surfacePx > SURFACE_MAX_AJUSTEMENT_PX) return { mode: 'spline' };
+  // UN TRAIT LIMITE N'EST PLUS LIVRE EN POLYGONES BRUTS, 26/08 au soir.
+  // Le logo aux silhouettes fines partait en escaliers exacts mais creneles,
+  // illisibles au premier zoom. L'ajustement s'applique aussi a lui, SERRE :
+  // tolerance sous le demi-pixel et lissage minimal, pour ne rien perdre
+  // d'un trait qui n'a qu'un ou deux pixels a offrir. Les planchers de
+  // recouvrement du harnais (trait_01px en tete) sont les gardiens du reglage.
+  if (traitLimite) {
+    return { mode: 'pixel', lissage: true, lissageReglages: { tolerance: 0.55, rayonLissage: 1, pas: 0.8 } };
+  }
   // Le mode pixel livre l'escalier exact ; l'ajustement (lissage.js) le
   // transforme en courbes. Le drapeau `lissage` est lu par
   // construireProgramme, VTracer ignore les cles qu'il ne connait pas.
@@ -384,6 +392,92 @@ export function pixelsPourVectorisation(image, mesures) {
     }
   }
 
+  // TROISIEME PASSE, 26/08/2026 au soir : LES FRANGES SE DISSOLVENT.
+  //
+  // Le vote de bord corrige les pixels INCERTAINS. Mais quand la palette
+  // porte elle-meme des teintes intermediaires (l'arc degrade du logo UNSA a
+  // plusieurs bleus), les pixels de bord entre le blanc et le bleu franc
+  // sont SURS d'une de ces teintes : chaque frontiere blanc-bleu se retrouve
+  // ourlee d'un lisere d'une couleur legitime ailleurs, et le fichier livre
+  // dessine ces ourlets. Sur UNSA, 284 formes pour un dessin qui en compte
+  // une quinzaine.
+  //
+  // La regle : une COMPOSANTE mince, prise en sandwich entre deux couleurs
+  // dont la sienne est le melange, est un artefact d'antialiasing, pas un
+  // element du dessin. Chacun de ses pixels rejoint celle des deux couleurs
+  // dont il est le plus proche. Une bande epaisse (l'arc degrade) n'est pas
+  // mince : elle reste. Un trait fin pose sur UNE seule couleur n'est pas un
+  // sandwich : il reste aussi.
+  {
+    const etiquettes = new Int32Array(total).fill(-1);
+    const pile = new Int32Array(total);
+    for (let passe = 0; passe < 2; passe++) {
+      etiquettes.fill(-1);
+      let prochaine = 0;
+      for (let depart = 0; depart < total; depart++) {
+        if (!masque[depart] || choix[depart] < 0 || etiquettes[depart] >= 0) continue;
+        const classe = choix[depart];
+        const composante = [];
+        let sommet = 0;
+        pile[sommet++] = depart;
+        etiquettes[depart] = prochaine;
+        const contacts = new Map();
+        let perimetre = 0;
+        while (sommet > 0) {
+          const i = pile[--sommet];
+          composante.push(i);
+          const x = i % largeur, y = (i / largeur) | 0;
+          for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+            const xx = x + dx, yy = y + dy;
+            if (xx < 0 || yy < 0 || xx >= largeur || yy >= hauteur) { perimetre++; continue; }
+            const j = yy * largeur + xx;
+            if (masque[j] && choix[j] === classe) {
+              if (etiquettes[j] < 0) { etiquettes[j] = prochaine; pile[sommet++] = j; }
+              continue;
+            }
+            perimetre++;
+            const cle = masque[j] && choix[j] >= 0 ? choix[j] : -1;
+            contacts.set(cle, (contacts.get(cle) ?? 0) + 1);
+          }
+        }
+        prochaine++;
+        const aire = composante.length;
+        if (aire > 1500 || perimetre === 0 || aire / perimetre >= 1.4) continue;
+        // Les deux voisines dominantes. Le FOND COULEUR est une voisine
+        // comme une autre : sur un JPEG a fond blanc, la frange d'un trace
+        // orange est prise entre l'orange et le blanc du fond, et l'ignorer
+        // laissait 839 formes au logo aux silhouettes. Le fond transparent,
+        // lui, n'a pas de couleur : il ne vote pas.
+        const labFond = fondRvb ? versLab(fondRvb[0], fondRvb[1], fondRvb[2]) : null;
+        const voisines = [...contacts.entries()]
+          .filter(([k]) => k >= 0 || labFond)
+          .sort((a, b) => b[1] - a[1]);
+        if (voisines.length < 2) continue;
+        const [vA, vB] = voisines;
+        if ((vA[1] + vB[1]) / perimetre < 0.7) continue;
+        const A = vA[0] >= 0 ? palette[vA[0]].lab : labFond;
+        const B = vB[0] >= 0 ? palette[vB[0]].lab : labFond;
+        const M = palette[classe].lab;
+        // distance de M au segment [A, B] en Lab
+        const ab = [B[0] - A[0], B[1] - A[1], B[2] - A[2]];
+        const am = [M[0] - A[0], M[1] - A[1], M[2] - A[2]];
+        const nab = ab[0] * ab[0] + ab[1] * ab[1] + ab[2] * ab[2];
+        const t = nab ? Math.max(0, Math.min(1, (am[0] * ab[0] + am[1] * ab[1] + am[2] * ab[2]) / nab)) : 0;
+        const proj = [A[0] + t * ab[0], A[1] + t * ab[1], A[2] + t * ab[2]];
+        const dm = Math.hypot(M[0] - proj[0], M[1] - proj[1], M[2] - proj[2]);
+        if (dm > 12 || t <= 0.05 || t >= 0.95) continue;
+        // dissolution : chaque pixel rejoint la plus proche de ses deux voisines
+        for (const i of composante) {
+          const p4 = i * 4;
+          const teinte = lab(donnees[p4], donnees[p4 + 1], donnees[p4 + 2]);
+          const vers = ecartLab(teinte, A) <= ecartLab(teinte, B) ? vA[0] : vB[0];
+          // -2 : ce pixel redevient du FOND, il sort du dessin
+          choix[i] = vers;
+        }
+      }
+    }
+  }
+
   for (let i = 0; i < total; i++) {
     const p = i * 4;
     if (!masque[i]) {
@@ -392,6 +486,11 @@ export function pixelsPourVectorisation(image, mesures) {
       } else {
         propre[p] = 0; propre[p + 1] = 0; propre[p + 2] = 0; propre[p + 3] = 0;
       }
+      continue;
+    }
+    if (choix[i] === -1 && fondRvb) {
+      // dissous dans le fond par l'absorption des franges
+      propre[p] = fondRvb[0]; propre[p + 1] = fondRvb[1]; propre[p + 2] = fondRvb[2]; propre[p + 3] = 255;
       continue;
     }
     if (choix[i] < 0) {
