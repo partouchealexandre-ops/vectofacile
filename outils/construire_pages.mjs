@@ -147,10 +147,26 @@ const echapper = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').r
  * L'orange reste le dernier element de la ligne, comme depuis le 18/08.
  */
 function actionsEntete(urlCourante) {
-  const ici = (url) => (urlCourante === url ? ' aria-current="page"' : '');
+  // UN BOUTON NE SE REND PAS SUR LA PAGE VERS LAQUELLE IL POINTE, decisions 1
+  // et 2 du brief navigation, arbitrees par Alex le 26/08/2026.
+  //
+  // Sur l'accueil, « Évaluer votre logo » surplombait la zone de depot qui EST
+  // l'evaluation : on demandait de cliquer pour faire ce qu'on etait deja en
+  // train de faire. Le meme defaut, a l'identique, que le « Décrivez votre
+  // besoin » releve sur un autre site du groupe la semaine derniere.
+  //
+  // La regle est generale, pas une exception d'accueil : un composant de lien
+  // qui refuse de fabriquer un lien mort refuse aussi de fabriquer un lien
+  // vers soi-meme. Elle vaut donc aussi pour « Mon logo sur des goodies » sur
+  // /voir-mon-logo. C'est le composant qui porte la garantie, pas le relecteur.
+  const boutons = [
+    { classe: 'cta-secondaire', href: '/voir-mon-logo', texte: 'Mon logo sur des goodies' },
+    { classe: 'cta-entete', href: '/', texte: 'Évaluer votre logo' },
+  ];
   return '<div class="droite">'
-    + `<a class="cta-secondaire" href="/voir-mon-logo"${ici('/voir-mon-logo')}>Mon logo sur des goodies</a>`
-    + `<a class="cta-entete" href="/"${ici('/')}>Évaluer votre logo</a>`
+    + boutons.filter((b) => b.href !== urlCourante)
+      .map((b) => `<a class="${b.classe}" href="${b.href}">${b.texte}</a>`)
+      .join('')
     + '</div>';
 }
 
@@ -178,13 +194,17 @@ function entete(urlCourante, publiees) {
   const liens = RUBRIQUES.filter((r) => publiees.has(r.url)).map((r) =>
     `<a href="${r.url}"${urlCourante.startsWith(r.url) && r.url !== '/' ? ' aria-current="page"' : ''}>${r.titre}</a>`
   ).join('');
-  // La vectorisation vit DANS la navigation, en dernier, habillee en pilule.
-  // Elle n'est pas dans RUBRIQUES : ce n'est pas une rubrique de contenu, et
-  // la faire entrer dans cette liste melangerait deux choses differentes.
-  const vectoriser = `<a class="nav-action" href="/vectoriser"${urlCourante === '/vectoriser' ? ' aria-current="page"' : ''}>Vectoriser mon logo</a>`;
+  // LA VECTORISATION SORT DE L'ENTETE, decision 2 du 26/08/2026, arbitree par
+  // Alex. Vectoriser un logo est une commodite que des dizaines de sites
+  // rendent, souvent bien ; le verdict par technique n'a aucun equivalent. En
+  // faire une porte d'entree de meme rang, c'etait se placer sur le terrain le
+  // plus dispute du sujet. La page /vectoriser RESTE : elle vise une requete
+  // tres recherchee et garde son referencement. Elle entre desormais par le
+  // pied de page, par la FAQ de l'accueil et par le corps des pages qui
+  // parlent de fichiers, plus par le menu.
   return `<header class="entete">
   <a class="lockup" href="/">${symbole}<span class="mot">Bon à<br>Marquer</span></a>
-  <nav class="nav-site">${liens}${vectoriser}</nav>
+  <nav class="nav-site">${liens}</nav>
   ${actionsEntete(urlCourante)}
 </header>`;
 }

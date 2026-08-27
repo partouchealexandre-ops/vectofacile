@@ -90,6 +90,10 @@ export const PIED = [
     liens: [
       { titre: 'Diagnostiquer un logo', url: '/' },
       { titre: 'Votre logo sur un objet', url: '/voir-mon-logo' },
+      // La vectorisation est sortie de l'entete le 26/08 : le pied devient son
+      // entree permanente, presente sur toutes les pages, pour qu'elle ne vive
+      // pas seule le temps que le maillage du corps se construise.
+      { titre: 'Vectoriser mon logo', url: '/vectoriser' },
       { titre: 'Votre logo reste chez vous', url: '/confidentialite' },
     ],
   },

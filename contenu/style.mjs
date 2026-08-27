@@ -617,15 +617,10 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
             font-weight: 500; flex-wrap: wrap; }
 .nav-site a { color: var(--texte); text-decoration: none; white-space: nowrap; }
 .nav-site a:hover, .nav-site a[aria-current] { color: var(--navy); }
-/* LA PILULE DE VECTORISATION, arbitrage Alex du 25/08 au soir. Elle detache
-   la vectorisation des deux rubriques de contenu sans inventer de couleur :
-   c'est le niveau « secondaire » de la charte, navy sur blanc. L'orange reste
-   ce qu'il est depuis le 18/08, un seul par ecran, et il est ailleurs.
-   Le selecteur porte .nav-site parce que la regle .nav-site a impose deja
-   une couleur : une regle a un seul point ne la battrait pas. */
-.nav-site a.nav-action { padding: 7px 13px; border-radius: 6px; font-weight: 600;
-                         border: 1.5px solid var(--trait); color: var(--navy); }
-.nav-site a.nav-action:hover { border-color: var(--gris); }
+/* La pilule « Vectoriser mon logo » a quitte l'entete le 26/08/2026, decision
+   2 du brief navigation : la vectorisation est une commodite, le verdict par
+   technique n'a pas d'equivalent, et l'entete porte le second. La page reste,
+   son entree passe par le pied de page et par le corps des pages. */
 
 /* L'ENTETE SUR UN PORTABLE DE 1024, mesure du 25/08 au soir. Elle se cassait
    deja en deux lignes AVANT ce tour d'entete, a 135 px, et personne ne l'avait
@@ -653,7 +648,6 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
   .entete { gap: clamp(7px, 1vw, 16px); }
   .entete .droite { gap: clamp(7px, 1vw, 14px); }
   .nav-site { gap: clamp(8px, 1.15vw, 18px); font-size: clamp(12px, 1.02vw, 14px); }
-  .nav-site a.nav-action { padding: clamp(5px, .55vw, 7px) clamp(7px, .95vw, 13px); }
   .cta-entete, .cta-secondaire { font-size: clamp(12px, 1.02vw, 14px);
                                  padding: clamp(7px, .7vw, 9px) clamp(8px, 1.1vw, 15px); }
   .lockup { gap: 8px; }

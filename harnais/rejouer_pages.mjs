@@ -293,8 +293,15 @@ for (const url of URLS) {
       return f === 'rgb(255, 106, 0)';
     }).length;
   });
-  if (orangesEntete !== null && orangesEntete !== 1) {
-    fautes.push(`${orangesEntete} bouton(s) orange dans l'entete, il en faut exactement un`);
+  // SUR L'ACCUEIL, ZERO ORANGE DANS L'ENTETE, decision du 26/08/2026. La regle
+  // de charte n'a pas change, un seul element orange par vue : sur cette page
+  // la conversion EST la zone de depot, et un bouton de menu orange lui
+  // volerait son poids. Partout ailleurs, « Évaluer votre logo » reprend
+  // l'orange sans concurrence.
+  const orangesAttendus = url === '/' ? 0 : 1;
+  if (orangesEntete !== null && orangesEntete !== orangesAttendus) {
+    fautes.push(`${orangesEntete} bouton(s) orange dans l'entete de ${url}, `
+      + `il en faut ${orangesAttendus}`);
   }
 
   // ET LES DEUX ACTIONS SONT BIEN GENEREES. Les reperes existent depuis le
@@ -302,8 +309,46 @@ for (const url of URLS) {
   // le garde-fou de construction, qui ne verifie que la presence des reperes.
   const actions = await page.evaluate(() =>
     [...document.querySelectorAll('.entete .droite a')].map((a) => a.getAttribute('href')));
-  if (actions.length !== 2) {
-    fautes.push(`${actions.length} action(s) dans l'entete, il en faut deux`);
+  // UN BOUTON NE SE REND PAS SUR LA PAGE VERS LAQUELLE IL POINTE, 26/08/2026.
+  // L'accueil perd « Évaluer votre logo », /voir-mon-logo perd « Mon logo sur
+  // des goodies » : chacun proposait d'aller la ou on etait deja.
+  const actionsAttendues = (url === '/' || url === '/voir-mon-logo') ? 1 : 2;
+  if (actions.length !== actionsAttendues) {
+    fautes.push(`${actions.length} action(s) dans l'entete de ${url}, `
+      + `il en faut ${actionsAttendues}`);
+  }
+  if (actions.includes(url)) {
+    fautes.push(`l'entete de ${url} propose d'aller la ou l'on est deja`);
+  }
+
+  // LA VECTORISATION A QUITTE L'ENTETE ET ENTRE PAR LE PIED, decision 2 du
+  // 26/08/2026. Deux gardes, et la seconde est celle qui compte : une page
+  // sortie du menu sans entree de remplacement devient orpheline en silence.
+  const vectorisation = await page.evaluate(() => ({
+    entete: [...document.querySelectorAll('.entete a')]
+      .some((a) => a.getAttribute('href') === '/vectoriser'),
+    pied: [...document.querySelectorAll('footer a, .pied-site a')]
+      .some((a) => a.getAttribute('href') === '/vectoriser'),
+  }));
+  if (vectorisation.entete) {
+    fautes.push(`l'entete de ${url} porte encore la vectorisation`);
+  }
+  // Les trois pages application portent un pied court sans arborescence ; le
+  // pied complet est celui des pages de contenu, et c'est lui qui garantit
+  // l'entree. L'accueil, lui, y menera par sa FAQ.
+  if (!vectorisation.pied && !['/', '/vectoriser', '/voir-mon-logo'].includes(url)) {
+    fautes.push(`le pied de ${url} ne mene plus a la vectorisation : la page devient orpheline`);
+  }
+
+  // ET SUR L'ACCUEIL, AUCUN LIEN DE L'ENTETE NE POINTE VERS L'ACCUEIL, le
+  // logotype compris : il y est rendu en simple enseigne, pas en lien.
+  if (url === '/') {
+    const versSoi = await page.evaluate(() =>
+      [...document.querySelectorAll('.entete a')]
+        .filter((a) => a.getAttribute('href') === '/').length);
+    if (versSoi !== 0) {
+      fautes.push(`${versSoi} lien(s) de l'entete de l'accueil pointent vers l'accueil`);
+    }
   }
 
   // LA VITRINE DE L'ACCUEIL, et surtout ce qu'elle declare.
