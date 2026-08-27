@@ -19,8 +19,8 @@ import { mesurer } from './moteur/mesures.js';
 import { juger } from './verdict/juger.js';
 import { jugerFeux } from './verdict/feux.js';
 import { CONTACT, rendreDecouverte } from './verdict/rendu_grille.js';
-import { programmeVersPng } from './vectorisation/toile.js';
-import { deposerLogo } from './simulation/passage.js';
+import { imageVersPng, programmeVersPng } from './vectorisation/toile.js';
+import { deposerLogo, oublierLogo } from './simulation/passage.js';
 import { rendreVerdict } from './verdict/rendu.js';
 import { rendreFaitPrincipal, logoClair } from './verdict/rendu_feux.js';
 import { conseiller } from './conseils/conseils.js';
@@ -470,7 +470,13 @@ const NOMS_PAR_FAMILLE = Object.freeze({
  * LA DECOUVERTE DE /VECTORISER, partie D du brief du 21/08, REECRITE LE
  * 26/08/2026 (arbitrage Alex).
  *
- * Elle n'existe que sur cette page, et seulement une fois le fichier remis.
+ * ELLE VIT SUR LES DEUX PAGES DEPUIS LE 27/08/2026. Sur /vectoriser elle
+ * arrive une fois le fichier remis ; sur l'accueil, une fois le diagnostic
+ * rendu, a la place laissee vide par le bloc de contact qui n'ouvre pas
+ * encore. Le garde n'est plus le mode de la page mais la PRESENCE du bloc :
+ * une page qui n'en porte pas n'en fabrique pas un.
+ *
+ * Elle arrive seulement une fois qu'il y a quelque chose a proposer.
  * Elle ne montre plus deux cartes de matieres : elle propose le simulateur,
  * et elle y envoie le fichier qu'on vient de fabriquer.
  *
@@ -484,10 +490,17 @@ const NOMS_PAR_FAMILLE = Object.freeze({
  * qui appartient a l'onglet et meurt avec lui : voir `simulation/passage.js`.
  */
 function afficherDecouverte() {
-  if (!modeVectoriser() || !$('decouverte')) return;
+  if (!$('decouverte')) return;
   let suit = false;
   try {
-    const png = etat.programme ? programmeVersPng(etat.programme) : null;
+    // LE TRACE S'IL EXISTE, L'IMAGE SINON. Sur l'accueil, un PDF ou un fichier
+    // Illustrator est mesure sans etre retrace, et une image refusee a la
+    // vectorisation ne produit aucun programme : ces visiteurs ont pourtant un
+    // diagnostic complet, et le porteur d'un vrai vectoriel tient meme le
+    // meilleur fichier du lot. On lui montre son logo sur l'objet avec ce
+    // qu'on a, plutot que de lui faire payer notre decoupage interne.
+    const png = etat.programme ? programmeVersPng(etat.programme)
+      : (etat.image ? imageVersPng(etat.image) : null);
     suit = png ? deposerLogo(png, etat.nom) : false;
   } catch (e) {
     // Une toile qui ne se dessine pas ne doit pas emporter la remise du
@@ -516,7 +529,16 @@ function afficherDecouverte() {
  */
 function peindreDecouverte() {
   if (!$('decouverte')) return;
-  $('decouverte').innerHTML = rendreDecouverte(etat.logoSuit === true, etat.fichierPris === true);
+  // LE RAPPEL POINTE « JUSTE AU-DESSUS », DONC IL FAUT QUE QUELQUE CHOSE Y
+  // SOIT. Sur l'accueil, les boutons de telechargement ne s'affichent que si
+  // le visiteur a demande son fichier : ecrire le rappel au-dessus d'un bloc
+  // cache serait pire que ne rien ecrire. C'est l'ETAT DE L'ECRAN qui decide,
+  // pas la page.
+  const boutons = $('telechargements');
+  $('decouverte').innerHTML = rendreDecouverte({
+    logoSuit: etat.logoSuit === true,
+    rappelFichiers: Boolean(boutons) && boutons.hidden === false && etat.fichierPris !== true,
+  });
 }
 
 /**
@@ -770,6 +792,13 @@ function reinitialiser() {
     const e = $(id);
     if (e) { e.hidden = true; e.innerHTML = ''; }
   }
+  // ET LE LOGO DEPOSE POUR LE SIMULATEUR PART AVEC EUX, 27/08/2026. La regle
+  // de cette fonction est que rien du fichier precedent ne survit au depot du
+  // suivant, ni a l'ecran ni en memoire. Le dessin depose dans le stockage de
+  // session EST une memoire du fichier precedent : sans cette ligne, un second
+  // fichier qui echoue laisserait le simulateur poser le PREMIER logo sur
+  // l'objet, sans la moindre erreur a l'ecran.
+  oublierLogo();
   // Celui-ci porte un balisage STATIQUE, dont les trois boutons et leurs
   // ecouteurs poses au demarrage. Le vider les supprimerait du document, et
   // les ecouteurs partiraient avec eux. On le masque, on n'y touche pas.
@@ -817,6 +846,11 @@ function revelerTelechargements() {
   if (!bloc) return;
   if (!etat.programme) return;
   if (modeVectoriser() || etat.telechargementDemande) bloc.hidden = false;
+  // LE RAPPEL SUIT L'ECRAN, 27/08/2026. Sur l'accueil, les boutons peuvent
+  // apparaitre APRES la decouverte : le visiteur lit son diagnostic, puis
+  // reclame son fichier. Sans cette ligne, le rappel d'emporter ses fichiers
+  // ne serait jamais ecrit pour lui, alors qu'il vient justement d'en obtenir.
+  peindreDecouverte();
 }
 
 /**
@@ -1100,6 +1134,12 @@ async function traiter(fichier) {
         devoiler('resultat');
       }
       terminerAttente();
+      // CE VISITEUR TIENT LE MEILLEUR FICHIER DU LOT, ET C'EST LUI QU'ON
+      // LAISSAIT SANS SUITE. On ne lui fabrique rien, par principe : lui
+      // rendre une version tracee de son propre vectoriel serait lui rendre
+      // une copie degradee. Mais voir SON logo sur un objet, a la taille du
+      // fabricant, ne lui degrade rien du tout.
+      afficherDecouverte();
       return;
     }
 
@@ -1115,6 +1155,8 @@ async function traiter(fichier) {
       terminerAttente();
       etat.fichierEtat = { origine: 'image', vectorise: false };
       rendreLeVerdict();
+      // Pas de fichier pour celui-la, mais son logo existe et l'objet aussi.
+      afficherDecouverte();
       return;
     }
 
@@ -1146,6 +1188,7 @@ async function traiter(fichier) {
       terminerAttente();
       etat.fichierEtat = { origine: 'image', vectorise: false };
       rendreLeVerdict();
+      afficherDecouverte();
       return;
     }
     $('apercu').innerHTML = etat.svg;
@@ -1188,10 +1231,11 @@ async function traiter(fichier) {
     // bas de page.
     etat.fichierEtat = { origine: 'image', vectorise: true };
     rendreLeVerdict();
-    // PARTIE D DU BRIEF DU 21/08 : sur /vectoriser, la decouverte arrive APRES
-    // la remise du fichier, jamais avant. Le visiteur a ce qu'il venait
-    // chercher ; on lui propose alors de voir CE logo sur un objet reel, et le
-    // fichier qu'on vient de fabriquer part avec lui.
+    // PARTIE D DU BRIEF DU 21/08, ET C4 DE LA STRUCTURE DE L'ACCUEIL. La
+    // decouverte arrive APRES, jamais avant : le visiteur a ce qu'il venait
+    // chercher, son fichier sur /vectoriser, son diagnostic sur l'accueil. On
+    // lui propose alors de voir CE logo sur un objet reel, et le trace qu'on
+    // vient de fabriquer part avec lui.
     afficherDecouverte();
   } catch (e) {
     terminerAttente();

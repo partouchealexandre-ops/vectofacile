@@ -54,6 +54,48 @@ export function dessinerProgramme(contexte, programme, echelle = 1) {
 }
 
 /**
+ * L'IMAGE DEPOSEE, RENDUE EN PNG, 27/08/2026.
+ *
+ * POURQUOI ELLE EXISTE A COTE DE LA PRECEDENTE. Sur l'accueil, tout le monde
+ * n'a pas de programme de trace : un PDF ou un fichier Illustrator est mesure
+ * DIRECTEMENT, sans etre retrace, et une image refusee a la vectorisation n'en
+ * produit pas non plus. Ces visiteurs ont pourtant un diagnostic complet, et
+ * ce sont meme ceux qui tiennent le meilleur fichier. Leur refuser le
+ * simulateur parce qu'on n'a rien FABRIQUE serait leur faire payer notre
+ * decoupage interne.
+ *
+ * ON N'AGRANDIT JAMAIS. Le programme de trace n'a pas de resolution et se rend
+ * a la taille qu'on veut ; une image en a une, et l'etirer au dela ne montre
+ * que ses propres pixels. On reduit donc si besoin, jamais l'inverse.
+ *
+ * @returns {string|null} l'URL de donnees, ou null si rien n'est dessinable.
+ */
+export function imageVersPng(image, coteMax = COTE_TOILE_PX) {
+  if (!image?.donnees || !(image.largeur > 0) || !(image.hauteur > 0)) return null;
+  const source = document.createElement('canvas');
+  source.width = image.largeur;
+  source.height = image.hauteur;
+  const dedans = source.getContext('2d');
+  if (!dedans) return null;
+  const donnees = dedans.createImageData(image.largeur, image.hauteur);
+  donnees.data.set(image.donnees);
+  dedans.putImageData(donnees, 0, 0);
+
+  const cote = Math.max(image.largeur, image.hauteur);
+  const echelle = Math.min(1, coteMax / cote);
+  if (echelle === 1) return source.toDataURL('image/png');
+  const toile = document.createElement('canvas');
+  toile.width = Math.max(1, Math.round(image.largeur * echelle));
+  toile.height = Math.max(1, Math.round(image.hauteur * echelle));
+  const contexte = toile.getContext('2d');
+  if (!contexte) return null;
+  contexte.imageSmoothingEnabled = true;
+  contexte.imageSmoothingQuality = 'high';
+  contexte.drawImage(source, 0, 0, toile.width, toile.height);
+  return toile.toDataURL('image/png');
+}
+
+/**
  * Le programme rendu en PNG, sous forme d'URL de donnees.
  *
  * LE FOND RESTE CE QU'IL EST. Si le logo d'origine avait un fond blanc, le

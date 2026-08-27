@@ -519,24 +519,36 @@ export function rendreSuite() {
  * faire partir quelqu'un avant qu'il ait pris son .eps ; cette page ne les
  * garde pas, il faudrait redeposer l'image et tout refaire. Le rappel s'ecrit
  * donc tant que rien n'a ete telecharge, et il s'efface des que le premier
- * fichier est pris : `fichierPris` vient du clic, pas d'une intention, comme
+ * fichier est pris : le rappel vient du clic, pas d'une intention, comme
  * `logoSuit` vient du depot.
+ *
+ * ELLE SERT LES DEUX PAGES DEPUIS LE 27/08/2026, et c'est ce qui a fait
+ * disparaitre sa premiere phrase. Elle disait « votre fichier est fait », ce
+ * qui n'est vrai que sur /vectoriser : sur l'accueil, un PDF est mesure sans
+ * etre retrace, et une image refusee ne produit aucun fichier. Le sur-titre
+ * « etape suivante » et le titre disent deja d'ou l'on vient ; une phrase de
+ * moins vaut mieux qu'une phrase fausse chez la moitie des visiteurs.
+ *
+ * ET LE RAPPEL NE SE DEVINE PAS ICI. C'est l'appelant qui sait si les boutons
+ * de telechargement sont a l'ecran : sur l'accueil, ils n'apparaissent que si
+ * le visiteur a demande son fichier. Un rappel qui pointe « juste au-dessus »
+ * vers un bloc cache serait pire que pas de rappel du tout.
  */
-export function rendreDecouverte(logoSuit = false, fichierPris = false) {
+export function rendreDecouverte({ logoSuit = false, rappelFichiers = false } = {}) {
   return `<div class="passage-objet">
 <p class="passage-etape">Étape suivante</p>
 <h2>Voyez ce logo sur un objet</h2>
-<p class="passage-note">Votre fichier est fait. Posez-le sur un objet : la zone de marquage et ses
-dimensions sont celles du fabricant, et la taille obtenue s'affiche en millimètres.
+<p class="passage-note">La zone de marquage et ses dimensions sont celles du fabricant,
+et la taille obtenue s'affiche en millimètres.
 ${logoSuit
   ? 'Votre logo vous suit, vous n\'avez rien à redéposer.'
   : 'Vous y déposerez votre logo.'}</p>
 <p><a class="cta-geant" href="/voir-mon-logo">Voir ce logo sur un objet<span
-class="fleche" aria-hidden="true">→</span></a></p>${fichierPris
-  ? ''
-  : `
+class="fleche" aria-hidden="true">→</span></a></p>${rappelFichiers
+  ? `
 <p class="passage-rappel">Prenez d'abord vos fichiers, juste au-dessus :
-cette page ne les garde pas.</p>`}
+cette page ne les garde pas.</p>`
+  : ''}
 </div>`;
 }
 

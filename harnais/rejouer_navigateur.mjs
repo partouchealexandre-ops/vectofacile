@@ -784,6 +784,112 @@ console.log('');
   console.log('');
 }
 
+// L'ACCUEIL PROPOSE L'OBJET A LA FIN DU DIAGNOSTIC, temoin du 27/08/2026.
+//
+// C4 de la structure du 21/08, « et maintenant », etait vide : le bloc de
+// contact ne s'affiche pas tant que l'adresse ne recoit pas, et la seule
+// mention du simulateur etait un lien de texte au milieu d'une reponse de la
+// foire aux questions. Arbitrage d'Alex : c'est ici que l'invitation doit
+// etre grosse.
+//
+// CE TEMOIN NE CROIT PAS UNE CLASSE CSS, IL MESURE. Il lit la taille calculee
+// du bouton et la compare a tous les autres boutons et liens visibles de la
+// page. Et il verifie l'inverse du rappel : sur l'accueil, les fichiers ne
+// s'affichent que si le visiteur les reclame, donc tant qu'ils sont caches, la
+// phrase « juste au-dessus » ne doit PAS s'ecrire.
+{
+  const page = await navigateur.newPage();
+  await page.goto(`http://127.0.0.1:${PORT}/`, { waitUntil: 'networkidle' });
+  await page.waitForTimeout(900);
+  const octets = fs.readFileSync(path.join(IMAGES, 'couleurs_09_plat.png'));
+  const constat = await page.evaluate(async (b64) => {
+    const fichier = new File(
+      [Uint8Array.from(atob(b64), (c) => c.charCodeAt(0))], 'mon-logo.png', { type: 'image/png' });
+    await globalThis.vecto.traiter(fichier);
+    const mesurerCta = () => {
+      const cta = document.querySelector('#decouverte a[href="/voir-mon-logo"]');
+      if (!cta) return null;
+      const taille = (el) => parseFloat(getComputedStyle(el).fontSize) || 0;
+      let rival = 0;
+      let nomRival = '';
+      for (const el of document.querySelectorAll('a, button')) {
+        if (el === cta || cta.contains(el) || el.contains(cta)) continue;
+        if (el.offsetWidth === 0 && el.offsetHeight === 0) continue;
+        const t = taille(el);
+        if (t > rival) { rival = t; nomRival = (el.textContent || '').trim().slice(0, 28); }
+      }
+      return { cta: taille(cta), rival, nomRival };
+    };
+    return {
+      visible: document.getElementById('decouverte')?.hidden === false,
+      texte: document.getElementById('decouverte')?.innerText ?? '',
+      tailles: mesurerCta(),
+      // L'ORDRE : la suite ne passe jamais devant le fichier.
+      ordre: [...document.querySelectorAll(
+        '#verdict, #telechargements, #decouverte, #volet_mesures')].map((e) => e.id),
+      boutonsCaches: document.getElementById('telechargements')?.hidden === true,
+      logoDepose: (() => {
+        try {
+          const brut = sessionStorage.getItem('bonamarquer.logo-vectorise.v1');
+          return brut ? JSON.parse(brut).png.slice(0, 40) : null;
+        } catch (e) { return null; }
+      })(),
+    };
+  }, octets.toString('base64'));
+
+  // ET LE RAPPEL ARRIVE QUAND LES FICHIERS ARRIVENT. Sur l'accueil, les
+  // boutons apparaissent APRES la decouverte, quand le visiteur les reclame :
+  // sans le redessin, le rappel ne serait jamais ecrit pour lui.
+  const apresDemande = await page.evaluate(async () => {
+    // C'est l'ancre exacte que la page ecoute, qu'elle soit portee par le
+    // bandeau ou par une carte de feu orange : voir ecouterLaDemandeDeFichier.
+    document.querySelector('a[href="#telechargements"]')?.click();
+    await new Promise((r) => setTimeout(r, 200));
+    return {
+      boutonsVisibles: document.getElementById('telechargements')?.hidden === false,
+      rappel: /juste au-dessus/i.test(document.getElementById('decouverte')?.innerText ?? ''),
+    };
+  });
+  await page.close();
+
+  console.log('');
+  console.log('  L\'ACCUEIL PROPOSE L\'OBJET A LA FIN DU DIAGNOSTIC');
+  console.log('  ' + '-'.repeat(66));
+  for (const [libelle, ok] of [
+    ['la decouverte apparait une fois le diagnostic rendu', constat.visible === true],
+    ['elle propose de voir CE logo sur un objet',
+      /voyez ce logo sur un objet/i.test(constat.texte)],
+    ['elle arrive APRES le fichier, jamais devant',
+      constat.ordre.join(' ') === 'verdict telechargements decouverte volet_mesures',
+      constat.ordre.join(' ')],
+    [`son bouton est le plus gros de la page (${constat.tailles
+        ? `${constat.tailles.cta} px contre ${constat.tailles.rival} px`
+          + ` pour « ${constat.tailles.nomRival} »`
+        : 'non mesure'})`,
+      constat.tailles !== null && constat.tailles.cta > constat.tailles.rival],
+    ['le logo suit jusqu\'au simulateur',
+      String(constat.logoDepose ?? '').startsWith('data:image/png;base64,')],
+    ['et la phrase ne le promet que si c\'est vrai',
+      /vous suit/i.test(constat.texte) === (constat.logoDepose !== null)],
+    // L'INVERSE DU RAPPEL, et c'est lui qui donne sa valeur au controle
+    // precedent : une phrase qui pointe « juste au-dessus » vers un bloc cache
+    // serait pire que pas de phrase du tout.
+    ['tant que les fichiers ne sont pas reclames, ils sont caches',
+      constat.boutonsCaches === true],
+    ['et le rappel ne pointe pas vers un bloc cache',
+      /juste au-dessus/i.test(constat.texte) === false],
+    ['une fois les fichiers reclames, ils s\'affichent',
+      apresDemande.boutonsVisibles === true],
+    ['et le rappel s\'ecrit alors, sans qu\'on ait redepose quoi que ce soit',
+      apresDemande.rappel === true],
+  ]) {
+    console.log(`  ${ok ? 'ok   ' : 'ECHEC'} ${libelle}`);
+    if (!ok) echecs++;
+  }
+  console.log('  ' + '-'.repeat(66));
+  console.log('');
+}
+
 // L'ACCUEIL N'ANNONCE PLUS AUCUN VERDICT AVANT MESURE.
 //
 // L'exemple a ete retire le 24/08/2026, arbitrage Alex : la zone de depot dit
