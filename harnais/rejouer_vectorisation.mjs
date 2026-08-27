@@ -354,15 +354,33 @@ for (const cas of verite.cas) {
   // ecrit, pas sur la fonction qui l'ecrit : un script n'est jamais son propre
   // juge.
   const enteteEps = fs.readFileSync(base + '.eps', 'utf-8').slice(0, 400);
-  const bb = enteteEps.match(/%%BoundingBox: 0 0 (\d+) (\d+)/);
+  // LA BOITE HAUTE RESOLUTION, ET PAS L'ENTIERE, 27/08/2026.
+  //
+  // Un EPS porte les deux. %%BoundingBox est ARRONDIE AU POINT SUPERIEUR, parce
+  // que la specification l'exige entiere ; %%HiResBoundingBox porte la vraie
+  // valeur. Sur un fichier de cent millimetres, 284 contre 283,465, soit deux
+  // dixiemes de pour cent.
+  //
+  // Ces deux dixiemes ont coute trois cas. Ghostscript cadre sur la boite HAUTE
+  // RESOLUTION ; calculer la resolution sur l'entiere decalait donc l'image de
+  // deux pixels au bord oppose, sur mille deux cents. Invisible sur un aplat,
+  // fatal sur un trait de quatre pixels de large : trait_01px tombait a 66,9
+  // pour cent de recouvrement, trait_03px a 86,4.
+  //
+  // C'est la meme famille que les erreurs d'unite du referentiel : deux
+  // grandeurs qui se ressemblent ne sont pas la meme.
+  const bbHaute = enteteEps.match(/%%HiResBoundingBox: 0 0 ([\d.]+) ([\d.]+)/);
+  const bb = bbHaute || enteteEps.match(/%%BoundingBox: 0 0 ([\d.]+) ([\d.]+)/);
   if (!bb) {
-    problemes.push('l\'EPS livre ne porte pas de BoundingBox lisible');
+    problemes.push('l\'EPS livre ne porte aucune boite englobante lisible');
   } else {
     const mm = (pt) => (Number(pt) * 25.4) / 72;
     const grand = Math.max(mm(bb[1]), mm(bb[2]));
-    // Un point d'arrondi de chaque cote : la BoundingBox est entiere en points,
-    // et un point vaut 0,353 mm.
-    if (Math.abs(grand - 100) > 0.5) {
+    // La tolerance se resserre depuis qu'on lit la boite HAUTE RESOLUTION :
+    // cent millimetres y tombent juste, a l'arrondi d'ecriture pres. Elle
+    // valait un demi millimetre pour absorber l'arrondi au point superieur de
+    // la boite entiere, et cette marge cachait l'ecart qui a coute trois cas.
+    if (Math.abs(grand - 100) > 0.05) {
       problemes.push(
         `le fichier livre declare ${mm(bb[1]).toFixed(1)} x ${mm(bb[2]).toFixed(1)} mm, `
         + `soit ${grand.toFixed(1)} mm sur sa plus grande dimension au lieu de 100`
