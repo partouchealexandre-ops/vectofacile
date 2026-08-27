@@ -195,6 +195,92 @@ console.log('  ' + '-'.repeat(72));
 console.log('  cas                     formes  couleurs  segments   recouvrement  eps=pdf');
 
 let echecs = 0;
+// LES DEUX TEMOINS DU TRAIT COURANT, 26/08/2026.
+//
+// La decision de vectorisation se prenait sur le MINIMUM des cretes. Sur huit
+// logos clients reels, six declenchaient l'avertissement et trois recevaient le
+// plus dur des deux, dont un logo dont la mediane de trait est a 11 pixels. Le
+// minimum y valait 1 px et representait 0,26 pour cent des points : un lisere
+// de compression decidait pour tout le fichier.
+//
+// Les deux temoins ci-dessous encadrent le nouveau comportement, et il faut LES
+// DEUX : sans le second, on aurait simplement desactive l'avertissement.
+{
+  const dessiner = (peindre) => {
+    const L = 600, H = 600;
+    const d = new Uint8ClampedArray(L * H * 4).fill(255);
+    const poser = (x, y) => {
+      const p = (y * L + x) * 4;
+      d[p] = 20; d[p + 1] = 20; d[p + 2] = 20; d[p + 3] = 255;
+    };
+    peindre(poser);
+    return { largeur: L, hauteur: H, donnees: d, reduction: 1, largeurOrigine: L, hauteurOrigine: H };
+  };
+  const juger = (image) => {
+    const m = mesurer(image);
+    const prep = preparerVectorisation(image, m);
+    return {
+      min: m.m5TraitLePlusFin?.encadrementPx?.basse ?? null,
+      courant: m.m5TraitLePlusFin?.courantPx ?? null,
+      alerte: (prep.avertissements ?? [])[0]?.gravite ?? 'aucune',
+      mode: prep.options?.mode ?? null,
+    };
+  };
+
+  // UN DESSIN FRANC QUI PORTE UN ACCIDENT. Six barres de 40 px, et un lisere
+  // de 1 px sur trente. C'est la situation du logo de la Fondation de Nice.
+  const accident = juger(dessiner((poser) => {
+    for (const x0 of [40, 130, 220, 310, 400, 490]) {
+      for (let y = 40; y < 540; y++) for (let x = x0; x < x0 + 40; x++) poser(x, y);
+    }
+    for (let x = 60; x < 90; x++) poser(x, 570);
+  }));
+  // UN DESSIN REELLEMENT FILIFORME. Vingt traits de 1 px, et rien d'autre.
+  const filiforme = juger(dessiner((poser) => {
+    for (let k = 0; k < 20; k++) for (let y = 40; y < 540; y++) poser(40 + k * 28, y);
+  }));
+
+  console.log('');
+  console.log('  LE TRAIT COURANT, et non plus le minimum');
+  console.log('  ' + '-'.repeat(72));
+  const dire = (ok, libelle, detail) => {
+    console.log(`  ${ok ? 'ok   ' : 'ECHEC'} ${libelle}${detail ? `  [${detail}]` : ''}`);
+    if (!ok) echecs++;
+  };
+  // LE CHAMP DOIT EXISTER. La sortie de mesurer recopie champ par champ, et un
+  // champ oublie disparait en silence : c'est arrive a la premiere ecriture,
+  // la mesure existait et la decision ne la voyait jamais.
+  dire(Number.isFinite(accident.courant) && Number.isFinite(filiforme.courant),
+       'la mesure du trait courant arrive jusqu\'a la decision',
+       `${accident.courant} et ${filiforme.courant}`);
+  dire(accident.courant >= accident.min,
+       'le trait courant n\'est jamais sous le minimum, par construction',
+       `courant ${accident.courant}, min ${accident.min}`);
+  dire(accident.min <= 1 && accident.alerte === 'aucune',
+       'un dessin franc portant un accident de 1 px n\'est plus condamne',
+       `min ${accident.min}, courant ${accident.courant}, alerte ${accident.alerte}`);
+  dire(accident.mode === 'spline',
+       'et il repasse en courbes lissees, au lieu de contours droits');
+  dire(filiforme.alerte === 'grave',
+       '(temoin) un dessin vraiment filiforme reste averti, sinon on aurait '
+       + 'simplement eteint l\'avertissement',
+       `courant ${filiforme.courant}, alerte ${filiforme.alerte}`);
+  // LE TON. On enonce un fait sur notre outil, pas un verdict sur le logo, et
+  // on donne les deux sorties du metier au lieu d'un seul ordre.
+  const image = dessiner((poser) => {
+    for (let k = 0; k < 20; k++) for (let y = 40; y < 540; y++) poser(40 + k * 28, y);
+  });
+  const texte = (preparerVectorisation(image, mesurer(image)).avertissements ?? [])
+    .map((a) => `${a.titre} ${a.texte} ${a.remede}`).join(' ');
+  dire(/redessin/.test(texte) && /graphiste/.test(texte),
+       'le remede nomme le redessin, la sortie que les ateliers utilisent');
+  dire(/pas un défaut de votre logo/.test(texte),
+       'et le texte dit que ce n\'est pas un defaut du logo du client');
+  dire(!/décevant/.test(texte),
+       '(temoin) il ne juge plus le fichier du client par un adjectif');
+  console.log('  ' + '-'.repeat(72));
+}
+
 // LE TEMOIN DE LA FRANGE, 26/08/2026.
 //
 // Un bloc gris fonce sur fond blanc, avec un bord adouci comme le fait tout

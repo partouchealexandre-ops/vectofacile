@@ -93,8 +93,29 @@ export function optionsDepuisMesures(mesures, reglages = {}) {
   // Sous 3 px de trait, on renonce donc aux courbes. Le fichier est un peu plus
   // anguleux, il est JUSTE, et le diagnostic dira par ailleurs que le fichier
   // d'origine est trop petit pour ce qu'il contient.
+  // LA DECISION SE PREND SUR LE TRAIT COURANT, PLUS SUR LE MINIMUM, 26/08/2026.
+  //
+  // Mesure sur huit logos clients reels : six sur huit declenchaient cet
+  // avertissement, trois recevaient le plus dur des deux. Sur le logo de la
+  // Fondation de Nice, 2 008 px de large, le minimum vaut 1 px et il ne
+  // represente que 0,26 pour cent des points de crete ; le dessin, lui, a une
+  // mediane a 11 px et un cinquieme centile a 5. Un lisere de compression JPEG
+  // decidait pour tout le fichier, et le remede conseillait alors de chercher
+  // une image quatre fois plus large, soit 8 000 pixels. Un conseil
+  // inapplicable est le signe d'un diagnostic qui ne s'applique pas.
+  //
+  // LE MINIMUM RESTE MESURE ET RESTE PRUDENT : il servira au verdict de
+  // marquage, ou c'est bien le trait le plus fin qui cassera en premier sous
+  // une presse. Mais la question du VECTORISEUR n'est pas « qu'est ce qui
+  // cassera », c'est « est ce que je sais lire ce dessin », et celle la se pose
+  // sur ce qui court partout.
+  //
+  // Temoin garde par la mesure : Symbol large, dont 26 pour cent des cretes
+  // sont a 1 px, reste attrape. L'avertissement ne disparait pas, il cesse de
+  // se declencher a tort.
   const traitBasse = mesures.m5TraitLePlusFin?.encadrementPx?.basse ?? null;
-  const traitLimite = traitBasse !== null && traitBasse <= 2;
+  const traitCourant = mesures.m5TraitLePlusFin?.courantPx ?? traitBasse;
+  const traitLimite = traitCourant !== null && traitCourant <= 2;
   const avertissements = [];
   if (traitLimite) {
     // L'avertissement DIT CE QU'IL FAUT FAIRE, et il le chiffre.
@@ -111,41 +132,49 @@ export function optionsDepuisMesures(mesures, reglages = {}) {
     // facteur annonce est de l'arithmetique, pas un seuil : pour obtenir un
     // trait de 4 pixels a partir d'un trait de 1, il faut une image quatre
     // fois plus large.
-    const facteur = Math.max(2, Math.ceil(4 / Math.max(traitBasse, 1)));
+    const facteur = Math.max(2, Math.ceil(4 / Math.max(traitCourant, 1)));
     const dimensions = mesures.m1Dimensions
       ? `${mesures.m1Dimensions.largeurPx} par ${mesures.m1Dimensions.hauteurPx} pixels`
       : 'de petite taille';
-    // LES ACCENTS, corriges le 26/08/2026. Ce bloc avait ete ecrit dans le
-    // style des COMMENTAIRES du projet, qui sont sans accent par convention.
-    // Ce sont des phrases VUES par le visiteur : « sera decevant », « le trace
-    // ne peut pas restituer le detail », « quand meme », « aucun reglage ». Le
-    // seul endroit du site ou l'on annonce une mauvaise nouvelle etait aussi le
-    // seul ecrit en style telegraphique.
     avertissements.push({
-      gravite: traitBasse <= 1 ? 'grave' : 'notable',
+      gravite: traitCourant <= 1 ? 'grave' : 'notable',
       // LE TITRE DIT DE QUOI ON PARLE, corrige le 25/08/2026. « Votre image
       // est trop petite pour son propre dessin » etait juste et obscur : le
       // visiteur ne savait pas si on parlait de son marquage ou de notre
       // travail. On parle de NOTRE travail, et le titre le dit.
-      titre: traitBasse <= 1
-        ? "Le fichier vectoriel que nous produirons sera décevant"
-        : "Le fichier vectoriel sera juste à la limite",
-      texte: `Votre image mesure ${dimensions}, et son trait le plus fin y fait `
-        + `${traitBasse} pixel${traitBasse > 1 ? 's' : ''}. À cette taille, le tracé ne `
-        + `peut pas restituer le détail : les petits textes se remplissent et les `
-        + `courbes deviennent anguleuses. Nous vectorisons quand même, en contours `
-        + `droits et sans lissage pour ne rien inventer. Cela ne dit rien de votre `
-        + `logo lui-même, ni des techniques qui l'impriment directement : c'est le `
-        + `FICHIER VECTORIEL, et lui seul, qui sera décevant.`,
-      remede: `Cherchez une version au moins ${facteur} fois plus large de votre logo : `
-        + `le PDF d'une plaquette, l'export d'origine, ou le fichier de votre graphiste. `
-        + `Aucun réglage ne remplace des pixels absents.`,
+      // LE TON, arbitrage Alex du 26/08/2026 : « il ne faut pas critiquer un
+      // fichier client juste pour le critiquer ». L'ancienne redaction ouvrait
+      // par un jugement, « sera decevant », et refermait sur un ordre, « cherchez
+      // une version plus large », sans dire ce qu'on fait quand cette version
+      // n'existe pas. Or elle n'existe presque jamais : c'est bien pour cela que
+      // la personne est la.
+      //
+      // On enonce donc un FAIT sur notre outil, pas un verdict sur son logo, et
+      // on donne les DEUX sorties reelles du metier. La seconde, le redessin,
+      // est celle que les ateliers utilisent, et la taire etait la vraie
+      // omission.
+      titre: traitCourant <= 1
+        ? 'Une vectorisation automatique ne rendra pas ce logo'
+        : 'Le fichier vectoriel sera juste à la limite',
+      texte: `Le trait courant de votre dessin fait ${traitCourant} pixel`
+        + `${traitCourant > 1 ? 's' : ''} sur une image de ${dimensions}. À cette finesse, `
+        + `un tracé automatique devine plus qu'il ne lit : il ne sait pas suivre un trait `
+        + `qu'il ne distingue pas du fond, ni refermer une courbe qu'il ne voit pas. Nous `
+        + `vectorisons quand même, en contours droits et sans lissage, pour ne rien inventer. `
+        + `Ce n'est pas un défaut de votre logo, et cela ne dit rien des techniques qui `
+        + `l'impriment directement : c'est le fichier vectoriel, et lui seul, qui restera `
+        + `en dessous de votre dessin.`,
+      remede: `Deux chemins, et le second est celui que les ateliers utilisent. Une version `
+        + `plus grande de votre logo, au moins ${facteur} fois plus large : le PDF d'une `
+        + `plaquette, l'export d'origine, le fichier de votre graphiste. Ou un redessin, `
+        + `qui est un travail de graphiste sur un logiciel vectoriel, et qui vous resservira `
+        + `sur toutes vos commandes. Aucun réglage automatique ne remplace des pixels absents.`,
     });
   }
 
   const reglagesTrait = traitLimite
     ? { mode: 'polygon' }
-    : { mode: 'spline', simplify: Math.min(1.2, Math.max(0.3, traitBasse === null ? 1.2 : traitBasse / 4)) };
+    : { mode: 'spline', simplify: Math.min(1.2, Math.max(0.3, traitCourant === null ? 1.2 : traitCourant / 4)) };
 
   return {
     ...reglagesTrait,

@@ -46,6 +46,12 @@ const ANGLE_OPPOSITION = 120;
  */
 const LONGUEUR_MINIMALE_CRETE = 3;
 
+/**
+ * Le centile qui definit le TRAIT COURANT du dessin. Voir m5TraitLePlusFin.
+ * Parametre d'instrument, jamais un seuil de marquage.
+ */
+const CENTILE_TRAIT_COURANT = 0.05;
+
 /** Regroupe des points de crete en composantes connexes de cretes. */
 function grouperCretes(indices, largeur, hauteur) {
   const dans = new Set(indices);
@@ -259,16 +265,44 @@ export function m5TraitLePlusFin(masque, largeur, hauteur) {
   // Un trait, c'est une crete qui COURT. Voir LONGUEUR_MINIMALE_CRETE.
   let min = null;
   let retenues = 0;
+  const epaisseurs = [];
   for (const groupe of grouperCretes(opposees, largeur, hauteur)) {
     if (groupe.length < LONGUEUR_MINIMALE_CRETE) continue;
     retenues += groupe.length;
     for (const i of groupe) {
+      epaisseurs.push(distance[i]);
       if (min === null || distance[i] < min) min = distance[i];
     }
   }
 
+  // LE TRAIT COURANT, ajoute le 26/08/2026, ET IL NE REMPLACE PAS LE MINIMUM.
+  //
+  // Le minimum reste ce qu'il est, la valeur prudente, celle qui servira au
+  // verdict de marquage : c'est le trait le plus fin du dessin qui cassera en
+  // premier sous une presse, et l'annoncer plus fin que la realite est un
+  // risque plutot qu'une fausse promesse.
+  //
+  // Mais un MINIMUM ne decrit pas un dessin. Mesure du 26/08 sur huit logos
+  // clients : sur le logo de la Fondation de Nice, le minimum vaut 1 px et il
+  // ne represente que 0,26 pour cent des points de crete, quand la mediane du
+  // dessin est a 11 px. Un liseré de compression JPEG suffit a le poser. Le
+  // vectoriseur, lui, ne se demande pas ce qui cassera a la presse : il se
+  // demande s'il saura LIRE le dessin, et cette question la se pose sur ce qui
+  // court partout, pas sur l'accident le plus fin.
+  //
+  // Cinquieme centile : assez bas pour attraper un dessin reellement filiforme,
+  // Symbol large a 26 pour cent de ses cretes a 1 px et reste attrape, assez
+  // haut pour ignorer un liseré. C'est un PARAMETRE D'INSTRUMENT, pas un seuil
+  // de marquage : il regle ce que notre traceur sait faire, il ne dit rien de
+  // ce qu'une machine accepte.
+  epaisseurs.sort((a, b) => a - b);
+  const courant = epaisseurs.length
+    ? epaisseurs[Math.min(epaisseurs.length - 1, Math.floor(CENTILE_TRAIT_COURANT * epaisseurs.length))]
+    : null;
+
   return {
     encadrementPx: encadrementDepuisDistance(min),
+    courantPx: courant === null ? null : 2 * courant - 1,
     cretesTotal: cretes.length,
     cretesRetenues: retenues,
     distanceEncre: distance,
@@ -799,7 +833,7 @@ export function mesurerParPlans(image, masque, palette, lab, largeur, hauteur, b
       contreFormes: m6.nombreContreFormes,
     });
     if (basseOuInfini(m5.encadrementPx) < basseOuInfini(trait?.encadrementPx)) {
-      trait = { encadrementPx: m5.encadrementPx, rvb: plan.rvb };
+      trait = { encadrementPx: m5.encadrementPx, courantPx: m5.courantPx, rvb: plan.rvb };
     }
     // LA RESOLUTION DE L'INSTRUMENT SUR LES PLANS EST DE TROIS PIXELS, dans
     // les deux sens. Sous trois pixels, un couloir entre deux zones d'un plan
@@ -887,6 +921,10 @@ export function mesurer(image, options = {}) {
     // borde par le fond. On retient le plus fin des deux.
     if (basseOuInfini(plans.trait?.encadrementPx) < basseOuInfini(m5.encadrementPx)) {
       m5.encadrementPx = plans.trait.encadrementPx;
+      // Le trait courant suit le meme choix : garder celui de l'union quand on
+      // a retenu le minimum des plans donnerait deux mesures qui ne parlent
+      // plus du meme masque.
+      m5.courantPx = plans.trait.courantPx ?? m5.courantPx;
       m5.couleurPorteuse = plans.trait.rvb;
     }
     // L'ECART ET LES CONTRE-FORMES : les plans SEULS. Sur un logo de
@@ -960,6 +998,11 @@ export function mesurer(image, options = {}) {
     m5TraitLePlusFin: {
       encadrementPx: m5.encadrementPx,
       encadrementMm: enMm(m5.encadrementPx),
+      // LE TRAIT COURANT NE DOIT PAS TOMBER ICI. Cette sortie recopie champ par
+      // champ, et un champ oublie disparait en silence : c'est exactement ce
+      // qui s'est passe la premiere fois, la mesure existait et la decision ne
+      // la voyait jamais.
+      courantPx: m5.courantPx ?? null,
       couleurPorteuse: m5.couleurPorteuse ?? null,
     },
     m6ContreFormes: {
