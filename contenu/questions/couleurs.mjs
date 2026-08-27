@@ -75,7 +75,8 @@ cette <b>palette</b> : la liste courte, celle qui a un sens pour un marqueur.</l
 </ol>
 <p>Vous obtenez donc les deux chiffres : les teintes brutes, qui disent l'état du fichier,
 et la palette, qui dit le dessin. L'écart entre les deux est précisément la mesure de la
-dégradation subie par votre logo.</p>`,
+dégradation subie par votre logo.</p>
+<p class="agir"><a class="cta-secondaire" href="/">Compter les couleurs de mon logo</a></p>`,
       },
       {
         h2: 'Le nombre de couleurs admis dépend de la technique',
@@ -113,7 +114,7 @@ votre identité visuelle.</li>
       },
       {
         q: 'Comment compter les couleurs de mon logo gratuitement ?',
-        r: "Déposez-le sur Bon à Marquer : la mesure se fait dans votre navigateur, sans compte "
+        r: "Déposez-le sur la page d'accueil de Bon à Marquer : la mesure se fait dans votre navigateur, sans compte "
           + "et sans envoi. Vous obtenez les teintes brutes présentes dans le fichier et la "
           + "palette réelle du dessin, c'est-à-dire les couleurs qu'il faudra séparer au marquage.",
       },

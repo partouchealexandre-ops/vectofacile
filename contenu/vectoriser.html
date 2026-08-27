@@ -24,7 +24,7 @@
 <meta name="twitter:description" content="Déposez une image : elle est retracée en courbes dans votre navigateur et vous repartez avec un .eps pour votre marqueur et un .pdf. Sans compte, sans envoi.">
 <meta name="twitter:image" content="{{DOMAINE}}/partage.png">
 <link rel="stylesheet" href="/vecto.css">
-<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebApplication","name":"Bon à Marquer, vectorisation","applicationCategory":"DesignApplication","operatingSystem":"Navigateur web","url":"{{DOMAINE}}/vectoriser","offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"},"featureList":"Vectorisation d'un logo en .eps, .pdf et .svg, sans envoi de fichier"},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Bon à Marquer","item":"{{DOMAINE}}/"},{"@type":"ListItem","position":2,"name":"Vectoriser mon logo","item":"{{DOMAINE}}/vectoriser"}]}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebApplication","name":"Bon à Marquer, vectorisation","applicationCategory":"DesignApplication","operatingSystem":"Navigateur web","url":"{{DOMAINE}}/vectoriser","offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"},"featureList":"Vectorisation d'un logo en .eps, .pdf et .svg, sans envoi de fichier"},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Bon à Marquer","item":"{{DOMAINE}}/"},{"@type":"ListItem","position":2,"name":"Vectoriser mon logo","item":"{{DOMAINE}}/vectoriser"}]},{"@type":"FAQPage","mainEntity":[{"@type":"Question","name":"La vectorisation est-elle vraiment gratuite ?","acceptedAnswer":{"@type":"Answer","text":"Oui, sans compte, sans adresse e-mail et sans limite de nombre de fichiers. Le calcul se fait sur votre machine, ce qui ne coûte pratiquement rien à faire tourner."}},{"@type":"Question","name":"Quels formats de fichier puis-je déposer ?","acceptedAnswer":{"@type":"Answer","text":"PNG, JPEG, GIF et WEBP : ce sont des images, elles se vectorisent. Un PDF ou un fichier Illustrator est déjà vectoriel : le retracer dégraderait son dessin, la page vous le dit et vous renvoie vers l'évaluation, qui le mesure sans le retracer."}},{"@type":"Question","name":"Mon logo est-il envoyé sur un serveur ?","acceptedAnswer":{"@type":"Answer","text":"Non. Coupez votre connexion internet après le chargement de la page puis déposez un logo : tout fonctionne encore, ce qui prouve que rien ne part."}},{"@type":"Question","name":"Que faire si le fichier vectoriel obtenu est décevant ?","acceptedAnswer":{"@type":"Answer","text":"C'est presque toujours que l'image de départ est trop petite. Cherchez la plus grande version disponible, un PDF de plaquette ou un export d'origine, et recommencez."}},{"@type":"Question","name":"J'ai déjà un fichier vectoriel chez mon graphiste, à quoi sert cet outil ?","acceptedAnswer":{"@type":"Answer","text":"À rien, et c'est la bonne nouvelle : si ce fichier existe, réclamez-le, il sera toujours meilleur que le nôtre. Une vectorisation automatique reconstruit un dessin à partir d'une image, elle ne retrouve pas l'original. Cet outil sert à ceux qui n'ont plus le fichier source, ou qui n'arrivent pas à savoir s'ils en ont un."}}]}]}</script>
 </head>
 <!-- LE MODE. C'est lui que src/app.js lit pour ne restituer QUE la
      vectorisation : pas de fiche, pas de couleurs, pas de verdict, pas de
@@ -102,19 +102,34 @@
     dit et vous renvoie vers l'évaluation.</p>
 
     <h2>Questions fréquentes</h2>
-    <h3>C'est vraiment gratuit ?</h3>
+    <!-- LES QUESTIONS DE VECTORISATION VIVENT ICI DEPUIS LE 27/08/2026 : elles
+         etaient sur l'accueil, ou elles servaient la requete de CETTE page et
+         desservaient celle du verdict. Le JSON-LD en tete de fichier porte les
+         memes, et le harnais compare les deux listes. -->
+    <h3>La vectorisation est-elle vraiment gratuite ?</h3>
     <p>Oui, sans compte, sans adresse e-mail et sans limite de nombre de fichiers.
     Le calcul se fait sur votre machine, ce qui ne nous coûte pratiquement rien à
     faire tourner.</p>
+    <h3>Quels formats de fichier puis-je déposer ?</h3>
+    <p>PNG, JPEG, GIF et WEBP : ce sont des images, elles se vectorisent. Un PDF ou
+    un fichier Illustrator est déjà vectoriel : le retracer dégraderait son dessin,
+    la page vous le dit et vous renvoie vers <a href="/">l'évaluation</a>, qui le
+    mesure sans le retracer.</p>
     <h3>Mon logo est-il envoyé quelque part ?</h3>
     <p>Non. Coupez votre connexion internet après le chargement de la page et
     déposez un logo : tout fonctionne encore. <a href="/confidentialite">Le test
     complet</a>.</p>
-    <h3>Le résultat est décevant, pourquoi ?</h3>
+    <h3>Que faire si le résultat est décevant ?</h3>
     <p>C'est presque toujours l'image de départ qui est trop petite. Cherchez la
     plus grande version dont vous disposez et recommencez.
     <a href="/questions/comment-vectoriser-un-jpeg">Pourquoi la taille de départ
     décide de tout</a>.</p>
+    <h3>J'ai déjà un fichier vectoriel chez mon graphiste, à quoi sert cet outil ?</h3>
+    <p>À rien, et c'est la bonne nouvelle : si ce fichier existe, réclamez-le, il
+    sera toujours meilleur que le nôtre. Une vectorisation automatique reconstruit
+    un dessin à partir d'une image, elle ne retrouve pas l'original. Cet outil sert
+    à ceux qui n'ont plus le fichier source, ou qui n'arrivent pas à savoir s'ils
+    en ont un.</p>
   </section>
 
   <footer>

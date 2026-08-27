@@ -28,7 +28,7 @@
 <!-- Balisage structure de l'accueil. Un seul bloc, comme sur les pages de
      contenu : deux blocs seraient deux endroits a tenir a jour, et les robots
      ne lisent de toute facon que ce qu'ils trouvent en premier. -->
-<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","name":"Bon à Marquer","url":"{{DOMAINE}}/","inLanguage":"fr-FR","publisher":{"@id":"{{DOMAINE}}/#editeur"}},{"@type":"Organization","@id":"{{DOMAINE}}/#editeur","name":"Bytouch","url":"{{DOMAINE}}/","address":{"@type":"PostalAddress","streetAddress":"4 rue Lemercier","postalCode":"75017","addressLocality":"Paris","addressCountry":"FR"}},{"@type":"WebApplication","name":"Bon à Marquer","applicationCategory":"DesignApplication","operatingSystem":"Navigateur web","url":"{{DOMAINE}}/","offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"},"featureList":"Vectorisation et diagnostic de marquage d'un logo, sans envoi de fichier"},{"@type":"FAQPage","mainEntity":[{"@type":"Question","name":"La vectorisation est-elle vraiment gratuite ?","acceptedAnswer":{"@type":"Answer","text":"Oui, sans compte, sans adresse e-mail et sans limite de nombre de fichiers. Le calcul se fait sur votre machine, ce qui ne coûte pratiquement rien à faire tourner."}},{"@type":"Question","name":"Quels formats de fichier puis-je déposer ?","acceptedAnswer":{"@type":"Answer","text":"PNG, JPEG, GIF, WEBP, PDF et AI. Les quatre premiers sont des images : elles sont vectorisées, puis mesurées. Un PDF ou un fichier Illustrator est mesuré directement, sans être retracé, parce qu'il est déjà vectoriel."}},{"@type":"Question","name":"Mon logo est-il envoyé sur un serveur ?","acceptedAnswer":{"@type":"Answer","text":"Non. Coupez votre connexion internet après le chargement de la page puis déposez un logo : tout fonctionne encore, ce qui prouve que rien ne part."}},{"@type":"Question","name":"Que faire si le fichier vectoriel obtenu est décevant ?","acceptedAnswer":{"@type":"Answer","text":"C'est presque toujours que l'image de départ est trop petite. Cherchez la plus grande version disponible, un PDF de plaquette ou un export d'origine, et recommencez."}}]}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","name":"Bon à Marquer","url":"{{DOMAINE}}/","inLanguage":"fr-FR","publisher":{"@id":"{{DOMAINE}}/#editeur"}},{"@type":"Organization","@id":"{{DOMAINE}}/#editeur","name":"Bytouch","url":"{{DOMAINE}}/","address":{"@type":"PostalAddress","streetAddress":"4 rue Lemercier","postalCode":"75017","addressLocality":"Paris","addressCountry":"FR"}},{"@type":"WebApplication","name":"Bon à Marquer","applicationCategory":"DesignApplication","operatingSystem":"Navigateur web","url":"{{DOMAINE}}/","offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"},"featureList":"Vectorisation et diagnostic de marquage d'un logo, sans envoi de fichier"},{"@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Que veut dire un feu vert, orange ou rouge ?","acceptedAnswer":{"@type":"Answer","text":"Vert : votre fichier pourrait partir tel quel pour cette technique. Orange : quelque chose bloque et se surmonte. Le plus souvent c'est le format du fichier, et nous le convertissons, ici ou sur la page de vectorisation ; parfois l'image est trop peu définie, et la sortie est d'en chercher une version plus grande ; parfois le nombre de couleurs pèsera dans le devis selon l'emplacement choisi. Rouge : le dessin lui-même pose problème pour cette technique, et le diagnostic écrit le brief du graphiste à votre place."}},{"@type":"Question","name":"Pourquoi mon logo passe-t-il sur une technique et pas sur une autre ?","acceptedAnswer":{"@type":"Answer","text":"Parce qu'il n'y a pas un verdict, il y en a un par technique. Une gravure ne rend qu'une seule teinte, une broderie reconstruit le dessin en points de couture, une sérigraphie demande un écran par couleur. Un logo n'est pas marquable dans l'absolu : il est marquable en quelque chose. C'est pour cela que la page affiche une ligne par technique plutôt qu'une note globale, qui ne voudrait rien dire."}},{"@type":"Question","name":"Le résultat dépend-il de l'objet ?","acceptedAnswer":{"@type":"Answer","text":"Oui, et davantage qu'on ne l'imagine. Le même dessin qui tient sur un tote bag devient illisible sur le corps d'un stylo, parce que la surface y est dix fois plus petite. Le nombre de couleurs acceptable dépend lui aussi de l'emplacement, pas seulement de la technique : sur un même objet, deux zones peuvent accepter l'une quatre couleurs et l'autre une seule. Voyez votre logo posé sur les objets, aux dimensions déclarées par les fabricants."}},{"@type":"Question","name":"Mon logo est rouge partout, qu'est-ce que je fais ?","acceptedAnswer":{"@type":"Answer","text":"Commencez par réclamer le fichier d'origine à qui a créé votre logo : il existe souvent, et il règle une partie des cas à lui seul. Si le dessin lui-même est en cause, chaque carte rouge écrit le brief à transmettre à un graphiste, et il se copie en un clic. Un logo rouge n'est pas un mauvais logo : c'est un logo conçu pour l'écran, à qui on demande de devenir un objet."}},{"@type":"Question","name":"Ce verdict engage-t-il l'imprimeur ?","acceptedAnswer":{"@type":"Answer","text":"Non, et c'est important. Nous lisons un fichier, pas une machine. Les contraintes affichées viennent des dimensions et des plafonds déclarés par les fabricants pour leurs objets ; l'atelier qui réalisera votre marquage a ses propres presses, ses encres et ses usages. Ce diagnostic vous évite de découvrir un problème après avoir payé, il ne remplace pas le bon à tirer de votre fournisseur."}},{"@type":"Question","name":"Que veut dire « nous ne savons pas encore » ?","acceptedAnswer":{"@type":"Answer","text":"Que la contrainte n'est pas établie. Sur certaines techniques, les sources professionnelles se contredisent, parfois largement, et nous refusons de publier une moyenne qui aurait l'air d'une donnée. Un inconnu déclaré vous est plus utile qu'un chiffre plausible : le premier vous dit d'aller demander, le second vous laisse croire que la question est réglée."}}]}]}</script>
 </head>
 <body>
 <main>
@@ -193,32 +193,65 @@
          disparait avec ce qu'elle promettait. Le harnais garde une garde : la
          page d'accueil ne doit plus annoncer aucun verdict avant mesure. -->
 
-    <h2>Ce qu'il ne fait pas, et c'est délibéré</h2>
-    <ul>
-      <li>Il ne remplace pas le fichier source de votre graphiste. S'il existe, réclamez-le.</li>
-      <li>Il ne garantit pas un rendu chez un fabricant donné. Il lit un fichier, pas une machine.</li>
-      <li>Il n'invente pas de seuil. Tant qu'une contrainte de marquage n'est pas établie,
-      il affiche <b>nous ne savons pas encore</b> plutôt qu'un chiffre plausible.</li>
-    </ul>
+    <!-- LE BLOC « CE QU'IL NE FAIT PAS » A DISPARU LE 27/08/2026, brief
+         navigation. Ses trois points SURVIVENT en reponses : la garantie
+         fabricant et les seuils dans la FAQ ci-dessous, le fichier source du
+         graphiste dans la FAQ de /vectoriser. Le diagnostic du fil meta etait
+         juste : ce bloc etait notre doctrine exposee telle quelle, ecrite pour
+         nous et pas pour le visiteur, et posee AVANT l'usage, ou la modestie
+         dissuade, au lieu d'APRES le verdict, ou elle rend credible. Rien
+         n'est edulcore : une affirmation non sollicitee est devenue une
+         reponse attendue. -->
 
     <h2>Questions fréquentes</h2>
-    <h3>La vectorisation est-elle vraiment gratuite ?</h3>
-    <p>Oui, sans compte, sans adresse e-mail et sans limite de nombre de fichiers. Le
-    calcul se fait sur votre machine, ce qui ne nous coûte pratiquement rien à faire
-    tourner.</p>
-    <h3>Quels formats puis-je déposer ?</h3>
-    <p>PNG, JPEG, GIF, WEBP, PDF et AI. Les quatre premiers sont des images : elles sont
-    vectorisées, puis mesurées. Un PDF ou un fichier Illustrator est mesuré directement,
-    sans être retracé, parce qu'il est déjà vectoriel : l'outil vous le dit au lieu de
-    faire semblant de travailler.</p>
-    <h3>Mon logo est-il envoyé quelque part ?</h3>
-    <p>Non. Coupez votre connexion internet après le chargement de la page et déposez un
-    logo : tout fonctionne encore. <a href="/confidentialite">Le test complet</a>.</p>
-    <h3>Que faire si le résultat est décevant ?</h3>
-    <p>C'est presque toujours l'image de départ qui est trop petite. Cherchez la plus
-    grande version dont vous disposez, un PDF de plaquette ou un export d'origine, et
-    recommencez. <a href="/questions/comment-vectoriser-un-jpeg">Pourquoi la taille de
-    départ décide de tout</a>.</p>
+    <!-- CES QUESTIONS PARLENT DE CETTE PAGE, 27/08/2026. Les quatre
+         precedentes portaient toutes sur la vectorisation : elles servaient la
+         requete de /vectoriser et desservaient celle de l'accueil, dont le
+         titre promet un verdict de marquage. Elles sont parties chez elles.
+         Le JSON-LD en tete de fichier porte LES MEMES questions : les deux
+         listes se tiennent, et le harnais compare l'une a l'autre. -->
+    <h3>Que veut dire un feu vert, orange ou rouge ?</h3>
+    <p>Vert : votre fichier pourrait partir tel quel pour cette technique. Orange :
+    quelque chose bloque et se surmonte. Le plus souvent c'est le format du fichier,
+    et nous le convertissons, ici ou sur <a href="/vectoriser">la page de
+    vectorisation</a> ; parfois l'image est trop peu définie, et la sortie est d'en
+    chercher une version plus grande ; parfois le nombre de couleurs pèsera dans le
+    devis selon l'emplacement choisi. Rouge : le dessin lui-même pose problème pour
+    cette technique, et le diagnostic écrit le brief du graphiste à votre place.</p>
+    <h3>Pourquoi mon logo passe-t-il sur une technique et pas sur une autre ?</h3>
+    <p>Parce qu'il n'y a pas un verdict, il y en a un par technique. Une gravure ne
+    rend qu'une seule teinte, une broderie reconstruit le dessin en points de
+    couture, une sérigraphie demande un écran par couleur. Un logo n'est pas
+    marquable dans l'absolu : il est marquable en quelque chose. C'est pour cela que
+    la page affiche une ligne par technique plutôt qu'une note globale, qui ne
+    voudrait rien dire.</p>
+    <h3>Le résultat dépend-il de l'objet ?</h3>
+    <p>Oui, et davantage qu'on ne l'imagine. Le même dessin qui tient sur un tote bag
+    devient illisible sur le corps d'un stylo, parce que la surface y est dix fois
+    plus petite. Le nombre de couleurs acceptable dépend lui aussi de l'emplacement,
+    pas seulement de la technique : sur un même objet, deux zones peuvent accepter
+    l'une quatre couleurs et l'autre une seule.
+    <a href="/voir-mon-logo">Voyez votre logo posé sur les objets</a>, aux dimensions
+    déclarées par les fabricants.</p>
+    <h3>Mon logo est rouge partout, qu'est-ce que je fais ?</h3>
+    <p>Commencez par réclamer le fichier d'origine à qui a créé votre logo : il
+    existe souvent, et il règle une partie des cas à lui seul. Si le dessin lui-même
+    est en cause, chaque carte rouge écrit le brief à transmettre à un graphiste, et
+    il se copie en un clic. Un logo rouge n'est pas un mauvais logo : c'est un logo
+    conçu pour l'écran, à qui on demande de devenir un objet.</p>
+    <h3>Ce verdict engage-t-il l'imprimeur ?</h3>
+    <p>Non, et c'est important. Nous lisons un fichier, pas une machine. Les
+    contraintes affichées viennent des dimensions et des plafonds déclarés par les
+    fabricants pour leurs objets ; l'atelier qui réalisera votre marquage a ses
+    propres presses, ses encres et ses usages. Ce diagnostic vous évite de découvrir
+    un problème après avoir payé, il ne remplace pas le bon à tirer de votre
+    fournisseur.</p>
+    <h3>Que veut dire « nous ne savons pas encore » ?</h3>
+    <p>Que la contrainte n'est pas établie. Sur certaines techniques, les sources
+    professionnelles se contredisent, parfois largement, et nous refusons de publier
+    une moyenne qui aurait l'air d'une donnée. Un inconnu déclaré vous est plus utile
+    qu'un chiffre plausible : le premier vous dit d'aller demander, le second vous
+    laisse croire que la question est réglée.</p>
   </section>
 
   <footer>

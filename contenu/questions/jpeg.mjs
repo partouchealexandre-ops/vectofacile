@@ -15,13 +15,22 @@ export const QUESTIONS_JPEG = [
     meta: "Vectoriser un JPEG, c'est redessiner ses contours. Comment le faire "
       + "gratuitement dans votre navigateur, et comment juger si le résultat tient.",
     h1: 'Comment vectoriser un JPEG',
-    chapo: "Déposez votre image ici : elle est vectorisée dans votre navigateur, sans compte "
-      + "et sans envoi, et vous récupérez un .eps. La vraie question n'est pas comment, "
-      + "c'est si le résultat tient la route, et cette page vous apprend à le juger.",
+    // « ICI » DESIGNAIT LE VIDE, constat d'Alex verifie sur pieces le 26/08 :
+    // cette page n'a ni zone de depot, ni bouton. Le lecteur cherchait des yeux
+    // la chose qu'on venait de lui montrer du doigt. La phrase nomme desormais
+    // la page, et le bouton juste sous le chapo donne le moyen d'agir : une
+    // phrase qui propose un service porte, a cote d'elle, le moyen de
+    // l'obtenir.
+    chapo: "Déposez votre image sur la page de vectorisation : elle est vectorisée dans votre "
+      + "navigateur, sans compte et sans envoi, et vous récupérez un .eps. La vraie question "
+      + "n'est pas comment, c'est si le résultat tient la route, et cette page vous apprend "
+      + "à le juger.",
     sections: [
       {
         h2: 'Vectoriser, ce que ça veut dire exactement',
         html: `
+<p class="agir"><a class="cta-secondaire" href="/vectoriser">Vectoriser mon image, gratuitement
+et sans envoi</a></p>
 <p>Un JPEG est une grille de points de couleur. Vectoriser, c'est faire parcourir cette
 grille par un programme qui cherche les frontières entre les zones de couleur et les
 remplace par des <b>contours mathématiques</b>. Le fichier obtenu ne contient plus de

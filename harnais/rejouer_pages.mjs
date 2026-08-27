@@ -340,6 +340,77 @@ for (const url of URLS) {
     fautes.push(`le pied de ${url} ne mene plus a la vectorisation : la page devient orpheline`);
   }
 
+  // CHAQUE FAQ REPOND A SA PROPRE PAGE, 27/08/2026. Les quatre questions de
+  // l'accueil parlaient toutes de vectorisation : elles servaient la requete
+  // de /vectoriser et desservaient celle du verdict. Deux gardes :
+  //
+  // 1. LES DEUX LISTES SE TIENNENT. Le JSON-LD et les h3 visibles sont ecrits
+  //    a deux endroits du meme fichier ; celui qui modifie l'un sans l'autre
+  //    fabrique une FAQ que les moteurs lisent et que personne ne voit, ou
+  //    l'inverse. Le harnais compare question par question.
+  // 2. LA FAQ DE L'ACCUEIL PARLE DE L'ACCUEIL. Le mot temoin est « feu » : si
+  //    plus aucune question ne parle du verdict, la migration a ete rejouee a
+  //    l'envers.
+  if (url === '/' || url === '/vectoriser') {
+    const faq = await page.evaluate(() => {
+      const scripts = [...document.querySelectorAll('script[type="application/ld+json"]')];
+      let jsonLd = [];
+      for (const sc of scripts) {
+        try {
+          const g = JSON.parse(sc.textContent)['@graph'] ?? [];
+          for (const bloc of g) {
+            if (bloc['@type'] === 'FAQPage') {
+              jsonLd = bloc.mainEntity.map((q) => q.name);
+            }
+          }
+        } catch (e) { /* un bloc illisible est attrape par le harnais seo */ }
+      }
+      const visibles = [...document.querySelectorAll('h3')].map((h) => h.textContent.trim());
+      return { jsonLd, visibles };
+    });
+    if (faq.jsonLd.length < 5) {
+      fautes.push(`${url} declare ${faq.jsonLd.length} question(s) en JSON-LD, il en faut au moins cinq`);
+    }
+    for (const q of faq.jsonLd) {
+      if (!faq.visibles.includes(q)) {
+        fautes.push(`${url} declare aux moteurs une question invisible a l'ecran : « ${q} »`);
+      }
+    }
+    if (url === '/' && !faq.jsonLd.some((q) => /feu/i.test(q))) {
+      fautes.push("la FAQ de l'accueil ne parle plus des feux : elle a cesse de repondre a sa page");
+    }
+    if (url === '/vectoriser' && !faq.jsonLd.some((q) => /gratuite/i.test(q))) {
+      fautes.push('la FAQ de /vectoriser a perdu sa question sur la gratuite');
+    }
+  }
+
+  // UNE PHRASE QUI PROPOSE UN SERVICE PORTE LE MOYEN DE L'OBTENIR, decision
+  // 3bis du 26/08/2026. « Deposez votre image ici » sur une page sans zone de
+  // depot montrait du doigt un endroit qui n'existe pas. Le motif est garde a
+  // la racine : sur toute page SANS zone de depot, « deposez » ne cotoie plus
+  // jamais « ici ».
+  const deictique = await page.evaluate(() => {
+    if (document.getElementById('depot')) return null;
+    const texte = document.body.innerText;
+    const m = texte.match(/[Dd]éposez[^.!?]{0,80}\bici\b/);
+    return m ? m[0].slice(0, 70) : false;
+  });
+  if (deictique) {
+    fautes.push(`« ici » designe le vide sur ${url} : « ${deictique} »`);
+  }
+
+  // ET LES PAGES QUI PARLENT DE VECTORISATION Y MENENT. La page /vectoriser a
+  // perdu son entree de menu : ces liens du corps sont son oxygene.
+  if (['/questions/comment-vectoriser-un-jpeg',
+       '/questions/mon-imprimeur-demande-un-fichier-vectoriel'].includes(url)) {
+    const mene = await page.evaluate(() =>
+      [...document.querySelectorAll('main a, body a')]
+        .some((a) => a.getAttribute('href') === '/vectoriser'));
+    if (!mene) {
+      fautes.push(`${url} parle de vectorisation et n'y mene pas`);
+    }
+  }
+
   // ET SUR L'ACCUEIL, AUCUN LIEN DE L'ENTETE NE POINTE VERS L'ACCUEIL, le
   // logotype compris : il y est rendu en simple enseigne, pas en lien.
   if (url === '/') {

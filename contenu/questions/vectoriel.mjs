@@ -15,7 +15,8 @@ export const QUESTIONS = [
       + "ça veut dire, où le chercher, comment en obtenir un gratuitement.",
     h1: "Mon imprimeur demande un fichier vectoriel",
     chapo: "Réclamez-le d'abord à qui a créé votre logo : vous y avez droit et c'est gratuit. "
-      + "S'il est introuvable, cet outil en fabrique un depuis votre image, sans compte.",
+      + "S'il est introuvable, la page de vectorisation en fabrique un depuis votre image, "
+      + "sans compte.",
     sections: [
       {
         h2: 'Ce que votre imprimeur demande vraiment',
@@ -61,7 +62,9 @@ automatiquement des contours qui suivent les formes.</p>
 un vectoriel propre. Une vignette de 300 pixels prise sur un site web donne un tracé
 anguleux, où les petits textes se déforment. Notre outil mesure cela et vous le dit
 avant que vous ne téléchargiez quoi que ce soit, plutôt que de vous laisser découvrir le
-problème chez le marqueur.</p>`,
+problème chez le marqueur.</p>
+<p class="agir"><a class="cta-secondaire" href="/vectoriser">Fabriquer mon fichier vectoriel,
+gratuitement et sans envoi</a></p>`,
       },
       {
         h2: 'Quel format lui envoyer, concrètement',
