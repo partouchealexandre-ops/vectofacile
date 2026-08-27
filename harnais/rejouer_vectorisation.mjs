@@ -95,7 +95,22 @@ function rasteriser(fichier, largeur, hauteur, largeurPt) {
   // On lit donc la taille que le FICHIER porte, et on en deduit la resolution
   // qui redonne la taille du cas. Le harnais suit le fichier au lieu de lui
   // dicter une convention.
-  const resolution = (72 * ZOOM * largeur) / (largeurPt || largeur);
+  //
+  // ET ELLE NE SE DEVINE PAS NON PLUS. La premiere ecriture retombait sur
+  // `largeurPt || largeur` quand l'appelant ne disait rien. Ce repli avait
+  // l'air prudent ; il a cache un effondrement complet pendant cinq patchs.
+  // Un appelant sur deux avait ete oublie, le repli rendait exactement
+  // l'ancien comportement, et le harnais annoncait des recouvrements de zero
+  // pour cent sur vingt et un cas sans qu'on sache pourquoi. Un defaut
+  // silencieux vaut moins qu'une erreur bruyante : on refuse.
+  if (!(largeurPt > 0)) {
+    throw new Error(
+      `rasteriser appele sans la taille declaree du fichier, pour ${path.basename(fichier)}. `
+      + "Cette taille se lit dans la BoundingBox du fichier livre : sans elle, on comparerait "
+      + "deux images d'echelles differentes et le recouvrement ne voudrait rien dire."
+    );
+  }
+  const resolution = (72 * ZOOM * largeur) / largeurPt;
   const communs = [
     '-dSAFER', '-dBATCH', '-dNOPAUSE', '-dQUIET',
     '-sDEVICE=ppmraw', `-r${resolution}`, `-g${largeur * ZOOM}x${hauteur * ZOOM}`,
@@ -380,10 +395,14 @@ for (const cas of verite.cas) {
   }
 
   let taux = null, ecart = null;
+  // LA TAILLE DECLAREE SE LIT UNE FOIS, ET LES DEUX RASTERISATIONS LA RECOIVENT.
+  // Elle etait lue dans le premier bloc et perdue dans le second : le second est
+  // celui qui MESURE, et il rasterisait donc a l'ancienne resolution contre des
+  // fichiers qui ne la portent plus.
+  const largeurPt = bb ? Number(bb[1]) : null;
   if (avecGs) {
     let rEps, rPdf;
     try {
-      const largeurPt = bb ? Number(bb[1]) : null;
       rEps = rasteriser(base + '.eps', cas.largeur, cas.hauteur, largeurPt);
       rPdf = rasteriser(base + '.pdf', cas.largeur, cas.hauteur, largeurPt);
     } catch (e) {
@@ -392,8 +411,8 @@ for (const cas of verite.cas) {
     }
   }
   if (avecGs && problemes.length === 0) {
-    const rEps = rasteriser(base + '.eps', cas.largeur, cas.hauteur);
-    const rPdf = rasteriser(base + '.pdf', cas.largeur, cas.hauteur);
+    const rEps = rasteriser(base + '.eps', cas.largeur, cas.hauteur, largeurPt);
+    const rPdf = rasteriser(base + '.pdf', cas.largeur, cas.hauteur, largeurPt);
 
     // Controle 1 : EPS et PDF doivent dessiner la meme chose.
     ecart = ecartPixels(rEps.pixels, rPdf.pixels);
