@@ -114,6 +114,15 @@ export const PIED = [
     ],
   },
   {
+    // LA COLONNE DU JOURNAL EST DERIVEE, comme celles des guides et des
+    // questions : sa place est ici, ses liens viennent des pages publiees.
+    // Le journal n'entre PAS dans l'entete, arbitrage du 26/08 : une rubrique
+    // de plus l'a deja fait passer de 79 a 135 pixels sur vingt-deux pages, et
+    // personne ne decouvre un article par une barre de navigation.
+    titre: 'Journal',
+    liens: [],
+  },
+  {
     titre: 'Bon à Marquer',
     liens: [
       { titre: 'Une initiative Bytouch', url: '/qui-sommes-nous' },

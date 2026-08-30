@@ -35,6 +35,7 @@ import { QUESTIONS_COULEURS } from '../contenu/questions/couleurs.mjs';
 import { QUESTIONS_FORMATS } from '../contenu/questions/formats.mjs';
 import { QUESTIONS_OUVERTURE } from '../contenu/questions/ouverture.mjs';
 import { TECHNIQUES } from '../contenu/guide/techniques.mjs';
+import { ARTICLES } from '../contenu/blog/articles.mjs';
 
 /**
  * LES MINIMUMS SOURCES ENTRENT DANS LES GUIDES, 20/08/2026.
@@ -228,6 +229,7 @@ function colonnesDerivees(pages) {
   const parPrefixe = [
     ['Techniques de marquage', '/guide/'],
     ['Questions fréquentes', '/questions/'],
+    ['Journal', '/blog/'],
   ];
   return parPrefixe.map(([titre, prefixe]) => ({
     titre,
@@ -279,13 +281,27 @@ function balises(page) {
       fil.push({
         '@type': 'ListItem',
         position: i + 2,
-        name: dernier ? page.titre
-          : (chemin === '/guide' ? 'Techniques de marquage' : 'Questions fréquentes'),
+        name: dernier ? page.titre : (RUBRIQUE_LIBELLE[chemin + '/'] ?? chemin),
         item: `${DOMAINE}${dernier ? page.url : chemin + '/'}`,
       });
     });
   }
   const graphe = [{ '@type': 'BreadcrumbList', itemListElement: fil }];
+  // UN ARTICLE SE DATE, ET LA DATE PART DANS LE BALISAGE COMME A L'ECRAN. Un
+  // seul champ, deux sorties : c'est ce qui evite qu'une page affiche une date
+  // et en declare une autre.
+  if (page.date) {
+    graphe.push({
+      '@type': 'BlogPosting',
+      headline: page.titre,
+      description: page.meta,
+      datePublished: page.date,
+      dateModified: page.dateModifiee ?? page.date,
+      mainEntityOfPage: { '@type': 'WebPage', '@id': `${DOMAINE}${page.url}` },
+      author: { '@type': 'Organization', name: 'Bon à Marquer' },
+      publisher: { '@type': 'Organization', name: 'Bon à Marquer' },
+    });
+  }
   if (page.faq && page.faq.length > 0) {
     graphe.push({
       '@type': 'FAQPage',
@@ -300,6 +316,33 @@ function balises(page) {
   return `<script type="application/ld+json">${JSON.stringify(donnees)}</script>`;
 }
 
+/**
+ * LE LIBELLE D'UNE RUBRIQUE SE LIT ICI, ET NULLE PART AILLEURS.
+ *
+ * Il servait a trois endroits, le fil visible, le fil structure et le pied, et
+ * chacun le recopiait. Une rubrique de plus, c'etait trois lignes a retrouver ;
+ * la troisieme oubliee ne se voit que dans le balisage, ou personne ne regarde.
+ *
+ * L'ADRESSE ET LE LIBELLE NE SONT PAS LE MEME MOT, et c'est voulu. `/blog/` est
+ * la convention que tout le monde reconnait dans une adresse, y compris les
+ * moteurs ; « Journal » est le mot qui se lit sur la page, et il promet ce que
+ * le corpus tient vraiment : des textes dates.
+ */
+const RUBRIQUE_LIBELLE = {
+  '/guide/': 'Techniques de marquage',
+  '/questions/': 'Questions fréquentes',
+  '/blog/': 'Journal',
+};
+
+/** La date d'un article, telle qu'elle se lit. */
+const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet',
+              'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+function dateLisible(iso) {
+  const [a, m, j] = String(iso).split('-').map(Number);
+  if (!a || !m || !j) return '';
+  return `${j} ${MOIS[m - 1]} ${a}`;
+}
+
 function faqVisible(page) {
   if (!page.faq || page.faq.length === 0) return '';
   const items = page.faq.map((f) =>
@@ -312,8 +355,7 @@ function filVisible(page, publiees) {
   const morceaux = ['<a href="/">Bon à Marquer</a>'];
   const parent = page.url.replace(/[^/]+$/, '');
   if (parent !== '/' && publiees.has(parent) && parent !== page.url) {
-    const nomRubrique = parent === '/guide/' ? 'Techniques de marquage'
-      : parent === '/questions/' ? 'Questions fréquentes' : parent;
+    const nomRubrique = RUBRIQUE_LIBELLE[parent] ?? parent;
     morceaux.push('<a href="' + parent + '">' + echapper(nomRubrique) + '</a>');
   }
   morceaux.push(echapper(page.titre));
@@ -326,9 +368,11 @@ function voisines(page, questions) {
   // les deux fabriquerait des liens sans rapport, que les moteurs lisent comme
   // du remplissage et que le lecteur ne suit pas.
   const rubrique = page.url.startsWith('/guide/') ? '/guide/'
-    : page.url.startsWith('/questions/') ? '/questions/' : null;
+    : page.url.startsWith('/questions/') ? '/questions/'
+    : page.url.startsWith('/blog/') ? '/blog/' : null;
   if (!rubrique || page.url === rubrique) return '';
-  const bassin = rubrique === '/guide/' ? TECHNIQUES : questions;
+  const bassin = rubrique === '/guide/' ? TECHNIQUES
+    : rubrique === '/blog/' ? ARTICLES : questions;
   const autres = bassin.filter((q) => q.url !== page.url).slice(0, 3);
   if (autres.length === 0) return '';
   const items = autres.map((q) => `<li><a href="${q.url}">${echapper(q.titre)}</a></li>`).join('');
@@ -355,6 +399,7 @@ ${balises(page)}
 ${entete(page.url, publiees)}
 <p class="fil">${filVisible(page, publiees)}</p>
 <h1>${echapper(page.h1)}</h1>
+${page.date ? `<p class="note">Publié le ${dateLisible(page.date)}.</p>` : ''}
 <p class="chapo">${echapper(page.chapo)}</p>
 ${corps}
 ${faqVisible(page)}
@@ -475,6 +520,56 @@ trente secondes suffisent à trancher.</li>
   };
 }
 
+/**
+ * L'INDEX DU JOURNAL, genere depuis les articles publies.
+ *
+ * Meme regle que les deux autres index : une liste tenue a la main se
+ * desynchronise des le deuxieme article ajoute, et personne ne s'en apercoit
+ * avant de lire le sitemap.
+ *
+ * LES ARTICLES SONT RANGES DU PLUS RECENT AU PLUS ANCIEN, ce qui est la seule
+ * chose qu'un lecteur attend d'un journal. A date egale, l'ordre de declaration
+ * fait foi : deux articles ecrits le meme jour n'ont pas de raison de changer
+ * de place a chaque construction.
+ */
+function indexJournal(articles) {
+  const ranges = articles.map((a, i) => ({ a, i }))
+    .sort((x, y) => (x.a.date < y.a.date ? 1 : x.a.date > y.a.date ? -1 : x.i - y.i))
+    .map((x) => x.a);
+  const items = ranges.map((a) =>
+    `<h3><a href="${a.url}">${echapper(a.titreCourt ?? a.h1)}</a></h3>`
+    + `<p class="note">Publié le ${dateLisible(a.date)}.</p>`
+    + `<p>${echapper(a.chapo)}</p>`
+  ).join('');
+  return {
+    url: '/blog/',
+    titre: 'Le journal du marquage sur objet',
+    meta: "Ce qui arrive vraiment quand on fait marquer un logo : un fichier refusé, un "
+      + "objet qui ne pardonne rien, un arbitrage à rendre. Expliqué par le métier.",
+    h1: 'Le journal',
+    chapo: "Les guides expliquent les techniques, les questions fréquentes expliquent les "
+      + "gestes. Ici, on part d'une situation que vous êtes en train de vivre, et on dit "
+      + "quoi faire ensuite.",
+    sections: [
+      { h2: 'Les articles', html: items },
+      {
+        h2: 'Ce que vous ne trouverez pas ici',
+        html: `<ul>
+<li><b>Aucun seuil chiffré présenté comme une règle du métier.</b> Les sources
+professionnelles se contredisent sur la plupart de ces valeurs, et une moyenne calculée
+sur des sources qui divergent est une donnée inventée. Quand nous ne savons pas, nous
+l'écrivons.</li>
+<li><b>Aucun conseil qui vous engage sans vous le dire.</b> Une mesure n'est pas une
+validation, et rien ici ne remplace le bon à tirer de votre fournisseur.</li>
+<li><b>Aucun jugement sur votre logo.</b> Un fichier se mesure, un dessin se discute, et
+les deux appartiennent à celui qui les a payés.</li>
+</ul>`,
+      },
+    ],
+    faq: [],
+  };
+}
+
 const candidates = [
   CONFIDENTIALITE,
   indexTechniques(TECHNIQUES),
@@ -489,6 +584,8 @@ const candidates = [
   }),
   indexQuestions(QUESTIONS_TOUTES),
   ...QUESTIONS_TOUTES,
+  indexJournal(ARTICLES),
+  ...ARTICLES,
   QUI_SOMMES_NOUS,
   MENTIONS,
 ];
