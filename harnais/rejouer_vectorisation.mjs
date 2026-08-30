@@ -658,6 +658,79 @@ let echecs = 0;
          `${reconstruits} coins vifs sur 4`);
   }
 
+  // LE BORD DROIT ENTRE DEUX COINS, 27/08/2026.
+  //
+  // CE QUI SE VOYAIT CHEZ ALEX. La contre-forme du A de Choose Chicago est un
+  // trapeze : quatre bords droits, deux tres inclines. Elle sortait avec les
+  // flancs bombes et le fond qui s'affaisse d'un pixel, et c'est exactement ce
+  // qu'on regarde quand on dit qu'un fichier « n'est pas clean ».
+  //
+  // POURQUOI. Le contour d'un bord incline est un ESCALIER, et ses deux bouts
+  // portent en plus le chanfrein du coin, un demi pixel a un pixel emousse par
+  // l'antialiasing. `enDroite` juge l'arc AVEC ses deux bouts : un seul
+  // echantillon de chanfrein a chaque extremite suffisait a lui faire refuser
+  // la droite, et l'arc repartait en cubiques qui suivaient l'escalier marche
+  // par marche. Le chanfrein appartient au COIN, pas au bord : on juge donc la
+  // droite sur le milieu de l'arc, et le coin la reprend a l'intersection.
+  //
+  // Sur ce trapeze, avant : 32 segments, dont 28 droites, une par marche.
+  // Apres : quatre droites, une par bord.
+  {
+    // Le contour PIXEL, celui que le vectoriseur produit : des marches
+    // entieres, pas la ligne ideale.
+    const contourPixel = (xg, xd, y0, y1) => {
+      const pts = [];
+      let x = Math.round(xd(y0));
+      for (let y = y0; y <= y1; y++) {
+        const nx = Math.round(xd(y));
+        if (nx !== x) { pts.push({ x, y }); pts.push({ x: nx, y }); x = nx; }
+        pts.push({ x, y: y + 1 });
+      }
+      let xl = Math.round(xg(y1 + 1));
+      pts.push({ x: xl, y: y1 + 1 });
+      for (let y = y1; y >= y0; y--) {
+        const nx = Math.round(xg(y));
+        if (nx !== xl) { pts.push({ x: xl, y: y + 1 }); pts.push({ x: nx, y: y + 1 }); xl = nx; }
+        pts.push({ x: xl, y });
+      }
+      pts.push({ x: Math.round(xd(y0)), y: y0 });
+      return pts;
+    };
+    const y0 = 20, y1 = 220;
+    const pts = contourPixel((y) => 58 - 8 * (y - y0) / (y1 - y0),
+                             (y) => 66 + 8 * (y - y0) / (y1 - y0), y0, y1);
+    const segments = lisserBoucle(pts);
+    const traces = segments.filter((g) => g.type !== 'depart');
+    const lignes = traces.filter((g) => g.type === 'ligne');
+    dire(lignes.length >= 4 && traces.length <= 5,
+         'un trapeze a bords droits sort en quatre droites, pas en escalier',
+         `${traces.length} segments dont ${lignes.length} droites`);
+  }
+
+  // LE TEMOIN DE L'AUTRE SENS, ET IL A DEJA SERVI DEUX FOIS. Un bout de trait
+  // fin ressemble a un chanfrein : le chemin y fait demi tour, et les deux
+  // flancs d'un trait d'un pixel tiennent a un demi pixel de leur axe commun,
+  // donc l'arc qui descend l'un, contourne et remonte l'autre passe pour une
+  // droite. Pose en droite unique, le trait se refermait SUR SON AXE et
+  // disparaissait : le recouvrement de trait_01px tombait de 100 a 37 pour
+  // cent, celui de trait_03px de 99,9 a 12,4. Ce controle tient la porte.
+  {
+    for (const epaisseur of [1, 3]) {
+      const pts = [];
+      const x0 = 60, y0 = 30, y1 = 250, e = epaisseur;
+      for (let y = y0; y <= y1; y++) pts.push({ x: x0, y });
+      pts.push({ x: x0 + e / 2, y: y1 + e / 2 });
+      for (let y = y1; y >= y0; y--) pts.push({ x: x0 + e, y });
+      pts.push({ x: x0 + e / 2, y: y0 - e / 2 });
+      const segments = lisserBoucle(pts);
+      const xs = segments.filter((g) => g.x !== undefined).map((g) => g.x);
+      const largeur = Math.max(...xs) - Math.min(...xs);
+      dire(largeur >= e * 0.8,
+           `un trait de ${e} px garde sa largeur, son bout n'est pas un chanfrein`,
+           `${largeur.toFixed(2)} px pour ${e}`);
+    }
+  }
+
   // LE GALBE VOULU, temoin de l'autre sens : un arc bombe de 3 px n'est pas
   // une droite qui a bouge, c'est un dessin. Il doit RESTER une courbe,
   // sinon on n'aurait pas pose un detecteur de droites, on aurait aplati le

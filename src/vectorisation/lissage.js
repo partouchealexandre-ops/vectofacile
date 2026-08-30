@@ -375,6 +375,79 @@ function enDroite(pts, tolerance) {
   return { ligne: [p0, pN] };
 }
 
+/*
+ * LE CHANFREIN DU COIN N'APPARTIENT PAS AU BORD.
+ */
+const ROGNAGE_COIN_MAX = 2;
+const ROGNAGE_PART_MIN = 0.6;
+export const PLI_DEG = 150;
+const ECARTEMENT_FENETRE = 25;    // echantillons de part et d'autre du coin
+const ECARTEMENT_GAIN_MIN = 0.5;  // px gagnes en doublant la fenetre
+
+/*
+ * LA DROITE SE POSE SUR TOUS LES ECHANTILLONS, PAS SUR LES DEUX BOUTS.
+ *
+ * `enDroite` REPOND si l'arc est droit ; la droite qu'elle renvoie passe par
+ * les deux extremites, et ces deux la sont justement celles que le chanfrein
+ * a deplacees. Sur un carre aux coins arrondis de deux pixels, les deux bouts
+ * de chaque cote sont un demi pixel a l'interieur : la remise a l'aplomb, qui
+ * moyenne les deux bouts, posait le cote un demi pixel trop bas, et les coins
+ * reconstruits par intersection tombaient a cote. Les moindres carres totaux
+ * sur TOUS les echantillons ignorent cet effet de bout : soixante seize
+ * echantillons plats pesent plus que dix arrondis.
+ */
+function droiteDesMoindresCarres(pts) {
+  let mx = 0, my = 0;
+  for (const p of pts) { mx += p.x; my += p.y; }
+  mx /= pts.length; my /= pts.length;
+  let sxx = 0, sxy = 0, syy = 0;
+  for (const p of pts) {
+    const dx = p.x - mx, dy = p.y - my;
+    sxx += dx * dx; sxy += dx * dy; syy += dy * dy;
+  }
+  const theta = 0.5 * Math.atan2(2 * sxy, sxx - syy);
+  const u = { x: Math.cos(theta), y: Math.sin(theta) };
+  const proj = (p) => {
+    const k = (p.x - mx) * u.x + (p.y - my) * u.y;
+    return { x: mx + k * u.x, y: my + k * u.y };
+  };
+  return { proj, ligne: [proj(pts[0]), proj(pts[pts.length - 1])] };
+}
+
+function enDroiteRognee(pts, tolerance, rogner = { debut: true, fin: true },
+                        rognageMax = ROGNAGE_COIN_MAX) {
+  const n = pts.length;
+  // L'ARC ENTIER DROIT NE SE POSE QUE SI SES DEUX BOUTS SONT DES COINS. Un
+  // bout de trait fin passe pour une droite : les deux flancs d'un trait d'un
+  // pixel tiennent a un demi pixel de leur axe commun, et l'arc qui descend
+  // l'un, contourne et remonte l'autre s'ecarte donc moins que la tolerance.
+  // Pose en une droite unique, le trait se refermait sur son axe et
+  // disparaissait. Quand les deux bouts sont des coins francs, cette
+  // confusion est impossible, et poser la droite d'un seul tenant vaut mieux
+  // que la segmentation, qui detache les deux chanfreins en micro courbes :
+  // ce sont elles qu'on voit onduler au bout d'un bord droit.
+  if (rogner.debut && rogner.fin) {
+    if (enDroite(pts, tolerance)) {
+      return { ligne: remettreALAplomb(droiteDesMoindresCarres(pts).ligne) };
+    }
+  }
+  if (!rogner.debut && !rogner.fin) return null;
+  const Ltot = Math.hypot(pts[n - 1].x - pts[0].x, pts[n - 1].y - pts[0].y);
+  for (let t = 1; t <= rognageMax; t++) {
+    const tD = rogner.debut ? t : 0;
+    const tF = rogner.fin ? t : 0;
+    if (n - tD - tF < 8) break;
+    const milieu = pts.slice(tD, n - tF);
+    const Lm = Math.hypot(milieu[milieu.length - 1].x - milieu[0].x,
+                          milieu[milieu.length - 1].y - milieu[0].y);
+    if (!(Lm >= ROGNAGE_PART_MIN * Ltot)) break;
+    if (!enDroite(milieu, tolerance)) continue;
+    const { proj } = droiteDesMoindresCarres(milieu);
+    return { ligne: remettreALAplomb([proj(pts[0]), proj(pts[n - 1])]) };
+  }
+  return null;
+}
+
 function ajusterArc(pts, t1, t2, tolerance, sortie, profondeur = 0) {
   const droite = enDroite(pts, tolerance);
   if (droite) { sortie.push(droite); return; }
@@ -593,11 +666,9 @@ const FENETRE_COURBURE = 8;      // demi-fenetre des cordes de courbure
 const RUN_DROIT_MIN = 9;         // echantillons minimum d'une zone droite
 const RUN_COURBE_MIN = 4;        // en dessous, une zone courbe rejoint les droites
 
-/* Valide une droite et la remet a l'aplomb si elle y est presque. */
-function poserDroite(morceau, tolerance) {
-  const d = enDroite(morceau, tolerance);
-  if (!d) return null;
-  let [p0, pN] = d.ligne;
+/* Remet une droite a l'aplomb quand elle y est presque. */
+function remettreALAplomb(ligne) {
+  let [p0, pN] = ligne;
   const L = Math.hypot(pN.x - p0.x, pN.y - p0.y);
   if (L >= APLOMB_LONGUEUR_MIN_PX) {
     const ang = Math.atan2(pN.y - p0.y, pN.x - p0.x) * 180 / Math.PI;
@@ -611,7 +682,14 @@ function poserDroite(morceau, tolerance) {
       p0 = { x: mx - demi, y: my }; pN = { x: mx + demi, y: my };
     }
   }
-  return { ligne: [p0, pN] };
+  return [p0, pN];
+}
+
+/* Valide une droite et la remet a l'aplomb si elle y est presque. */
+function poserDroite(morceau, tolerance) {
+  const d = enDroite(morceau, tolerance);
+  if (!d) return null;
+  return { ligne: remettreALAplomb(d.ligne) };
 }
 
 function segmenterEtAjuster(arc, t1, t2, tolerance, sortie) {
@@ -750,6 +828,34 @@ export function lisserBoucle(pts, options = {}) {
   } else {
     // Chaque arc garde sa propre liste : les jonctions entre arcs sont les
     // COINS, et ils recoivent un traitement propre apres l'ajustement.
+    // LE PLI D'UN BOUT DE TRAIT N'EST PAS UN COIN DE DESSIN. Aux deux bouts
+    // d'un trait fin, le chemin fait DEMI TOUR : le detecteur y voit un coin,
+    // a juste titre, mais ce coin la ne borde pas deux bords qui se croisent,
+    // il referme un trait sur lui meme. Rogner de ce cote la retirerait le
+    // bout du trait au lieu d'un chanfrein, et les deux flancs, devenus deux
+    // droites opposees, se souderaient sur leur axe : le trait disparaissait.
+    // Mesure prise sur les echantillons, pas sur les primitives, parce qu'il
+    // faut la connaitre AVANT de choisir la primitive.
+    const coinFranc = (c) => {
+      const k = 8;
+      const a = normaliser(soustraire(S[c], S[(c - k + n) % n]));
+      const b = normaliser(soustraire(S[(c + k) % n], S[c]));
+      let cos = a.x * b.x + a.y * b.y;
+      cos = Math.max(-1, Math.min(1, cos));
+      const virage = Math.acos(cos) * 180 / Math.PI;
+      if (virage < PLI_DEG) return true;
+      // PRESQUE UN DEMI TOUR : POINTE AIGUE, OU BOUT DE TRAIT ? Les deux se
+      // ressemblent a la loupe et se separent en s'eloignant. Les deux bords
+      // d'une pointe DIVERGENT : deux fois plus loin du sommet, ils sont deux
+      // fois plus ecartes. Les deux flancs d'un trait restent a la meme
+      // distance, quelle que soit la fenetre. C'est la meme distinction que
+      // fait deja l'effacement des micro-arcs de chanfrein, mesuree ici sur
+      // les echantillons parce qu'il faut la connaitre AVANT la primitive.
+      const W = ECARTEMENT_FENETRE;
+      if (n < 4 * W) return false;
+      const ecart = (w) => norme(soustraire(S[(c - w + n) % n], S[(c + w) % n]));
+      return ecart(2 * W) - ecart(W) > ECARTEMENT_GAIN_MIN;
+    };
     const arcs = [];
     for (let k = 0; k < liste.length; k++) {
       const debut = liste[k], fin = liste[(k + 1) % liste.length];
@@ -765,7 +871,10 @@ export function lisserBoucle(pts, options = {}) {
       const t1 = normaliser(soustraire(arc[base], arc[0]));
       const t2 = normaliser(soustraire(arc[arc.length - 1 - base], arc[arc.length - 1]));
       const sortie = [];
-      segmenterEtAjuster(arc, t1, t2, tolerance, sortie);
+      const droite = enDroiteRognee(arc, tolerance,
+        { debut: coinFranc(debut), fin: coinFranc(fin) });
+      if (droite) sortie.push(droite);
+      else segmenterEtAjuster(arc, t1, t2, tolerance, sortie);
       if (sortie.length) arcs.push(sortie);
     }
     // LES MICRO-ARCS DE CHANFREIN S'EFFACENT D'ABORD : un chanfrein de deux
