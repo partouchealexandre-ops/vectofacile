@@ -55,7 +55,7 @@ const CONSEILS_EN_TETE = 3;
  * Sept techniques, c'est tout le metier, et les produits redeviennent ce
  * qu'ils doivent etre, la traduction d'une technique en objets qu'on reconnait.
  */
-export function rendreVerdict(mesures, feux = [], fichier = null) {
+export function rendreVerdict(mesures, feux = [], fichier = null, diagnostic = '') {
   if (!feux.length) return '';
   const points = pointsAttention(mesures, feux).slice(CONSEILS_EN_TETE);
   // Les cartes de feu orange portent deja le bouton de conversion depuis le
@@ -64,5 +64,5 @@ export function rendreVerdict(mesures, feux = [], fichier = null) {
   return `${rendreFeux(feux)}
 ${rendrePointsAttention(points)}
 ${rendreActionFichier(fichier, ctaDejaPorte)}
-${rendreSuite()}`;
+${rendreSuite(diagnostic)}`;
 }

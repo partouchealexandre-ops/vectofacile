@@ -541,19 +541,43 @@ export function rendreReprise(avertissements = [], options = {}) {
 </div>`;
 }
 
-export function rendreSuite() {
-  if (!CONTACT_OPERATIONNEL) return '';
+/**
+ * ON DEMANDE UN MAIL, ON NE FABRIQUE PAS UN FORMULAIRE, 31/08/2026.
+ *
+ * CE BLOC PORTAIT LE MEME DEFAUT QUE L'OFFRE DE REDESSIN, et il le portait
+ * depuis plus longtemps. Deux champs et un bouton « Demander un prix » qui
+ * ouvrait la messagerie du visiteur par une adresse `mailto:`. Or une adresse
+ * `mailto:` ne fait RIEN sur une machine sans logiciel de courrier configure,
+ * ce qui est le cas courant chez qui lit son courrier dans un navigateur : le
+ * bouton ne repondait pas, sans un mot. Le champ email, lui, redemandait une
+ * adresse que la messagerie connait deja.
+ *
+ * ET IL PORTAIT UNE BRANCHE MORTE, restee invisible parce que ce bloc l'est.
+ * Le message pre-rempli listait les objets qui passent, en parcourant
+ * `etat.juges` : ce champ n'a JAMAIS ete rempli nulle part dans le programme.
+ * La boucle ne s'executait pas une seule fois. Personne ne l'a vu, et personne
+ * ne pouvait le voir : un code qu'aucun ecran n'affiche est un code que
+ * personne ne relit. C'est l'argument le plus net en faveur du drapeau qui
+ * ferme ce bloc, et le plus net aussi contre le fait de l'y laisser dormir.
+ *
+ * Reste ce qui marche partout : l'adresse ECRITE, lisible et recopiable meme
+ * si le lien ne s'ouvre pas, et le diagnostic a copier d'un clic. C'est le
+ * meme moyen que l'offre de redessin, et c'est voulu : deux blocs qui
+ * demandent la meme chose au visiteur ne doivent pas la demander de deux
+ * facons differentes.
+ */
+export function rendreSuite(diagnostic = '', options = {}) {
+  const ouverte = options.adresseOuverte ?? CONTACT_OPERATIONNEL;
+  if (!ouverte) return '';
+  const resume = String(diagnostic).trim();
   return `<div class="encadre et-maintenant">
   <h2>Vous voulez ce marquage en vrai ?</h2>
-  <p>Dites-nous sur quel objet, on vous dit combien ça coûte et en combien de temps.
-  Réponse par un humain qui a vu votre diagnostic.</p>
-  <div class="suite-champs">
-    <label for="suite_email">Votre email</label>
-    <input type="email" id="suite_email" placeholder="vous@votre-entreprise.fr">
-    <label for="suite_mot">Sur quel objet ? (facultatif)</label>
-    <input type="text" id="suite_mot" placeholder="500 tote bags pour un salon">
-    <button id="suite_envoyer" type="button">Demander un prix</button>
-  </div>
+  <p>Dites-nous sur quel objet et en quelle quantité. On vous dit combien ça coûte et en
+  combien de temps, avec une réponse par un humain qui a vu votre diagnostic.</p>
+  <p class="reprise-envoi">Écrivez-nous à <a href="mailto:${CONTACT}">${CONTACT}</a>.</p>${resume
+    ? `
+  <button class="feu-copier" type="button" data-copier="${echapper(resume)}">Copier mon diagnostic à coller dans le message</button>`
+    : ''}
   <p class="note">Votre logo ne part pas : seul le diagnostic accompagne votre message,
   pour que la réponse soit utile dès le premier échange.</p>
 </div>`;

@@ -449,10 +449,29 @@ const controle = (libelle, ok, detail) => resultats.push({ libelle, ok, detail }
   // pas achete : un formulaire qui ecrit dans le vide est pire que pas de
   // formulaire. Le controle marche dans les DEUX sens, pour que le jour du
   // domaine, oublier de rebrancher le bloc se voie tout de suite.
-  const suite = rendreSuite();
-  controle('le bloc de demande suit l\'etat reel de l\'adresse',
-           CONTACT_OPERATIONNEL ? /Demander un prix/.test(suite) : suite === '',
+  // LE BLOC « ET MAINTENANT » SUIT L'ETAT REEL DE L'ADRESSE, dans les deux
+  // sens : ferme, il ne rend rien ; ouvert, il donne l'adresse. Depuis le
+  // 31/08 il la donne comme l'offre de redessin, en toutes lettres et sans
+  // formulaire : un bouton `mailto:` ne repond pas chez qui lit son courrier
+  // dans un navigateur.
+  const diagPrix = 'Diagnostic fait sur bonamarquer.fr :\n- 3 couleur(s) réelle(s)';
+  const suite = rendreSuite(diagPrix, { adresseOuverte: true });
+  controle('le bloc de demande ne rend rien tant que l\'adresse ne recoit pas',
+           rendreSuite(diagPrix, { adresseOuverte: false }) === '');
+  controle('et il suit le drapeau par defaut, sans qu\'on ait a le lui dire',
+           rendreSuite(diagPrix) === (CONTACT_OPERATIONNEL ? suite : ''),
            CONTACT_OPERATIONNEL ? 'adresse operationnelle' : 'adresse pas encore ouverte');
+  controle('il donne l\'adresse en toutes lettres, pas seulement en lien',
+           suite.includes(`>${CONTACT}<`), CONTACT);
+  controle('et le diagnostic s\'y copie, il ne se retape pas',
+           /class="feu-copier"[^>]*data-copier="[^"]+"/.test(suite));
+  // AUCUN FORMULAIRE, ET AUCUN BOUTON QUI OUVRE UNE MESSAGERIE. Les deux
+  // reposaient sur une adresse `mailto:` qui ne repond pas partout, et le
+  // champ email redemandait ce que la messagerie du visiteur connait deja.
+  controle('il ne fabrique plus de formulaire ni de bouton mailto',
+           !/<input/.test(suite) && !/id="suite_envoyer"/.test(suite));
+  const motSuite = MOTS_INTERDITS.find((m) => suite.toLowerCase().includes(m));
+  controle('aucun mot interdit dans le bloc de demande', !motSuite, motSuite || 'aucun');
 
   // L'OFFRE DE REDESSIN, 30/08/2026, arbitrage Alex.
   //

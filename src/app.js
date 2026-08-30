@@ -18,7 +18,7 @@ import { lireEnteteEps } from './adaptateurs/eps_entete.js';
 import { mesurer } from './moteur/mesures.js';
 import { juger } from './verdict/juger.js';
 import { jugerFeux } from './verdict/feux.js';
-import { CONTACT, rendreDecouverte, rendreReprise } from './verdict/rendu_grille.js';
+import { rendreDecouverte, rendreReprise } from './verdict/rendu_grille.js';
 import { imageVersPng, programmeVersPng } from './vectorisation/toile.js';
 import { deposerLogo, oublierLogo } from './simulation/passage.js';
 import { rendreVerdict } from './verdict/rendu.js';
@@ -366,7 +366,7 @@ function afficherAvertissements(liste) {
  * Le bouton de copie est celui du brief de graphiste, pose le 21/08 : un seul
  * ecouteur, au demarrage, pour tous les boutons qui portent `data-copier`.
  */
-function resumeDuDiagnostic(avertissements) {
+function resumeDuDiagnostic(avertissements = etat.avertissements) {
   const lignes = ['Diagnostic fait sur bonamarquer.fr :'];
   if (etat.nom) lignes.push(`- fichier : ${etat.nom}`);
   const d = etat.mesures?.m1Dimensions;
@@ -376,6 +376,13 @@ function resumeDuDiagnostic(avertissements) {
   }
   for (const a of avertissements ?? []) {
     if (a?.titre) lignes.push(`- ${a.titre}`);
+  }
+  // LES SEPT VERDICTS, PARCE QUE C'EST CE QU'ON DEMANDE AU REPONDANT DE LIRE.
+  // Le bloc precedent listait les objets qui passent, en parcourant un champ
+  // que rien ne remplissait : la boucle n'a jamais tourne. Les feux, eux,
+  // existent et sont deja calcules a cet instant.
+  for (const f of etat.feux ?? []) {
+    if (f?.nom && f?.feu) lignes.push(`- ${f.nom} : ${f.feu}`);
   }
   return lignes.join('\n');
 }
@@ -458,7 +465,7 @@ function rendreLeVerdict() {
     tete.innerHTML = rendreFaitPrincipal(m?.m2Couleurs?.couleursReelles ?? null, feux, m);
     tete.hidden = false;
   }
-  $('verdict').innerHTML = rendreVerdict(m, feux, etat.fichierEtat);
+  $('verdict').innerHTML = rendreVerdict(m, feux, etat.fichierEtat, resumeDuDiagnostic());
   $('verdict').hidden = false;
 }
 
@@ -1376,49 +1383,15 @@ function brancher() {
     }
   });
 
-  // C4 DU BRIEF DU 21/08 : LA SUITE, POUR LE VISITEUR LE PLUS CHAUD DU
-  // PARCOURS, QUI N'EN AVAIT AUCUNE.
+  // C4 DU BRIEF DU 21/08, ET SON GESTIONNAIRE QUI PART, 31/08/2026.
   //
-  // Le bloc est rendu avec le verdict, donc apres coup : on ecoute au niveau
-  // du document plutot que sur un bouton qui n'existe pas encore au demarrage.
-  //
-  // AUCUN ENVOI AUTOMATIQUE. On compose un message dans le logiciel de courrier
-  // du visiteur, il le relit, il l'envoie. Le fichier ne part pas, le diagnostic
-  // l'accompagne, et la promesse « rien ne quitte votre machine » tient : c'est
-  // lui qui envoie, pas nous.
-  document.addEventListener('click', (evenement) => {
-    if (evenement.target?.id !== 'suite_envoyer') return;
-    const email = $('suite_email')?.value.trim() ?? '';
-    const objet = $('suite_mot')?.value.trim() ?? '';
-    location.href = `mailto:${CONTACT}?subject=${encodeURIComponent('Demande de prix')}`
-      + `&body=${encodeURIComponent(corpsDeLaDemande(email, objet))}`;
-  });
-}
-
-/**
- * LE MESSAGE PRE-REMPLI : ce que le repondant a besoin de savoir avant meme
- * d'ouvrir un fichier. Le diagnostic, jamais le logo.
- */
-function corpsDeLaDemande(email, objet) {
-  const m = etat.mesures;
-  const lignes = ['Bonjour,', ''];
-  lignes.push(objet ? `Je voudrais un prix pour : ${objet}.` : 'Je voudrais un prix pour un marquage.');
-  lignes.push('');
-  lignes.push('Voici le diagnostic de mon logo, fait sur bonamarquer.fr :');
-  if (m?.m2Couleurs) lignes.push(`- ${m.m2Couleurs.couleursReelles} couleur(s) réelle(s)`);
-  if (etat.fichierEtat) {
-    lignes.push(etat.fichierEtat.origine === 'vectoriel'
-      ? '- fichier déjà vectoriel'
-      : `- image${etat.fichierEtat.vectorise === true ? ', vectorisée par l\'outil' : ''}`);
-  }
-  for (const p of etat.juges ?? []) {
-    if (p.etat === 'oui' && p.meilleure) {
-      lignes.push(`- ${p.libelle} : ${p.meilleure.zone}, en ${p.meilleure.technique.toLowerCase()}, `
-        + `${p.meilleure.taille.largeurMm} × ${p.meilleure.taille.hauteurMm} mm`);
-    }
-  }
-  lignes.push('', email ? `Vous pouvez me répondre à ${email}.` : 'Merci de me répondre à cette adresse.');
-  return lignes.join('\n');
+  // Le bloc « et maintenant » composait un message dans le logiciel de courrier
+  // du visiteur par une adresse `mailto:`. Ce moyen ne repond pas chez qui lit
+  // son courrier dans un navigateur, et le message qu'il composait parcourait
+  // un champ que rien ne remplit : la moitie de son contenu n'existait pas.
+  // Le bloc demande desormais un mail comme l'offre de redessin, avec l'adresse
+  // ecrite et le diagnostic a copier. Il n'a plus de gestionnaire propre : le
+  // bouton de copie est celui des briefs, pose juste au dessus.
 }
 
 /**
