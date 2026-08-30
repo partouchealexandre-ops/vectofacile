@@ -18,7 +18,7 @@ import { lireEnteteEps } from './adaptateurs/eps_entete.js';
 import { mesurer } from './moteur/mesures.js';
 import { juger } from './verdict/juger.js';
 import { jugerFeux } from './verdict/feux.js';
-import { CONTACT, rendreDecouverte } from './verdict/rendu_grille.js';
+import { CONTACT, rendreDecouverte, rendreReprise } from './verdict/rendu_grille.js';
 import { imageVersPng, programmeVersPng } from './vectorisation/toile.js';
 import { deposerLogo, oublierLogo } from './simulation/passage.js';
 import { rendreVerdict } from './verdict/rendu.js';
@@ -337,6 +337,13 @@ function chargerGrille() {
 function afficherAvertissements(liste) {
   const bloc = $('avertissements');
   if (!liste || liste.length === 0) { bloc.hidden = true; return; }
+  // L'OFFRE DE REDESSIN SUIT L'AVERTISSEMENT, DANS LE MEME BLOC, 30/08/2026.
+  //
+  // Elle n'est pas ailleurs sur la page, et ce n'est pas un detail de mise en
+  // page : c'est l'avertissement qui nomme la limite, et un remede qui vit
+  // loin de la ligne qui le motive n'est plus un remede, c'est une reclame.
+  // Le meme raisonnement a deja fait remonter l'avertissement AU DESSUS des
+  // boutons de telechargement le 25/08.
   bloc.innerHTML = liste.map((a) => {
     if (typeof a === 'string') return `<div class="alerte"><p>${a}</p></div>`;
     return `<div class="alerte alerte-${a.gravite}">
@@ -344,8 +351,33 @@ function afficherAvertissements(liste) {
       <p>${a.texte}</p>
       ${a.remede ? `<p class="alerte-remede">${a.remede}</p>` : ''}
     </div>`;
-  }).join('');
+  }).join('') + rendreReprise(liste, { diagnostic: resumeDuDiagnostic(liste) });
   bloc.hidden = false;
+}
+
+/**
+ * LE DIAGNOSTIC A COLLER DANS SON MESSAGE.
+ *
+ * Ce qu'un graphiste a besoin de savoir avant d'ouvrir le fichier : sa taille
+ * en pixels, son compte de couleurs, et la limite qu'on a MESUREE. Le logo, lui,
+ * ne part pas d'ici : c'est le visiteur qui le joint a son envoi, et l'ecran le
+ * dit au lieu de le lui laisser decouvrir.
+ *
+ * Le bouton de copie est celui du brief de graphiste, pose le 21/08 : un seul
+ * ecouteur, au demarrage, pour tous les boutons qui portent `data-copier`.
+ */
+function resumeDuDiagnostic(avertissements) {
+  const lignes = ['Diagnostic fait sur bonamarquer.fr :'];
+  if (etat.nom) lignes.push(`- fichier : ${etat.nom}`);
+  const d = etat.mesures?.m1Dimensions;
+  if (d) lignes.push(`- image de ${d.largeurPx} par ${d.hauteurPx} pixels`);
+  if (etat.mesures?.m2Couleurs) {
+    lignes.push(`- ${etat.mesures.m2Couleurs.couleursReelles} couleur(s) réelle(s)`);
+  }
+  for (const a of avertissements ?? []) {
+    if (a?.titre) lignes.push(`- ${a.titre}`);
+  }
+  return lignes.join('\n');
 }
 
 async function afficherVerdict(mesures) {

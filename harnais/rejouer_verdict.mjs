@@ -404,7 +404,8 @@ const controle = (libelle, ok, detail) => resultats.push({ libelle, ok, detail }
 // variante n'en est un.
 {
   const { rendreVerdict } = await import('../src/verdict/rendu.js');
-  const { rendreActionFichier, rendreSuite, CONTACT, CONTACT_OPERATIONNEL } =
+  const { rendreActionFichier, rendreSuite, rendreReprise, PRIX_REDESSIN_HT_EUR,
+          CONTACT, CONTACT_OPERATIONNEL } =
     await import('../src/verdict/rendu_grille.js');
   const { direCouleurs } = await import('../src/verdict/formulation.js');
   const v = juger({ mesures: mesuresImpeccables(), seuils: SEUILS,
@@ -452,6 +453,66 @@ const controle = (libelle, ok, detail) => resultats.push({ libelle, ok, detail }
   controle('le bloc de demande suit l\'etat reel de l\'adresse',
            CONTACT_OPERATIONNEL ? /Demander un prix/.test(suite) : suite === '',
            CONTACT_OPERATIONNEL ? 'adresse operationnelle' : 'adresse pas encore ouverte');
+
+  // L'OFFRE DE REDESSIN, 30/08/2026, arbitrage Alex.
+  //
+  // Les avertissements du moteur nommaient la sortie du metier et s'arretaient
+  // la. L'offre la rend accessible, et elle obeit a deux conditions, chacune
+  // eprouvee dans LES DEUX SENS : elle ne parait que si une limite a ete
+  // nommee, et que si l'adresse peut recevoir. Un controle qui ne saurait
+  // eprouver qu'un seul des deux etats ne dirait rien le jour de la bascule.
+  const limite = [{ gravite: 'notable', titre: 'Les petits textes sortiront approximatifs' }];
+  const diag = 'Diagnostic fait sur bonamarquer.fr :\n- image de 416 par 300 pixels';
+  const ouverte = rendreReprise(limite, { adresseOuverte: true, diagnostic: diag });
+  const fermee = rendreReprise(limite, { adresseOuverte: false, diagnostic: diag });
+  const sansLimite = rendreReprise([], { adresseOuverte: true, diagnostic: diag });
+  controle('l\'offre de redessin ne parait pas tant que l\'adresse ne recoit pas',
+           fermee === '');
+  controle('et elle parait des que l\'adresse recoit',
+           /Faire redessiner ce logo/.test(ouverte));
+  controle('elle ne se propose PAS quand aucune limite n\'a ete nommee',
+           sansLimite === '');
+  // ON DEMANDE UN MAIL, ON NE FABRIQUE PAS UN FORMULAIRE. Une adresse
+  // `mailto:` ne fait rien sur une machine sans logiciel de courrier
+  // configure, et c'est le cas courant chez qui lit son courrier dans un
+  // navigateur. L'adresse est donc ECRITE, lisible et recopiable meme si le
+  // lien ne s'ouvre pas.
+  controle('elle donne l\'adresse en toutes lettres, pas seulement en lien',
+           ouverte.includes(`>${CONTACT}<`), CONTACT);
+  controle('elle dit de joindre le logo au message',
+           /pièce jointe/.test(ouverte));
+  // Le diagnostic se copie, il ne se retape pas. Motif du brief de graphiste,
+  // pose le 21/08 : un seul ecouteur pour tous les boutons `data-copier`.
+  controle('le diagnostic mesure se copie en un clic',
+           /class="feu-copier"[^>]*data-copier="[^"]+"/.test(ouverte));
+  controle('et sans diagnostic, aucun bouton de copie vide',
+           !/feu-copier/.test(rendreReprise(limite, { adresseOuverte: true })));
+  // LE PRIX EST HORS TAXES, ET IL EST ECRIT HORS TAXES. On s'adresse a des
+  // entreprises ; un prix affiche sans mention se lit TTC, et la difference se
+  // decouvre a la facture, ce qui est la pire facon de la decouvrir.
+  controle('elle annonce son prix, une fois, et hors taxes',
+           new RegExp(`${PRIX_REDESSIN_HT_EUR}\\s*€\\s*HT`).test(ouverte),
+           `${PRIX_REDESSIN_HT_EUR} € HT`);
+  // LA RESERVE DE FAISABILITE, arbitrage Alex du 30/08. Elle est ecrite a cote
+  // du prix, pas decouverte au moment de la facture.
+  controle('elle pose la reserve de faisabilite avant de prendre la commande',
+           /avant de nous engager/.test(ouverte) && /assez d'information/.test(ouverte));
+  // ET ELLE NE JUGE PAS LE FICHIER POUR AUTANT : un fait sur l'image, jamais
+  // un adjectif sur le logo. Meme regle que les avertissements du moteur.
+  controle('et elle ne porte aucun jugement sur le logo du client',
+           !/mauvais|pourri|médiocre|mediocre|décevant|decevant|moche/i.test(ouverte));
+  // LE PRIX D'ACHAT ET LE FOURNISSEUR NE SONT PAS DANS LE DEPOT. Cet
+  // arbitrage vit dans briefs/arbitrages_vecto.md, et lui seul.
+  const moduleServi = fs.readFileSync(
+    path.join(ICI, '..', 'src', 'verdict', 'rendu_grille.js'), 'utf-8').toLowerCase();
+  controle('aucun nom de fournisseur ni prix d\'achat dans le module servi',
+           !/superpictor|prix_achat|prix_achat_eur/.test(moduleServi));
+  controle('elle redit que le logo ne part pas de la page',
+           /ne part pas/.test(ouverte));
+  const motRepris = MOTS_INTERDITS.find((m) => ouverte.toLowerCase().includes(m));
+  controle('aucun mot interdit dans l\'offre de redessin', !motRepris, motRepris || 'aucun');
+  controle('aucun pourcentage ni confiance dans l\'offre de redessin',
+           !MOTIF_CONFIANCE.test(ouverte));
 
   // LES COULEURS : au dela de 3 couleurs sur une technique a passages, la
   // carte recommande l'economie. Jamais sur les techniques a passage unique,

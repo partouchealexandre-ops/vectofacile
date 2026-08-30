@@ -459,6 +459,88 @@ export const CONTACT = 'contact@bonamarquer.fr';
  */
 export const CONTACT_OPERATIONNEL = false;
 
+/**
+ * LE REDESSIN, ET SON PRIX, arbitrage Alex du 26/08, precise le 30/08.
+ *
+ * CE QUI MANQUAIT. Les deux avertissements du moteur nomment deja la sortie du
+ * metier : « un redessin, un travail de graphiste sur un logiciel vectoriel ».
+ * Ils la nomment et ils s'arretent la. Le visiteur dont le fichier atteint la
+ * limite de l'automatique repartait donc avec un fichier moyen et une phrase
+ * qui lui disait d'aller voir ailleurs. Trois des huit logos du banc sont dans
+ * ce cas, et ce sont exactement les trois qu'Alex trouve moyens : la limite
+ * n'est pas une surprise, elle est diagnostiquee. Ce qui manquait, c'est la
+ * sortie.
+ *
+ * HORS TAXES, ET LE NOM DE LA CONSTANTE LE DIT. On s'adresse a des
+ * entreprises, qui raisonnent hors taxes ; porter le HT dans le NOM plutot que
+ * dans le seul affichage evite la faute qui se paie deux fois, celle ou
+ * quelqu'un reutilise la constante en croyant tenir un prix TTC.
+ *
+ * CE QUI RESTE HORS DU DEPOT. Ce prix ci est celui que paie le visiteur, et il
+ * s'affichera sur le site : il n'a pas de raison d'etre cache. Ce qu'on paie,
+ * nous, et a qui, ne se lit nulle part dans ce depot et ne doit jamais s'y
+ * lire. Cet arbitrage vit dans briefs/arbitrages_vecto.md, et lui seul.
+ */
+export const PRIX_REDESSIN_HT_EUR = 45;
+
+/**
+ * L'OFFRE DE REDESSIN, posee sous l'avertissement qui la rend utile.
+ *
+ * ELLE NE S'AFFICHE QUE LA OU ELLE REPOND A QUELQUE CHOSE. Sans avertissement,
+ * le fichier automatique convient, et proposer un redessin serait vendre un
+ * remede a qui n'a rien. La condition n'est donc pas la page, c'est le FAIT :
+ * le moteur a nomme une limite.
+ *
+ * ET ELLE NE S'AFFICHE PAS TANT QUE L'ADRESSE NE RECOIT PAS. Meme regle que le
+ * bloc « et maintenant » : ecrire a quelqu'un qui ne repondra pas coute plus
+ * cher que ne rien proposer, et davantage encore quand un prix est affiche.
+ *
+ * ON DEMANDE UN MAIL, ON NE FABRIQUE PAS UN FORMULAIRE. Premiere ecriture, le
+ * 30/08 : un champ email et un bouton qui ouvrait la messagerie du visiteur
+ * par une adresse `mailto:`. Alex : « est-ce qu'on n'est pas en train de se
+ * compliquer ? ». Il avait raison, et le defaut etait plus grave que la
+ * complication. Une adresse `mailto:` ne fait RIEN sur une machine sans
+ * logiciel de courrier configure, ce qui est le cas courant chez qui lit son
+ * courrier dans un navigateur : le bouton ne repondait pas, sans un mot, et
+ * c'est exactement la panne muette que ce projet refuse ailleurs. Le champ
+ * email, lui, redemandait une adresse que la messagerie du visiteur connait
+ * deja.
+ *
+ * Reste ce qui marche partout : une PHRASE qui donne l'adresse, lisible et
+ * recopiable meme si le lien ne s'ouvre pas, et le diagnostic a copier d'un
+ * clic pour le coller dans le message. C'est le motif du brief de graphiste,
+ * pose le 21/08 et deja eprouve : cout nul, valeur immediate.
+ *
+ * `options.adresseOuverte` n'existe que pour le harnais : un controle qui ne
+ * peut eprouver qu'un seul des deux etats ne prouve pas grand chose, et
+ * celui-ci doit tomber dans les deux sens.
+ */
+export function rendreReprise(avertissements = [], options = {}) {
+  const ouverte = options.adresseOuverte ?? CONTACT_OPERATIONNEL;
+  if (!ouverte) return '';
+  if (!avertissements?.length) return '';
+  const diagnostic = String(options.diagnostic ?? '').trim();
+  return `<div class="reprise">
+  <p class="reprise-titre">Faire redessiner ce logo</p>
+  <p>Un redessin est un travail de graphiste sur un logiciel vectoriel : les petites
+  lettres retrouvent leur dessin exact, les courbes sont retracées à la main, et le
+  fichier ne dépend plus de la définition de votre image de départ. Nous le faisons
+  faire et nous vous le livrons dans les mêmes formats que ci-dessus.</p>
+  <p class="reprise-prix"><b>${PRIX_REDESSIN_HT_EUR} € HT</b>, une seule fois. Le fichier
+  vous resservira sur toutes vos commandes, chez n'importe quel fournisseur.</p>
+  <p class="reprise-reserve">Nous regardons votre fichier avant de nous engager. Si
+  l'image ne porte pas assez d'information pour qu'un redessin soit fidèle à votre
+  logo, nous vous le disons plutôt que de le faire.</p>
+  <p class="reprise-envoi">Envoyez-nous votre logo en pièce jointe à
+  <a href="mailto:${CONTACT}">${CONTACT}</a>, et nous vous répondons.</p>${diagnostic
+    ? `
+  <button class="feu-copier" type="button" data-copier="${echapper(diagnostic)}">Copier le diagnostic à coller dans votre message</button>`
+    : ''}
+  <p class="note">Votre logo ne part pas d'ici : c'est vous qui l'envoyez, depuis votre
+  messagerie.</p>
+</div>`;
+}
+
 export function rendreSuite() {
   if (!CONTACT_OPERATIONNEL) return '';
   return `<div class="encadre et-maintenant">

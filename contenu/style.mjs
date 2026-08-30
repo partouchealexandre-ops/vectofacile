@@ -610,6 +610,28 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
   .alerte-remede { font-weight: 600; }
   .alerte-notable { border-left-color: #C9A227; background: #FFFBF0; }
 
+  /* ------------------------------------------------- L'OFFRE DE REDESSIN
+     Posee SOUS l'avertissement, dans le meme bloc et sur la meme colonne de
+     lecture : c'est l'avertissement qui nomme la limite, et le remede se lit
+     avec elle ou ne se lit pas.
+
+     PAS D'ORANGE ICI, ET C'EST VOULU. La regle de charte est un seul appel
+     orange par ecran, et sur /vectoriser c'est le panneau du simulateur qui
+     le porte depuis le 0083. Un second bouton orange, juste au dessus, ferait
+     deux appels qui se disputent. */
+  .reprise { border: 1px solid var(--trait); border-left: 4px solid var(--navy);
+             border-radius: 0 8px 8px 0; padding: 16px 18px; margin: 0 0 22px;
+             max-width: 68ch; background: #fff; }
+  .reprise-titre { font-family: 'Poppins', var(--pile-systeme); font-weight: 700;
+                   font-size: 16px; margin: 0 0 8px; }
+  .reprise p { margin: 0 0 10px; font-size: 15px; line-height: 1.55; }
+  .reprise-prix b { font-size: 17px; }
+  .reprise-reserve { color: var(--gris); font-size: 14px; }
+  .reprise-envoi { font-weight: 600; }
+  .reprise-envoi a { color: var(--navy); }
+  .reprise .feu-copier { margin: 2px 0 12px; }
+  .reprise .note { margin: 0; font-size: 13px; color: var(--gris); }
+
   /* Un apercu vide n'est pas un apercu : c'est un cadre a damier au milieu de
      la page. Il ne se montre que quand il a quelque chose a montrer. */
   #apercu:empty { display: none; }

@@ -51,6 +51,10 @@ import { entetesGlobales } from '../outils/entetes.mjs';
 const ICI = path.dirname(fileURLToPath(import.meta.url));
 const RACINE = path.resolve(ICI, '..');
 const PUBLIC = path.join(RACINE, 'public');
+// Le drapeau de l'adresse, lu a la source : ce harnais ne le recopie pas.
+const { CONTACT_OPERATIONNEL: ADRESSE_OUVERTE } =
+  await import('../src/verdict/rendu_grille.js');
+
 const IMAGES = path.join(ICI, 'corpus_synthetique', 'images');
 const SORTIES = path.join(ICI, 'sorties', 'navigateur');
 const PORT = 8231;
@@ -386,6 +390,15 @@ console.log('');
         return Boolean(tete && alerte
           && tete.getBoundingClientRect().top < alerte.getBoundingClientRect().top);
       })(),
+      // L'OFFRE DE REDESSIN NE S'AFFICHE PAS TANT QUE L'ADRESSE NE RECOIT
+      // PAS, 30/08/2026. Ce cas est celui ou elle a le plus de raisons de
+      // paraitre : une limite vient d'etre nommee a l'ecran. Elle ne parait
+      // pourtant pas, parce qu'ecrire a quelqu'un qui ne repondra pas coute
+      // plus cher que ne rien proposer, et davantage quand un prix est
+      // affiche. Le jour de la bascule, ce controle change de branche : il
+      // tient les deux etats ensemble.
+      repriseVisible: Boolean(document.querySelector('.reprise')),
+      repriseDansLAlerte: Boolean(document.querySelector('#avertissements .reprise')),
     };
   }, petit.toString('base64'));
   await page.close();
@@ -400,6 +413,10 @@ console.log('');
       constat.appelPresent],
     ['il est colle aux boutons, et au dessus d\'eux', constat.avantLeBouton],
     ['il ne contredit plus la reponse en tete de page', constat.reponseAvantAlerte],
+    [ADRESSE_OUVERTE
+      ? 'l\'offre de redessin est posee dans le bloc de l\'avertissement'
+      : 'aucune offre de redessin tant que l\'adresse ne recoit pas',
+      ADRESSE_OUVERTE ? constat.repriseDansLAlerte : constat.repriseVisible === false],
   ]) {
     console.log(`  ${ok ? 'ok   ' : 'ECHEC'} ${libelle}`);
     if (!ok) echecs++;
