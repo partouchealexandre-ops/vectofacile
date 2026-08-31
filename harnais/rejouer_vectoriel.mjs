@@ -304,6 +304,15 @@ await page.waitForTimeout(900);
     ['et aucun bouton de telechargement n\'apparait : rien a vectoriser',
       r.telechargements === false],
     ['aucun trace n\'a ete produit en memoire', r.programme === false],
+    // LE MEME DEFAUT AVAIT DEUX SYMPTOMES, ET UN SEUL ETAIT MESURE, 01/09.
+    //
+    // 0101 faisait entrer l'EPS par le chemin vectoriel mais laissait deux
+    // autres endroits decider sur `nature === 'pdf'` seul. L'un vectorisait
+    // l'EPS, et le controle au-dessus l'a vu. L'autre annoncait « image » dans
+    // le bandeau du fichier, et rien ne le regardait : c'est pourtant le
+    // symptome que le visiteur, lui, voyait.
+    ['et l\'action le felicite, comme pour un PDF : deja vectoriel',
+      /déjà vectoriel/.test(r.actionFichier)],
   ], [`${r.fiche?.format} ${r.fiche?.largeurMm} x ${r.fiche?.hauteurMm} mm, `
       + `${r.fiche?.traces} traces, ${r.fiche?.images} image(s), `
       + `${r.couleurs} couleur(s)`]);

@@ -1066,8 +1066,20 @@ async function traiter(fichier) {
     // L'interprete PostScript retire l'exception au lieu de la corriger : un
     // EPS devient un PDF chez le visiteur, et il repart dans le chemin
     // vectoriel qui existe depuis le 19/08, sans une ligne de special.
+    // LA QUESTION SE POSE UNE FOIS, ET PAS TROIS, 01/09/2026.
+    //
+    // « Ce fichier est-il deja vectoriel » se decidait a trois endroits de
+    // cette fonction, et 0101 n'en a corrige qu'un en faisant entrer l'EPS.
+    // Les deux autres testaient encore `nature === 'pdf'` seul, donc un EPS
+    // etait lu comme un vectoriel, puis traite comme une image : il ressortait
+    // annonce « image » dans le bandeau, et il se faisait vectoriser, c'est a
+    // dire qu'on lui rendait une copie approximative de son propre dessin.
+    //
+    // Le harnais l'a vu, et c'est exactement pour ca qu'il existe.
+    const dejaVectoriel = nature === 'pdf' || nature === 'postscript';
+
     let image;
-    if (nature === 'pdf' || nature === 'postscript') {
+    if (dejaVectoriel) {
       etape = 'lecture du fichier vectoriel';
       direEtape('Lecture du fichier vectoriel');
       const lu = await lireVectoriel(fichier, { direEtape });
@@ -1091,7 +1103,7 @@ async function traiter(fichier) {
     // (arbitrage Alex du 20/08). L'origine se connait ici ; pour une image, le
     // sort de la vectorisation se connait plus bas, et le bandeau est re-rendu
     // a ce moment la.
-    etat.fichierEtat = nature === 'pdf'
+    etat.fichierEtat = dejaVectoriel
       ? { origine: etat.fiche?.faux_vectoriel ? 'faux_vectoriel' : 'vectoriel' }
       : { origine: 'image', vectorise: null };
 
@@ -1114,7 +1126,7 @@ async function traiter(fichier) {
     // lui propose aucun telechargement : lui rendre une version tracee de son
     // propre vectoriel serait lui rendre une copie degradee de ce qu'il a
     // deja.
-    if (nature === 'pdf') {
+    if (dejaVectoriel) {
       // Sur /vectoriser, il faut le DIRE : la page n'affiche pas de fiche, et
       // un depot qui ne produit rien ressemblerait a une panne. Ce fichier n'a
       // pas besoin d'etre vectorise, et c'est une bonne nouvelle.
