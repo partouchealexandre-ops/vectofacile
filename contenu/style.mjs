@@ -210,9 +210,29 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
      bloc mange l'ecran juste sous la zone de depot. 460 est le compromis
      mesure : le marquage poitrine y tient sur une soixantaine de pixels, celui
      du carnet sur soixante-dix. */
-  .vitrine { --hauteur-vitrine: 460px;
-             display: flex; align-items: flex-end; justify-content: center;
-             flex-wrap: wrap; gap: 28px; margin: 0 0 30px; }
+  /* LA VITRINE EST UNE BANDE, 31/08/2026. Trois etats successifs ont echoue le
+     meme jour, et il faut les garder pour que personne ne les rejoue : trois
+     images nues sur le sol creme, qui montraient leurs rectangles blancs ;
+     trois cartes a filet, qui les soulignaient au lieu de les effacer ; une
+     carte unique dans le cadre, deja mieux. La bande pleine largeur est la
+     suite : une seule surface blanche, ou les fonds blancs des JPEG se fondent,
+     et plus aucun rectangle a voir.
+
+     ALIGNEMENT AU CENTRE ET NON EN BAS. Tant que les objets etaient a leur
+     taille reelle, une ligne de sol commune avait du sens. A hauteurs
+     arbitrees, elle n'en a plus : le centre est ce que fait tout catalogue.
+
+     SI UN DEFILEMENT HORIZONTAL APPARAIT, la ligne fautive est celle du
+     margin en 50vw : sur un systeme dont la barre de defilement occupe de la
+     place, 100vw depasse la largeur utile. Remplacer alors les deux valeurs
+     par 0 remet la bande dans le cadre de 1120 px, sans rien casser d'autre. */
+  .vitrine { --hauteur-vitrine: 300px;
+             background: var(--carte);
+             border-top: 1px solid var(--trait); border-bottom: 1px solid var(--trait);
+             margin: 30px calc(50% - 50vw) 34px; padding: 32px 24px 22px;
+             max-width: 100vw;
+             display: flex; align-items: center; justify-content: center;
+             flex-wrap: wrap; gap: 34px; }
   /* LES OBJETS SONT POSES SUR DES CARTES, 31/08/2026. Ces photos sont des JPEG :
      le blanc du studio est dans le pixel, aucune transparence n'est possible, et
      le detourage se casserait justement sur le t-shirt blanc sur fond blanc. Sur
@@ -221,14 +241,18 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
      que le site pose sur son sol. Un filet de 1 px et non un cadre epais, parce
      que la legende promet des objets a leur taille relative reelle, et qu'une
      marge constante mentirait davantage sur le petit que sur le grand. */
-  .vitrine img { display: block; width: auto; border-radius: 10px;
-                 height: calc(var(--hauteur-vitrine) * var(--part, 1));
-                 border: 1px solid var(--trait);
-                 background: var(--carte); }
-  .vitrine figcaption { flex-basis: 100%; color: var(--gris-texte); font-size: 14px;
-                        line-height: 1.5; margin: 4px 0 0; text-align: center; }
-  @media (max-width: 900px) { .vitrine { --hauteur-vitrine: 340px; gap: 20px; } }
-  @media (max-width: 620px) { .vitrine { --hauteur-vitrine: 240px; gap: 14px; } }
+  /* Ni filet ni arrondi : l'image n'est plus une carte, elle est posee SUR la
+     carte. Le filet de 0094 servait a rendre le rectangle blanc volontaire ;
+     la bande le fait disparaitre, ce qui vaut mieux. */
+  .vitrine img { display: block; width: auto;
+                 height: calc(var(--hauteur-vitrine) * var(--part, 1)); }
+  .vitrine figcaption { flex-basis: 100%; color: var(--gris-texte); font-size: 13.5px;
+                        line-height: 1.5; margin: 16px auto 0; text-align: center;
+                        max-width: 74ch; }
+  @media (max-width: 900px) { .vitrine { --hauteur-vitrine: 240px; gap: 24px;
+                                         padding: 26px 20px 18px; } }
+  @media (max-width: 620px) { .vitrine { --hauteur-vitrine: 180px; gap: 16px;
+                                         padding: 22px 16px 16px; } }
 
   .bandeau { display: grid; gap: 28px; align-items: center; margin: 4px 0 16px; }
   .bandeau h1 { margin-top: 0; }

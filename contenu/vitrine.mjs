@@ -38,56 +38,75 @@
  */
 
 /*
- * LES OBJETS SONT A LEUR TAILLE RELATIVE REELLE, arbitrage Alex du 26/08.
+ * LA TAILLE RELATIVE REELLE EST ABANDONNEE, arbitrage Alex du 31/08, qui
+ * renverse celui du 26/08. Il faut dire pourquoi, parce que l'arbitrage
+ * precedent n'etait pas faux.
  *
- * La premiere version rendait les trois photos a la MEME largeur de tuile. Un
- * carnet A5 y paraissait aussi grand qu'un t-shirt. Sur un site dont toute la
- * doctrine dit que le millimetre est la verite, c'est une image fausse, et
- * c'est celle qu'un acheteur voit en premier.
+ * CE QU'IL DISAIT. Rendre les trois photos a la meme hauteur ferait paraitre
+ * un carnet A5 aussi grand qu'un t-shirt. Sur un site dont toute la doctrine
+ * dit que le millimetre est la verite, c'est une image fausse.
  *
- * Les millimetres ci-dessous ne sont pas estimes : ils se deduisent du lot.
- * Chaque vue porte les dimensions de sa zone en mm et en pixels, donc une
- * echelle, donc la taille reelle de la photo entiere. Le composeur recalcule
- * ces valeurs a chaque passage et refuse celles qui ne correspondent plus.
+ * CE QU'IL COUTAIT, et qu'on a mis cinq jours a voir. Le rapport reel du
+ * carnet au t-shirt vaut 0,32. Aucune mise en page ne rend harmonieuse une
+ * rangee ou un objet vaut le quart d'un autre : il y aura toujours un grand
+ * vide et un petit objet perdu dans un coin. Trois traitements successifs ont
+ * ete essayes, filet, carte, bande pleine largeur, et aucun n'y pouvait rien,
+ * parce que le defaut n'etait pas dans la mise en page.
  *
- * Controle de vraisemblance, fait a la main une fois : le rapport carnet sur
- * t-shirt sort a 0,32. Un carnet A5 mesure 210 mm, un t-shirt a plat environ
- * 700, soit 0,30. La derivation dit donc la meme chose que le metre.
+ * ET SON BENEFICE ETAIT INVISIBLE. Rien a l'ecran ne dit qu'une echelle est
+ * respectee ; il faut lire trois lignes de legende pour l'apprendre. C'etait
+ * une exactitude que personne ne percoit, payee par la seule image de la page
+ * d'accueil.
+ *
+ * OU L'ECHELLE REELLE RESTE, ET C'EST L'ESSENTIEL. Dans le simulateur, ou le
+ * visiteur choisit son objet, pose son logo et lit ses millimetres. La, elle
+ * est le produit. Sur une vitrine d'accueil, c'etait du zele.
+ *
+ * La legende perd donc la phrase sur la taille relative, qui deviendrait
+ * fausse, et garde la seule qui engage : simulation, pas validation.
+ *
+ * Doctrine : une exactitude que personne ne peut percevoir n'est pas une
+ * exactitude, c'est une contrainte.
  */
 export const VITRINE = [
   {
-    image: 'p01_01.jpg', part: 0.58, encre: 'navy',
+    image: 'p01_01.jpg', part: 0.58, encre: 'navy', hauteurVue: 1,
     largeurPx: 700, hauteurPx: 882,
     largeurMmPhoto: 495, hauteurMmPhoto: 623,
     alt: 'Le logo Bon à Marquer imprimé sur le devant d\'un tote bag en coton écru, '
        + 'à 174 millimètres de large.',
   },
   {
-    image: 'p02_05.jpg', part: 0.92, encre: 'navy',
+    image: 'p02_05.jpg', part: 0.92, encre: 'navy', hauteurVue: 1,
     largeurPx: 700, hauteurPx: 708,
     largeurMmPhoto: 727, hauteurMmPhoto: 736,
     alt: 'Le même logo en marquage poitrine sur un t-shirt blanc, à 92 millimètres de large.',
   },
   {
-    // LE DOS PLUTOT QUE LE DEVANT, arbitrage Alex du 26/08/2026 : « le carnet est
-    // trop petit, ce n'est pas parlant ». La taille du carnet, elle, ne se
-    // negocie pas, c'est celle d'un A5 a cote d'un t-shirt. Ce qui se negocie,
-    // c'est l'EMPLACEMENT : le devant en haut n'offre que 80 x 70 mm, soit la
-    // moitie de la largeur de la couverture, quand le dos en offre 110 x 180,
-    // soit soixante-dix pour cent. Le marquage y est donc nettement plus grand
-    // sans qu'aucune echelle ait bouge, et la surface y est unie, sans la
-    // poche diagonale ni le passant du devant.
-    // 236 ET NON 235, corrige le 26/08/2026 par le controle du composeur.
-    // J'avais calcule l'echelle sur la LARGEUR de la zone, 110 mm pour 467 px.
-    // Elle se lit sur la PLUS GRANDE DIMENSION, ici la hauteur, 180 mm pour
-    // 763 px, et c'est une regle du projet, pas un detail : la plus grande
-    // dimension porte le moins d'erreur relative. Les deux calculs donnent
-    // 235,31 et 235,67 mm, qui n'arrondissent pas au meme entier.
-    image: 'p04_16.jpg', part: 0.80, encre: 'blanc',
-    largeurPx: 663, hauteurPx: 999,
-    largeurMmPhoto: 156, hauteurMmPhoto: 236,
-    alt: 'Le logo dans sa version blanche sur le dos d\'un carnet A5 à couverture souple, '
-       + 'à 88 millimètres de large.',
+    // LE DEVANT PLUTOT QUE LE DOS, arbitrage Alex du 31/08, qui renverse celui
+    // du 26/08. La raison est metier et elle prime sur la geometrie : un carnet
+    // se marque sur sa premiere de couverture, c'est la que l'acheteur attend
+    // son logo, et une vitrine doit ressembler a ce qu'on commande.
+    //
+    // CE QUE CA COUTE, mesure. La zone du devant en haut fait 80 x 70 mm quand
+    // le dos en offrait 110 x 180. Le marquage maximal passe donc de 110 a
+    // 80 mm. La part monte a 0,95 pour compenser : le logo fait 76 mm sur une
+    // couverture de 154, soit 49 % de sa largeur, contre 56 % au dos. L'ecart
+    // se voit a peine, et il est du bon cote de la verite : sur ce carnet, on
+    // ne peut pas marquer plus large que 80 mm.
+    //
+    // CE QUI VIENT AVEC. La premiere de couverture porte une poche diagonale et
+    // un passant elastique, la ou le dos etait uni. C'est moins propre en
+    // geometrie et plus vrai en usage.
+    //
+    // L'ENCRE RESTE BLANCHE, et ce n'est plus seulement une preference : cette
+    // couverture est navy, exactement notre navy. Le logo en encre de marque y
+    // serait illisible.
+    image: 'p04_13.jpg', part: 0.95, encre: 'blanc', hauteurVue: 0.70,
+    largeurPx: 659, hauteurPx: 1000,
+    largeurMmPhoto: 154, hauteurMmPhoto: 234,
+    alt: 'Le logo dans sa version blanche sur la première de couverture d\'un carnet A5 '
+       + 'à couverture souple, à 76 millimètres de large.',
   },
 ];
 
@@ -99,17 +118,25 @@ export const VITRINE = [
  * ne casse, et c'est exactement pour ca qu'un controle la garde.
  */
 export const LEGENDE = 'Ces trois images sont produites par cet outil, sur des zones aux '
-  + 'dimensions déclarées par les fabricants, et les objets sont à leur taille relative '
-  + 'réelle. C\'est une simulation, pas une validation.';
+  + 'dimensions déclarées par les fabricants. C\'est une simulation, pas une validation.';
 
 /**
- * LA PART DE HAUTEUR DE CHAQUE OBJET, entre 0 et 1, le plus grand valant 1.
+ * LA PART DE HAUTEUR DE CHAQUE OBJET A L'ECRAN, entre 0 et 1.
  *
- * C'est la seule chose que la feuille de style a besoin de savoir : elle
- * multiplie une hauteur de reference par cette part. Le rapport largeur sur
- * hauteur, lui, vient de l'image elle-meme, donc il ne peut pas se tromper.
+ * Elle etait DERIVEE des millimetres jusqu'au 31/08 : le carnet y valait 0,32
+ * du t-shirt, sa vraie proportion, et c'est ce qui rendait la rangee
+ * impossible a composer. Elle est desormais ARBITREE, comme dans n'importe
+ * quel catalogue, et le fichier le dit au lieu de le cacher.
+ *
+ * Les deux textiles occupent la hauteur pleine. Le carnet est pose a 0,70 :
+ * assez petit pour qu'on lise que ce n'est pas un textile, assez grand pour
+ * que son marquage se voie. Ce nombre est un reglage d'oeil, il se change sans
+ * rien casser, et c'est exactement pour ca qu'il vit ici et pas dans le CSS.
+ *
+ * Le rapport largeur sur hauteur, lui, continue de venir de l'image elle-meme :
+ * un objet n'est jamais deforme, il est seulement mis a une autre echelle que
+ * son voisin.
  */
 export function partsDeHauteur() {
-  const plusGrand = Math.max(...VITRINE.map((v) => v.hauteurMmPhoto));
-  return new Map(VITRINE.map((v) => [v.image, v.hauteurMmPhoto / plusGrand]));
+  return new Map(VITRINE.map((v) => [v.image, v.hauteurVue ?? 1]));
 }
