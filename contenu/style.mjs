@@ -148,10 +148,21 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
   .cta-entete { font-size: 14px; font-weight: 700; padding: 9px 15px; border-radius: 8px;
                 border: 1.5px solid var(--orange); background: var(--orange); color: var(--navy);
                 text-decoration: none; white-space: nowrap; }
+  /* LE BOUTON SECONDAIRE SE VOIT, 31/08/2026. Sa bordure etait le filet du
+     site : #E5E1D8 sur le sol creme mesure 1,23:1, quand un controle
+     d'interface demande 3:1. Il ne passait pas davantage sur le blanc d'avant,
+     le sol n'a rien casse, il a rendu le defaut visible.
+
+     POURQUOI IL COMPTE PLUS QU'AILLEURS. Sur l'accueil, la regle du 26/08
+     retire le bouton orange, qui pointerait vers la page ou l'on se trouve
+     deja. Ce bouton-ci est donc le SEUL de l'entete, et c'etait le seul a ne
+     pas se voir. Sa bordure passe au navy, 13,22:1. Il reste un contour et non
+     un aplat : la zone de depot doit rester l'appel principal de cette page. */
   .cta-secondaire { display: inline-block; padding: 9px 15px; border-radius: 8px;
-                    border: 1.5px solid var(--trait); color: var(--encre); font-weight: 600;
+                    border: 1.5px solid var(--navy); background: var(--carte);
+                    color: var(--encre); font-weight: 600;
                     font-size: 14px; text-decoration: none; white-space: nowrap; }
-  .cta-secondaire:hover { border-color: var(--gris); }
+  .cta-secondaire:hover { background: var(--gris-clair); }
   .mesures-detail summary { cursor: pointer; color: var(--gris-texte); font-size: 14px;
                             padding: 8px 0; font-weight: 600; }
   #couleurs h2, #verdict h2 { margin-top: 26px; }
@@ -202,9 +213,18 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
   .vitrine { --hauteur-vitrine: 460px;
              display: flex; align-items: flex-end; justify-content: center;
              flex-wrap: wrap; gap: 28px; margin: 0 0 30px; }
+  /* LES OBJETS SONT POSES SUR DES CARTES, 31/08/2026. Ces photos sont des JPEG :
+     le blanc du studio est dans le pixel, aucune transparence n'est possible, et
+     le detourage se casserait justement sur le t-shirt blanc sur fond blanc. Sur
+     le sol creme, ce blanc faisait donc un rectangle qui avait l'air d'un oubli.
+     Un filet le rend volontaire : l'objet est pose sur une carte, comme tout ce
+     que le site pose sur son sol. Un filet de 1 px et non un cadre epais, parce
+     que la legende promet des objets a leur taille relative reelle, et qu'une
+     marge constante mentirait davantage sur le petit que sur le grand. */
   .vitrine img { display: block; width: auto; border-radius: 10px;
                  height: calc(var(--hauteur-vitrine) * var(--part, 1));
-                 background: var(--gris-clair); }
+                 border: 1px solid var(--trait);
+                 background: var(--carte); }
   .vitrine figcaption { flex-basis: 100%; color: var(--gris-texte); font-size: 14px;
                         line-height: 1.5; margin: 4px 0 0; text-align: center; }
   @media (max-width: 900px) { .vitrine { --hauteur-vitrine: 340px; gap: 20px; } }
@@ -686,6 +706,21 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
   [hidden] { display: none !important; }
 
   /* Le contenu sous l'outil. Colonne de lecture, comme partout ailleurs. */
+  /* LE GRAS PREND LE NAVY, 31/08/2026. Aucune regle ne lui donnait de couleur :
+     il heritait de son paragraphe. Dans un texte en gris de texte, un mot en
+     gras valait donc 5,13:1 comme le reste de la phrase, et ne se detachait que
+     par sa graisse. En navy il monte a 13,22:1.
+
+     Porte sur le texte de LECTURE seulement : accroche, corps editorial, blocs
+     d'explication. Les etats gardent leur couleur, un mot en gras dans une
+     carte rouge ne doit pas devenir navy. */
+  .accroche b, .accroche strong,
+  .explication p b, .explication p strong,
+  .explication li b, .explication li strong,
+  .page-contenu p b, .page-contenu p strong,
+  .page-contenu li b, .page-contenu li strong,
+  .page-contenu td b, .page-contenu td strong { color: var(--navy); }
+
   .explication { margin-top: 56px; border-top: 1px solid var(--trait); padding-top: 8px; }
   .explication h2, .explication p, .explication ul, .explication ol { max-width: 68ch; }
   .explication h3 { font-family: 'Poppins', var(--pile-systeme); font-weight: 700;
