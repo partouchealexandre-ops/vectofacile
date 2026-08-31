@@ -24,7 +24,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { STYLE } from '../contenu/style.mjs';
-import { RUBRIQUES, PIED, EN_ATTENTE } from '../contenu/pages.mjs';
+import { RUBRIQUES, PIED, EN_ATTENTE, NOTES_PIED } from '../contenu/pages.mjs';
 import { DOMAINE, partage } from './entetes.mjs';
 import { LEGENDE, VITRINE, partsDeHauteur } from '../contenu/vitrine.mjs';
 import { CONFIDENTIALITE } from '../contenu/confidentialite.mjs';
@@ -290,7 +290,7 @@ function colonnesDerivees(pages) {
   })).filter((c) => c.liens.length);
 }
 
-function pied(publiees, pagesPubliees = []) {
+function pied(publiees, pagesPubliees = [], url = null) {
   const derivees = colonnesDerivees(pagesPubliees);
   // L'ordre reste celui de la table : l'outil, les rubriques derivees a leur
   // place, l'editeur en dernier.
@@ -303,10 +303,12 @@ function pied(publiees, pagesPubliees = []) {
     if (liens.length === 0) return '';
     return `<div><b>${c.titre}</b>${liens.map((l) => `<a href="${l.url}">${l.titre}</a>`).join('')}</div>`;
   }).join('');
+  // La phrase propre a la page, s'il y en a une, apres la mention commune.
+  const note = url && NOTES_PIED[url] ? `\n  <p class="mention">${NOTES_PIED[url]}</p>` : '';
   return `<footer class="pied-site">
   <div class="colonnes">${colonnes}</div>
   <p class="mention">Bon à Marquer est une initiative Bytouch. Votre logo n'est jamais
-  envoyé : l'analyse se fait dans votre navigateur.</p>
+  envoyé : l'analyse se fait dans votre navigateur.</p>${note}
 </footer>`;
 }
 
@@ -836,7 +838,31 @@ if (!REPERES_ACTIONS.test(accueil)) {
   console.error('  contenu/accueil.html ne porte plus ses reperes d\'actions d\'entete.');
   process.exit(1);
 }
+/*
+ * LE PIED DES TROIS PAGES D'OUTIL, pose le 01/09/2026.
+ *
+ * Meme faute que la navigation figee du 19/08, au meme endroit et pour la meme
+ * raison : un bloc recopie a la main dans un gabarit diverge de sa source. Les
+ * trois pages d'outil portaient chacune un pied ecrit a la main, d'une ligne,
+ * sans le moindre lien. Mesure du 01/09 : six liens sur l'accueil, dix sur
+ * /vectoriser, sept sur /voir-mon-logo, contre vingt-sept sur une fiche du
+ * guide. Ce sont les trois pages qu'un visiteur atteint en premier, et ce sont
+ * les trois qui ne menaient nulle part.
+ *
+ * Elles recoivent desormais le meme pied que les vingt-trois autres, injecte
+ * entre deux reperes depuis contenu/pages.mjs. Une seule verite par sujet.
+ */
+const REPERES_PIED = /<!-- pied-site:debut[\s\S]*?pied-site:fin -->/;
+const verifierPied = (gabarit, nom) => {
+  if (REPERES_PIED.test(gabarit)) return;
+  console.error(`  contenu/${nom} ne porte plus ses reperes de pied de page.`);
+  console.error('  Sans eux, la page sortirait sans pied : aucun lien vers le');
+  console.error('  guide, les questions ni le journal, sur la page la plus vue.');
+  process.exit(1);
+};
+
 const REPERES_VITRINE = /<!-- vitrine:debut[\s\S]*?vitrine:fin -->/;
+verifierPied(accueil, 'accueil.html');
 if (!REPERES_VITRINE.test(accueil)) {
   console.error('  contenu/accueil.html ne porte plus ses reperes de vitrine.');
   process.exit(1);
@@ -854,6 +880,7 @@ for (const v of VITRINE) {
 fs.writeFileSync(path.join(PUBLIC, 'index.html'),
   accueil.replace(REPERES, laNavDe('/'))
     .replace(REPERES_ACTIONS, actionsEntete('/'))
+    .replace(REPERES_PIED, pied(publiees, pages, '/'))
     .replace(REPERES_VITRINE, vitrine())
     .replaceAll('{{DOMAINE}}', DOMAINE));
 
@@ -881,6 +908,7 @@ if (!REPERES_ACTIONS.test(vectoriser)) {
   console.error('  contenu/vectoriser.html ne porte plus ses reperes d\'actions d\'entete.');
   process.exit(1);
 }
+verifierPied(vectoriser, 'vectoriser.html');
 if (!/data-mode="vectoriser"/.test(vectoriser)) {
   console.error('  contenu/vectoriser.html a perdu son data-mode="vectoriser" :');
   console.error('  la page afficherait le diagnostic complet qu\'elle promet de ne pas faire.');
@@ -890,6 +918,7 @@ fs.mkdirSync(path.join(PUBLIC, 'vectoriser'), { recursive: true });
 fs.writeFileSync(path.join(PUBLIC, 'vectoriser', 'index.html'),
   vectoriser.replace(REPERES, laNavDe('/vectoriser'))
     .replace(REPERES_ACTIONS, actionsEntete('/vectoriser'))
+    .replace(REPERES_PIED, pied(publiees, pages, '/vectoriser'))
     .replaceAll('{{DOMAINE}}', DOMAINE));
 
 /**
@@ -915,6 +944,7 @@ if (!REPERES_ACTIONS.test(voirMonLogo)) {
   console.error('  contenu/voir-mon-logo.html ne porte plus ses reperes d\'actions d\'entete.');
   process.exit(1);
 }
+verifierPied(voirMonLogo, 'voir-mon-logo.html');
 if (!/src\/simulation\/page\.js/.test(voirMonLogo)) {
   console.error('  contenu/voir-mon-logo.html ne charge plus le simulateur :');
   console.error('  la page promettrait un apercu qu\'elle ne rendrait pas.');
@@ -967,7 +997,8 @@ const tableauObjets = '<table class="objets-simulation">'
 
 fs.mkdirSync(path.join(PUBLIC, 'voir-mon-logo'), { recursive: true });
 fs.writeFileSync(path.join(PUBLIC, 'voir-mon-logo', 'index.html'),
-  voirMonLogo.replace(REPERES, laNavDe('/voir-mon-logo'))
+  voirMonLogo.replace(REPERES_PIED, pied(publiees, pages, '/voir-mon-logo'))
+    .replace(REPERES, laNavDe('/voir-mon-logo'))
     .replace(REPERES_ACTIONS, actionsEntete('/voir-mon-logo'))
     .replace(REPERES_OBJETS, tableauObjets)
     .replaceAll('{{DOMAINE}}', DOMAINE));

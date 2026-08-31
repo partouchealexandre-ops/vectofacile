@@ -145,3 +145,22 @@ export const PIED = [
     ],
   },
 ];
+
+/**
+ * LA PHRASE QUE CERTAINES PAGES AJOUTENT SOUS LE PIED COMMUN.
+ *
+ * Les trois pages d'outil portaient chacune un pied ecrit a la main, d'une
+ * ligne, sans aucun lien : l'accueil en emettait six, /vectoriser dix,
+ * /voir-mon-logo sept, contre vingt-sept sur une fiche du guide. Elles
+ * recoivent desormais le meme pied que les autres. Ce qu'elles disaient de
+ * propre a elles ne se perd pas pour autant : il se declare ici, a cote du
+ * pied, et pas dans le gabarit ou personne ne le retrouve.
+ *
+ * La promesse de confidentialite n'y figure plus : le pied commun la porte
+ * deja pour toutes les pages, et une seule verite par sujet.
+ */
+export const NOTES_PIED = {
+  '/': 'Le diagnostic par technique s\'étend à mesure que les seuils du référentiel '
+    + 'de marquage sont arbitrés, un par un. Rien n\'est affiché tant que ce n\'est pas '
+    + 'établi : une case vide vous est plus utile qu\'un chiffre plausible.',
+};
