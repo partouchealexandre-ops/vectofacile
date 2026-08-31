@@ -136,6 +136,15 @@ async function deposer(page, octets, nom, type) {
       telechargements: document.getElementById('telechargements').offsetParent !== null,
       ficheVisible: document.getElementById('fiche').offsetParent !== null,
       titreFiche: document.querySelector('#fiche h2')?.textContent ?? null,
+      // LA LIGNE FORMAT, LUE EN textContent ET PAS EN innerText, 31/08/2026.
+      // innerText rend une chaine VIDE des que l'element n'est pas rendu, et
+      // un controle qui interroge du vide passe au vert sur rien. C'est
+      // exactement ce qui est arrive au premier jet du bloc EPS : trois
+      // controles rouges pour la mauvaise raison, et un quatrieme vert pour
+      // la mauvaise raison aussi, ce qui est le pire des deux.
+      ligneFormat: [...document.querySelectorAll('#fiche .ligne')]
+        .find((l) => l.querySelector('.intitule')?.textContent === 'Format')
+        ?.textContent ?? '',
       // Depuis le 24/08 un conseil tient sur une ligne : le titre est un <b>,
       // plus un <h3>.
       conseils: [...document.querySelectorAll('#conseils .conseil b')].map((x) => x.textContent),
@@ -268,31 +277,36 @@ await page.waitForTimeout(900);
   const avantDepot = requetesGs.length;
 
   const r = await deposer(page, eps, 'logo.eps', 'application/postscript');
-  const texte = r.verdictCourt + ' ' + r.teteComplete;
-  const fiche = await page.evaluate(() => {
-    const f = document.getElementById('fiche');
-    return f && !f.hidden ? f.innerText : '';
-  });
 
   bloc('UN EPS EST AUDITE COMME N\'IMPORTE QUEL VECTORIEL', [
     ['il est lu sans erreur', r.erreur === null],
     ['l\'interprete PostScript ne s\'etait PAS charge pour les PDF precedents',
       avantDepot === 0],
     ['et il se charge bien pour l\'EPS', requetesGs.length > 0],
-    ['la fiche dit EPS, pas PDF', /EPS/.test(fiche)],
-    // 301,4 x 170,2 points valent 106,3 x 60,0 mm. Le controle porte sur les
-    // MILLIMETRES servis : c'est la conversion qui peut casser, pas la lecture.
+    ['sa fiche apparait', r.ficheVisible === true],
+    ['la fiche dit EPS, pas PDF',
+      /EPS/.test(r.ligneFormat) && !/PDF/.test(r.ligneFormat)],
+    ['et elle dit d\'ou vient la lecture', /interprète/i.test(r.ligneFormat)],
+    // 301,4 points valent 106,3 mm. Le controle porte sur les MILLIMETRES
+    // servis : c'est la conversion qui peut casser, pas la lecture.
     ['sa taille reelle est lue dans le fichier, en millimetres',
-      /106,3 × 60,0 mm/.test(fiche)],
+      Math.abs((r.fiche?.largeurMm ?? 0) - 106.3) < 0.5
+      && Math.abs((r.fiche?.hauteurMm ?? 0) - 60.0) < 0.5],
     ['ses traces sont comptes, donc l\'interprete a rendu un dessin',
-      /tracé/.test(fiche)],
+      r.fiche?.traces > 0],
+    // CE CONTROLE SE LIT SUR L'ETAT, PAS SUR UNE ABSENCE DE TEXTE. Ecrit
+    // comme une negation sur du DOM, il passait au vert quand le DOM etait
+    // vide, c'est a dire quand il ne prouvait rien.
     ['il n\'est PAS pris pour un faux vectoriel',
-      !/n\'est pas réellement vectoriel/.test(fiche)],
+      r.fiche?.faux_vectoriel === false],
     ['le diagnostic par technique s\'affiche, ce qu\'aucun EPS n\'obtenait',
       r.verdict === true],
     ['et aucun bouton de telechargement n\'apparait : rien a vectoriser',
       r.telechargements === false],
-  ], [fiche.replace(/\s+/g, ' ').slice(0, 160)]);
+    ['aucun trace n\'a ete produit en memoire', r.programme === false],
+  ], [`${r.fiche?.format} ${r.fiche?.largeurMm} x ${r.fiche?.hauteurMm} mm, `
+      + `${r.fiche?.traces} traces, ${r.fiche?.images} image(s), `
+      + `${r.couleurs} couleur(s)`]);
 }
 
 // 4. RIEN NE PART, ET C'EST CA QU'IL FAUT PROUVER.
