@@ -357,8 +357,14 @@ function balises(page) {
   // donc pas des BlogPosting : ce sont des Article, avec le meme auteur et la
   // meme paire de dates. Les quatorze pages qui portent l'actif du site
   // etaient justement les seules qu'un moteur ne pouvait pas dater.
+  //
+  // ET SEULEMENT ELLES. Un index n'est pas un article, des mentions legales
+  // non plus. Porter une date dans le sitemap et se declarer Article sont deux
+  // choses differentes : la premiere vaut pour toute page, la seconde pour les
+  // seules pages redactionnelles. La table des dates sert les deux, la liste
+  // des familles tranche la seconde.
   const dates = datesDe(page);
-  if (!page.date && dates) {
+  if (!page.date && dates && FAMILLES_DATEES.some((f) => f.test(page.url))) {
     graphe.push({
       '@type': 'Article',
       headline: page.titre,
