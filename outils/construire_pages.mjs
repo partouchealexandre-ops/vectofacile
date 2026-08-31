@@ -84,7 +84,9 @@ function sectionMinimums(url) {
   const lignes = valeurs.map((v) => `<tr>
 <td>${mmTexte(v.mm)}&nbsp;mm</td>
 <td>${echapper(v.support)}</td>
-<td>${v.url ? `<a href="${echapper(v.url)}" rel="nofollow noopener">${echapper(v.source)}</a>` : echapper(v.source)}</td>
+<td>${v.url
+  ? `<a href="${echapper(v.url)}" rel="noopener">${echapper(v.source)}</a>`
+  : `${echapper(v.source)} <span class="sans-lien">document fournisseur, pas d'URL publique</span>`}</td>
 <td>${echapper(v.date)}</td>
 </tr>`).join('\n');
   const min = mmTexte(valeurs[0].mm);
@@ -95,8 +97,10 @@ function sectionMinimums(url) {
 <p>Il n'existe pas UN seuil pour cette technique, et ce tableau le montre : les
 minimums publiés vont de <b>${min} à ${max}&nbsp;mm selon la matière</b>. Chaque ligne
 vient d'un fabricant ou d'un atelier qui la publie, avec le support qu'il nomme, et le
-lien pour vérifier sans nous croire. <a href="/">Déposez votre logo</a> pour savoir où
-son trait le plus fin se situe dans ces valeurs.</p>
+lien pour vérifier sans nous croire quand cette source est en ligne. Quand elle ne l'est
+pas, la ligne le dit : le chiffre vient alors d'un document remis par le fournisseur, que
+nous ne pouvons pas republier. <a href="/">Déposez votre logo</a> pour savoir où son
+trait le plus fin se situe dans ces valeurs.</p>
 <table class="minimums-sources">
 <thead><tr><th>trait minimal</th><th>matière nommée par la source</th><th>source</th><th>relevé le</th></tr></thead>
 <tbody>

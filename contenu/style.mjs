@@ -485,6 +485,13 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
   .minimums td.date, .minimums td.tient { color: var(--gris); white-space: nowrap; }
   .minimums tr.ne-tient-pas td.mm, .minimums tr.ne-tient-pas td.tient { color: #b23b32; }
   .minimums a { color: inherit; }
+  /* LA CASE QUI N'A PAS DE LIEN, 31/08/2026. Le paragraphe au-dessus du tableau
+     promettait un lien sur chaque ligne ; onze des vingt et une lignes de la
+     serigraphie n'en avaient pas. On ne fabrique pas le lien manquant, on ecrit
+     ce qui manque. Une promesse se tient ou se reformule, elle ne se laisse pas
+     dementir par le tableau qu'elle annonce. */
+  .minimums .sans-lien { display: block; font-size: 11px; color: var(--gris);
+    font-style: italic; }
   #largeur label { display: inline-block; color: var(--gris); font-size: 14px; margin-right: 10px; }
   #largeur input { width: 110px; padding: 9px 12px; font: inherit; font-size: 16px;
                    border: 1px solid var(--trait); border-radius: 6px; background: #fff; }
