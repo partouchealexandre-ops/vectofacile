@@ -36,6 +36,8 @@ import { QUESTIONS_FORMATS } from '../contenu/questions/formats.mjs';
 import { QUESTIONS_OUVERTURE } from '../contenu/questions/ouverture.mjs';
 import { TECHNIQUES } from '../contenu/guide/techniques.mjs';
 import { ARTICLES } from '../contenu/blog/articles.mjs';
+import { REFERENTIEL } from '../contenu/referentiel.mjs';
+import { datesDe, DATES_PAGES, FAMILLES_DATEES } from './dates_pages.mjs';
 
 /**
  * LES MINIMUMS SOURCES ENTRENT DANS LES GUIDES, 20/08/2026.
@@ -351,6 +353,27 @@ function balises(page) {
       publisher: { '@type': 'Organization', name: 'Bon à Marquer' },
     });
   }
+  // UNE FICHE ET UNE QUESTION SE DATENT AUSSI. Elles ne sont pas du journal,
+  // donc pas des BlogPosting : ce sont des Article, avec le meme auteur et la
+  // meme paire de dates. Les quatorze pages qui portent l'actif du site
+  // etaient justement les seules qu'un moteur ne pouvait pas dater.
+  const dates = datesDe(page);
+  if (!page.date && dates) {
+    graphe.push({
+      '@type': 'Article',
+      headline: page.titre,
+      description: page.meta,
+      datePublished: dates.publiee,
+      dateModified: dates.modifiee,
+      mainEntityOfPage: { '@type': 'WebPage', '@id': `${DOMAINE}${page.url}` },
+      author: { '@type': 'Organization', name: 'Bon à Marquer' },
+      publisher: { '@type': 'Organization', name: 'Bon à Marquer' },
+    });
+  }
+  // Une page qui apporte son propre objet structure le pose ici. Le
+  // referentiel porte son Dataset, parce que la donnee decrite est la sienne
+  // et que personne d'autre ne sait la decrire.
+  if (page.dataset) graphe.push(page.dataset);
   if (page.faq && page.faq.length > 0) {
     graphe.push({
       '@type': 'FAQPage',
@@ -708,6 +731,7 @@ const candidates = [
   ...QUESTIONS_TOUTES,
   indexJournal(ARTICLES),
   ...ARTICLES,
+  REFERENTIEL,
   QUI_SOMMES_NOUS,
   MENTIONS,
 ];
@@ -720,6 +744,21 @@ const retenues = [];
 for (const p of candidates) {
   if (p.manquants && p.manquants.length > 0) retenues.push(p);
   else pages.push(p);
+}
+
+// UNE FICHE OU UNE QUESTION SANS DATE NE SE PUBLIE PAS. Le controle est ecrit
+// sur ce qui doit etre la, page par page, et pas sur l'absence d'un manque :
+// une page ajoutee demain sans sa ligne dans dates_pages.mjs arrete la
+// construction au lieu de sortir muette pour les moteurs.
+const sansDate = pages
+  .filter((p) => FAMILLES_DATEES.some((f) => f.test(p.url)))
+  .filter((p) => !DATES_PAGES[p.url]);
+if (sansDate.length > 0) {
+  console.error('  Page sans date dans outils/dates_pages.mjs :');
+  for (const p of sansDate) console.error(`    ${p.url}`);
+  console.error('  Ajouter sa ligne, sinon la page sort sans auteur ni date et');
+  console.error('  aucun moteur ne peut la dater.');
+  process.exit(1);
 }
 
 // Une URL en double serait deux pages qui se cannibalisent. On refuse.
@@ -999,12 +1038,20 @@ if (nonIgnorees.length > 0) {
   process.exit(1);
 }
 
+// UNE PAGE DATEE SE DECLARE DATEE DANS LE SITEMAP AUSSI. Le lastmod est ce que
+// le robot lit avant de decider s'il revient. Il n'est ecrit que la ou une date
+// existe vraiment : un lastmod invente a la date du jour est un mensonge que
+// les moteurs apprennent a ignorer, et ils l'ignorent alors partout.
 const sitemap = ['<?xml version="1.0" encoding="UTF-8"?>',
   '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
   `<url><loc>${DOMAINE}/</loc></url>`,
   `<url><loc>${DOMAINE}/vectoriser</loc></url>`,
   `<url><loc>${DOMAINE}/voir-mon-logo</loc></url>`,
-  ...pages.map((p) => `<url><loc>${DOMAINE}${p.url}</loc></url>`),
+  ...pages.map((p) => {
+    const d = datesDe(p);
+    return `<url><loc>${DOMAINE}${p.url}</loc>`
+      + (d ? `<lastmod>${d.modifiee}</lastmod>` : '') + '</url>';
+  }),
   '</urlset>', ''].join('\n');
 fs.writeFileSync(path.join(PUBLIC, 'sitemap.xml'), sitemap);
 
