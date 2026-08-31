@@ -107,9 +107,11 @@ trait le plus fin se situe dans ces valeurs.</p>
 ${lignes}
 </tbody>
 </table>
-<p class="note">Relevé du référentiel Bon à Marquer. Une valeur dont la source ne nomme
-aucun support n'entre pas dans ce tableau, quelle que soit sa notoriété : une règle de
-préparation de fichier d'imprimerie n'est pas une contrainte de marquage d'objet.</p>`,
+<div class="encadre-info">
+<p>Relevé du référentiel Bon à Marquer. Une valeur dont la source ne nomme aucun support
+n'entre pas dans ce tableau, quelle que soit sa notoriété : une règle de préparation de
+fichier d'imprimerie n'est pas une contrainte de marquage d'objet.</p>
+</div>`,
   };
 }
 

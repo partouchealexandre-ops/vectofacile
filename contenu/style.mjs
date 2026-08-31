@@ -48,7 +48,27 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
        choses finit toujours par etre juste pour une seule. */
     --gris-texte: #5F6B76;
     --trait: #E3E8ED;
-    --accent: #0A2D4D;
+    /* LA COULEUR D'INFORMATION, 31/08/2026. Ce jeton existait depuis le premier
+       jour et valait le navy : une place reservee, jamais remplie. La palette
+       n'avait donc aucune couleur pour dire "voici comment ca marche". Tout ce
+       qui explique etait navy ou gris, et c'est ce qui rendait les pages sages.
+
+       MESURES. #2474C6 sur blanc : 4,79:1, donc il porte du texte. Blanc sur
+       #2474C6 : 4,79:1, donc un aplat porte du texte blanc. Navy sur
+       #EAF3FB : 12,51:1.
+
+       DEUX INTERDITS QUI VIENNENT DE LA MESURE, pas du gout. Le bleu sur
+       #EAF3FB tombe a 4,26:1 : dans l'encadre d'information, le texte est navy,
+       le bleu ne tient que les filets, les numeros et les pictos, ou le seuil
+       est de 3:1. Le bleu sur un aplat navy tombe a 2,93:1 : on ne superpose
+       jamais les deux.
+
+       DEUX INTERDITS QUI VIENNENT DU SENS. Le bleu n'entre pas dans une carte
+       de feu : le jour ou il se pose a cote des lampes, le visiteur lit quatre
+       etats au lieu de trois. Et il ne touche pas un bouton : l'orange est la
+       seule couleur d'action, cette regle-la ne bouge pas. */
+    --accent: #2474C6;
+    --info-clair: #EAF3FB;
     --gris-clair: #F6F8FA;
     --vert: #0E7C52;
     /* LES LAMPES DU FEU, et pourquoi elles ne sont pas les couleurs de charte.
@@ -806,8 +826,11 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
 .jour-item { padding: 0 0 30px; border-bottom: 1px solid var(--trait); margin: 0 0 30px;
              max-width: 68ch; }
 .jour-item:last-child { border-bottom: 0; padding-bottom: 6px; margin-bottom: 0; }
+/* Le sur-titre de rubrique est le premier usage de la couleur d'information :
+   il ne dit pas un etat, il dit de quoi on va parler. C'est exactement ce que
+   ce bleu signifie. */
 .jour-axe { font-size: 11.5px; font-weight: 700; letter-spacing: .06em;
-            text-transform: uppercase; color: var(--gris-texte); margin: 0 0 8px; }
+            text-transform: uppercase; color: var(--accent); margin: 0 0 8px; }
 .jour-service { font-size: 13.5px; color: var(--gris-texte); margin: 0 0 8px; }
 /* La regle de rubrique des h2 porte deux selecteurs, donc elle
    l'emporte sur une classe seule : le titre d'article se qualifie ici avec le
@@ -840,6 +863,16 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
    visiblement d'une autre nature que la liste qui precede. C'est la doctrine
    des deux largeurs appliquee a l'envers de d'habitude : ce qui se BALAIE
    prend le cadre, ce qui se LIT prend la colonne. */
+/* L'ENCADRE D'INFORMATION. Il porte ce qui explique la lecture d'un tableau ou
+   d'une regle, et pas le tableau lui-meme. Son fond ne le distingue presque pas
+   du blanc, 1,12:1 : c'est le filet qui le fait exister, comme pour nos
+   encadres gris. Le texte y est navy, jamais bleu, la mesure l'impose. */
+.encadre-info { background: var(--info-clair); border: 1px solid #C9DDF1;
+  border-left: 3px solid var(--accent); border-radius: 0 10px 10px 0;
+  padding: 14px 18px; margin: 18px 0 24px; max-width: 68ch; }
+.encadre-info p { margin: 0; font-size: 13.5px; line-height: 1.55; color: var(--navy); }
+.encadre-info p + p { margin-top: 8px; }
+
 .jour-cadre { background: var(--gris-clair); border: 1px solid var(--trait);
               border-radius: 10px; padding: 26px 28px 28px; margin: 48px 0 0; }
 .page-contenu .jour-cadre h2 { margin: 0 0 4px; max-width: none; }
