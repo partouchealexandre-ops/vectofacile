@@ -64,7 +64,7 @@ un vectoriel propre. Une vignette de 300 pixels prise sur un site web donne un t
 anguleux, où les petits textes se déforment. Notre outil mesure cela et vous le dit
 avant que vous ne téléchargiez quoi que ce soit, plutôt que de vous laisser découvrir le
 problème chez le marqueur.</p>
-<p class="agir"><a class="cta-secondaire" href="/vectoriser">Fabriquer mon fichier vectoriel,
+<p class="agir"><a class="cta-corps" href="/vectoriser">Fabriquer mon fichier vectoriel,
 gratuitement et sans envoi</a></p>`,
       },
       {

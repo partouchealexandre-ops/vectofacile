@@ -231,8 +231,8 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
              border-top: 1px solid var(--trait); border-bottom: 1px solid var(--trait);
              margin: 30px calc(50% - 50vw) 34px; padding: 32px 24px 22px;
              max-width: 100vw;
-             display: flex; align-items: center; justify-content: center;
-             flex-wrap: wrap; gap: 34px; }
+             display: flex; align-items: flex-end; justify-content: center;
+             flex-wrap: wrap; gap: 44px; }
   /* LES OBJETS SONT POSES SUR DES CARTES, 31/08/2026. Ces photos sont des JPEG :
      le blanc du studio est dans le pixel, aucune transparence n'est possible, et
      le detourage se casserait justement sur le t-shirt blanc sur fond blanc. Sur
@@ -839,6 +839,19 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
 .encadre b { font-family: \'Poppins\', var(--pile-systeme); font-weight: 600; color: var(--navy); }
 .preuve { background: #F0F7F3; border-color: #C6E3D4; border-left-color: var(--vert); }
 .preuve b { color: #0B5C3D; }
+/* L'APPEL DANS LE CORPS D'UNE PAGE, 31/08/2026, arbitrage Alex.
+   Trois pages du corpus portent un bouton vers un outil au milieu de leur
+   texte. Il etait en contour, donc discret, alors que c'est l'action que la
+   page vient de rendre necessaire. Il prend l'orange, et l'entete de ces
+   pages-la le rend : sur une page qui explique un probleme, l'action utile est
+   dans le texte, pas en haut de l'ecran. */
+.cta-corps { display: inline-block; margin: 4px 0 2px;
+  font-family: 'Poppins', var(--pile-systeme); font-weight: 700; font-size: 15px;
+  padding: 12px 24px; border-radius: 9px;
+  border: 1.5px solid var(--orange); background: var(--orange);
+  color: var(--navy); text-decoration: none; }
+.cta-corps:hover { background: #FF8C2B; border-color: #FF8C2B; }
+
 .appel { text-align: center; margin: 40px 0 10px; }
 .appel a { display: inline-block; font-family: \'Poppins\', var(--pile-systeme); font-weight: 600;
   font-size: 15px; padding: 13px 26px; border-radius: 9px; background: var(--orange);
@@ -846,7 +859,11 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
 
 /* ----------------------------------------------- navigation et pied commun */
 
-.nav-site { display: flex; align-items: center; gap: 18px; font-size: 14px;
+/* 26 px ET NON 18, 31/08/2026. A 18 px les trois rubriques se lisaient comme
+   un seul bloc de mots. La valeur ne change QUE sur grand ecran : en dessous de
+   1024 px, le clamp plus bas reprend la main et redescend a 11,8 px, la ou
+   l'entete se joue au pixel pres. */
+.nav-site { display: flex; align-items: center; gap: 26px; font-size: 14px;
             font-weight: 500; flex-wrap: wrap; }
 .nav-site a { color: var(--texte); text-decoration: none; white-space: nowrap; }
 .nav-site a:hover, .nav-site a[aria-current] { color: var(--navy); }

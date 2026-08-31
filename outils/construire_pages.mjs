@@ -146,14 +146,25 @@ const echapper = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').r
  * navy. C'est l'appat qui amene au diagnostic, pas la destination du site : il
  * garde un relief, il ne garde pas la premiere place.
  *
- * UN SEUL BOUTON ORANGE PAR ECRAN, arbitrage du 18/08 toujours en vigueur.
- * Des deux boutons de droite, l'orange reste sur « Evaluer votre logo ». Le
- * simulateur ne valide rien, master prompt §8 : il ne peut pas etre la porte
- * d'entree du site. L'orange dit « commencer », le navy dit « continuer ».
+ * UN SEUL BOUTON ORANGE VISIBLE A LA FOIS, arbitrage du 18/08 precise le
+ * 31/08. La formule d'origine disait « par ecran », et elle etait deja
+ * enfreinte sans que personne l'ait vu : chaque page de contenu porte un appel
+ * orange en pied de corps depuis toujours, en plus de celui de l'entete. Les
+ * deux ne se voient jamais ensemble, separes par huit cents mots, et c'est ce
+ * qui rendait la faute invisible. La regle dit donc ce qu'elle a toujours
+ * voulu dire : deux oranges ne se regardent pas.
+ *
+ * L'orange n'est plus ecrit sur un bouton, il se CALCULE, et le corps de la
+ * page peut le reprendre. Le detail est dans le commentaire de la liste,
+ * plus bas.
+ *
+ * Le simulateur ne valide rien, master prompt §8 : il ne peut pas etre la
+ * porte d'entree du site, et il ne prend donc l'orange que sur l'accueil, ou
+ * le diagnostic est deja sous les yeux du visiteur.
  *
  * L'orange reste le dernier element de la ligne, comme depuis le 18/08.
  */
-function actionsEntete(urlCourante) {
+function actionsEntete(urlCourante, orangeDansLeCorps = false) {
   // UN BOUTON NE SE REND PAS SUR LA PAGE VERS LAQUELLE IL POINTE, decisions 1
   // et 2 du brief navigation, arbitrees par Alex le 26/08/2026.
   //
@@ -166,14 +177,34 @@ function actionsEntete(urlCourante) {
   // qui refuse de fabriquer un lien mort refuse aussi de fabriquer un lien
   // vers soi-meme. Elle vaut donc aussi pour « Mon logo sur des goodies » sur
   // /voir-mon-logo. C'est le composant qui porte la garantie, pas le relecteur.
+  //
+  // L'ORANGE SE CALCULE, IL N'EST PLUS ECRIT SUR UN BOUTON, 31/08/2026.
+  //
+  // Il etait attache a « Évaluer votre logo ». Sur l'accueil, ou ce bouton est
+  // justement retire parce qu'il pointerait vers la page courante, il ne restait
+  // donc AUCUN orange : le seul appel de l'entete y etait un contour, et il ne
+  // se voyait pas. Un attribut fixe ne peut pas suivre une regle conditionnelle.
+  //
+  // La regle est desormais : l'orange revient au bouton restant de plus haute
+  // priorite. Le diagnostic passe devant la simulation, parce qu'il est
+  // l'entree du produit ; quand il est retire, la simulation prend l'orange.
+  //
+  // ET IL SE REND QUAND LE CORPS EN PORTE UN. Sur les trois pages dont le texte
+  // appelle un outil a quelques lignes du titre, deux oranges se verraient d'un
+  // seul coup d'oeil. L'entete cede alors la place a celui du corps, qui est
+  // plus proche de la raison d'agir.
   const boutons = [
-    { classe: 'cta-secondaire', href: '/voir-mon-logo', texte: 'Mon logo sur des goodies' },
-    { classe: 'cta-entete', href: '/', texte: 'Évaluer votre logo' },
-  ];
+    { rang: 2, classe: 'cta-secondaire', href: '/voir-mon-logo', texte: 'Mon logo sur des goodies' },
+    { rang: 1, classe: 'cta-secondaire', href: '/', texte: 'Évaluer votre logo' },
+  ].filter((b) => b.href !== urlCourante);
+
+  if (!orangeDansLeCorps && boutons.length > 0) {
+    const principal = boutons.reduce((a, b) => (b.rang < a.rang ? b : a));
+    principal.classe = 'cta-entete';
+  }
+
   return '<div class="droite">'
-    + boutons.filter((b) => b.href !== urlCourante)
-      .map((b) => `<a class="${b.classe}" href="${b.href}">${b.texte}</a>`)
-      .join('')
+    + boutons.map((b) => `<a class="${b.classe}" href="${b.href}">${b.texte}</a>`).join('')
     + '</div>';
 }
 
@@ -197,7 +228,7 @@ function vitrine() {
   return `<figure class="vitrine">${images}<figcaption>${echapper(LEGENDE)}</figcaption></figure>`;
 }
 
-function entete(urlCourante, publiees) {
+function entete(urlCourante, publiees, orangeDansLeCorps = false) {
   const liens = RUBRIQUES.filter((r) => publiees.has(r.url)).map((r) =>
     `<a href="${r.url}"${urlCourante.startsWith(r.url) && r.url !== '/' ? ' aria-current="page"' : ''}>${r.titre}</a>`
   ).join('');
@@ -212,7 +243,7 @@ function entete(urlCourante, publiees) {
   return `<header class="entete">
   <a class="lockup" href="/">${symbole}<span class="mot">Bon à<br>Marquer</span></a>
   <nav class="nav-site">${liens}</nav>
-  ${actionsEntete(urlCourante)}
+  ${actionsEntete(urlCourante, orangeDansLeCorps)}
 </header>`;
 }
 
@@ -450,7 +481,7 @@ ${balises(page)}
 </head>
 <body>
 <div class="page-contenu">
-${entete(page.url, publiees)}
+${entete(page.url, publiees, corps.includes('cta-corps'))}
 <p class="fil">${filVisible(page, publiees)}</p>
 ${page.axe ? `<p class="jour-axe">${echapper(page.axe)}</p>` : ''}
 <h1>${echapper(page.h1)}</h1>

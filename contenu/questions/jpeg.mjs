@@ -29,7 +29,7 @@ export const QUESTIONS_JPEG = [
       {
         h2: 'Vectoriser, ce que ça veut dire exactement',
         html: `
-<p class="agir"><a class="cta-secondaire" href="/vectoriser">Vectoriser mon image, gratuitement
+<p class="agir"><a class="cta-corps" href="/vectoriser">Vectoriser mon image, gratuitement
 et sans envoi</a></p>
 <p>Un JPEG est une grille de points de couleur. Vectoriser, c'est faire parcourir cette
 grille par un programme qui cherche les frontières entre les zones de couleur et les
