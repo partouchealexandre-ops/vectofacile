@@ -52,7 +52,7 @@ un marqueur. <a href="/">Déposez votre logo</a>, c'est gratuit et rien ne quitt
 votre navigateur.</p></div>`,
 };
 
-export const TECHNIQUES = [
+const FICHES = [
   {
     url: '/guide/serigraphie',
     titre: 'La sérigraphie sur objet publicitaire',
@@ -628,3 +628,72 @@ découvrir au bon à tirer.</p>`,
     ],
   },
 ];
+
+
+/**
+ * LE RENVOI VERS LE REFERENTIEL, ajoute le 31/08/2026.
+ *
+ * Chaque fiche sert deja SES valeurs sourcees, dans le tableau que
+ * `sectionMinimums()` insere a la construction. Ce qu'aucune fiche ne dit,
+ * c'est que ces valeurs font partie d'un releve plus large, et qu'on peut les
+ * comparer d'une technique a l'autre sur une seule page. Sans ce renvoi, la
+ * page /referentiel est orpheline : rien n'y mene depuis le corps du site, et
+ * une page ou aucun lien n'entre est une page qu'un moteur explore tard et
+ * classe bas.
+ *
+ * IL S'AJOUTE AU DERNIER PARAGRAPHE PLUTOT QU'EN SECTION NOUVELLE : sept h2
+ * identiques sur sept pages fabriqueraient exactement le contenu repete que le
+ * reste du site evite. Le libelle de la technique entre dans la phrase, donc
+ * les sept renvois ne sont pas la meme ligne recopiee.
+ *
+ * AUCUN CHIFFRE SUIVI D'UNE UNITE ici, et ce n'est pas un detail de style : le
+ * harnais des pages refuserait la construction, et il aurait raison, parce
+ * qu'un millimetre ecrit hors du tableau des sources serait un millimetre sans
+ * provenance.
+ */
+/**
+ * LE NOM DE LA TECHNIQUE, AVEC SON ARTICLE, ECRIT EN TOUTES LETTRES.
+ *
+ * Premiere version fausse, 31/08 : le nom etait derive du h1 par une
+ * expression reguliere qui forcait « la ». Elle rendait « la impression
+ * numerique UV », « la marquage a chaud » et « la transfert DTF ». Deuxieme
+ * version fausse dix minutes plus tard : l'article etait juste, mais la phrase
+ * le prefixait par « de », ce qui rendait « de le transfert DTF » au lieu de
+ * « du transfert DTF ».
+ *
+ * La table porte donc le groupe COMPLET, contraction comprise, tel qu'il se lit
+ * dans la phrase. Une regle de grammaire francaise ne se devine pas depuis une
+ * chaine, et une table qui ne stocke qu'une moitie du groupe laisse l'autre
+ * moitie se deviner ailleurs. Sept entrees ecrites en toutes lettres coutent
+ * moins cher que deux tours de correction.
+ */
+const DE_LA_TECHNIQUE = {
+  '/guide/serigraphie': 'de la sérigraphie',
+  '/guide/tampographie': 'de la tampographie',
+  '/guide/gravure-laser': 'de la gravure laser',
+  '/guide/broderie': 'de la broderie',
+  '/guide/impression-numerique-uv': "de l'impression numérique UV",
+  '/guide/transfert-dtf': 'du transfert DTF',
+  '/guide/marquage-a-chaud': 'du marquage à chaud',
+};
+
+/**
+ * AUCUN RENVOI POSITIONNEL DANS CETTE PHRASE, et la premiere version en
+ * portait un. Elle disait « les valeurs ci-dessus », ce que le harnais SEO a
+ * refuse, et il avait raison : un passage extrait seul par un moteur de reponse
+ * doit rester lisible, et « ci-dessus » ne designe plus rien une fois la page
+ * partie. La phrase nomme donc sa technique.
+ */
+const renvoiReferentiel = (fiche) => `
+<p class="renvoi">Bon à Marquer relève aussi les épaisseurs minimales de trait des six
+autres techniques de marquage. Pour les comparer avec celles
+${DE_LA_TECHNIQUE[fiche.url]}, sur une seule page et avec la source de chaque ligne,
+voyez le <a href="/referentiel">relevé des épaisseurs minimales de trait par
+technique</a>.</p>`;
+
+export const TECHNIQUES = FICHES.map((fiche) => ({
+  ...fiche,
+  sections: fiche.sections.map((s, i) => (i === fiche.sections.length - 1
+    ? { ...s, html: s.html + renvoiReferentiel(fiche) }
+    : s)),
+}));
