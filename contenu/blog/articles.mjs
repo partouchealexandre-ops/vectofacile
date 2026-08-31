@@ -33,6 +33,17 @@
  * pas de palette d'infographie distincte de celle du site. Les textes se
  * tiennent sans elles ; les images s'ajouteront sans toucher au texte.
  *
+ * DEUX CHAMPS POUR LE RYTHME, ajoutes le 31/08. `axe` reprend les quatre axes
+ * du plan editorial et se lit en sur-titre : c'est ce qui donne au journal une
+ * structure visible des l'index, et ce qui portera les filtres quand il y aura
+ * assez d'articles pour qu'un filtre veuille dire quelque chose. `mots` porte
+ * les mots-cles affiches en pilules. Ni l'un ni l'autre n'entre dans une URL :
+ * une taxonomie qui commande des adresses ne se change plus.
+ *
+ * LA DUREE DE LECTURE NE S'ECRIT PAS ICI. Elle se CALCULE sur le texte rendu,
+ * a la construction. Ecrite a la main, elle serait fausse a la premiere
+ * correction, et fausse en silence.
+ *
  * Source : corpus/article_01_fichier_refuse.md et corpus/article_02_totebag_stylo.md,
  * ecrits dans la nuit du 25 au 26/08/2026.
  */
@@ -41,6 +52,8 @@ export const ARTICLES = [
   {
     url: '/blog/mon-fichier-a-ete-refuse',
     date: '2026-08-31',
+    axe: 'La situation vécue',
+    mots: ['Fichier refusé', 'Format vectoriel', 'Fond blanc', 'Monochrome', 'Graphiste'],
     titre: 'Fichier refusé par le marqueur : que faire',
     titreCourt: 'Mon fichier a été refusé par le marqueur',
     meta: "Un marqueur refuse un fichier pour un petit nombre de raisons, toujours les "
@@ -80,8 +93,8 @@ dessin, et aucun format ne le réparera.</p>
 <tr><td>Le délai</td><td>des minutes</td><td>des jours</td></tr>
 </tbody>
 </table>
-<div class="encadre"><p>Un fichier se répare. Un dessin se retravaille. Confondre les deux
-fait perdre une semaine à demander un devis de graphiste pour un problème de format.</p></div>`,
+<blockquote class="exergue"><p>Un fichier se répare. Un dessin se retravaille. Confondre les deux
+fait perdre une semaine à demander un devis de graphiste pour un problème de format.</p></blockquote>`,
       },
       {
         h2: "Les causes qui reviennent, dans l'ordre où elles arrivent",
@@ -119,8 +132,8 @@ promettre un rendu avant production. Et sur plusieurs de ces causes, notre réf�
 encore « nous ne savons pas » plutôt que d'avancer un chiffre : les sources professionnelles
 consultées divergent d'un facteur important sur la finesse minimale d'un trait, et publier
 une moyenne serait inventer une donnée.</p>
-<div class="encadre"><p>Un site qui vous donne un nombre là où le métier n'est pas d'accord
-ne vous rend pas service. Il vous rend confiant, ce qui est autre chose.</p></div>`,
+<blockquote class="exergue"><p>Un site qui vous donne un nombre là où le métier n'est pas d'accord
+ne vous rend pas service. Il vous rend confiant, ce qui est autre chose.</p></blockquote>`,
       },
       {
         h2: 'Ce qui se règle en quelques minutes',
@@ -191,6 +204,8 @@ d'écart.</p>`,
   {
     url: '/blog/le-meme-logo-tote-bag-et-stylo',
     date: '2026-08-31',
+    axe: "L'anatomie d'un échec",
+    mots: ['Emplacement', 'Petits objets', 'Traits fins', 'Contre-formes', 'Simulation'],
     titre: 'Le même logo sur un tote bag et sur un stylo',
     titreCourt: 'Le même logo passe sur un tote bag et rate sur un stylo',
     meta: "Un logo n'est pas accepté ou refusé dans l'absolu. Ce qui change d'un objet à "
@@ -210,8 +225,8 @@ réduit sur l'autre dans un rapport considérable.</p>
 ce ne sont pas seulement ses dimensions qui diminuent : ce sont ses traits, ses espacements,
 ses contre-formes, et le texte de sa signature. Une mécanique qui tenait largement à une
 échelle se retrouve au bord de ce que le procédé sait déposer.</p>
-<div class="encadre"><p>Un logo ne devient pas mauvais en changeant d'objet. Il devient
-petit, et le petit est un régime différent.</p></div>`,
+<blockquote class="exergue"><p>Un logo ne devient pas mauvais en changeant d'objet. Il devient
+petit, et le petit est un régime différent.</p></blockquote>`,
       },
       {
         h2: 'Ce qui casse en premier quand la surface rétrécit',
@@ -263,8 +278,8 @@ pouvons pas.</li>
 <li><b>Le dessin doit être retravaillé.</b> Et dans ce cas le brief à transmettre est écrit
 pour vous.</li>
 </ol>
-<div class="encadre"><p>Un site qui répond seulement oui ou non vous cache l'information la
-plus utile : qui doit agir ensuite.</p></div>`,
+<blockquote class="exergue"><p>Un site qui répond seulement oui ou non vous cache l'information la
+plus utile : qui doit agir ensuite.</p></blockquote>`,
       },
       {
         h2: 'Comment le voir avant de commander',

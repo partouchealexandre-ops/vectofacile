@@ -24,6 +24,21 @@
 export const RUBRIQUES = [
   { titre: 'Techniques de marquage', url: '/guide/' },
   { titre: 'Questions fréquentes', url: '/questions/' },
+  // LE JOURNAL ENTRE DANS L'ENTETE, ET C'EST MESURE, 31/08/2026.
+  //
+  // L'arbitrage du 26/08 le laissait dehors, sur une mesure : une rubrique de
+  // plus avait fait passer l'entete de 79 a 135 pixels. Cette mesure la portait
+  // sur une rubrique LONGUE. « Journal » fait sept caracteres, et il entre dans
+  // le mou qui existe deja. Mesure du 31/08, hauteur de l'entete avec et sans,
+  // sur /guide/serigraphie :
+  //
+  //   1600 px : 67 et 67     1024 px : 60 et 60     600 px : 100 et 100
+  //   1280 px : 67 et 67      900 px : 60 et 60     480 px : 100 et 100
+  //   1180 px : 62 et 62      760 px : 60 et 60     390 px : 126 et 126
+  //
+  // Zero pixel de plus, a toutes les largeurs. L'arbitrage du 26/08 avait
+  // raison sur une rubrique longue, et tort sur celle ci.
+  { titre: 'Journal', url: '/blog/' },
 ];
 
 /*

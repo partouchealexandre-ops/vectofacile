@@ -334,6 +334,35 @@ const RUBRIQUE_LIBELLE = {
   '/blog/': 'Journal',
 };
 
+/**
+ * LA DUREE DE LECTURE SE CALCULE, ELLE NE S'ECRIT PAS.
+ *
+ * Ecrite a la main dans le champ d'un article, elle serait fausse a la
+ * premiere correction, et fausse en silence : personne ne relit une duree.
+ * Elle se compte donc sur le texte REELLEMENT rendu, chapo et questions
+ * comprises, a chaque construction.
+ *
+ * Deux cents mots par minute : c'est la fourchette basse des mesures publiees
+ * pour un adulte lisant du francais sur ecran, et la fourchette basse est la
+ * bonne ici. Annoncer sept minutes pour un texte qui en prend neuf fait
+ * abandonner en cours de route ; l'inverse ne coute rien.
+ */
+const MOTS_PAR_MINUTE = 200;
+function dureeLecture(page) {
+  const morceaux = [page.chapo ?? '', ...(page.sections ?? []).map((x) => x.html ?? ''),
+                    ...(page.faq ?? []).flatMap((f) => [f.q, f.r])];
+  const texte = morceaux.join(' ').replace(/<[^>]+>/g, ' ');
+  const mots = texte.split(/\s+/).filter((m) => /[\p{L}\p{N}]/u.test(m)).length;
+  return Math.max(1, Math.round(mots / MOTS_PAR_MINUTE));
+}
+
+/** La ligne de service d'un article : sa date, et le temps qu'il demande. */
+function ligneService(page) {
+  if (!page.date) return '';
+  return `<p class="jour-service"><time datetime="${page.date}">${dateLisible(page.date)}</time>`
+    + ` <span aria-hidden="true">·</span> ${dureeLecture(page)} min de lecture</p>`;
+}
+
 /** La date d'un article, telle qu'elle se lit. */
 const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet',
               'août', 'septembre', 'octobre', 'novembre', 'décembre'];
@@ -341,6 +370,20 @@ function dateLisible(iso) {
   const [a, m, j] = String(iso).split('-').map(Number);
   if (!a || !m || !j) return '';
   return `${j} ${MOIS[m - 1]} ${a}`;
+}
+
+/**
+ * LES MOTS-CLES, EN PILULES, ET SANS LIEN.
+ *
+ * Ils donnent au lecteur la matiere de l'article en un coup d'oeil, et ils
+ * n'emmenent nulle part : une pilule cliquable promet une page par mot-cle,
+ * et vingt-six articles feraient cent pages de listes quasi vides. Le jour ou
+ * une famille aura assez d'articles pour meriter sa page, elle l'aura.
+ */
+function motsCles(page) {
+  if (!page.mots?.length) return '';
+  const items = page.mots.map((m) => `<li>${echapper(m)}</li>`).join('');
+  return `<ul class="jour-mots">${items}</ul>`;
 }
 
 function faqVisible(page) {
@@ -380,7 +423,12 @@ function voisines(page, questions) {
 }
 
 function rendre(page, publiees, questions = [], toutesPages = []) {
-  const corps = page.sections.map((s) => `<h2>${echapper(s.h2)}</h2>${s.html.trim()}`).join('\n');
+  // LE TITRE DE SECTION DEVIENT FACULTATIF. L'index du journal est une LISTE
+  // d'articles dont chacun porte son propre titre : lui coiffer un « Les
+  // articles » ferait deux niveaux de titre pour une seule liste, et le
+  // second, le vrai, se retrouverait au troisieme rang.
+  const corps = page.sections
+    .map((s) => `${s.h2 ? `<h2>${echapper(s.h2)}</h2>` : ''}${s.html.trim()}`).join('\n');
   return `<!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -398,11 +446,13 @@ ${balises(page)}
 <div class="page-contenu">
 ${entete(page.url, publiees)}
 <p class="fil">${filVisible(page, publiees)}</p>
+${page.axe ? `<p class="jour-axe">${echapper(page.axe)}</p>` : ''}
 <h1>${echapper(page.h1)}</h1>
-${page.date ? `<p class="note">Publié le ${dateLisible(page.date)}.</p>` : ''}
+${ligneService(page)}
 <p class="chapo">${echapper(page.chapo)}</p>
 ${corps}
 ${faqVisible(page)}
+${motsCles(page)}
 ${voisines(page, questions)}
 <div class="appel"><a href="/">Diagnostiquer mon logo, gratuitement</a></div>
 </div>
@@ -536,11 +586,13 @@ function indexJournal(articles) {
   const ranges = articles.map((a, i) => ({ a, i }))
     .sort((x, y) => (x.a.date < y.a.date ? 1 : x.a.date > y.a.date ? -1 : x.i - y.i))
     .map((x) => x.a);
-  const items = ranges.map((a) =>
-    `<h3><a href="${a.url}">${echapper(a.titreCourt ?? a.h1)}</a></h3>`
-    + `<p class="note">Publié le ${dateLisible(a.date)}.</p>`
-    + `<p>${echapper(a.chapo)}</p>`
-  ).join('');
+  const items = ranges.map((a) => `<article class="jour-item">`
+    + (a.axe ? `<p class="jour-axe">${echapper(a.axe)}</p>` : '')
+    + ligneService(a)
+    + `<h2 class="jour-titre"><a href="${a.url}">${echapper(a.titreCourt ?? a.h1)}</a></h2>`
+    + `<p class="jour-chapo">${echapper(a.chapo)}</p>`
+    + motsCles(a)
+    + `</article>`).join('');
   return {
     url: '/blog/',
     titre: 'Le journal du marquage sur objet',
@@ -551,19 +603,40 @@ function indexJournal(articles) {
       + "gestes. Ici, on part d'une situation que vous êtes en train de vivre, et on dit "
       + "quoi faire ensuite.",
     sections: [
-      { h2: 'Les articles', html: items },
+      { h2: null, html: `<div class="jour-liste">${items}</div>` },
+      // LE CADRE QUI CASSE LE RYTHME, arbitrage d'Alex du 31/08 : « ça vient
+      // vraiment alourdir le bloc, il faudrait l'allonger pour qu'il soit
+      // moins haut, et peut-être qu'il soit dans un cadre, pour casser un peu
+      // le rythme ».
+      //
+      // Le bloc etait rendu comme une section d'article de plus : meme
+      // largeur, meme allure, meme colonne de lecture. Il se lisait donc comme
+      // un troisieme article, en trois puces empilees qui ajoutaient deux
+      // cents pixels de hauteur a la fin d'une page dont ce n'est pas le
+      // sujet. Il devient un panneau gris qui prend TOUTE la largeur du cadre
+      // et range ses trois points en colonnes : plus large, donc plus court,
+      // et visiblement d'une autre nature que ce qui precede.
+      //
+      // Le titre entre DANS le panneau, ce qui n'etait possible que depuis que
+      // le titre de section est facultatif.
       {
-        h2: 'Ce que vous ne trouverez pas ici',
-        html: `<ul>
-<li><b>Aucun seuil chiffré présenté comme une règle du métier.</b> Les sources
-professionnelles se contredisent sur la plupart de ces valeurs, et une moyenne calculée
-sur des sources qui divergent est une donnée inventée. Quand nous ne savons pas, nous
-l'écrivons.</li>
-<li><b>Aucun conseil qui vous engage sans vous le dire.</b> Une mesure n'est pas une
-validation, et rien ici ne remplace le bon à tirer de votre fournisseur.</li>
-<li><b>Aucun jugement sur votre logo.</b> Un fichier se mesure, un dessin se discute, et
-les deux appartiennent à celui qui les a payés.</li>
-</ul>`,
+        h2: null,
+        html: `<aside class="jour-cadre">
+<h2>Ce que vous ne trouverez pas ici</h2>
+<p class="note">Trois choses que ce journal ne fera pas, et c'est volontaire.</p>
+<div class="jour-cadre-colonnes">
+<div><b>Aucun seuil chiffré présenté comme une règle du métier.</b>
+<p>Les sources professionnelles se contredisent sur la plupart de ces valeurs, et une
+moyenne calculée sur des sources qui divergent est une donnée inventée. Quand nous ne
+savons pas, nous l'écrivons.</p></div>
+<div><b>Aucun conseil qui vous engage sans vous le dire.</b>
+<p>Une mesure n'est pas une validation, et rien ici ne remplace le bon à tirer de votre
+fournisseur.</p></div>
+<div><b>Aucun jugement sur votre logo.</b>
+<p>Un fichier se mesure, un dessin se discute, et les deux appartiennent à celui qui les
+a payés.</p></div>
+</div>
+</aside>`,
       },
     ],
     faq: [],

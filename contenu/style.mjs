@@ -747,6 +747,92 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
 }
 
 /* Bloc « A lire aussi », genere en pied de chaque question. */
+/* ------------------------------------------------------------ le journal
+
+   POURQUOI CE BLOC EXISTE, arbitrage d'Alex du 31/08 : « la mise en page est
+   vraiment trop sage, il n'y a pas de mise en exergue, il n'y a pas de
+   rythme ». L'index rendait chaque article en h3 de quinze pixels suivi d'un
+   paragraphe : trois articles se lisaient comme une table des matieres.
+
+   LE RYTHME VIENT DE QUATRE CHOSES, et d'aucune couleur nouvelle : un
+   sur-titre qui situe l'article, une ligne de service qui le date et le
+   chiffre, un titre nettement plus gros que le corps, et un filet qui separe.
+
+   L'ORANGE N'ENTRE PAS ICI. Regle du 18/08 : un seul bouton orange par ecran,
+   celui qui ramene a l'outil, et sur ces pages c'est l'appel du bas. Les
+   pilules de mots-cles prennent donc le gris clair et le navy.
+
+   LE TITRE D'ARTICLE SORT DE LA FOURCHETTE DES h2, et c'est assume : la charte
+   pose les h2 entre 19 et 21 px pour un titre DANS une colonne de lecture. Un
+   titre d'article dans un index n'est pas un intertitre, c'est le lien vers
+   une page, et son role est celui d'un h1 de vignette. A confirmer par Alex. */
+.jour-liste { margin: 8px 0 0; }
+.jour-item { padding: 0 0 30px; border-bottom: 1px solid var(--trait); margin: 0 0 30px;
+             max-width: 68ch; }
+.jour-item:last-child { border-bottom: 0; padding-bottom: 6px; margin-bottom: 0; }
+.jour-axe { font-size: 11.5px; font-weight: 700; letter-spacing: .06em;
+            text-transform: uppercase; color: var(--gris); margin: 0 0 8px; }
+.jour-service { font-size: 13.5px; color: var(--gris); margin: 0 0 8px; }
+/* La regle de rubrique des h2 porte deux selecteurs, donc elle
+   l'emporte sur une classe seule : le titre d'article se qualifie ici avec le
+   meme poids, sinon sa marge haute reste celle d'un intertitre et le titre
+   flotte a vingt pixels de sa date. */
+.page-contenu .jour-titre { font-family: 'Poppins', var(--pile-systeme); font-weight: 700;
+              font-size: clamp(22px, 2.2vw, 27px); line-height: 1.18;
+              letter-spacing: -0.015em; margin: 0 0 10px; max-width: 26ch; }
+.jour-titre a { color: var(--encre); text-decoration: none; font-weight: 700; }
+.jour-titre a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.jour-chapo { font-size: 16.5px; line-height: 1.6; color: var(--gris);
+              margin: 0 0 14px; }
+.jour-mots { list-style: none; padding: 0; margin: 0; display: flex;
+             flex-wrap: wrap; gap: 8px; }
+.jour-mots li { font-size: 12.5px; color: var(--navy); background: var(--gris-clair);
+                border: 1px solid var(--trait); border-radius: 999px; padding: 4px 12px; }
+.page-contenu > .jour-axe { margin-top: 2px; }
+.page-contenu > .jour-service { margin: 0 0 22px; }
+.page-contenu > .jour-mots { margin-top: 34px; }
+
+/* LE PANNEAU QUI CASSE LE RYTHME, arbitrage d'Alex du 31/08.
+
+   Le bloc « ce que vous ne trouverez pas ici » etait rendu comme une section
+   d'article de plus : meme largeur, meme allure, meme colonne de lecture. Il
+   se lisait donc comme un troisieme article, en trois puces empilees qui
+   ajoutaient deux cents pixels a la fin d'une page dont ce n'est pas le sujet.
+
+   Il prend TOUTE la largeur du cadre, contre 68 caracteres pour le reste, et
+   range ses trois points en colonnes : plus large, donc plus court, et
+   visiblement d'une autre nature que la liste qui precede. C'est la doctrine
+   des deux largeurs appliquee a l'envers de d'habitude : ce qui se BALAIE
+   prend le cadre, ce qui se LIT prend la colonne. */
+.jour-cadre { background: var(--gris-clair); border: 1px solid var(--trait);
+              border-radius: 10px; padding: 26px 28px 28px; margin: 48px 0 0; }
+.page-contenu .jour-cadre h2 { margin: 0 0 4px; max-width: none; }
+.jour-cadre > .note { margin: 0 0 22px; }
+.jour-cadre-colonnes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 26px; }
+.jour-cadre-colonnes b { display: block; color: var(--navy); margin: 0 0 6px;
+                         font-size: 15px; line-height: 1.4; }
+.jour-cadre-colonnes p { margin: 0; font-size: 14.5px; line-height: 1.55;
+                         color: var(--gris); max-width: none; }
+@media (max-width: 760px) {
+  .jour-cadre { padding: 22px 20px 24px; margin-top: 38px; }
+  .jour-cadre-colonnes { grid-template-columns: 1fr; gap: 20px; }
+}
+
+/* L'EXERGUE, ce qui manquait au corps des articles. Ce n'est pas un encadre :
+   un encadre range une remarque a cote du texte, une exergue SORT du texte et
+   le fait respirer. Pas de fond, pas de cadre, un filet et une taille. */
+.exergue { margin: 26px 0; padding: 2px 0 2px 20px; border-left: 3px solid var(--navy);
+           max-width: 62ch; }
+.exergue p { font-size: 19.5px; line-height: 1.5; color: var(--encre); margin: 0; }
+
+/* UN TABLEAU SE BALAIE, MAIS LA PAGE NE GLISSE PAS. Defaut mesure le 31/08 :
+   a 390 px de large, le tableau des minimums sourcés fait 393 px et fait
+   DEFILER LA PAGE ENTIERE de gauche a droite, sur les sept fiches du guide.
+   La charte assume qu'un tableau deborde de la colonne de lecture ; elle
+   n'assume pas que le site glisse sous le pouce. Le tableau defile donc dans
+   sa propre boite. */
+.page-contenu table { display: block; overflow-x: auto; max-width: 100%; }
+
 .voisines { list-style: none; padding: 0; margin: 14px 0 0; }
 .voisines li { margin: 0 0 9px; }
 .voisines a { font-weight: 600; }
