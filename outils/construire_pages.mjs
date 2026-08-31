@@ -198,7 +198,19 @@ function actionsEntete(urlCourante, orangeDansLeCorps = false) {
     { rang: 1, classe: 'cta-secondaire', href: '/', texte: 'Évaluer votre logo' },
   ].filter((b) => b.href !== urlCourante);
 
-  if (!orangeDansLeCorps && boutons.length > 0) {
+  // SAUF SUR L'ACCUEIL, ET C'EST UNE DECISION, PAS UN OUBLI, 26/08/2026.
+  //
+  // Le patch du 31/08 a defait cette decision en croyant reparer un defaut.
+  // Il avait raison sur le constat, l'entete de l'accueil ne portait aucun
+  // orange, et tort sur la cause : c'est voulu. Sur cette page la conversion
+  // EST la zone de depot, et un bouton de menu orange lui volerait son poids.
+  // Le raisonnement etait ecrit, en toutes lettres, dans le harnais des pages,
+  // trois lignes au-dessus du controle qui l'aurait arrete.
+  //
+  // Partout ailleurs, l'entete garde l'orange : sur /vectoriser et sur
+  // /voir-mon-logo il pointe vers un AUTRE produit que celui de la page, il
+  // n'entre donc pas en concurrence avec le depot qui s'y trouve.
+  if (!orangeDansLeCorps && urlCourante !== '/' && boutons.length > 0) {
     const principal = boutons.reduce((a, b) => (b.rang < a.rang ? b : a));
     principal.classe = 'cta-entete';
   }

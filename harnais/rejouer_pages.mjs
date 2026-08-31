@@ -298,7 +298,21 @@ for (const url of URLS) {
   // la conversion EST la zone de depot, et un bouton de menu orange lui
   // volerait son poids. Partout ailleurs, « Évaluer votre logo » reprend
   // l'orange sans concurrence.
-  const orangesAttendus = url === '/' ? 0 : 1;
+  //
+  // ET ZERO AUSSI QUAND LE CORPS PORTE DEJA SON ORANGE, 31/08/2026. Sur les
+  // pages dont le texte appelle un outil a quelques lignes du titre, l'entete
+  // cede la place a l'appel du corps, plus proche de la raison d'agir.
+  //
+  // LA CONDITION SE LIT SUR LA PAGE SERVIE, elle ne se recopie pas ici. Une
+  // liste d'URL tenue dans le harnais serait une deuxieme verite a cote de
+  // celle du generateur, et c'est toujours la deuxieme qu'on oublie de mettre
+  // a jour. Le harnais pose donc la MEME question que le generateur, au HTML
+  // rendu : ce corps porte-t-il un appel orange. Et il la pose sur la couleur
+  // calculee, comme le compte de l'entete, pour la meme raison.
+  const orangeDansLeCorps = await page.evaluate(() =>
+    [...document.querySelectorAll('.cta-corps')]
+      .some((n) => getComputedStyle(n).backgroundColor === 'rgb(255, 106, 0)'));
+  const orangesAttendus = (url === '/' || orangeDansLeCorps) ? 0 : 1;
   if (orangesEntete !== null && orangesEntete !== orangesAttendus) {
     fautes.push(`${orangesEntete} bouton(s) orange dans l'entete de ${url}, `
       + `il en faut ${orangesAttendus}`);
