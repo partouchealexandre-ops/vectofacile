@@ -48,6 +48,31 @@ export const INDEXABLE = true;
 export const DOMAINE = 'https://bonamarquer.fr';
 
 /**
+ * LA CLE INDEXNOW, et pourquoi elle n'est pas un secret.
+ *
+ * IndexNow est un protocole ouvert : on previent le moteur qu'une URL a change
+ * au lieu d'attendre qu'il repasse. Bing le prend en compte en general dans
+ * l'heure, la ou son passage spontane sur un site neuf se compte en jours.
+ * Ce raccourci vaut plus que tout le reste pour ce projet, parce que les
+ * moteurs de reponse s'appuient largement sur cet index-la.
+ *
+ * La cle est PUBLIQUE par construction : le protocole exige qu'elle soit
+ * servie en clair a la racine du site, et c'est justement ainsi que le moteur
+ * verifie que celui qui l'annonce possede le domaine. Elle n'ouvre aucun
+ * acces, elle ne signe rien, elle ne fait que prouver la possession. Elle a
+ * donc sa place dans un depot destine a devenir public, contrairement a tout
+ * ce que la charte interdit d'y ecrire.
+ *
+ * Generee par Bing Webmaster Tools le 31/08/2026. La regenerer chez eux et la
+ * remplacer ici suffit a la faire tourner : le fichier servi se reconstruit
+ * tout seul, il n'est jamais ecrit a la main.
+ */
+export const CLE_INDEXNOW = 'd8b20b52d6924960a3a1fc402d7f586b';
+
+/** L'adresse ou le moteur va lire la cle pour verifier la possession. */
+export const URL_CLE_INDEXNOW = `${DOMAINE}/${CLE_INDEXNOW}.txt`;
+
+/**
  * L'ADRESSE DE DEPLOIEMENT, qui n'est PAS le domaine.
  *
  * Netlify sert le site sur les deux : le nom qu'on a achete, et l'adresse

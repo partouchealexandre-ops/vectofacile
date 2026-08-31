@@ -37,3 +37,7 @@ public/mentions-legales/
 public/404.html
 public/exemple/
 public/partage.png
+# La cle IndexNow est GENEREE par la construction, comme robots.txt : son nom
+# est la cle elle-meme, donc le motif plutot que le nom, pour que le jour ou
+# elle est regeneree chez Bing personne n'ait a penser a cette ligne.
+public/*.txt

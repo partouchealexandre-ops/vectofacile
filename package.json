@@ -20,7 +20,8 @@
     "harnais:vectoriel": "node harnais/rejouer_vectoriel.mjs",
     "harnais:simulation": "node harnais/rejouer_simulation.mjs",
     "vitrine:composer": "node outils/composer_vitrine.mjs",
-    "simulation:deriver": "python3 outils/deriver_simulation.py"
+    "simulation:deriver": "python3 outils/deriver_simulation.py",
+    "indexnow": "node outils/prevenir_indexnow.mjs"
   },
   "license": "UNLICENSED",
   "dependencies": {
