@@ -27,6 +27,8 @@
  * worker aussi, ses polices aussi. Aucun appel sortant.
  */
 
+import { epsVersPdf, EpsNonInterprete } from './eps_ghostscript.js';
+
 export class FichierVectorielNonLu extends Error {}
 
 /** Ou pdf.js est servi. Notre domaine, jamais un CDN. */
@@ -97,17 +99,30 @@ const POINT_EN_MM = 25.4 / 72;
  */
 export async function lireVectoriel(fichier, options = {}) {
   const largeurCible = options.largeurCible ?? 2000;
-  const octets = await fichier.arrayBuffer();
+  const brut = await fichier.arrayBuffer();
 
-  const nature = reconnaitre(octets);
+  const nature = reconnaitre(brut);
+  let octetsPdf;
   if (nature === 'postscript') {
-    throw new FichierVectorielNonLu(
-      'ce fichier est un EPS, c\'est à dire du PostScript. Nous savons lire les '
-      + 'PDF et les fichiers Illustrator enregistrés avec l\'option « Créer un '
-      + 'fichier compatible PDF », qui est le réglage par défaut. Réenregistrez '
-      + 'votre logo en PDF depuis votre logiciel, le diagnostic sera le même.');
-  }
-  if (nature !== 'pdf') {
+    // L'EPS PASSE PAR L'INTERPRETE, ET REDEVIENT LE CAS ORDINAIRE, 31/08/2026.
+    //
+    // Il etait renvoye d'ici avec un conseil qui supposait qu'on possede
+    // Illustrator, c'est a dire l'hypothese la moins probable chez quelqu'un
+    // qui a recu un EPS de son graphiste il y a six ans. Une fois execute, il
+    // n'y a plus d'EPS : il y a un PDF, et tout ce qui suit ne change pas
+    // d'une ligne.
+    try {
+      octetsPdf = await epsVersPdf(new Uint8Array(brut), options.direEtape);
+    } catch (e) {
+      // L'appelant ne connait qu'une famille d'erreur de lecture. On traduit
+      // ici plutot que de faire dependre l'interprete du lecteur PDF, ce qui
+      // fermerait la boucle des imports entre les deux modules.
+      if (e instanceof EpsNonInterprete) throw new FichierVectorielNonLu(e.message);
+      throw e;
+    }
+  } else if (nature === 'pdf') {
+    octetsPdf = new Uint8Array(brut);
+  } else {
     throw new FichierVectorielNonLu(
       'ce fichier ne commence pas comme un PDF. S\'il porte l\'extension .ai, '
       + 'il a probablement été enregistré sans l\'option de compatibilité PDF.');
@@ -119,7 +134,7 @@ export async function lireVectoriel(fichier, options = {}) {
   try {
     tache = pdfjs.getDocument({
       worker,
-      data: new Uint8Array(octets),
+      data: octetsPdf,
       standardFontDataUrl: `${BASE}standard_fonts/`,
       wasmUrl: `${BASE}wasm/`,
       // Aucune requete sortante, aucun script du document execute.
@@ -172,7 +187,9 @@ export async function lireVectoriel(fichier, options = {}) {
       hauteurOrigine: hauteur,
     },
     fiche: {
-      format: 'pdf',
+      // LE FORMAT DIT CE QUE LE VISITEUR A DEPOSE, pas ce que la chaine a
+      // fabrique en chemin. Quelqu'un qui a depose un EPS doit lire « eps ».
+      format: nature === 'postscript' ? 'eps' : 'pdf',
       pages,
       largeurMm: arrondir(largeurMm),
       hauteurMm: arrondir(hauteurMm),

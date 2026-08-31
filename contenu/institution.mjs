@@ -72,8 +72,11 @@ collecte d'adresses, pas de relance. Si un jour un modèle économique s'y greff
     {
       h2: 'Comment ce site est construit',
       html: `
-<p>Le calcul tient dans quelques modules JavaScript et un composant de vectorisation
-compilé en WebAssembly, chargés par votre navigateur et exécutés chez vous. Le site
+<p>Le calcul tient dans quelques modules JavaScript, un composant de vectorisation et un
+interprète PostScript, tous deux compilés en WebAssembly, chargés par votre navigateur et
+exécutés chez vous. L'interprète est <b>Ghostscript</b>, publié par Artifex Software sous
+licence AGPL v3 ; il n'est téléchargé que si vous déposez un fichier EPS, et il sert à
+lire ce fichier sur votre machine plutôt qu'à l'envoyer sur la nôtre. Le site
 n'utilise aucun service tiers, aucun outil de mesure d'audience, aucune police chargée à
 distance : la politique de sécurité que nous envoyons interdit toute connexion sortante,
 ce que vous pouvez <a href="/confidentialite">vérifier vous-même en une commande</a>.</p>

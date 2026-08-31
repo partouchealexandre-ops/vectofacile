@@ -18,6 +18,7 @@ dist/
 public/src/
 public/vtracer_wasm_bg.wasm
 public/pdfjs/
+public/gs/
 src/vectorisation/vtracer_web.js
 public/_headers
 public/robots.txt

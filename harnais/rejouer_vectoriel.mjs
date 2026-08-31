@@ -164,6 +164,12 @@ function bloc(titre, controles, detail) {
 }
 
 const page = await navigateur.newPage();
+// L'INTERPRETE POSTSCRIPT PESE DIX MEGAOCTETS, et il ne doit se charger que
+// pour ceux qui deposent un EPS. Une regle de chargement paresseux qui casse
+// ne se voit pas a l'oeil : la page marche, elle est simplement dix fois plus
+// lourde pour tout le monde. On enregistre donc les requetes des le depart.
+const requetesGs = [];
+page.on('request', (r) => { if (r.url().includes('/gs/')) requetesGs.push(r.url()); });
 page.on('console', (m) => { if (m.type() === 'error') messages.push(m.text()); });
 page.on('pageerror', (e) => messages.push('pageerror: ' + e.message));
 await page.goto(`http://127.0.0.1:${PORT}/`, { waitUntil: 'networkidle' });
@@ -225,44 +231,68 @@ await page.waitForTimeout(900);
   ], [r.titreFiche, ...r.conseils]);
 }
 
-// 3. UN EPS N'EST PLUS RENVOYE SANS RIEN, arbitrage Alex du 24/08/2026.
+// 3. UN EPS EST AUDITE COMME N'IMPORTE QUEL VECTORIEL, arbitrage du 31/08/2026.
 //
-//    On ne sait toujours pas l'executer, donc on ne juge pas son dessin. Mais
-//    son en-tete est du texte en clair : la taille du logo et le logiciel qui
-//    l'a ecrit s'y lisent sans aucune dependance. C'est le visiteur le MIEUX
-//    equipe du parcours, celui qui a deja le fichier que son marqueur reclame,
-//    et c'etait le seul a qui le site ne savait rien dire.
+//    CE QUE CE BLOC PROTEGE. Du 24 au 31/08, un EPS recevait un ecran
+//    d'exception : on annoncait le format, on se taisait sur le dessin, et on
+//    renvoyait la personne chercher un PDF. Cet ecran disait meme une chose
+//    fausse, « votre fichier est deja vectoriel », affirmee sur la seule foi
+//    de l'extension et de l'en-tete. Un EPS de client est arrive le 31/08 qui
+//    ne tracait rien et collait une image.
 //
-//    LE CONTROLE QUI COMPTE EST LE TROISIEME. Le site doit dire que le FORMAT
-//    est bon, et dire dans la meme page qu'il ne se prononce pas sur le
-//    DESSIN. Confondre les deux serait le pire mensonge possible, au pire
-//    endroit possible.
+//    L'interprete PostScript retire l'exception. Ce qu'il faut prouver n'est
+//    donc plus « l'EPS recoit une explication », c'est « l'EPS recoit le meme
+//    diagnostic complet qu'un PDF », et le chemin le plus court pour le casser
+//    serait un interprete qui se charge et rend une page blanche.
 {
-  // Un EPS avec l'en-tete binaire DOS, comme vingt et un des vingt cinq
-  // fichiers reels du corpus d'Alex : le PostScript ne commence pas a zero.
-  const corps = Buffer.from('%!PS-Adobe-3.0 EPSF-3.0\n%%Creator: Adobe Illustrator(R) 28.0\n'
-    + '%%HiResBoundingBox: 0 0 301.4 170.2\n%%EndComments\nshowpage\n');
+  // Un EPS avec l'en-tete binaire DOS, comme vingt et un des vingt sept
+  // fichiers reels du corpus : le PostScript ne commence pas a zero. Et il
+  // DESSINE, contrairement a la version precedente de cette eprouve qui ne
+  // contenait qu'un showpage : un fichier vide serait passe pour un fichier lu.
+  const corps = Buffer.from('%!PS-Adobe-3.0 EPSF-3.0\n'
+    + '%%Creator: Adobe Illustrator(R) 28.0\n'
+    + '%%HiResBoundingBox: 0 0 301.4 170.2\n'
+    + '%%BoundingBox: 0 0 302 171\n%%EndComments\n'
+    + '0 0.2 0.6 setrgbcolor\n'
+    + '20 20 moveto 281.4 20 lineto 281.4 150.2 lineto 20 150.2 lineto '
+    + 'closepath fill\nshowpage\n');
   const tete = Buffer.alloc(30);
   tete.writeUInt32BE(0xC5D0D3C6, 0);
   tete.writeUInt32LE(30, 4);
   tete.writeUInt32LE(corps.length, 8);
   const eps = Buffer.concat([tete, corps]);
+
+  // AVANT LE DEPOT, RIEN. Deux PDF viennent d'etre audites ; si l'interprete
+  // s'etait charge pour eux, la regle du chargement paresseux serait deja
+  // rompue et le controle d'apres passerait au vert sans rien prouver.
+  const avantDepot = requetesGs.length;
+
   const r = await deposer(page, eps, 'logo.eps', 'application/postscript');
   const texte = r.verdictCourt + ' ' + r.teteComplete;
-  bloc('UN EPS DIT CE QU\'IL EST, ET CE QU\'ON N\'EN SAIT PAS', [
-    ['il n\'est plus refuse', !r.erreur],
-    ['le site dit que le format est le bon', /déjà vectoriel/i.test(texte)],
-    // 301,4 x 170,2 points valent 106 x 60 mm. Le controle porte sur les
-    // MILLIMETRES servis, pas sur les points du fichier : c'est la conversion
-    // qui peut casser, pas la lecture.
-    ['il annonce la taille reelle, convertie en millimetres', /106 × 60 mm/.test(texte)],
-    ['ET il dit qu\'il ne se prononce pas sur le dessin',
-      /ne nous prononçons pas|ne savons pas encore lire/i.test(texte)],
-    ['il donne une sortie vers le diagnostic complet', /PDF/i.test(texte)],
-    ['rien n\'est propose au telechargement', r.telechargements === false],
-    ['et aucune grille de feux n\'est rendue sur un fichier non mesure',
-      r.verdict === false],
-  ], [texte.replace(/\s+/g, ' ').slice(0, 160)]);
+  const fiche = await page.evaluate(() => {
+    const f = document.getElementById('fiche');
+    return f && !f.hidden ? f.innerText : '';
+  });
+
+  bloc('UN EPS EST AUDITE COMME N\'IMPORTE QUEL VECTORIEL', [
+    ['il est lu sans erreur', r.erreur === null],
+    ['l\'interprete PostScript ne s\'etait PAS charge pour les PDF precedents',
+      avantDepot === 0],
+    ['et il se charge bien pour l\'EPS', requetesGs.length > 0],
+    ['la fiche dit EPS, pas PDF', /EPS/.test(fiche)],
+    // 301,4 x 170,2 points valent 106,3 x 60,0 mm. Le controle porte sur les
+    // MILLIMETRES servis : c'est la conversion qui peut casser, pas la lecture.
+    ['sa taille reelle est lue dans le fichier, en millimetres',
+      /106,3 × 60,0 mm/.test(fiche)],
+    ['ses traces sont comptes, donc l\'interprete a rendu un dessin',
+      /tracé/.test(fiche)],
+    ['il n\'est PAS pris pour un faux vectoriel',
+      !/n\'est pas réellement vectoriel/.test(fiche)],
+    ['le diagnostic par technique s\'affiche, ce qu\'aucun EPS n\'obtenait',
+      r.verdict === true],
+    ['et aucun bouton de telechargement n\'apparait : rien a vectoriser',
+      r.telechargements === false],
+  ], [fiche.replace(/\s+/g, ' ').slice(0, 160)]);
 }
 
 // 4. RIEN NE PART, ET C'EST CA QU'IL FAUT PROUVER.

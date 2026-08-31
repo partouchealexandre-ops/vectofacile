@@ -619,20 +619,37 @@ async function controlerLaPage() {
              false, PDF_TEMOIN);
   }
 
-  // ET UN EPS N'EST PAS RENVOYE COMME UN FORMAT INVALIDE. Il a sa sortie : un
-  // EPS est un programme, aucun navigateur ne l'execute, et la personne qui en
-  // tient un tient justement le fichier que son marqueur reclame.
+  // ET UN EPS SE POSE SUR L'OBJET, arbitrage Alex du 31/08/2026.
+  //
+  // Il recevait ici une explication : un EPS est un programme, aucun
+  // navigateur ne l'execute, allez chercher un PDF. C'etait honnete et c'etait
+  // une porte fermee, sur la page dont le but est justement de MONTRER. Depuis
+  // que l'interprete PostScript est servi, l'EPS entre par le meme chemin que
+  // le PDF, et ce qu'il faut prouver a change de camp : plus « le refus est
+  // bien explique », mais « le logo est bien pose ».
+  //
+  // L'EPS de cette eprouve DESSINE. Un fichier vide se poserait comme une
+  // vignette vide, et le controle passerait au vert sur rien.
   await onglet.setInputFiles('#fichier', {
     name: 'logo.eps', mimeType: 'application/postscript',
-    buffer: Buffer.from('%!PS-Adobe-3.0 EPSF-3.0\n%%BoundingBox: 0 0 100 50\n%%EOF\n'),
+    buffer: Buffer.from('%!PS-Adobe-3.0 EPSF-3.0\n'
+      + '%%HiResBoundingBox: 0 0 200 100\n%%BoundingBox: 0 0 200 100\n%%EndComments\n'
+      + '0 0.2 0.6 setrgbcolor\n'
+      + '10 10 moveto 190 10 lineto 190 90 lineto 10 90 lineto closepath fill\n'
+      + 'showpage\n'),
   });
-  await onglet.waitForTimeout(400);
-  const eps = await onglet.evaluate(() =>
-    document.getElementById('erreur')?.textContent?.trim() ?? '');
-  controle('un EPS recoit sa propre explication, pas « format invalide »',
-           /PostScript/.test(eps) && /PDF/.test(eps), eps.slice(0, 90));
-  controle('(temoin) et cette explication ne dit jamais que c\'est impossible',
-           !/impossible/i.test(eps));
+  // L'interprete pese dix megaoctets et se telecharge ici pour la premiere
+  // fois de la page : l'attente est plus longue que pour un PDF.
+  await onglet.waitForTimeout(6000);
+  const eps = await onglet.evaluate(() => ({
+    erreur: document.getElementById('erreur')?.textContent?.trim() ?? '',
+    vignette: Boolean(document.querySelector('#depot img')),
+    nom: document.querySelector('#depot')?.textContent?.includes('logo.eps') ?? false,
+  }));
+  controle('un EPS n\'est plus refuse sur le simulateur', eps.erreur === '',
+           eps.erreur.slice(0, 90) || 'aucune erreur');
+  controle('il se pose comme un logo, et la zone de depot le montre',
+           eps.vignette, String(eps.vignette));
   // ET LE SIMULATEUR SURVIT AU MAUVAIS FICHIER. L'ancien code vidait l'hote
   // pour tout message d'erreur : deposer un PDF detruisait le panneau, les
   // objets, les emplacements, tout. On retirait l'outil au visiteur pour le

@@ -174,20 +174,14 @@ try {
     try { nature = reconnaitre(await fichier.slice(0, 1024).arrayBuffer()); }
     catch (e) { nature = null; }
 
-    // L'EPS N'EST PAS UN REFUS SEC, il a sa propre sortie. Un EPS est un
-    // programme PostScript : pour savoir ce qu'il dessine il faut l'executer,
-    // et aucun navigateur ne le fait. On ne dit donc pas « format invalide » a
-    // quelqu'un qui tient le fichier que son marqueur reclame ; on lui dit ce
-    // qui bloque et ce qui marche.
-    if (nature === 'postscript') {
-      signaler('Un EPS est un programme PostScript, et aucun navigateur ne sait '
-        + 'l’exécuter : nous ne pouvons donc pas en tirer une image à poser. '
-        + 'Réenregistrez le même logo en PDF depuis votre logiciel, ou demandez '
-        + 'le PDF à qui vous a fourni cet EPS. Tout fonctionnera.');
-      return;
-    }
-
-    if (nature === 'pdf') {
+    // L'EPS ENTRE COMME UN PDF, arbitrage Alex du 31/08/2026.
+    //
+    // Il recevait ici une sortie honnete mais fermee : aucun navigateur ne
+    // sait executer du PostScript, donc pas d'image a poser, donc demandez un
+    // PDF. L'interprete compile en WebAssembly retire l'obstacle plutot que
+    // de l'expliquer, et il le retire au meme endroit pour les deux pages :
+    // c'est lireVectoriel qui execute, ici on ne fait que le laisser passer.
+    if (nature === 'pdf' || nature === 'postscript') {
       if (zoneErreur) zoneErreur.hidden = true;
       try {
         const { image } = await lireVectoriel(fichier);

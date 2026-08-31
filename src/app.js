@@ -14,7 +14,6 @@
 
 import { lireImage, telecharger, FichierNonSupporte } from './adaptateurs/image_navigateur.js';
 import { lireVectoriel, reconnaitre, FichierVectorielNonLu } from './adaptateurs/pdf_navigateur.js';
-import { lireEnteteEps } from './adaptateurs/eps_entete.js';
 import { mesurer } from './moteur/mesures.js';
 import { juger } from './verdict/juger.js';
 import { jugerFeux } from './verdict/feux.js';
@@ -982,7 +981,13 @@ function afficherFiche(fiche) {
       ? 'notre vectoriseur ne ferait que retracer l\'image qu\'il contient, et vous auriez une approximation de plus'
       : 'il n\'y a rien à tracer'}. Nous le mesurons et nous le
     diagnostiquons, ce qui est l'autre moitié du travail.</p>
-    ${ligne('Format', 'PDF' + (fiche.pages > 1 ? `, ${nb(fiche.pages)} pages, la première est mesurée` : ''))}
+    ${ligne('Format', (fiche.format === 'eps' ? 'EPS' : 'PDF')
+      + (fiche.pages > 1 ? `, ${nb(fiche.pages)} pages, la première est mesurée` : ''),
+      // LA LIGNE DIT CE QUE LE VISITEUR A DEPOSE, 31/08/2026. Elle ecrivait
+      // « PDF » en dur ; depuis que l'interprete PostScript fait entrer les
+      // EPS par le meme chemin, cette ligne annoncait un format que la
+      // personne n'avait pas deposé.
+      fiche.format === 'eps' ? 'lu par un interprète PostScript, chez vous' : '')}
     ${ligne('Taille réelle du dessin',
         `${nb(fiche.largeurMm, 1)} × ${nb(fiche.hauteurMm, 1)} mm`,
         'écrite dans le fichier, contrairement à une image')}
@@ -995,53 +1000,6 @@ function afficherFiche(fiche) {
       retracera à la main et vous le facturera.</div>` : ''}
   `;
   devoiler('fiche');
-}
-
-/**
- * L'ECRAN D'UN EPS, arbitrage Alex du 24/08/2026.
- *
- * TROIS PARTS, ET L'ORDRE COMPTE : ce qu'on sait, ce qu'on ne sait pas, ce
- * qu'il peut faire. La deuxieme est la plus importante, et c'est celle qu'un
- * autre site supprimerait.
- *
- * ON NE DIT PAS QUE LE LOGO EST BON. On dit que le FORMAT est le bon, ce qui
- * est vrai et verifiable dans l'en-tete, et on dit qu'on ne sait rien du
- * DESSIN, ce qui est vrai aussi : un EPS peut porter douze couleurs, un
- * degrade, un trait de cinq centiemes de millimetre, et rien de tout cela
- * n'est ecrit dans l'en-tete. Confondre le format et le dessin serait
- * exactement le mensonge que ce site refuse, et ce serait le pire endroit
- * pour le faire, parce que c'est la personne la mieux equipee du parcours.
- */
-function afficherFichePostscript(e) {
-  const taille = e.largeurMm
-    ? `Il mesure <b>${Math.round(e.largeurMm)} × ${Math.round(e.hauteurMm)} mm</b> `
-      + 'à sa taille d\'origine, ce qui ne limite rien : un fichier vectoriel '
-      + 'se réduit et s\'agrandit sans jamais perdre en netteté.'
-    : '';
-  const logiciel = e.createur
-    ? `<p class="note">Écrit par ${echapperTexte(e.createur)}.</p>` : '';
-  const tete = $('fait_principal');
-  if (!tete) return;
-  tete.innerHTML = `<div class="verdict-tete reponse-format">
-    <p class="fait-reponse">Votre fichier est déjà vectoriel. C'est le format que
-    votre marqueur réclame.</p>
-    <p class="fait-couleurs">${taille}</p>
-  </div>
-  <div class="encadre eps-limite">
-    <p><b>En revanche, nous ne savons pas encore lire son contenu.</b> Un EPS est un
-    programme, pas une image : pour savoir ce qu'il dessine, il faut l'exécuter, et
-    aucun navigateur ne sait le faire. Nous ne pouvons donc pas vous dire combien
-    votre logo a de couleurs, s'il tient en une seule, ni si son trait le plus fin
-    passera. <b>Le format est bon ; sur le dessin, nous ne nous prononçons pas.</b></p>
-    <p>Pour obtenir le diagnostic complet, deux chemins. Si vous avez Illustrator ou
-    un logiciel équivalent, exportez le même logo en <b>PDF</b> et déposez-le ici :
-    tout fonctionne. Sinon, demandez le PDF à qui vous a fourni cet EPS, c'est
-    l'affaire de deux minutes pour lui.</p>
-    <p class="note">Et si vous ne voulez rien faire de plus : envoyez cet EPS tel quel
-    à votre marqueur. C'est un fichier qu'il sait ouvrir.</p>
-  </div>`;
-  tete.hidden = false;
-  passerEnModeResultat(true);
 }
 
 const echapperTexte = (t) => String(t)
@@ -1097,26 +1055,22 @@ async function traiter(fichier) {
     // rien a tracer, et le tracer degraderait un dessin exact.
     const nature = reconnaitre(await fichier.slice(0, 1024).arrayBuffer());
 
-    // L'EPS N'EST PLUS RENVOYE SANS RIEN, arbitrage Alex du 24/08/2026. On ne
-    // sait toujours pas l'executer, donc on ne juge pas son dessin. Mais son
-    // en-tete est du texte en clair, et il porte deux verites : la taille du
-    // logo et le logiciel qui l'a ecrit. Les dire coute zero dependance, et ca
-    // change tout pour celui qui arrive avec le fichier que son marqueur
-    // reclame et qu'on lui refusait a l'entree.
-    if (nature === 'postscript') {
-      const entete = lireEnteteEps(await fichier.arrayBuffer());
-      if (entete) {
-        afficherFichePostscript(entete);
-        terminerAttente();
-        return;
-      }
-    }
-
+    // L'EPS N'EST PLUS UN CAS A PART, arbitrage Alex du 31/08/2026.
+    //
+    // Il a eu son ecran d'exception du 24 au 31/08 : on ne savait pas executer
+    // du PostScript, donc on annoncait le format et on se taisait sur le
+    // dessin. L'ecran disait meme une chose fausse, « votre fichier est deja
+    // vectoriel », sur la seule foi de l'extension. Un EPS de client est arrive
+    // le 31/08 qui ne tracait rien et collait une image.
+    //
+    // L'interprete PostScript retire l'exception au lieu de la corriger : un
+    // EPS devient un PDF chez le visiteur, et il repart dans le chemin
+    // vectoriel qui existe depuis le 19/08, sans une ligne de special.
     let image;
-    if (nature === 'pdf') {
+    if (nature === 'pdf' || nature === 'postscript') {
       etape = 'lecture du fichier vectoriel';
       direEtape('Lecture du fichier vectoriel');
-      const lu = await lireVectoriel(fichier);
+      const lu = await lireVectoriel(fichier, { direEtape });
       image = lu.image;
       etat.fiche = lu.fiche;
     } else {
