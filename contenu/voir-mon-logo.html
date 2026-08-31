@@ -66,14 +66,17 @@
       </p>
     </div>
 
-    <div id="depot">
-      <strong>Déposez votre logo ici</strong>
-      <span>PNG, JPEG, GIF, WEBP, PDF, AI. Ou cliquez pour choisir un fichier.</span>
+    <div class="depot-colonne">
+      <div id="depot" role="button" tabindex="0">
+        <strong>Déposez votre logo ici</strong>
+        <span>PNG, JPEG, GIF, WEBP, PDF, AI. Ou cliquez pour choisir un fichier.</span>
+      </div>
+      <p class="depot-gratuit">Gratuit, sans compte, sans envoi de fichier.</p>
     </div>
   </div>
   <input type="file" id="fichier" accept="image/png,image/jpeg,image/gif,image/webp,.pdf,.ai,application/pdf,application/postscript">
 
-  <div id="erreur" hidden></div>
+  <div id="erreur" hidden role="alert"></div>
 
   <!-- Le panneau est monte ici par src/simulation/page.js. Il n'existe pas
        dans le document servi : sans JavaScript, la page dit ce qu'elle fait et

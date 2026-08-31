@@ -1305,6 +1305,15 @@ function brancher() {
   const champ = $('fichier');
 
   zone.addEventListener('click', () => champ.click());
+  // LA MEME PORTE, AU CLAVIER. La zone est un role=button : elle doit donc
+  // repondre a Entree et a Espace comme un bouton, sinon le role ment. Le
+  // preventDefault sur Espace evite que la page defile sous le selecteur.
+  zone.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+      e.preventDefault();
+      champ.click();
+    }
+  });
   champ.addEventListener('change', () => { if (champ.files[0]) traiter(champ.files[0]); });
   ['dragenter', 'dragover'].forEach((n) => zone.addEventListener(n, (e) => {
     e.preventDefault(); zone.classList.add('survol');

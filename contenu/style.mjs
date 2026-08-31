@@ -40,6 +40,13 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
     --encre: #0A2D4D;
     --papier: #ffffff;
     --gris: #7B8794;
+    /* DEUX GRIS DEPUIS LE 31/08. Le gris de charte tient sur un trait, pas sous
+       un texte : #7B8794 sur blanc mesure 3,66:1, et 3,44:1 sur le gris clair,
+       quand le niveau AA en demande 4,5. Il reste la couleur des filets, des
+       bordures et des pastilles ; le texte gris prend --gris-texte, mesure a
+       5,45:1 sur blanc et 5,12:1 sur le gris clair. Une couleur qui sert a deux
+       choses finit toujours par etre juste pour une seule. */
+    --gris-texte: #5F6B76;
     --trait: #E3E8ED;
     --accent: #0A2D4D;
     --gris-clair: #F6F8FA;
@@ -89,14 +96,19 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
                  font-size: 18px; line-height: 1.05; color: var(--navy);
                  letter-spacing: -0.025em; }
   .entete .droite { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-  .cta-entete { font-size: 14px; font-weight: 600; padding: 9px 15px; border-radius: 8px;
-                border: 1.5px solid var(--orange); background: var(--orange); color: #fff;
+  /* LE TEXTE DES BOUTONS ORANGE EST NAVY DEPUIS LE 31/08. Blanc sur #FF6A00
+     mesure 2,87:1 ; le niveau AA en demande 4,5 pour un texte de cette taille,
+     et 3 meme pour un grand titre. Navy sur le meme orange mesure 4,89:1. La
+     couleur de conversion ne bouge pas, c'est ce qu'on ecrit dessus qui change :
+     l'orange reste reconnaissable de loin, le libelle devient lisible de pres. */
+  .cta-entete { font-size: 14px; font-weight: 700; padding: 9px 15px; border-radius: 8px;
+                border: 1.5px solid var(--orange); background: var(--orange); color: var(--navy);
                 text-decoration: none; white-space: nowrap; }
   .cta-secondaire { display: inline-block; padding: 9px 15px; border-radius: 8px;
                     border: 1.5px solid var(--trait); color: var(--encre); font-weight: 600;
                     font-size: 14px; text-decoration: none; white-space: nowrap; }
   .cta-secondaire:hover { border-color: var(--gris); }
-  .mesures-detail summary { cursor: pointer; color: var(--gris); font-size: 14px;
+  .mesures-detail summary { cursor: pointer; color: var(--gris-texte); font-size: 14px;
                             padding: 8px 0; font-weight: 600; }
   #couleurs h2, #verdict h2 { margin-top: 26px; }
   /* ------------------------------------------------- la largeur du site
@@ -118,7 +130,7 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
        line-height: 1.2; margin: 0 0 12px; letter-spacing: -0.02em; }
   h2 { font-family: 'Poppins', var(--pile-systeme); font-weight: 700; font-size: 17px;
        margin: 32px 0 12px; letter-spacing: -0.01em; }
-  .accroche { color: var(--gris); margin: 0 0 8px; max-width: 62ch; font-size: 17px; }
+  .accroche { color: var(--gris-texte); margin: 0 0 8px; max-width: 62ch; font-size: 17px; }
 
   /* Le bandeau d'accueil. En dessous de 1000 px, une colonne : le discours
      puis l'action. Au-dessus, deux colonnes de meme poids, parce que la zone
@@ -149,7 +161,7 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
   .vitrine img { display: block; width: auto; border-radius: 10px;
                  height: calc(var(--hauteur-vitrine) * var(--part, 1));
                  background: var(--gris-clair); }
-  .vitrine figcaption { flex-basis: 100%; color: var(--gris); font-size: 14px;
+  .vitrine figcaption { flex-basis: 100%; color: var(--gris-texte); font-size: 14px;
                         line-height: 1.5; margin: 4px 0 0; text-align: center; }
   @media (max-width: 900px) { .vitrine { --hauteur-vitrine: 340px; gap: 20px; } }
   @media (max-width: 620px) { .vitrine { --hauteur-vitrine: 240px; gap: 14px; } }
@@ -160,11 +172,25 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
     .bandeau { grid-template-columns: 1fr 1fr; gap: 56px; margin: 10px 0 24px; }
     .bandeau h1 { font-size: 40px; }
   }
+  /* LE DEPOT S'ATTEINT AU CLAVIER DEPUIS LE 31/08. Le champ de fichier est en
+     display:none et la zone etait un div nu : aucun des deux n'etait atteignable
+     par la touche de tabulation, donc un visiteur au clavier ne pouvait pas
+     charger de fichier DU TOUT. Ce n'etait pas une gene, c'etait une porte
+     fermee. La zone porte maintenant role=button et tabindex, et l'anneau de
+     focus se voit. Le champ reste cache : un input.click() ouvre le selecteur
+     meme sur un champ masque, c'est le clavier qui manquait, pas la souris. */
+  .depot-colonne { display: flex; flex-direction: column; }
   #depot {
     border: 2px dashed var(--trait); border-radius: 12px; padding: 56px 24px;
     text-align: center; cursor: pointer; transition: border-color .15s, background .15s;
   }
   #depot:hover, #depot.survol { border-color: var(--accent); background: var(--gris-clair); }
+  #depot:focus-visible { outline: 3px solid var(--orange); outline-offset: 3px;
+    border-color: var(--accent); }
+  /* La gratuite se lit sous la zone, pas trois ecrans plus bas. Elle ne vaut que
+     pour ce que cette zone fait : le diagnostic et le fichier vectoriel. */
+  .depot-gratuit { margin: 10px 0 0; text-align: center; font-size: 13px;
+    color: var(--gris-texte); }
   #depot strong { display: block; font-size: 18px; margin-bottom: 6px; }
   /* §7.1 du brief du 20/08 : une fois l'analyse faite, la zone de depot montre
      le logo analyse plutot que de reclamer une action deja accomplie. */
@@ -190,15 +216,15 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
      On ne supprime pas le mouvement, qui EST l'information ici : on le ralentit
      jusqu'a ce qu'il cesse d'agresser. */
   @media (prefers-reduced-motion: reduce) { .sablier { animation-duration: 2.4s; } }
-  #depot span { color: var(--gris); font-size: 14px; }
+  #depot span { color: var(--gris-texte); font-size: 14px; }
   input[type=file] { display: none; }
   .ligne { display: flex; align-items: baseline; gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--trait); }
-  .intitule { flex: 0 0 210px; color: var(--gris); font-size: 14px; }
+  .intitule { flex: 0 0 210px; color: var(--gris-texte); font-size: 14px; }
   .valeur { font-weight: 600; font-variant-numeric: tabular-nums; }
-  .precision { color: var(--gris); font-size: 13px; }
+  .precision { color: var(--gris-texte); font-size: 13px; }
   .pastille { display: inline-block; width: 13px; height: 13px; border-radius: 3px; margin-left: 3px;
               vertical-align: -1px; border: 1px solid rgba(0,0,0,.15); }
-  .secondaire { color: var(--gris); font-weight: 400; font-size: 13px; }
+  .secondaire { color: var(--gris-texte); font-weight: 400; font-size: 13px; }
   .technique .situation { margin: 8px 0 10px; font-size: 14.5px; line-height: 1.55; }
   .technique .couleurs-technique { margin: 0 0 10px; font-size: 13.5px; line-height: 1.5;
     color: #5b6470; }
@@ -210,7 +236,7 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
   .etat-fichier.fichier-partiel { border-left-color: var(--orange); }
   .cta-fichier { display: inline-block; margin-top: 8px; font-size: 14px; font-weight: 600;
     padding: 9px 17px; border-radius: 8px; border: 1.5px solid var(--orange);
-    background: var(--orange); color: #fff; text-decoration: none; }
+    background: var(--orange); color: var(--navy); text-decoration: none; }
   /* LA GRILLE DE PRODUITS, pivot du 20/08. Des cartes qui se lisent en une
      seconde : une silhouette, un nom, un verdict, une phrase. */
   .grille-produits { display: grid; gap: 14px; margin: 16px 0 18px;
@@ -226,7 +252,7 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
     letter-spacing: .03em; text-transform: uppercase; padding: 2px 8px;
     border-radius: 20px; background: var(--gris-clair); }
   .produit-phrase { margin: 0; font-size: 14.5px; line-height: 1.5; }
-  .produit-autres { margin: 0; font-size: 12.5px; color: var(--gris); }
+  .produit-autres { margin: 0; font-size: 12.5px; color: var(--gris-texte); }
   /* Le gain de la vectorisation sur un produit qui dit deja oui. Il remplace
      le peage supprime : ce n'est plus une condition, c'est une ouverture. */
   .produit-gain { margin: 0; font-size: 13.5px; line-height: 1.45; color: #8f3d08; }
@@ -242,7 +268,7 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
   .verdict-tete p { margin: 0; }
   .fait-reponse { font-family: 'Poppins', var(--pile-systeme); font-size: 21px;
     font-weight: 700; line-height: 1.25; letter-spacing: -.02em; }
-  .fait-couleurs { margin-top: 8px !important; font-size: 15px; color: var(--gris); }
+  .fait-couleurs { margin-top: 8px !important; font-size: 15px; color: var(--gris-texte); }
   .fait-couleurs b { color: var(--encre); }
   /* La couleur du filet suit celle du feu le plus favorable de la grille : la
      reponse et les cartes disent la meme chose, elles doivent se ressembler. */
@@ -265,7 +291,7 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
      concurrencent pas. */
   .fait-conseils { margin: 0 0 18px; padding: 0 18px; }
   .fait-conseils p { margin: 10px 0 0; font-size: 14.5px; line-height: 1.55;
-    max-width: 68ch; color: var(--gris); }
+    max-width: 68ch; color: var(--gris-texte); }
   .fait-conseils b { color: var(--encre); }
   /* Le volet des couleurs est monte juste sous la reponse : il se pose comme
      une ligne discrete, pas comme un bloc de plus. */
@@ -273,7 +299,7 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
   .verdict-action { margin: 0 0 22px; }
   .verdict-action .note { margin: 8px 0 0; }
   .cta-large { display: block; text-align: center; padding: 14px 20px; border-radius: 10px;
-    background: var(--orange); color: #fff; font-weight: 700; font-size: 16px;
+    background: var(--orange); color: var(--navy); font-weight: 700; font-size: 16px;
     text-decoration: none; }
   .verdict-action-ok p { margin: 0; padding: 12px 16px; border-radius: 10px;
     background: #eef5f0; border-left: 3px solid #1d6b38; }
@@ -332,7 +358,7 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
     place-items: center; color: rgba(10, 45, 77, .72); flex: 0 0 auto; }
   .picto-technique { width: 34px; height: 34px; }
   .feu-rang { display: block; font-family: 'Poppins', var(--pile-systeme);
-    font-size: 10.5px; color: var(--gris); font-weight: 700; letter-spacing: .03em;
+    font-size: 10.5px; color: var(--gris-texte); font-weight: 700; letter-spacing: .03em;
     text-transform: uppercase; line-height: 1.1; margin-bottom: 2px; }
   .feu h3 { margin: 0; font-size: 20px; line-height: 1.05; letter-spacing: -.025em; }
   /* L'ETAT EST LE VERDICT DE LA CARTE, donc il se lit. Il etait en capitales de
@@ -345,20 +371,20 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
   .feu-orange .feu-etat { color: #8f3d08; }
   .feu-rouge .feu-etat { color: #9c3722; }
   .feu-definition { margin: 0; font-size: 14px; line-height: 1.45; }
-  .feu-raison { margin: 0; font-size: 14px; line-height: 1.45; color: var(--gris); }
+  .feu-raison { margin: 0; font-size: 14px; line-height: 1.45; color: var(--gris-texte); }
   /* LA RESERVE PERMANENTE, 26/08/2026. Une seule ligne la porte, la broderie,
      et elle s'affiche meme sur un feu vert. Elle se distingue de la raison par
      un filet a gauche, parce qu'elle ne parle PAS de ce logo la : elle parle du
      procede, et elle sera la au fichier suivant. Aucune couleur d'etat : ce
      n'est ni un obstacle ni un refus, c'est une propriete du metier. */
   .feu-reserve { margin: 0; padding-left: 11px; border-left: 2px solid var(--trait);
-                 font-size: 13.5px; line-height: 1.45; color: var(--gris); }
+                 font-size: 13.5px; line-height: 1.45; color: var(--gris-texte); }
   /* LES OBJETS FREQUENTS. C'est la traduction de la technique, et le picto la
      rend balayable. Il reste PETIT : sa fonction n'est pas de faire grossir la
      carte. */
   .feu-produits { padding-top: 8px; border-top: 1px solid var(--trait); }
   .feu-produits-titre { margin: 0 0 6px; font-family: 'Poppins', var(--pile-systeme);
-    font-size: 10.5px; color: var(--gris); font-weight: 700; letter-spacing: .05em;
+    font-size: 10.5px; color: var(--gris-texte); font-weight: 700; letter-spacing: .05em;
     text-transform: uppercase; }
   .feu-objets { display: flex; flex-wrap: wrap; gap: 5px; margin: 0; padding: 0;
     list-style: none; }
@@ -374,8 +400,11 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
      la. */
   .feu-action { align-self: flex-start; margin: 2px 0 0; padding: 10px 18px;
     border-radius: 8px; border: 1.5px solid var(--orange); background: var(--orange);
-    color: #fff; font-weight: 600; font-size: 14.5px; text-decoration: none; }
-  .feu-action:hover { background: #e85f00; border-color: #e85f00; }
+    color: var(--navy); font-weight: 700; font-size: 14.5px; text-decoration: none; }
+  /* Le survol ECLAIRCIT au lieu d'assombrir : navy sur #e85f00 retombait a
+     4,06:1, donc sous AA des qu'on posait le doigt dessus. Sur #FF8C2B, la
+     teinte haute du degrade deja au repertoire, il monte a 6,04:1. */
+  .feu-action:hover { background: #FF8C2B; border-color: #FF8C2B; }
   .feu-sortie { margin: 0; font-size: 14px; line-height: 1.5; }
   /* LE BRIEF DU GRAPHISTE, sous un rouge. Le site ecrit ce que le visiteur ne
      saurait pas demander, et le bouton le lui met dans le presse-papier. */
@@ -386,7 +415,7 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
     color: #9c3722; }
   .feu-brief p { margin: 0 0 6px; font-size: 13.5px; line-height: 1.5; }
   .feu-brief p:last-child { margin-bottom: 0; }
-  .feu-brief .note { color: var(--gris); }
+  .feu-brief .note { color: var(--gris-texte); }
   /* La couleur est explicite : la regle generale des boutons pose du texte
      blanc sur fond navy, et un bouton clair qui en herite est invisible. Celui
      ci est navy plein, comme les telechargements : copier n'est pas convertir,
@@ -408,7 +437,7 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
      elle deviendrait du bruit qu'on saute, et c'est justement la phrase qui
      doit rester lisible : nous lisons un fichier, pas une machine. */
   .grille-reserve { margin: -14px 0 22px; font-size: 13px; line-height: 1.5;
-    color: var(--gris); max-width: 68ch; }
+    color: var(--gris-texte); max-width: 68ch; }
   /* Les points d'attention : ce qui change la lecture de TOUTES les lignes. */
   .points-attention { margin: 0 0 22px; }
   .points-attention h2 { font-size: 18px; margin: 0 0 8px; }
@@ -423,7 +452,7 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
   .et-maintenant { margin-top: 26px; }
   .et-maintenant h2 { margin: 0 0 6px; font-size: 19px; }
   .suite-champs { display: grid; gap: 8px; margin: 14px 0 10px; max-width: 460px; }
-  .suite-champs label { font-size: 13.5px; color: var(--gris); }
+  .suite-champs label { font-size: 13.5px; color: var(--gris-texte); }
   .suite-champs input { padding: 10px 12px; border: 1px solid var(--trait);
     border-radius: 8px; font-size: 15px; font-family: inherit; }
   .suite-champs button { padding: 11px 18px; border-radius: 8px; border: 0;
@@ -436,7 +465,7 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
   .volet > summary { cursor: pointer; font-weight: 600; font-size: 15.5px;
     color: var(--navy); list-style: none; }
   .volet > summary::-webkit-details-marker { display: none; }
-  .volet > summary::before { content: '▸ '; color: var(--gris); }
+  .volet > summary::before { content: '▸ '; color: var(--gris-texte); }
   .volet[open] > summary::before { content: '▾ '; }
   .produit-oui { border-left: 3px solid #1d6b38; }
   .produit-oui .produit-verdict { color: #12522a; background: #e8f3ec; }
@@ -468,21 +497,21 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
   .produit-techniques .ligne-ok { color: #1d6b38; font-weight: 600; }
   .produit-techniques .ligne-ko { color: #9c3722; font-weight: 600; }
   .par-technique { margin: 6px 0 14px; }
-  .par-technique > summary { cursor: pointer; color: var(--gris); font-size: 14px;
+  .par-technique > summary { cursor: pointer; color: var(--gris-texte); font-size: 14px;
     margin-bottom: 10px; }
   .sources-verdict h4 { margin: 14px 0 4px; font-size: 13.5px; }
-  .minimums .note-calcul { margin: 8px 0 0; font-size: 12.5px; color: var(--gris);
+  .minimums .note-calcul { margin: 8px 0 0; font-size: 12.5px; color: var(--gris-texte);
     line-height: 1.5; }
   .minimums { margin: 0 0 10px; }
-  .minimums summary { cursor: pointer; color: var(--gris); font-size: 13px; }
+  .minimums summary { cursor: pointer; color: var(--gris-texte); font-size: 13px; }
   .minimums table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12.5px; }
-  .minimums th { text-align: left; font-weight: 600; color: var(--gris); font-size: 11.5px;
+  .minimums th { text-align: left; font-weight: 600; color: var(--gris-texte); font-size: 11.5px;
                  text-transform: uppercase; letter-spacing: .04em; padding: 4px 8px 4px 0;
                  border-bottom: 1px solid var(--trait); }
   .minimums td { padding: 5px 8px 5px 0; border-bottom: 1px solid var(--trait);
                  vertical-align: top; }
   .minimums td.mm { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .minimums td.date, .minimums td.tient { color: var(--gris); white-space: nowrap; }
+  .minimums td.date, .minimums td.tient { color: var(--gris-texte); white-space: nowrap; }
   .minimums tr.ne-tient-pas td.mm, .minimums tr.ne-tient-pas td.tient { color: #b23b32; }
   .minimums a { color: inherit; }
   /* LA CASE QUI N'A PAS DE LIEN, 31/08/2026. Le paragraphe au-dessus du tableau
@@ -490,41 +519,41 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
      serigraphie n'en avaient pas. On ne fabrique pas le lien manquant, on ecrit
      ce qui manque. Une promesse se tient ou se reformule, elle ne se laisse pas
      dementir par le tableau qu'elle annonce. */
-  .minimums .sans-lien { display: block; font-size: 11px; color: var(--gris);
+  .minimums .sans-lien { display: block; font-size: 11px; color: var(--gris-texte);
     font-style: italic; }
-  #largeur label { display: inline-block; color: var(--gris); font-size: 14px; margin-right: 10px; }
+  #largeur label { display: inline-block; color: var(--gris-texte); font-size: 14px; margin-right: 10px; }
   #largeur input { width: 110px; padding: 9px 12px; font: inherit; font-size: 16px;
                    border: 1px solid var(--trait); border-radius: 6px; background: #fff; }
-  #largeur .unite { margin-left: 8px; color: var(--gris); font-size: 14px; }
+  #largeur .unite { margin-left: 8px; color: var(--gris-texte); font-size: 14px; }
   /* UNE LIGNE PAR POINT depuis le 24/08. Le fait reste en avant, la mecanique
      passe en gris derriere lui : c'est la meme hierarchie qu'avant, sur une
      ligne au lieu de trois blocs. */
   ul.conseils { list-style: none; padding: 0; margin: 12px 0 0; }
   .conseil { border-left: 3px solid var(--trait); padding: 2px 0 2px 16px;
     margin: 0 0 14px; font-size: 15px; line-height: 1.55; }
-  .conseil .mecanique { color: var(--gris); }
+  .conseil .mecanique { color: var(--gris-texte); }
   .palette { list-style: none; padding: 0; margin: 12px 0 0; }
   .teinte { display: flex; align-items: center; gap: 12px; padding: 6px 0;
             border-bottom: 1px solid var(--trait); }
   .teinte .pastille { width: 22px; height: 22px; margin-left: 0; flex: 0 0 22px; }
   .teinte .hex { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 14px;
                  font-weight: 600; letter-spacing: .02em; user-select: all; }
-  .teinte .rvb { color: var(--gris); font-size: 13.5px; font-variant-numeric: tabular-nums;
+  .teinte .rvb { color: var(--gris-texte); font-size: 13.5px; font-variant-numeric: tabular-nums;
                  user-select: all; }
-  .teinte .part { margin-left: auto; color: var(--gris); font-size: 13px;
+  .teinte .part { margin-left: auto; color: var(--gris-texte); font-size: 13px;
                   font-variant-numeric: tabular-nums; }
   @media (max-width: 520px) {
     .teinte { flex-wrap: wrap; gap: 8px 10px; }
     .teinte .part { margin-left: 0; flex-basis: 100%; }
   }
   .preuves { margin: 10px 0 0; }
-  .preuves summary { cursor: pointer; color: var(--gris); font-size: 14px; padding: 6px 0; }
+  .preuves summary { cursor: pointer; color: var(--gris-texte); font-size: 14px; padding: 6px 0; }
   .preuves > *:not(summary) { margin-left: 2px; }
-  .note { color: var(--gris); font-size: 13.5px; margin: 10px 0; }
+  .note { color: var(--gris-texte); font-size: 13.5px; margin: 10px 0; }
   .gris { background: var(--gris-clair); border-left: 3px solid var(--trait); padding: 14px 16px;
-          color: var(--gris); font-size: 14px; border-radius: 0 6px 6px 0; }
+          color: var(--gris-texte); font-size: 14px; border-radius: 0 6px 6px 0; }
   .techniques { list-style: none; padding: 0; margin: 14px 0 0; display: flex; flex-wrap: wrap; gap: 8px; }
-  .techniques li { font-size: 13px; color: var(--gris); background: var(--gris-clair);
+  .techniques li { font-size: 13px; color: var(--gris-texte); background: var(--gris-clair);
                    border: 1px solid var(--trait); border-radius: 999px; padding: 4px 12px; }
   #apercu { margin-top: 14px; border: 1px solid var(--trait); border-radius: 8px; padding: 12px;
             background: repeating-conic-gradient(#f3f4f6 0% 25%, #ffffff 0% 50%) 50% / 16px 16px; }
@@ -562,26 +591,26 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
      ligne de rappel tant que rien n'a ete telecharge, et elle disparait des
      que le premier fichier est pris. */
   .passage-objet { margin: 34px 0 6px; padding: 30px 28px 26px; border-radius: 16px;
-    background: linear-gradient(135deg, #FF6A00 0%, #FF8C2B 100%); color: #fff;
+    background: linear-gradient(135deg, #FF6A00 0%, #FF8C2B 100%); color: var(--navy);
     text-align: center; box-shadow: 0 14px 34px rgba(255, 106, 0, .26); }
   .passage-etape { margin: 0 0 8px; font-size: 12.5px; font-weight: 700;
-    letter-spacing: .09em; text-transform: uppercase; color: rgba(255, 255, 255, .85); }
-  .passage-objet h2 { margin: 0 0 12px; color: #fff; line-height: 1.12;
+    letter-spacing: .09em; text-transform: uppercase; color: var(--navy); }
+  .passage-objet h2 { margin: 0 0 12px; color: var(--navy); line-height: 1.12;
     font-size: clamp(25px, 3.1vw, 34px); }
   .passage-objet .passage-note { margin: 0 auto 22px; max-width: 58ch; font-size: 15.5px;
-    line-height: 1.55; color: rgba(255, 255, 255, .93); }
+    line-height: 1.55; color: var(--navy); }
   /* La taille du bouton est ce qui a ete demande : elle depasse celle de tout
      autre bouton ou lien de la page, et le harnais le MESURE au lieu de le
      croire. */
   .cta-geant { display: inline-flex; align-items: center; justify-content: center; gap: 12px;
-    padding: 18px 36px; border-radius: 999px; background: #fff; color: var(--orange);
+    padding: 18px 36px; border-radius: 999px; background: #fff; color: var(--navy);
     font-family: 'Poppins', var(--pile-systeme); font-weight: 700;
     font-size: clamp(18px, 1.7vw, 22px); line-height: 1.15; text-decoration: none;
     box-shadow: 0 8px 20px rgba(10, 45, 77, .18); }
   .cta-geant:hover { background: #FFF6EF; box-shadow: 0 10px 26px rgba(10, 45, 77, .24); }
   .cta-geant .fleche { font-size: .9em; }
   .passage-rappel { margin: 18px 0 0; font-size: 13.5px; line-height: 1.5;
-    color: rgba(255, 255, 255, .9); }
+    color: var(--navy); }
   @media (max-width: 520px) {
     .passage-objet { padding: 24px 18px 22px; border-radius: 14px; }
     .cta-geant { display: flex; padding: 17px 20px; }
@@ -633,11 +662,11 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
                    font-size: 16px; margin: 0 0 8px; }
   .reprise p { margin: 0 0 10px; font-size: 15px; line-height: 1.55; }
   .reprise-prix b { font-size: 17px; }
-  .reprise-reserve { color: var(--gris); font-size: 14px; }
+  .reprise-reserve { color: var(--gris-texte); font-size: 14px; }
   .reprise-envoi { font-weight: 600; }
   .reprise-envoi a { color: var(--navy); }
   .reprise .feu-copier { margin: 2px 0 12px; }
-  .reprise .note { margin: 0; font-size: 13px; color: var(--gris); }
+  .reprise .note { margin: 0; font-size: 13px; color: var(--gris-texte); }
 
   /* Un apercu vide n'est pas un apercu : c'est un cadre a damier au milieu de
      la page. Il ne se montre que quand il a quelque chose a montrer. */
@@ -645,12 +674,12 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
   button { font: inherit; font-size: 14px; font-weight: 600; padding: 10px 18px; border-radius: 8px;
            border: 1.5px solid var(--navy); background: var(--navy); color: #fff; cursor: pointer; }
   button.second { background: #fff; color: var(--encre); }
-  button.tertiaire { background: #fff; color: var(--gris); border-color: var(--trait); font-weight: 500; }
-  #travail { margin-top: 20px; color: var(--gris); font-size: 14px; }
+  button.tertiaire { background: #fff; color: var(--gris-texte); border-color: var(--trait); font-weight: 500; }
+  #travail { margin-top: 20px; color: var(--gris-texte); font-size: 14px; }
   #erreur { margin-top: 20px; color: #b42318; background: #fef3f2; border: 1px solid #fecdca;
             padding: 12px 14px; border-radius: 8px; font-size: 14px; }
   footer { border-top: 1px solid var(--trait); margin-top: 56px; padding-top: 20px;
-           color: var(--gris); font-size: 13px; }
+           color: var(--gris-texte); font-size: 13px; }
 
 /* ------------------------------------------------------ pages de contenu */
 
@@ -682,8 +711,8 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
   border-bottom: 1px solid var(--trait); vertical-align: top; }
 .page-contenu th { background: var(--gris-clair); font-family: \'Poppins\', var(--pile-systeme);
   font-weight: 600; color: var(--navy); font-size: 13.5px; }
-.fil { font-size: 13px; color: var(--gris); margin: 0 0 4px; }
-.fil a { color: var(--gris); text-decoration: none; }
+.fil { font-size: 13px; color: var(--gris-texte); margin: 0 0 4px; }
+.fil a { color: var(--gris-texte); text-decoration: none; }
 .fil a:hover { color: var(--navy); }
 .encadre { background: var(--gris-clair); border: 1px solid var(--trait);
   border-left: 3px solid var(--navy); border-radius: 0 8px 8px 0; padding: 16px 18px; margin: 22px 0; }
@@ -694,7 +723,7 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
 .appel { text-align: center; margin: 40px 0 10px; }
 .appel a { display: inline-block; font-family: \'Poppins\', var(--pile-systeme); font-weight: 600;
   font-size: 15px; padding: 13px 26px; border-radius: 9px; background: var(--orange);
-  color: #fff; text-decoration: none; }
+  color: var(--navy); font-weight: 700; text-decoration: none; }
 
 /* ----------------------------------------------- navigation et pied commun */
 
@@ -744,9 +773,9 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
 .pied-site .colonnes { max-width: 1120px; margin: 0 auto; display: flex; gap: 40px; flex-wrap: wrap; }
 .pied-site b { display: block; font-family: \'Poppins\', var(--pile-systeme); font-weight: 600;
   color: var(--navy); font-size: 13px; margin-bottom: 8px; }
-.pied-site a { display: block; color: var(--gris); text-decoration: none; font-size: 13px; padding: 3px 0; }
+.pied-site a { display: block; color: var(--gris-texte); text-decoration: none; font-size: 13px; padding: 3px 0; }
 .pied-site a:hover { color: var(--navy); }
-.pied-site .mention { max-width: 1120px; margin: 26px auto 0; font-size: 12.5px; color: var(--gris); }
+.pied-site .mention { max-width: 1120px; margin: 26px auto 0; font-size: 12.5px; color: var(--gris-texte); }
 
 @media (max-width: 700px) {
   .page-contenu h1 { font-size: 27px; }
@@ -778,8 +807,8 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
              max-width: 68ch; }
 .jour-item:last-child { border-bottom: 0; padding-bottom: 6px; margin-bottom: 0; }
 .jour-axe { font-size: 11.5px; font-weight: 700; letter-spacing: .06em;
-            text-transform: uppercase; color: var(--gris); margin: 0 0 8px; }
-.jour-service { font-size: 13.5px; color: var(--gris); margin: 0 0 8px; }
+            text-transform: uppercase; color: var(--gris-texte); margin: 0 0 8px; }
+.jour-service { font-size: 13.5px; color: var(--gris-texte); margin: 0 0 8px; }
 /* La regle de rubrique des h2 porte deux selecteurs, donc elle
    l'emporte sur une classe seule : le titre d'article se qualifie ici avec le
    meme poids, sinon sa marge haute reste celle d'un intertitre et le titre
@@ -789,7 +818,7 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
               letter-spacing: -0.015em; margin: 0 0 10px; max-width: 26ch; }
 .jour-titre a { color: var(--encre); text-decoration: none; font-weight: 700; }
 .jour-titre a:hover { text-decoration: underline; text-underline-offset: 3px; }
-.jour-chapo { font-size: 16.5px; line-height: 1.6; color: var(--gris);
+.jour-chapo { font-size: 16.5px; line-height: 1.6; color: var(--gris-texte);
               margin: 0 0 14px; }
 .jour-mots { list-style: none; padding: 0; margin: 0; display: flex;
              flex-wrap: wrap; gap: 8px; }
@@ -819,7 +848,7 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
 .jour-cadre-colonnes b { display: block; color: var(--navy); margin: 0 0 6px;
                          font-size: 15px; line-height: 1.4; }
 .jour-cadre-colonnes p { margin: 0; font-size: 14.5px; line-height: 1.55;
-                         color: var(--gris); max-width: none; }
+                         color: var(--gris-texte); max-width: none; }
 @media (max-width: 760px) {
   .jour-cadre { padding: 22px 20px 24px; margin-top: 38px; }
   .jour-cadre-colonnes { grid-template-columns: 1fr; gap: 20px; }
@@ -929,7 +958,7 @@ body[data-mode="simulation"] #depot { padding: 40px 24px; }
      mesurent. */
   .simu-scene { position: sticky; top: 16px; }
 }
-.simu-attente { color: var(--gris); font-size: 14px; margin: 0; }
+.simu-attente { color: var(--gris-texte); font-size: 14px; margin: 0; }
 
 .simu-scene {
   border: 1px solid var(--trait);
@@ -947,7 +976,7 @@ body[data-mode="simulation"] #depot { padding: 40px 24px; }
 .simu-bloc { border: 1px solid var(--trait); border-radius: 10px; padding: 14px 16px; }
 .simu-bloc h2 {
   font-size: 11.5px; text-transform: uppercase; letter-spacing: .03em;
-  color: var(--gris); margin: 0 0 10px; font-weight: 700; font-family: inherit;
+  color: var(--gris-texte); margin: 0 0 10px; font-weight: 700; font-family: inherit;
 }
 
 .simu-puces { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -970,7 +999,7 @@ body[data-mode="simulation"] #depot { padding: 40px 24px; }
 }
 .simu-bloc label { display: block; font-size: 13.5px; margin: 14px 0 6px; }
 .simu-bloc input[type="range"] { width: 100%; accent-color: var(--navy); }
-.simu-bornes { display: flex; justify-content: space-between; font-size: 12px; color: var(--gris); }
+.simu-bornes { display: flex; justify-content: space-between; font-size: 12px; color: var(--gris-texte); }
 
 .simu-mesures { list-style: none; padding: 0; margin: 0; font-size: 14px; }
 .simu-mesures li {
@@ -985,7 +1014,7 @@ body[data-mode="simulation"] #depot { padding: 40px 24px; }
   border-radius: 8px; padding: 10px 12px; font-size: 13.5px;
   line-height: 1.5; margin-top: 12px;
 }
-.simu-note { color: var(--gris); font-size: 13px; line-height: 1.5; margin: 10px 0 0; }
+.simu-note { color: var(--gris-texte); font-size: 13px; line-height: 1.5; margin: 10px 0 0; }
 
 /* LES DEUX LARGEURS. Ce qui se LIT reste dans la colonne de lecture ; le
    tableau, lui, se BALAIE et prend le cadre entier. Contraindre un tableau a
@@ -1000,7 +1029,7 @@ body[data-mode="simulation"] #depot { padding: 40px 24px; }
   text-align: left; padding: 8px 12px 8px 0; border-bottom: 1px solid var(--trait);
   vertical-align: top;
 }
-.objets-simulation th { font-size: 12.5px; color: var(--gris); font-weight: 700; }
+.objets-simulation th { font-size: 12.5px; color: var(--gris-texte); font-weight: 700; }
 .objets-simulation td:nth-child(3) { font-variant-numeric: tabular-nums; }
 .simu-apres h2 { font-size: 21px; margin: 0 0 10px; }
 .simu-apres p { margin: 0 0 12px; }

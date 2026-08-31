@@ -242,6 +242,13 @@ try {
 
   if (depot && champ) {
     depot.addEventListener('click', () => champ.click());
+    // Meme regle que sur l'accueil : un role=button repond au clavier.
+    depot.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+        e.preventDefault();
+        champ.click();
+      }
+    });
     champ.addEventListener('change', (e) => poser(e.target.files[0]));
     for (const nom of ['dragenter', 'dragover']) {
       depot.addEventListener(nom, (e) => { e.preventDefault(); depot.classList.add('survol'); });

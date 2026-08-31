@@ -76,23 +76,28 @@
     <div class="bandeau-texte">
       <h1>Votre logo est-il bon à marquer ?</h1>
       <p class="accroche">
-        Déposez votre logo, quel que soit son format, et sachez sur quels objets
-        publicitaires il passe : mug, textile, gourde, stylo, tote bag. Une image est
-        vectorisée puis mesurée ; un PDF ou un fichier Illustrator est mesuré
-        directement, sans être retracé. Tout se passe dans votre navigateur : ni le
-        fichier, ni son nom, ni une vignette ne quittent votre machine.
+        Déposez votre logo, quel que soit son format, et sachez s'il passe en
+        sérigraphie, tampographie, gravure, broderie et trois autres techniques, avec
+        la raison à chaque fois. Vous le posez ensuite sur un mug, un textile, une
+        gourde, un stylo ou un tote bag, aux dimensions déclarées par les fabricants.
+        Une image est vectorisée puis mesurée ; un PDF ou un fichier Illustrator est
+        mesuré directement, sans être retracé. Tout se passe dans votre navigateur :
+        ni le fichier, ni son nom, ni une vignette ne quittent votre machine.
       </p>
     </div>
 
-    <div id="depot">
-      <strong>Déposez votre logo ici</strong>
-      <span>PNG, JPEG, GIF, WEBP, PDF, AI, EPS. Ou cliquez pour choisir un fichier.</span>
+    <div class="depot-colonne">
+      <div id="depot" role="button" tabindex="0">
+        <strong>Déposez votre logo ici</strong>
+        <span>PNG, JPEG, GIF, WEBP, PDF, AI, EPS. Ou cliquez pour choisir un fichier.</span>
+      </div>
+      <p class="depot-gratuit">Gratuit, sans compte, sans envoi de fichier.</p>
     </div>
   </div>
   <input type="file" id="fichier" accept="image/*,.pdf,.ai,.eps,.ps,application/pdf,application/postscript">
 
-  <div id="travail" hidden></div>
-  <div id="erreur" hidden></div>
+  <div id="travail" hidden role="status" aria-live="polite"></div>
+  <div id="erreur" hidden role="alert"></div>
 
   <!-- L'ORDRE DE LECTURE, structure C du brief du 21/08 « le site de
        reference ». Ce n'est pas une question de gout, c'est le test du
