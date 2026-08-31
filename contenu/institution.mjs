@@ -81,7 +81,11 @@ ce que vous pouvez <a href="/confidentialite">vérifier vous-même en une comman
 fabriquées exprès, dont on connaît la réponse exacte : un trait de trois pixels doit être
 mesuré à trois pixels, un dégradé doit être détecté comme un dégradé et neuf aplats
 voisins ne doivent pas l'être. Quand une mesure change sans qu'on l'ait voulu, le contrôle
-échoue avant la mise en ligne.</p>`,
+échoue avant la mise en ligne.</p>
+<p>Et vous n'êtes pas obligé de nous croire sur parole : <a href="https://github.com/partouchealexandre-ops/vectofacile" rel="noopener">le code
+de ce site est public</a>, sous licence libre. Ce qu'on affirme ici sur ce qui reste chez
+vous se lit ligne à ligne, y compris par quelqu'un qui n'a aucune raison de nous faire
+confiance.</p>`,
     },
     {
       h2: 'Nous écrire',
@@ -175,7 +179,14 @@ garantir qu'elles le soient en toutes circonstances.</p>`,
 pleine et entière. Le traitement étant local, l'éditeur n'en reçoit ni n'en conserve
 aucune copie.</p>
 <p>Le nom Bon à Marquer, son logotype et le contenu rédactionnel de ce site sont la propriété
-de Bytouch SARL.</p>`,
+de Bytouch SARL.</p>
+<p>Le code de ce site est publié sous licence <b>GNU Affero General Public License, version 3
+ou ultérieure</b>. Son texte intégral se trouve dans le fichier <code>LICENSE</code> du dépôt.
+Toute personne qui utilise ce service peut obtenir la source correspondant exactement à la
+version en ligne, à l'adresse
+<a href="https://github.com/partouchealexandre-ops/vectofacile" rel="noopener">github.com/partouchealexandre-ops/vectofacile</a>.
+Cette licence porte sur le code, et sur lui seul : elle ne cède ni la marque, ni le logotype,
+ni le contenu rédactionnel de ce site.</p>`,
     },
     {
       h2: 'Droit applicable',

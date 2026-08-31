@@ -223,6 +223,27 @@ for (const url of URLS) {
     else if (table.liens < 3) fautes.push(`tableau des minimums sans sources cliquables : ${table.liens} liens`);
   }
 
+  // L'OFFRE DE SOURCE EST UNE OBLIGATION, PAS UNE COURTOISIE, 31/08/2026.
+  //
+  // Le site passe sous licence AGPL. Cette licence demande que quiconque
+  // utilise le service puisse obtenir la source de la version qu'il utilise,
+  // et l'endroit ou on l'annonce est la page des mentions legales.
+  //
+  // Ce controle existe parce qu'une phrase de mentions legales est exactement
+  // le genre de ligne qui disparait dans une reecriture sans que personne s'en
+  // apercoive, et que celle-la n'est pas une formule de politesse : sans elle,
+  // le site ne respecte plus la licence du composant qu'il sert.
+  if (url === '/mentions-legales') {
+    const offre = await page.evaluate(() => {
+      const corps = document.body.innerText;
+      const lien = [...document.querySelectorAll('a[href*="github.com"]')]
+        .some((a) => /vectofacile/.test(a.getAttribute('href')));
+      return { lien, licence: /Affero/i.test(corps) };
+    });
+    if (!offre.licence) fautes.push('les mentions légales ne nomment plus la licence AGPL');
+    if (!offre.lien) fautes.push('les mentions légales n\'offrent plus la source du site');
+  }
+
   // L'ENTETE TIENT SUR UNE LIGNE, et c'est une mesure, pas un gout.
   //
   // Trouve le 25/08 en ajoutant une quatrieme rubrique : l'entete passait de

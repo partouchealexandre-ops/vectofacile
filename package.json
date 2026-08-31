@@ -23,7 +23,7 @@
     "simulation:deriver": "python3 outils/deriver_simulation.py",
     "indexnow": "node outils/prevenir_indexnow.mjs"
   },
-  "license": "UNLICENSED",
+  "license": "AGPL-3.0-or-later",
   "dependencies": {
     "@visioncortex/vtracer": "^1.0.0-alpha.3",
     "pdfjs-dist": "^6.2.108"
