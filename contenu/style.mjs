@@ -38,7 +38,23 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
     --navy: #0A2D4D;
     --orange: #FF6A00;
     --encre: #0A2D4D;
-    --papier: #ffffff;
+    /* TROIS NIVEAUX AU LIEU D'UN, 31/08/2026. Le fond du site etait le blanc
+       pur, et nos cartes sont blanches aussi : une carte de technique, un
+       encadre, la zone de depot, tout etait blanc sur blanc, et seuls les
+       filets les faisaient exister. La page se lisait comme une feuille plate.
+       Ce n'etait pas un defaut de mise en page, c'etait un defaut de palette :
+       il manquait un SOL sur lequel poser des cartes.
+
+       Le sol prend #FAF8F2. L'ecart entre une carte blanche et ce sol vaut
+       1,062, exactement l'ecart que le site accepte deja entre son gris clair
+       et le blanc (1,065). Rien de neuf n'est demande a l'oeil, on deplace la
+       marche d'un cran.
+
+       LE SOL EST CHAUD, DONC TOUT LE NEUTRE L'EST. Le gris clair valait
+       #F6F8FA, un gris FROID, bleute : pose sur un creme il vire au verdatre.
+       Le sol, le panneau et le filet sont une seule decision, pas trois. */
+    --papier: #FAF8F2;
+    --carte: #ffffff;
     --gris: #7B8794;
     /* DEUX GRIS DEPUIS LE 31/08. Le gris de charte tient sur un trait, pas sous
        un texte : #7B8794 sur blanc mesure 3,66:1, et 3,44:1 sur le gris clair,
@@ -47,29 +63,37 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
        5,45:1 sur blanc et 5,12:1 sur le gris clair. Une couleur qui sert a deux
        choses finit toujours par etre juste pour une seule. */
     --gris-texte: #5F6B76;
-    --trait: #E3E8ED;
+    --trait: #E5E1D8;
     /* LA COULEUR D'INFORMATION, 31/08/2026. Ce jeton existait depuis le premier
        jour et valait le navy : une place reservee, jamais remplie. La palette
        n'avait donc aucune couleur pour dire "voici comment ca marche". Tout ce
        qui explique etait navy ou gris, et c'est ce qui rendait les pages sages.
 
-       MESURES. #2474C6 sur blanc : 4,79:1, donc il porte du texte. Blanc sur
-       #2474C6 : 4,79:1, donc un aplat porte du texte blanc. Navy sur
-       #EAF3FB : 12,51:1.
+       MESURES. #2270C0 sur une carte blanche : 5,06:1, et 4,77:1 sur le sol
+       creme. Blanc sur #2270C0 : 5,06:1, donc un aplat porte du texte blanc.
+       Navy sur #EAF3FB : 12,51:1.
 
-       DEUX INTERDITS QUI VIENNENT DE LA MESURE, pas du gout. Le bleu sur
-       #EAF3FB tombe a 4,26:1 : dans l'encadre d'information, le texte est navy,
-       le bleu ne tient que les filets, les numeros et les pictos, ou le seuil
-       est de 3:1. Le bleu sur un aplat navy tombe a 2,93:1 : on ne superpose
-       jamais les deux.
+       POURQUOI PAS #2474C6, choisi le matin meme. Il valait 4,79:1 sur blanc,
+       et le fond etait blanc. Le sol est passe au creme le soir : le meme bleu
+       n'y vaut plus que 4,51:1, a un centieme du seuil. Le bleu n'a pas ete
+       mal choisi, c'est le sol qui a bouge sous lui. On reprend la marge au
+       lieu de vivre sur la limite.
+
+       TROIS INTERDITS QUI VIENNENT DE LA MESURE, pas du gout. Le bleu ne
+       porte de texte que sur le sol et sur une carte. Sur un panneau teinte il
+       retombe sous le seuil, quel que soit le panneau : 4,45:1 sur le gris
+       chaud, 4,50:1 sur son propre fond bleu pale. Dans un panneau, le texte
+       est navy ; le bleu n'y tient que les filets, les numeros et les pictos,
+       ou le seuil est de 3:1. Et le bleu sur un aplat navy tombe a 2,93:1 : on
+       ne superpose jamais les deux.
 
        DEUX INTERDITS QUI VIENNENT DU SENS. Le bleu n'entre pas dans une carte
        de feu : le jour ou il se pose a cote des lampes, le visiteur lit quatre
        etats au lieu de trois. Et il ne touche pas un bouton : l'orange est la
        seule couleur d'action, cette regle-la ne bouge pas. */
-    --accent: #2474C6;
+    --accent: #2270C0;
     --info-clair: #EAF3FB;
-    --gris-clair: #F6F8FA;
+    --gris-clair: #F3F0E8;
     --vert: #0E7C52;
     /* LES LAMPES DU FEU, et pourquoi elles ne sont pas les couleurs de charte.
        Les trois officielles n'ont pas la meme luminance : le vert #0E7C52 vaut
@@ -200,7 +224,19 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
      focus se voit. Le champ reste cache : un input.click() ouvre le selecteur
      meme sur un champ masque, c'est le clavier qui manquait, pas la souris. */
   .depot-colonne { display: flex; flex-direction: column; }
+  /* LA ZONE DE DEPOT RESTE BLANCHE SUR LE SOL CREME, arbitrage Alex du 31/08.
+     C'est la seule chose que le visiteur doit faire sur cette page : elle est
+     donc la surface la plus claire de l'ecran, et elle se detache d'elle-meme
+     sans un gramme d'orange. Son survol ASSOMBRIT vers le panneau chaud, ce qui
+     se lit comme un appui.
+
+     Elle regle aussi une question propre a ce site : on affiche le logo du
+     visiteur. Sur un sol creme, un JPEG a fond blanc opaque montrerait un
+     rectangle blanc franc autour du dessin. La vignette se pose donc sur cette
+     surface blanche, comme le fera l'objet marque : on ne juge pas un logo sur
+     un sol que le marquage n'aura jamais. */
   #depot {
+    background: var(--carte);
     border: 2px dashed var(--trait); border-radius: 12px; padding: 56px 24px;
     text-align: center; cursor: pointer; transition: border-color .15s, background .15s;
   }
@@ -215,7 +251,7 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
   /* §7.1 du brief du 20/08 : une fois l'analyse faite, la zone de depot montre
      le logo analyse plutot que de reclamer une action deja accomplie. */
   #depot.depot-analyse { border-style: solid; border-color: var(--trait);
-    background: #fff; padding: 14px; }
+    background: var(--carte); padding: 14px; }
   /* La legende de la vignette teintee. Elle n'est pas decorative : sans elle,
      on montrerait au visiteur un logo d'une couleur qui n'est pas la sienne. */
   .vignette-teinte { display: block; margin-top: 8px; color: #B02463;
@@ -262,7 +298,7 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
   .grille-produits { display: grid; gap: 14px; margin: 16px 0 18px;
     grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); }
   .produit { border: 1px solid #e3e6ea; border-radius: 10px; padding: 16px 18px;
-    background: #fff; display: grid; grid-template-columns: 46px minmax(0, 1fr);
+    background: var(--carte); display: grid; grid-template-columns: 46px minmax(0, 1fr);
     gap: 16px; align-items: start; }
   .produit-corps { display: grid; gap: 8px; min-width: 0; align-content: start; }
   .produit-image { color: var(--navy); opacity: .7; }
@@ -303,7 +339,7 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
   /* L'ECRAN D'UN EPS. La deuxieme part, « ce qu'on ne sait pas », est celle
      qu'un autre site supprimerait : elle se distingue donc, sans crier. */
   .eps-limite { margin: 0 0 20px; padding: 14px 18px; border: 1px solid var(--trait);
-    border-left: 4px solid var(--gris); border-radius: 10px; background: #fff; }
+    border-left: 4px solid var(--gris); border-radius: 10px; background: var(--carte); }
   .eps-limite p { margin: 0 0 10px; font-size: 15px; line-height: 1.55; max-width: 68ch; }
   .eps-limite p:last-child { margin-bottom: 0; }
   /* LES CONSEILS, DANS LA REPONSE depuis le 25/08. Trois au maximum, en
@@ -342,7 +378,7 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
     gap: 14px; align-items: start; margin: 4px 0 22px; }
   .feu { display: grid; grid-template-columns: 66px minmax(0, 1fr);
     border: 1px solid var(--trait); border-radius: 10px; overflow: hidden;
-    background: #fff; align-self: start; }
+    background: var(--carte); align-self: start; }
   /* LA BARRE D'ETAT, 3 px, du cote gauche du rail. Elle etait posee en ombre
      interne dans la maquette : une bordure fait exactement la meme image, et le
      site ne porte aucune ombre. */
@@ -410,7 +446,7 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
     list-style: none; }
   .feu-objet { display: inline-flex; align-items: center; gap: 5px;
     border: 1px solid var(--trait); border-radius: 999px; padding: 4px 8px 4px 6px;
-    font-size: 12.5px; line-height: 1; background: #fff; }
+    font-size: 12.5px; line-height: 1; background: var(--carte); }
   .picto-objet { width: 15px; height: 15px; color: rgba(10, 45, 77, .55);
     flex: 0 0 auto; }
   /* LE BOUTON DE CONVERSION, plein, arbitrage Alex du 24/08. En contour, il se
@@ -503,10 +539,10 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
   .choix-produit label { display: block; font-weight: 600; font-size: 14px;
     margin: 0 0 6px; }
   .choix-produit select { font: inherit; font-size: 15px; padding: 9px 12px;
-    border: 1px solid #c9ced6; border-radius: 8px; background: #fff; min-width: 260px;
+    border: 1px solid #c9ced6; border-radius: 8px; background: var(--carte); min-width: 260px;
     max-width: 100%; }
   .produit-verdict { border: 1px solid #e3e6ea; border-radius: 10px;
-    padding: 16px 18px; margin: 0 0 16px; background: #fff; }
+    padding: 16px 18px; margin: 0 0 16px; background: var(--carte); }
   .produit-verdict h3 { margin: 0 0 10px; font-size: 17px; }
   .produit-techniques { list-style: none; padding: 0; margin: 0; display: grid;
     gap: 12px; }
@@ -543,7 +579,7 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
     font-style: italic; }
   #largeur label { display: inline-block; color: var(--gris-texte); font-size: 14px; margin-right: 10px; }
   #largeur input { width: 110px; padding: 9px 12px; font: inherit; font-size: 16px;
-                   border: 1px solid var(--trait); border-radius: 6px; background: #fff; }
+                   border: 1px solid var(--trait); border-radius: 6px; background: var(--carte); }
   #largeur .unite { margin-left: 8px; color: var(--gris-texte); font-size: 14px; }
   /* UNE LIGNE PAR POINT depuis le 24/08. Le fait reste en avant, la mecanique
      passe en gris derriere lui : c'est la meme hierarchie qu'avant, sur une
@@ -575,6 +611,10 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
   .techniques { list-style: none; padding: 0; margin: 14px 0 0; display: flex; flex-wrap: wrap; gap: 8px; }
   .techniques li { font-size: 13px; color: var(--gris-texte); background: var(--gris-clair);
                    border: 1px solid var(--trait); border-radius: 999px; padding: 4px 12px; }
+  /* LE DAMIER DE TRANSPARENCE RESTE NEUTRE, meme quand le sol devient creme.
+     Ce damier gris et blanc est la convention universelle de "il n'y a rien
+     ici" : rechauffe, il se lirait comme un fond beige APPARTENANT au logo,
+     c'est a dire comme la chose exacte qu'il sert a nier. */
   #apercu { margin-top: 14px; border: 1px solid var(--trait); border-radius: 8px; padding: 12px;
             background: repeating-conic-gradient(#f3f4f6 0% 25%, #ffffff 0% 50%) 50% / 16px 16px; }
   #apercu svg { max-width: 100%; height: auto; display: block; margin: 0 auto; }
@@ -623,7 +663,7 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
      autre bouton ou lien de la page, et le harnais le MESURE au lieu de le
      croire. */
   .cta-geant { display: inline-flex; align-items: center; justify-content: center; gap: 12px;
-    padding: 18px 36px; border-radius: 999px; background: #fff; color: var(--navy);
+    padding: 18px 36px; border-radius: 999px; background: var(--carte); color: var(--navy);
     font-family: 'Poppins', var(--pile-systeme); font-weight: 700;
     font-size: clamp(18px, 1.7vw, 22px); line-height: 1.15; text-decoration: none;
     box-shadow: 0 8px 20px rgba(10, 45, 77, .18); }
@@ -677,7 +717,7 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
      deux appels qui se disputent. */
   .reprise { border: 1px solid var(--trait); border-left: 4px solid var(--navy);
              border-radius: 0 8px 8px 0; padding: 16px 18px; margin: 0 0 22px;
-             max-width: 68ch; background: #fff; }
+             max-width: 68ch; background: var(--carte); }
   .reprise-titre { font-family: 'Poppins', var(--pile-systeme); font-weight: 700;
                    font-size: 16px; margin: 0 0 8px; }
   .reprise p { margin: 0 0 10px; font-size: 15px; line-height: 1.55; }
@@ -693,8 +733,8 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
   #apercu:empty { display: none; }
   button { font: inherit; font-size: 14px; font-weight: 600; padding: 10px 18px; border-radius: 8px;
            border: 1.5px solid var(--navy); background: var(--navy); color: #fff; cursor: pointer; }
-  button.second { background: #fff; color: var(--encre); }
-  button.tertiaire { background: #fff; color: var(--gris-texte); border-color: var(--trait); font-weight: 500; }
+  button.second { background: var(--carte); color: var(--encre); }
+  button.tertiaire { background: var(--carte); color: var(--gris-texte); border-color: var(--trait); font-weight: 500; }
   #travail { margin-top: 20px; color: var(--gris-texte); font-size: 14px; }
   #erreur { margin-top: 20px; color: #b42318; background: #fef3f2; border: 1px solid #fecdca;
             padding: 12px 14px; border-radius: 8px; font-size: 14px; }
@@ -942,7 +982,7 @@ li.verdict-defavorable::before { content: "-"; color: #9c3722; }
 .verdict-inconnu { border-color: #cdd4dd; }
 .verdict-inconnu > h3 .etiquette { color: #44536b; }
 li.verdict-inconnu::before { content: "?"; color: #44536b; }
-div.encadre.verdict-inconnu { background: #f4f6f9; }
+div.encadre.verdict-inconnu { background: var(--gris-clair); }
 
 #verdict .resume { font-size: 15px; margin: 10px 0 0; }
 #verdict .note { font-size: 13px; color: #5b6470; margin-top: 14px; }
