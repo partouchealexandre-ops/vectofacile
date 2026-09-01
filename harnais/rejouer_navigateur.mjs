@@ -891,6 +891,13 @@ console.log('');
           + ` pour « ${constat.tailles.nomRival} »`
         : 'non mesure'})`,
       constat.tailles !== null && constat.tailles.cta > constat.tailles.rival],
+    // LE PLAFOND, pose le 01/09/2026 avec la bande qui maigrit. Le bouton
+    // faisait 22 px, le titre 34, et Alex a tranche : « vraiment vraiment too
+    // much ». Sans plafond, la taille repart a la hausse au premier « et si on
+    // le rendait plus visible », et le controle du dessus l'y encouragerait
+    // meme, puisqu'il ne demande que d'etre le plus gros.
+    [`et il ne repart pas a la hausse : 20 px au plus (${constat.tailles?.cta ?? '?'} px)`,
+      constat.tailles !== null && constat.tailles.cta <= 20],
     ['le logo suit jusqu\'au simulateur',
       String(constat.logoDepose ?? '').startsWith('data:image/png;base64,')],
     ['et la phrase ne le promet que si c\'est vrai',
@@ -1099,6 +1106,13 @@ console.log('');
           + ` pour « ${constat.tailles.nomRival} »`
         : 'non mesure'})`,
       constat.tailles !== null && constat.tailles.cta > constat.tailles.rival],
+    // LE PLAFOND, pose le 01/09/2026 avec la bande qui maigrit. Le bouton
+    // faisait 22 px, le titre 34, et Alex a tranche : « vraiment vraiment too
+    // much ». Sans plafond, la taille repart a la hausse au premier « et si on
+    // le rendait plus visible », et le controle du dessus l'y encouragerait
+    // meme, puisqu'il ne demande que d'etre le plus gros.
+    [`et il ne repart pas a la hausse : 20 px au plus (${constat.tailles?.cta ?? '?'} px)`,
+      constat.tailles !== null && constat.tailles.cta <= 20],
     ['tant que rien n\'est pris, elle rappelle d\'emporter ses fichiers',
       constat.rappelFichiers === true],
     ['et ce rappel s\'efface des que le premier fichier est pris',

@@ -152,7 +152,9 @@ async function deposer(page, octets, nom, type) {
       // C2 du brief du 21/08 : le bandeau de six lignes a ete remplace par
       // l'ACTION, une ligne et un bouton. On lit donc ce que le visiteur voit
       // maintenant, pas ce qui n'existe plus.
-      actionFichier: document.querySelector('#verdict .verdict-action')?.innerText ?? '',
+      // LE BANDEAU A QUITTE #verdict LE 01/09/2026 : il vit dans le cadre du
+      // fichier, avec l'avertissement et les boutons qui livrent.
+      actionFichier: document.querySelector('#action_fichier .verdict-action')?.innerText ?? '',
       // La reponse a quitte #verdict le 24/08 : elle ouvre la page.
       verdictCourt: document.querySelector('#fait_principal .verdict-tete')?.innerText ?? '',
       teteComplete: document.getElementById('fait_principal')?.innerText ?? '',

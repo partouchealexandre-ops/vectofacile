@@ -23,7 +23,6 @@
  * Fonction PURE : elle prend des donnees, elle rend une chaine. Pas de DOM.
  */
 
-import { rendreActionFichier, rendreSuite } from './rendu_grille.js';
 import { rendreFeux, rendreFaitPrincipal, pointsAttention, rendrePointsAttention }
   from './rendu_feux.js';
 
@@ -55,14 +54,23 @@ const CONSEILS_EN_TETE = 3;
  * Sept techniques, c'est tout le metier, et les produits redeviennent ce
  * qu'ils doivent etre, la traduction d'une technique en objets qu'on reconnait.
  */
-export function rendreVerdict(mesures, feux = [], fichier = null, diagnostic = '') {
+export function rendreVerdict(mesures, feux = []) {
   if (!feux.length) return '';
   const points = pointsAttention(mesures, feux).slice(CONSEILS_EN_TETE);
-  // Les cartes de feu orange portent deja le bouton de conversion depuis le
-  // 24/08/2026. Le bandeau du bas ne le repete pas : voir rendreActionFichier.
-  const ctaDejaPorte = feux.some((f) => f.feu === 'orange' && f.nuance === 'format');
+  // LE BLOC DE CONTACT A QUITTE CET ECRAN, arbitrage Alex du 01/09/2026.
+  //
+  // « Vous voulez ce marquage en vrai ? » arrivait entre le retour sur le
+  // fichier et les boutons de telechargement, c'est a dire AVANT que le
+  // visiteur ait son fichier. Il demandait une commande a quelqu'un qui n'a
+  // pas fini de recevoir ce qu'il etait venu chercher.
+  //
+  // Sa place est sur le simulateur : la, le visiteur a vu SON logo sur un
+  // objet reel, a une taille en millimetres. C'est le seul moment du parcours
+  // ou « je le veux en vrai » est la question qu'il se pose deja.
+  // ET L'ACTION SUR LE FICHIER AUSSI. Elle est peinte dans son propre cadre,
+  // avec l'avertissement et les boutons qui livrent : ils disent tous la meme
+  // chose, ils tiennent donc ensemble. Ce module ne rend plus que le
+  // diagnostic.
   return `${rendreFeux(feux)}
-${rendrePointsAttention(points)}
-${rendreActionFichier(fichier, ctaDejaPorte)}
-${rendreSuite(diagnostic)}`;
+${rendrePointsAttention(points)}`;
 }

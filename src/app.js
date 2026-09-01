@@ -21,6 +21,7 @@ import { rendreDecouverte, rendreReprise } from './verdict/rendu_grille.js';
 import { imageVersPng, programmeVersPng } from './vectorisation/toile.js';
 import { deposerLogo, oublierLogo } from './simulation/passage.js';
 import { rendreVerdict } from './verdict/rendu.js';
+import { rendreActionFichier } from './verdict/rendu_grille.js';
 import { rendreFaitPrincipal, logoClair } from './verdict/rendu_feux.js';
 import { conseiller } from './conseils/conseils.js';
 import { preparerVectorisation, FORMES_MAXIMALES } from './vectorisation/options.js';
@@ -333,9 +334,40 @@ function chargerGrille() {
  * Un avertissement qui arrive apres le bouton n'est pas un avertissement,
  * c'est une note de bas de page.
  */
+/**
+ * LE RETOUR SUR LE FICHIER, DANS SON CADRE, 01/09/2026.
+ *
+ * Ce qu'on a compris du fichier, ce qu'on en a fait, l'avertissement s'il y en
+ * a un et les boutons qui livrent disaient tous la meme chose et vivaient dans
+ * quatre blocs separes, avec le bloc de contact intercale au milieu. Ils
+ * tiennent desormais dans le meme cadre, et c'est ce cadre qui porte les
+ * boutons.
+ *
+ * Le cadre ne se montre que s'il a quelque chose dedans : un encadre vide sous
+ * la grille de feux serait une promesse sans objet.
+ */
+function peindreActionFichier() {
+  const zone = $('action_fichier');
+  if (!zone) return;
+  zone.innerHTML = rendreActionFichier(etat.fichierEtat, ctaPorteParLesCartes());
+  const cadre = $('bloc_fichier');
+  if (cadre) cadre.hidden = zone.innerHTML.trim() === '';
+}
+
+/**
+ * Les cartes de feu orange portent deja le bouton de conversion depuis le
+ * 24/08/2026 : le bandeau ne le repete pas. La question se pose une fois, ici,
+ * et pas dans chacun des deux rendus.
+ */
+function ctaPorteParLesCartes() {
+  return Boolean(etat.feux?.some((f) => f.feu === 'orange' && f.nuance === 'format'));
+}
+
 function afficherAvertissements(liste) {
   const bloc = $('avertissements');
+  const cadre = $('bloc_fichier');
   if (!liste || liste.length === 0) { bloc.hidden = true; return; }
+  if (cadre) cadre.hidden = false;
   // L'OFFRE DE REDESSIN SUIT L'AVERTISSEMENT, DANS LE MEME BLOC, 30/08/2026.
   //
   // Elle n'est pas ailleurs sur la page, et ce n'est pas un detail de mise en
@@ -464,8 +496,9 @@ function rendreLeVerdict() {
     tete.innerHTML = rendreFaitPrincipal(m?.m2Couleurs?.couleursReelles ?? null, feux, m);
     tete.hidden = false;
   }
-  $('verdict').innerHTML = rendreVerdict(m, feux, etat.fichierEtat, resumeDuDiagnostic());
+  $('verdict').innerHTML = rendreVerdict(m, feux);
   $('verdict').hidden = false;
+  peindreActionFichier();
 }
 
 /**
@@ -883,7 +916,14 @@ function revelerTelechargements() {
   const bloc = $('telechargements');
   if (!bloc) return;
   if (!etat.programme) return;
-  if (modeVectoriser() || etat.telechargementDemande) bloc.hidden = false;
+  if (modeVectoriser() || etat.telechargementDemande) {
+    bloc.hidden = false;
+    // Un bloc visible dans un cadre cache reste invisible, et le navigateur ne
+    // previent pas : c'est exactement le defaut du 19/08 avec `hidden` contre
+    // une regle `display`, pris par l'autre bout.
+    const cadre = $('bloc_fichier');
+    if (cadre) cadre.hidden = false;
+  }
   // LE RAPPEL SUIT L'ECRAN, 27/08/2026. Sur l'accueil, les boutons peuvent
   // apparaitre APRES la decouverte : le visiteur lit son diagnostic, puis
   // reclame son fichier. Sans cette ligne, le rappel d'emporter ses fichiers

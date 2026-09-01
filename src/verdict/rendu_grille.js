@@ -591,16 +591,23 @@ export function rendreSuite(diagnostic = '', options = {}) {
   const ouverte = options.adresseOuverte ?? CONTACT_OPERATIONNEL;
   if (!ouverte) return '';
   const resume = String(diagnostic).trim();
+  // LE BLOC PARLE DE CE QUE LA PAGE A, 01/09/2026. Il vit desormais sur le
+  // simulateur, ou il n'y a pas de diagnostic a joindre : deux de ses phrases
+  // en promettaient un, et un texte qui cite un document absent est une
+  // promesse en l'air. Le diagnostic decide donc du texte, comme il decidait
+  // deja du bouton de copie.
   return `<div class="encadre et-maintenant">
   <h2>Vous voulez ce marquage en vrai ?</h2>
   <p>Dites-nous sur quel objet et en quelle quantité. On vous dit combien ça coûte et en
-  combien de temps, avec une réponse par un humain qui a vu votre diagnostic.</p>
+  combien de temps, avec une réponse par un humain${resume ? ' qui a vu votre diagnostic' : ''}.</p>
   <p class="reprise-envoi">Écrivez-nous à <a href="mailto:${CONTACT}">${CONTACT}</a>.</p>${resume
     ? `
   <button class="feu-copier" type="button" data-copier="${echapper(resume)}">Copier mon diagnostic à coller dans le message</button>`
     : ''}
-  <p class="note">Votre logo ne part pas : seul le diagnostic accompagne votre message,
-  pour que la réponse soit utile dès le premier échange.</p>
+  <p class="note">${resume
+    ? 'Votre logo ne part pas : seul le diagnostic accompagne votre message, pour que la '
+      + 'réponse soit utile dès le premier échange.'
+    : 'Votre logo ne part pas d\'ici : c\'est vous qui l\'envoyez, depuis votre messagerie.'}</p>
 </div>`;
 }
 

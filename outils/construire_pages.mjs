@@ -969,6 +969,24 @@ if (!/class="mention-simulation"/.test(voirMonLogo)
  * qui les affiche avec le produit choisi ; les publier en tableau les
  * transformerait en promesse detachee de son contexte.
  */
+/*
+ * LE BLOC DE CONTACT DU SIMULATEUR, pose le 01/09/2026.
+ *
+ * Il est ECRIT A LA CONSTRUCTION, pas monte par un script : la page charge
+ * deja le simulateur, et lui faire charger en plus tout le module de rendu du
+ * verdict pour deux paragraphes serait payer un module de plus a chaque
+ * visite. Le drapeau de l'adresse est lu a la source, comme partout ailleurs :
+ * si la boite ne recoit pas, le bloc n'existe pas dans le HTML servi.
+ */
+const { rendreSuite } = await import('../src/verdict/rendu_grille.js');
+const REPERES_SUITE = /<!-- suite-contact:debut[\s\S]*?suite-contact:fin -->/;
+if (!REPERES_SUITE.test(voirMonLogo)) {
+  console.error('  contenu/voir-mon-logo.html ne porte plus ses reperes de bloc de contact.');
+  console.error('  Sans eux, le seul endroit du parcours ou « je le veux en vrai »');
+  console.error('  est la question du visiteur ne le lui propose plus.');
+  process.exit(1);
+}
+
 const LOT_SIMULATION = JSON.parse(fs.readFileSync(
   path.join(RACINE, 'src', 'simulation', 'lot1.json'), 'utf-8'));
 const REPERES_OBJETS = /<!-- objets:debut[\s\S]*?objets:fin -->/;
@@ -997,7 +1015,8 @@ const tableauObjets = '<table class="objets-simulation">'
 
 fs.mkdirSync(path.join(PUBLIC, 'voir-mon-logo'), { recursive: true });
 fs.writeFileSync(path.join(PUBLIC, 'voir-mon-logo', 'index.html'),
-  voirMonLogo.replace(REPERES_PIED, pied(publiees, pages, '/voir-mon-logo'))
+  voirMonLogo.replace(REPERES_SUITE, rendreSuite())
+    .replace(REPERES_PIED, pied(publiees, pages, '/voir-mon-logo'))
     .replace(REPERES, laNavDe('/voir-mon-logo'))
     .replace(REPERES_ACTIONS, actionsEntete('/voir-mon-logo'))
     .replace(REPERES_OBJETS, tableauObjets)

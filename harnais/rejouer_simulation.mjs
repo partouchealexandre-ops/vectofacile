@@ -457,6 +457,24 @@ async function controlerLaPage() {
     }).map((n) => n.textContent.trim().slice(0, 30)));
   controle('un seul bouton orange sur la page', oranges.length === 1, oranges.join(' | '));
 
+  // LE BLOC DE CONTACT VIT ICI DEPUIS LE 01/09/2026, arbitrage Alex. Sur
+  // l'accueil il s'intercalait entre le retour sur le fichier et les boutons
+  // qui le livrent : il demandait une commande a quelqu'un qui n'avait pas
+  // fini de recevoir ce qu'il venait chercher. Ici, le visiteur vient de voir
+  // SON logo sur un objet, a une taille en millimetres.
+  const suite = await onglet.evaluate(() => {
+    const b = document.querySelector('.et-maintenant');
+    return b ? { texte: b.innerText, boutons: b.querySelectorAll('button').length } : null;
+  });
+  controle('le bloc de contact est sur le simulateur', suite !== null);
+  controle('et il ecrit l\'adresse en toutes lettres',
+           Boolean(suite) && /contact@bonamarquer\.fr/.test(suite.texte));
+  // Il n'y a pas de diagnostic sur cette page : le bloc ne doit donc ni en
+  // promettre un ni offrir de le copier. Un texte qui cite un document absent
+  // est une promesse en l'air.
+  controle('il ne promet aucun diagnostic, il n\'y en a pas ici',
+           Boolean(suite) && !/diagnostic/i.test(suite.texte) && suite.boutons === 0);
+
   // LA REGLETTE CHANGE LES MILLIMETRES. Une reglette qui bouge sans rien
   // deplacer serait exactement l'illustration decorative qu'on refuse.
   // ON DEPOSE UN LOGO. La page n'en affiche aucun par defaut, et c'est

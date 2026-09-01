@@ -396,7 +396,18 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
   /* Le volet des couleurs est monte juste sous la reponse : il se pose comme
      une ligne discrete, pas comme un bloc de plus. */
   #volet_couleurs { margin: 0 0 18px; }
+  /* LE CADRE DU FICHIER, 01/09/2026. Ce qu'on a compris du fichier, ce qu'on
+     en a fait, l'avertissement et les boutons qui livrent : un seul cadre,
+     parce qu'ils disent tous la meme chose. Bordure et fond, jamais
+     d'elevation : la charte interdit l'ombre portee. */
+  .bloc-fichier { margin: 0 0 22px; padding: 18px 20px; border: 1px solid var(--trait);
+    border-left: 4px solid var(--navy); border-radius: 10px; background: var(--gris-clair); }
+  .bloc-fichier > *:last-child { margin-bottom: 0; }
+  .bloc-fichier #telechargements { margin-top: 14px; }
+  .bloc-fichier .alerte:last-of-type { margin-bottom: 0; }
   .verdict-action { margin: 0 0 22px; }
+  .bloc-fichier .verdict-action { margin: 0; }
+  .bloc-fichier .verdict-action p:first-child { margin-top: 0; }
   .verdict-action .note { margin: 8px 0 0; }
   .cta-large { display: block; text-align: center; padding: 14px 20px; border-radius: 10px;
     background: var(--orange); color: var(--navy); font-weight: 700; font-size: 16px;
@@ -694,30 +705,39 @@ export const STYLE = `/* FICHIER GENERE par outils/construire_pages.mjs depuis c
      ne les garde pas, il faudrait tout redeposer. Le panneau porte donc une
      ligne de rappel tant que rien n'a ete telecharge, et elle disparait des
      que le premier fichier est pris. */
-  .passage-objet { margin: 34px 0 6px; padding: 30px 28px 26px; border-radius: 16px;
+  /* LA BANDE A MAIGRI, arbitrage Alex du 01/09/2026. Elle occupait un ecran
+     entier : un titre de 34 px, un bouton de 22 px et trois ombres portees,
+     pour une invitation qui vient APRES le fichier. « Vraiment vraiment too
+     much », et il a raison : l'orange signale deja, il n'a pas besoin de la
+     taille en plus.
+     Les trois ombres partent avec, et pas seulement par gout : la charte dit
+     AUCUNE ombre portee nulle part, la hierarchie se fait par la bordure et le
+     fond. Ce bloc etait le seul du site a l'enfreindre, trois fois.
+     Ce qui ne change pas : c'est le seul fond orange de l'ecran, donc le seul
+     appel a la conversion, et son bouton reste le plus gros de la page. */
+  .passage-objet { margin: 26px 0 6px; padding: 20px 22px 18px; border-radius: 12px;
     background: linear-gradient(135deg, #FF6A00 0%, #FF8C2B 100%); color: var(--navy);
-    text-align: center; box-shadow: 0 14px 34px rgba(255, 106, 0, .26); }
-  .passage-etape { margin: 0 0 8px; font-size: 12.5px; font-weight: 700;
+    text-align: center; }
+  .passage-etape { margin: 0 0 6px; font-size: 11.5px; font-weight: 700;
     letter-spacing: .09em; text-transform: uppercase; color: var(--navy); }
-  .passage-objet h2 { margin: 0 0 12px; color: var(--navy); line-height: 1.12;
-    font-size: clamp(25px, 3.1vw, 34px); }
-  .passage-objet .passage-note { margin: 0 auto 22px; max-width: 58ch; font-size: 15.5px;
-    line-height: 1.55; color: var(--navy); }
-  /* La taille du bouton est ce qui a ete demande : elle depasse celle de tout
-     autre bouton ou lien de la page, et le harnais le MESURE au lieu de le
-     croire. */
-  .cta-geant { display: inline-flex; align-items: center; justify-content: center; gap: 12px;
-    padding: 18px 36px; border-radius: 999px; background: var(--carte); color: var(--navy);
+  .passage-objet h2 { margin: 0 0 8px; color: var(--navy); line-height: 1.15;
+    font-size: clamp(19px, 1.7vw, 22px); }
+  .passage-objet .passage-note { margin: 0 auto 16px; max-width: 58ch; font-size: 14.5px;
+    line-height: 1.5; color: var(--navy); }
+  /* Le bouton reste le plus gros de la page, et le harnais le MESURE au lieu
+     de le croire. Il porte desormais un plafond : sans lui, la taille repart
+     a la hausse au premier « et si on le rendait plus visible ». */
+  .cta-geant { display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+    padding: 12px 26px; border-radius: 999px; background: var(--carte); color: var(--navy);
     font-family: 'Poppins', var(--pile-systeme); font-weight: 700;
-    font-size: clamp(18px, 1.7vw, 22px); line-height: 1.15; text-decoration: none;
-    box-shadow: 0 8px 20px rgba(10, 45, 77, .18); }
-  .cta-geant:hover { background: #FFF6EF; box-shadow: 0 10px 26px rgba(10, 45, 77, .24); }
+    font-size: 17px; line-height: 1.15; text-decoration: none; }
+  .cta-geant:hover { background: #FFF6EF; }
   .cta-geant .fleche { font-size: .9em; }
-  .passage-rappel { margin: 18px 0 0; font-size: 13.5px; line-height: 1.5;
+  .passage-rappel { margin: 14px 0 0; font-size: 13px; line-height: 1.5;
     color: var(--navy); }
   @media (max-width: 520px) {
-    .passage-objet { padding: 24px 18px 22px; border-radius: 14px; }
-    .cta-geant { display: flex; padding: 17px 20px; }
+    .passage-objet { padding: 18px 16px 16px; border-radius: 10px; }
+    .cta-geant { display: flex; padding: 13px 18px; }
   }
 
   /* L'attribut hidden ne resiste pas a une regle display, et le navigateur ne
