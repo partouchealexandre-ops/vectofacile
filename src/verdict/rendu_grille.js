@@ -386,16 +386,36 @@ export function rendreActionFichier(fichier, ctaDejaPorte = false) {
       + `<b>Votre fichier est déjà vectoriel.</b> `
       + `C'est celui-là qu'il faut envoyer à votre marqueur.</p></div>`;
   }
-  // LE FAUX VECTORIEL a sa propre sortie, et elle ne depend pas d'une tentative
-  // de vectorisation : on ne retrace pas l'image ecrasee dans un PDF, on
-  // reclame l'originale. Ce cas se traite AVANT les autres, sinon un faux
-  // vectoriel sans drapeau tombe dans « nous préparons votre fichier », ce qui
-  // est faux et le laisse attendre.
+  // LE FAUX VECTORIEL DIT DEUX CHOSES, ET DANS CET ORDRE, 01/09/2026.
+  //
+  // D'abord ce que le fichier est : une image dans un emballage de vectoriel.
+  // Ensuite ce qu'on en fait. Jusqu'a aujourd'hui ce bloc s'arretait a la
+  // premiere moitie et renvoyait vers /vectoriser, pendant que les cartes de
+  // feu, elles, proposaient « Obtenir mon fichier vectoriel » vers un bloc que
+  // ce chemin ne devoilait jamais. Deux voix sur le meme ecran, dont une
+  // morte. Le reflexe gratuit passe toujours devant : le fichier source du
+  // graphiste vaudra toujours mieux que notre trace.
+  let preambule = '';
   if (fichier.origine === 'faux_vectoriel') {
-    return `<div class="verdict-action"><p>`
-      + `<b>Ce fichier porte l'extension d'un vectoriel mais n'en est pas un.</b> `
-      + `<a href="/vectoriser">Déposez l'image d'origine de votre logo</a>, ou réclamez `
-      + `le fichier source à votre graphiste.</p></div>`;
+    const constat = `<b>Ce fichier porte l'extension d'un vectoriel mais n'en est pas un.</b> `;
+    if (fichier.vectorise === true) {
+      // ON NE PROMET PAS UN FICHIER « EN BAS DE PAGE ». Depuis le 24/08/2026,
+      // rien ne se telecharge sans avoir ete demande : le bloc reste cache
+      // jusqu'au clic. Le constat et le reflexe se disent donc ici, et le
+      // bouton reste celui des cartes, comme pour une image.
+      preambule = `<p>${constat}Nous avons retracé l'image qu'il contenait. Si le fichier `
+        + `source existe chez votre graphiste, réclamez-le : il sera meilleur que notre `
+        + `tracé.</p>`;
+    } else if (fichier.vectorise === false) {
+      return `<div class="verdict-action"><p>${constat}`
+        + `Nous n'avons pas pu retracer l'image qu'il contient. `
+        + `<a href="/questions/comment-vectoriser-un-jpeg">Repartez de la plus grande version `
+        + `disponible de votre logo</a>, ou réclamez le fichier source à votre graphiste.</p></div>`;
+    } else {
+      return `<div class="verdict-action"><p>${constat}`
+        + `Nous retraçons l'image qu'il contient, elle sera prête dans un instant. `
+        + `Le fichier source de votre graphiste, s'il existe, vaudra toujours mieux.</p></div>`;
+    }
   }
   if (fichier.vectorise === false) {
     return `<div class="verdict-action"><p>`
@@ -410,11 +430,11 @@ export function rendreActionFichier(fichier, ctaDejaPorte = false) {
     // le meme ecran, ce qui n'est plus un appel a l'action. La ligne qui dit ce
     // qu'on recoit reste, elle : c'est la seule qui l'ecrit.
     if (ctaDejaPorte) {
-      return `<div class="verdict-action"><p class="note">Le bouton des cartes vous donne
+      return `<div class="verdict-action">${preambule}<p class="note">Le bouton des cartes vous donne
       le <b>.eps</b> pour votre marqueur et le <b>.pdf</b> pour vous. Gratuit, sans compte,
       sans envoi de votre fichier.</p></div>`;
     }
-    return `<div class="verdict-action">
+    return `<div class="verdict-action">${preambule}
     <a class="cta-large" href="#telechargements">Obtenir mon fichier vectoriel</a>
     <p class="note">Le <b>.eps</b> pour votre marqueur, le <b>.pdf</b> pour vous. Gratuit,
     sans compte, sans envoi de votre fichier.</p>

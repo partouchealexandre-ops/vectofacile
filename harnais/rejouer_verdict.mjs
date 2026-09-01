@@ -429,11 +429,26 @@ const controle = (libelle, ok, detail) => resultats.push({ libelle, ok, detail }
   const vrai = rendreActionFichier({ origine: 'vectoriel' });
   controle('un vrai vectoriel est felicite, pas sermonne',
            /déjà vectoriel/.test(vrai) && !/refus[ée]/i.test(vrai));
+  // LE FAUX VECTORIEL A TROIS ETATS DEPUIS LE 01/09/2026, et le harnais les
+  // eprouve tous les trois. Il ne s'arrete plus a la porte : son image se
+  // vectorise comme n'importe quelle image, parce que les memes pixels deposes
+  // en JPEG l'etaient deja. Ce qui ne change pas : le constat passe en premier,
+  // et le reflexe gratuit, le fichier source du graphiste, passe avant l'offre.
+  const fauxAttente = rendreActionFichier({ origine: 'faux_vectoriel', vectorise: null });
+  const fauxFait = rendreActionFichier({ origine: 'faux_vectoriel', vectorise: true });
   const faux = rendreActionFichier({ origine: 'faux_vectoriel', vectorise: false });
-  controle('un faux vectoriel garde sa sortie : l\'image d\'origine',
-           /href="\/vectoriser"/.test(faux));
+  controle('un faux vectoriel est nomme pour ce qu\'il est, dans les trois etats',
+           [fauxAttente, fauxFait, faux].every((t) => /n'en est pas un/.test(t)));
+  controle('en attente, il annonce le trace sans le promettre livre',
+           /dans un instant/.test(fauxAttente) && !/en bas de page/.test(fauxAttente));
+  controle('une fois trace, il dit ce qu\'on a fait',
+           /retracé l\'image/.test(fauxFait));
+  controle('et il place le fichier source du graphiste AVANT notre trace',
+           fauxFait.indexOf('réclamez-le') > fauxFait.indexOf('retracé'));
+  controle('si le trace echoue, la sortie est la meme que pour une image',
+           /comment-vectoriser-un-jpeg/.test(faux) && /graphiste/.test(faux));
   // P0.5 tient sur TOUTES les variantes, « impossible » compris.
-  const toutes = [imageOk, imageRefus, vrai, faux].join(' ').toLowerCase();
+  const toutes = [imageOk, imageRefus, vrai, faux, fauxAttente, fauxFait].join(' ').toLowerCase();
   const fautif = MOTS_INTERDITS.find((m) => toutes.includes(m));
   controle('aucun mot interdit dans les actions sur le fichier', !fautif, fautif || 'aucun');
   // Sans etat de fichier connu, aucune action : pas de mensonge par defaut.

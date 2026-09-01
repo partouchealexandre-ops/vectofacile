@@ -224,13 +224,23 @@ await page.waitForTimeout(900);
       Boolean(r.titreFiche) && !/déjà vectoriel/.test(r.titreFiche)],
     ['un conseil le dit en clair',
       r.conseils.some((c) => /n'en est pas un/.test(c))],
-    ['aucun bouton de telechargement n\'apparait', r.telechargements === false],
-    // Le bandeau du fichier, reecrit le 20/08 apres le §1 du brief : il nomme
-    // ce que le fichier EST, il garde ce que son image ouvre deja, et il donne
-    // la sortie, la page Vectoriser mon logo, avec l'image d'origine.
-    ['l\'action donne la sortie : redeposer l\'image d\'origine',
-      /Vectoriser mon logo|image d'origine/.test(r.actionFichier),
-      ],
+    // UN FAUX VECTORIEL SE VECTORISE, arbitrage Alex du 01/09/2026, rendu sur
+    // un EPS reel qui ne contenait qu'une image. Jusque la il etait arrete
+    // comme un vrai vectoriel, pendant que les cartes de feu proposaient
+    // « Obtenir mon fichier vectoriel » vers un bloc que ce chemin ne
+    // devoilait jamais : le bouton ne faisait rien. Et les MEMES pixels
+    // deposes en JPEG etaient vectorises sans discuter.
+    ['un trace est produit : le bouton des cartes a de quoi livrer',
+      r.programme === true],
+    // Rien ne se telecharge sans avoir ete demande, regle du 24/08 : le bloc
+    // reste cache jusqu'au clic, y compris ici.
+    ['mais rien ne se devoile avant que le visiteur le demande',
+      r.telechargements === false],
+    ['le bandeau dit ce qu\'on a fait, et le reflexe gratuit AVANT',
+      /retracé l\'image/.test(r.actionFichier)
+        && r.actionFichier.indexOf('réclamez-le') > r.actionFichier.indexOf('retracé')],
+    ['il ne dit pas que le fichier attend « en bas de page »',
+      !/en bas de page/.test(r.actionFichier)],
     // Un faux vectoriel n'est pas une impasse : son IMAGE reste mesurable, et
     // la page doit donc quand meme repondre a la question posee, puis donner le
     // compte de couleurs. Ce controle verifie les deux etages de la reponse.

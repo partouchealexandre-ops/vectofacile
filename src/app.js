@@ -977,10 +977,12 @@ function afficherFiche(fiche) {
     : 'Votre fichier est déjà vectoriel';
   $('fiche').innerHTML = `
     <h2>${titre}</h2>
-    <p class="note">Nous ne le vectorisons pas : ${fiche.faux_vectoriel
-      ? 'notre vectoriseur ne ferait que retracer l\'image qu\'il contient, et vous auriez une approximation de plus'
-      : 'il n\'y a rien à tracer'}. Nous le mesurons et nous le
-    diagnostiquons, ce qui est l'autre moitié du travail.</p>
+    <p class="note">${fiche.faux_vectoriel
+      ? 'Nous retraçons l\'image qu\'il contient, exactement comme si vous l\'aviez déposée seule : '
+        + 'vous aurez un fichier utilisable, et ce sera une approximation. Si le fichier source existe '
+        + 'chez votre graphiste, il vaudra toujours mieux que notre tracé.'
+      : 'Nous ne le vectorisons pas : il n\'y a rien à tracer. Nous le mesurons et nous le '
+        + 'diagnostiquons, ce qui est l\'autre moitié du travail.'}</p>
     ${ligne('Format', (fiche.format === 'eps' ? 'EPS' : 'PDF')
       + (fiche.pages > 1 ? `, ${nb(fiche.pages)} pages, la première est mesurée` : ''),
       // LA LIGNE DIT CE QUE LE VISITEUR A DEPOSE, 31/08/2026. Elle ecrivait
@@ -1103,9 +1105,27 @@ async function traiter(fichier) {
     // (arbitrage Alex du 20/08). L'origine se connait ici ; pour une image, le
     // sort de la vectorisation se connait plus bas, et le bandeau est re-rendu
     // a ce moment la.
-    etat.fichierEtat = dejaVectoriel
-      ? { origine: etat.fiche?.faux_vectoriel ? 'faux_vectoriel' : 'vectoriel' }
-      : { origine: 'image', vectorise: null };
+    // UN FAUX VECTORIEL N'EST PAS UN VECTORIEL, ET IL SE VECTORISE, 01/09/2026.
+    //
+    // Arbitrage Alex, rendu sur un cas reel : un EPS qui ne contient qu'une
+    // image. Jusqu'ici il etait lu comme un vectoriel, donc arrete avant la
+    // vectorisation, alors que la grille de feux annoncait « Obtenir mon
+    // fichier vectoriel ». Le bouton pointait vers un bloc que ce chemin ne
+    // devoilait jamais : le clic ne faisait rien, et il contredisait le
+    // bandeau pose juste au dessus.
+    //
+    // Et l'asymetrie ne se defendait pas : les MEMES pixels deposes en JPEG
+    // etaient vectorises sans discuter, emballes dans un EPS ils etaient
+    // refuses. Le reflexe gratuit reste dit en premier, « le fichier source
+    // existe peut-etre, reclamez-le », mais le bouton fait ce qu'il promet.
+    const fauxVectoriel = Boolean(etat.fiche?.faux_vectoriel);
+    // L'origine ne change plus en cours de route : un faux vectoriel qui passe
+    // par le vectoriseur reste un faux vectoriel, sinon le bandeau final
+    // parlerait d'une image que le visiteur n'a jamais deposee.
+    const origineFichier = fauxVectoriel ? 'faux_vectoriel' : 'image';
+    etat.fichierEtat = dejaVectoriel && !fauxVectoriel
+      ? { origine: 'vectoriel' }
+      : { origine: origineFichier, vectorise: null };
 
     // SUR /VECTORISER, PAS DE DIAGNOSTIC. La page promet une seule chose,
     // vectoriser, et elle ne fait que ca. Les mesures ont quand meme eu lieu :
@@ -1126,7 +1146,7 @@ async function traiter(fichier) {
     // lui propose aucun telechargement : lui rendre une version tracee de son
     // propre vectoriel serait lui rendre une copie degradee de ce qu'il a
     // deja.
-    if (dejaVectoriel) {
+    if (dejaVectoriel && !fauxVectoriel) {
       // Sur /vectoriser, il faut le DIRE : la page n'affiche pas de fiche, et
       // un depot qui ne produit rien ressemblerait a une panne. Ce fichier n'a
       // pas besoin d'etre vectorise, et c'est une bonne nouvelle.
@@ -1158,7 +1178,7 @@ async function traiter(fichier) {
         <p class="gris">${prepare.refus.texte}</p>`;
       devoiler('resultat');
       terminerAttente();
-      etat.fichierEtat = { origine: 'image', vectorise: false };
+      etat.fichierEtat = { origine: origineFichier, vectorise: false };
       rendreLeVerdict();
       // Pas de fichier pour celui-la, mais son logo existe et l'objet aussi.
       afficherDecouverte();
@@ -1191,7 +1211,7 @@ async function traiter(fichier) {
         le fichier. Le diagnostic ci-dessus reste valable, il décrit bien votre fichier.</p>`;
       devoiler('resultat');
       terminerAttente();
-      etat.fichierEtat = { origine: 'image', vectorise: false };
+      etat.fichierEtat = { origine: origineFichier, vectorise: false };
       rendreLeVerdict();
       afficherDecouverte();
       return;
@@ -1223,6 +1243,10 @@ async function traiter(fichier) {
       ${ligne('Taille déclarée du fichier', tailleLivree(etat.programme),
               largeurDeMarquage() ? 'la largeur que vous avez indiquée'
                                   : 'un point de départ, à redimensionner sans perte')}
+      ${fauxVectoriel ? `<p class="note">Le fichier que vous avez déposé portait
+        l'extension d'un vectoriel sans en être un : il ne contenait qu'une image.
+        C'est cette image que nous venons de retracer. Si le fichier source existe
+        chez votre graphiste, réclamez-le, il sera meilleur que ce tracé.</p>` : ''}
       <p class="note">
         Les fabricants de goodies demandent du .eps ou du .ai, et refusent le
         SVG dans la plupart des cas. Le SVG reste téléchargeable, pour votre
@@ -1234,7 +1258,7 @@ async function traiter(fichier) {
     terminerAttente();
     // Le .eps existe desormais : l'action peut le promettre et pointer vers le
     // bas de page.
-    etat.fichierEtat = { origine: 'image', vectorise: true };
+    etat.fichierEtat = { origine: origineFichier, vectorise: true };
     rendreLeVerdict();
     // PARTIE D DU BRIEF DU 21/08, ET C4 DE LA STRUCTURE DE L'ACCUEIL. La
     // decouverte arrive APRES, jamais avant : le visiteur a ce qu'il venait
