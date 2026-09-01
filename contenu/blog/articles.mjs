@@ -332,4 +332,221 @@ posé sur les objets les plus petits d'abord : ce qui passe là passe partout ai
       },
     ],
   },
+  {
+    // Source : corpus/article_03_refaire_son_logo.md, relu et repris par Alex le
+    // 01/09/2026. La version relue apporte la reponse courte en tete, le test en
+    // trois questions, et la nuance « toutes les techniques n'exigent pas un
+    // vectoriel ». Trois arbitrages ont ete rendus au moment de l'integrer.
+    //
+    // 1. LES FORMATS SONT RENOMMES DANS LE BRIEF. La version relue demandait
+    //    « le fichier source vectoriel ». Sa structure de livrables est
+    //    meilleure que la premiere, mais elle effacait l'arbitrage du 17/08 :
+    //    le SVG est refuse par la plupart des fabricants d'objets, le livrable
+    //    est .eps ou .ai. Un lecteur qui repart avec « fichier vectoriel »
+    //    redemande un SVG et se fait refuser. Les deux sont donc fusionnes :
+    //    sa liste, nos formats, et son PDF de controle qu'on n'avait pas.
+    //
+    // 2. LES LIENS INTERNES SONT REMIS. Ils avaient saute au passage en
+    //    markdown, et une phrase s'etait mise a parler au constructeur du site
+    //    (« l'evaluation doit effectuer ce tri ») au lieu du lecteur.
+    //
+    // 3. LE TITRE EST SAISI NU. La fiche de relecture donnait la balise avec
+    //    « | Bon a Marquer » deja dedans ; le gabarit l'ajoute, et la page
+    //    serait sortie avec le suffixe en double.
+    url: '/blog/refaire-logo-pour-marquage',
+    date: '2026-09-01',
+    axe: "L'arbitrage",
+    mots: ['Refonte de logo', 'Déclinaison', 'Logo monochrome', 'Fichier vectoriel', 'Brief graphiste'],
+    titre: 'Faut-il refaire son logo pour un marquage ?',
+    titreCourt: 'Faut-il refaire son logo pour un marquage',
+    meta: "Logo refusé pour un marquage ? Distinguez fichier à récupérer, déclinaison "
+      + "technique et véritable refonte, puis préparez le bon brief graphiste.",
+    h1: "Faut-il refaire son logo pour le marquage d'un objet ?",
+    chapo: "Dans la grande majorité des cas, non. Un logo refusé pour un marquage n'a pas "
+      + "forcément besoin d'être refait. Il faut d'abord distinguer trois situations : "
+      + "récupérer un fichier exploitable, créer une déclinaison de marquage, ou engager une "
+      + "véritable refonte.",
+    sections: [
+      {
+        h2: 'La réponse courte',
+        html: `
+<ul>
+<li><b>Le dessin convient, mais le fichier est inutilisable</b> : il faut récupérer ou
+reconstituer un fichier vectoriel exploitable.</li>
+<li><b>Le logo fonctionne dans son format habituel, mais pas en petit, en monochrome ou sur
+certains objets</b> : il faut créer une déclinaison de marquage.</li>
+<li><b>Le logo reste difficile à lire sur plusieurs supports, même avec un bon fichier</b> :
+une refonte peut devenir pertinente.</li>
+</ul>
+<p>Une déclinaison n'est pas une refonte. La première adapte le logo à un usage précis. La
+seconde modifie l'identité de la marque.</p>`,
+      },
+      {
+        h2: 'Récupérer, décliner ou refaire : les trois issues possibles',
+        html: `
+<table>
+<thead><tr><th>Issue</th><th>Ce que c'est</th><th>Ce que cela engage</th></tr></thead>
+<tbody>
+<tr><td><b>Récupérer</b></td><td>retrouver ou reconstituer un fichier exploitable du logo existant</td><td>aucun changement d'identité</td></tr>
+<tr><td><b>Décliner</b></td><td>créer une version monochrome, simplifiée ou adaptée aux petits formats</td><td>une décision graphique limitée à certains usages</td></tr>
+<tr><td><b>Refaire</b></td><td>modifier le logo lui-même</td><td>l'ensemble de l'identité et de ses supports</td></tr>
+</tbody>
+</table>
+<p>Une marque peut utiliser pendant des années une version simplifiée pour les petits formats
+sans remplacer son logo principal. Les deux versions coexistent, chacune dans le contexte pour
+lequel elle a été conçue.</p>`,
+      },
+      {
+        h2: 'Le problème vient-il du fichier ou du dessin',
+        html: `
+<p>Le test tient en une question : <b>le défaut disparaît-il avec une meilleure version du
+même logo ?</b> Si oui, le problème appartient au fichier. Si le défaut reste visible avec des
+contours nets, dans un format exploitable et à une taille suffisante, il appartient
+probablement au dessin.</p>
+<p>Les défauts qui appartiennent au <b>fichier</b> :</p>
+<ul>
+<li>le logo n'existe qu'en image matricielle alors que la technique retenue demande des tracés
+vectoriels nets</li>
+<li>un fond ou un contour blanc involontaire serait marqué avec le reste</li>
+<li>l'image est trop petite ou trop compressée pour l'usage prévu</li>
+<li>l'extension du fichier est correcte, mais son contenu ne contient pas de véritables tracés
+vectoriels</li>
+</ul>
+<p>Toutes les techniques de marquage n'exigent pas systématiquement un fichier vectoriel. En
+revanche, la sérigraphie, la tampographie, la gravure et de nombreux travaux de découpe
+demandent généralement des formes propres et exploitables. Le besoin exact dépend de la
+technique choisie et des consignes de l'atelier, et
+<a href="/guide/">chaque fiche technique</a> décrit ce que son procédé sait déposer.</p>
+<p>Les défauts qui appartiennent au <b>dessin</b> :</p>
+<ul>
+<li>deux couleurs proches deviennent indissociables en monochrome</li>
+<li>un dégradé ne peut pas être reproduit par la technique retenue</li>
+<li>le nombre de couleurs dépasse ce que le procédé ou le budget autorise</li>
+<li>des traits, des espaces ou des contre-formes se ferment à la réduction</li>
+<li>une signature ou une baseline devient illisible en petit format</li>
+</ul>
+<p><a href="/">Faire évaluer son logo</a> effectue ce tri défaut par défaut. Une note globale
+ne suffirait pas : ce qu'il faut savoir, c'est ce qui se corrige dans le fichier et ce qui
+suppose une décision graphique.</p>`,
+      },
+      {
+        h2: 'Le test en trois questions',
+        html: `
+<ol>
+<li><b>Existe-t-il un fichier réellement exploitable ?</b> Un PDF, un EPS ou un fichier
+Illustrator peut contenir du vectoriel, mais l'extension seule ne le garantit pas.</li>
+<li><b>Le logo reste-t-il lisible en petit et en une seule couleur ?</b> Si ce n'est pas le
+cas, une déclinaison peut être nécessaire.</li>
+<li><b>Le problème revient-il sur plusieurs supports ?</b> S'il apparaît aussi à l'écran, sur
+un document imprimé et sur un vêtement, la question dépasse probablement le seul
+marquage.</li>
+</ol>`,
+      },
+      {
+        h2: 'Que demander précisément à un graphiste',
+        html: `
+<p>Dans la plupart des cas, la bonne commande est une <b>déclinaison de marquage</b>, pas une
+nouvelle identité. Le brief doit préciser ce qui doit rester intact autant que ce qui peut
+être simplifié.</p>
+<ol>
+<li><b>Les livrables</b> : le fichier source vectoriel en <code>.eps</code> ou en
+<code>.ai</code>, les deux formats que les fabricants d'objets acceptent partout, plus un PDF
+vectoriel de contrôle et les exports demandés par l'atelier.</li>
+<li><b>Ce qui doit rester intact</b> : les proportions principales, la forme distinctive et
+l'esprit du logo.</li>
+<li><b>Ce qui peut évoluer</b> : la signature, un dégradé, une nuance trop proche ou un détail
+qui disparaît en petit.</li>
+<li><b>Les usages prévus</b> : marquage sur objet, petite taille, monochrome, fond clair ou
+fond sombre.</li>
+<li><b>Les versions attendues</b> : complète, simplifiée, monochrome et, si nécessaire,
+négative pour les supports foncés.</li>
+</ol>
+<p>Demandez la version en une seule couleur pendant que le graphiste travaille sur le fichier.
+Elle servira sur de nombreux objets et techniques, et elle évitera une seconde intervention
+plus tard.</p>
+<blockquote class="exergue"><p>Un bon brief protège ce qui doit rester reconnaissable et
+définit précisément ce qui peut céder.</p></blockquote>`,
+      },
+      {
+        h2: 'Quand la refonte devient-elle vraiment pertinente',
+        html: `
+<p>Une difficulté de production isolée ne la justifie pas. Elle devient pertinente lorsque les
+mêmes symptômes apparaissent partout : petite taille à l'écran, impression en noir, broderie,
+signalétique, document photocopié.</p>
+<p>Dans ce cas, le problème n'appartient plus seulement au marquage. Le logo manque
+peut-être de robustesse, de lisibilité ou d'adaptabilité dans l'ensemble de ses usages.</p>
+<p>La décision se prend alors comme une décision de marque : avec un objectif, un budget, un
+calendrier et une réflexion sur tous les supports. Une commande d'objets publicitaires ne doit
+pas précipiter à elle seule un changement d'identité.</p>`,
+      },
+      {
+        h2: "Ce qu'il ne faut pas faire",
+        html: `
+<ul>
+<li><b>Renommer le fichier.</b> Transformer un <code>.jpg</code> en <code>.eps</code> ne crée
+aucun tracé vectoriel.</li>
+<li><b>Agrandir une image trop petite.</b> L'information manquante ne revient pas, le flou
+devient seulement plus grand.</li>
+<li><b>Accepter une vectorisation automatique sans contrôle.</b> Sur un logo simple, elle
+aide. Sur un dessin complexe ou une mauvaise image, elle déforme les courbes et les
+espacements.</li>
+<li><b>Laisser l'atelier modifier le logo sans validation.</b> Toute simplification doit
+apparaître clairement sur le bon à tirer avant la production.</li>
+</ul>
+<p>Avant d'engager une refonte, faites examiner le meilleur fichier dont vous disposez. Si le
+seul défaut est le format, <a href="/vectoriser">vectoriser un fichier de logo</a> le règle en
+quelques minutes et sans compte. Si le doute porte sur les objets plutôt que sur le fichier,
+<a href="/voir-mon-logo">tester le logo sur un objet</a> montre où le dessin tient et où il
+cède. Dans de nombreux cas, récupérer un bon fichier ou préparer une déclinaison suffit à
+rendre le logo marquable sans toucher à l'identité principale.</p>`,
+      },
+    ],
+    faq: [
+      {
+        q: 'Quelle différence entre vectoriser et décliner un logo ?',
+        r: "Vectoriser consiste à reconstruire le même dessin avec des tracés exploitables et "
+          + "redimensionnables. Décliner consiste à modifier volontairement certains éléments "
+          + "pour un usage précis : petite taille, monochrome, fond sombre ou technique de "
+          + "marquage particulière.",
+      },
+      {
+        q: 'Combien coûte une déclinaison de marquage ?',
+        r: "Il n'existe pas de tarif universel. Le coût dépend de la complexité du logo, de "
+          + "l'état du fichier de départ et du nombre de versions demandées. Le devis doit "
+          + "distinguer la reconstruction du fichier, la simplification graphique et la "
+          + "livraison des différentes variantes.",
+      },
+      {
+        q: 'Peut-on créer la déclinaison soi-même ?',
+        r: "Un outil peut convertir des formes simples en tracés. En revanche, décider quels "
+          + "détails supprimer, épaissir ou déplacer relève d'un choix graphique. Sans contrôle, "
+          + "une simplification peut rendre le logo techniquement imprimable mais moins "
+          + "reconnaissable.",
+      },
+      {
+        q: "La version simplifiée doit-elle remplacer l'originale ?",
+        r: "Non. Le logo complet reste utilisé sur les supports qui offrent suffisamment de "
+          + "place. La version de marquage sert aux petits formats, au monochrome et aux "
+          + "techniques qui supportent moins de détails.",
+      },
+      {
+        q: 'Faut-il redéposer la marque après une déclinaison ?',
+        r: "Cela dépend de l'écart entre les versions et de la protection recherchée. C'est une "
+          + "question juridique à poser à un conseil en propriété industrielle, pas une décision "
+          + "que doit prendre le marqueur.",
+      },
+      {
+        q: 'Un logo ancien est-il forcément difficile à marquer ?',
+        r: "Non. L'âge d'un logo ne dit rien de sa marquabilité. Ce qui compte est la qualité du "
+          + "fichier, la lisibilité du dessin en petit format et l'existence de variantes "
+          + "adaptées.",
+      },
+      {
+        q: 'Le marqueur propose une version simplifiée, faut-il accepter ?',
+        r: "Il faut l'examiner, pas l'accepter automatiquement. L'atelier cherche d'abord à "
+          + "rendre la production possible. La marque doit vérifier que la version reste "
+          + "reconnaissable et cohérente avant de signer le bon à tirer.",
+      },
+    ],
+  },
 ];
