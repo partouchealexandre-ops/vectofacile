@@ -720,8 +720,15 @@ console.log('');
       vertsAvecRaison: lignes.filter((l) => l.classList.contains('feu-vert')
         && l.querySelector('.feu-raison')).length,
       // Sous un rouge, le brief du graphiste et son bouton de copie.
+      //
+      // LE BOUTON SE COMPTE DANS LE BRIEF, ET PAS DANS LA PAGE. Il se comptait
+      // partout : le jour ou l'adresse de contact s'est ouverte, les blocs de
+      // demande ont apporte leurs propres boutons de copie, le total a depasse
+      // le nombre de briefs et le controle est tombe en annoncant que les
+      // briefs ne se copiaient plus. Ils se copiaient tous. Un controle qui
+      // compte plus large que ce qu'il affirme finit par mesurer autre chose.
       briefs: bloc.querySelectorAll('.feu-brief').length,
-      copiables: bloc.querySelectorAll('.feu-copier[data-copier]').length,
+      copiables: bloc.querySelectorAll('.feu-brief .feu-copier[data-copier]').length,
       rouges: lignes.filter((l) => l.classList.contains('feu-rouge')).length,
       // L'action du format ne se propose QUE sur un orange de format.
       actionsFormat: bloc.querySelectorAll('.feu-orange .feu-action').length,

@@ -21,7 +21,7 @@
  */
 
 import { CAUSES } from './feux.js';
-import { CONTACT_OPERATIONNEL } from './rendu_grille.js';
+import { CONTACT_OPERATIONNEL, CONTACT, PRIX_REDESSIN_HT_EUR } from './rendu_grille.js';
 import { spritePictos, usePicto, pictoProduit, objets } from './pictos.js';
 
 const echapper = (t) => String(t)
@@ -201,15 +201,21 @@ function brief(ligne) {
   if (!t) return '';
   // LE REFLEXE GRATUIT PASSE AVANT L'OFFRE. C'est la signature du site, et
   // c'est ce qui rend la suite credible.
+  //
+  // CE BLOC A DORMI DERRIERE LE DRAPEAU, ET IL DORMAIT FAUX. Il portait un
+  // champ email et un bouton « Demander cette version » sans aucun gestionnaire
+  // dans tout le programme : le bouton n'aurait rien fait, et il ne pouvait
+  // rien faire, la politique de securite du site interdisant toute soumission
+  // de formulaire. Les deux autres blocs de contact avaient ete corriges le
+  // 31/08 ; celui-ci ne l'avait pas ete parce qu'aucun ecran ne l'affichait.
+  // Un code qu'aucun ecran n'affiche est un code que personne ne relit, et
+  // c'est le drapeau lui-meme qui le cachait.
   const offre = CONTACT_OPERATIONNEL
-    ? `<p>Si elle n'existe pas, on peut la faire. C'est un travail de graphiste, et il
-      resservira à toutes vos commandes. Laissez-nous votre email avec votre logo : on vous
-      dit ce qu'on ferait et ce que ça coûte.</p>
-      <div class="suite-champs">
-        <label for="brief_email">Votre email</label>
-        <input type="email" id="brief_email" placeholder="vous@votre-entreprise.fr">
-        <button id="brief_envoyer" type="button">Demander cette version</button>
-      </div>`
+    ? `<p>Si cette version n'existe pas, nous pouvons la faire faire : un travail de
+      graphiste, ${PRIX_REDESSIN_HT_EUR} € HT une seule fois, et le fichier vous ressert
+      sur toutes vos commandes. Envoyez-nous votre logo en pièce jointe à
+      <a href="mailto:${CONTACT}">${CONTACT}</a>, avec le brief ci-dessus, et nous vous
+      répondons.</p>`
     : '';
   return `<div class="feu-brief">
   <p class="feu-brief-titre">Ce qu'il faut demander à votre graphiste</p>

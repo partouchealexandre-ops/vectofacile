@@ -441,23 +441,24 @@ export function rendreActionFichier(fichier, ctaDejaPorte = false) {
 export const CONTACT = 'contact@bonamarquer.fr';
 
 /**
- * ET L'ADRESSE NE RECOIT RIEN AUJOURD'HUI.
+ * L'ADRESSE RECOIT, DEPUIS LE 01/09/2026.
  *
- * Le domaine bonamarquer.fr est achete depuis le 25/08/2026, mais la boite
- * n'existe pas encore, donc contact@bonamarquer.fr ne peut pas recevoir de
- * courrier. Ce n'est plus le domaine qui bloque, c'est la boite : la raison a
- * change, le blocage tient toujours. L'adresse est deja
- * publiee dans les mentions legales, ce qui est un probleme en soi, mais ce
- * n'est pas une raison pour en fabriquer un second : un formulaire qui ecrit
- * dans le vide est PIRE que pas de formulaire. Le visiteur croit avoir demande
- * un prix, personne ne repond, et c'est le contraire de la confiance qu'on
- * cherche a construire.
+ * Le domaine est achete depuis le 25/08, la boite contact@bonamarquer.fr
+ * existe depuis aujourd'hui et a ete eprouvee : un courrier envoye depuis une
+ * adresse exterieure arrive. C'est cette preuve qui ouvre le drapeau, pas la
+ * creation de la boite : une boite qui existe et qui ne recoit pas produit
+ * exactement le defaut que ce drapeau existe pour empecher, un visiteur qui
+ * croit avoir demande un prix et a qui personne ne repond.
  *
- * Le bloc « et maintenant ? » ne s'affiche donc pas encore. Le jour ou le
- * domaine tourne, ce booleen passe a vrai, une ligne, et le harnais verifie
- * que l'affichage suit dans les deux sens.
+ * Ce que ce booleen commande, et rien d'autre : le bloc « et maintenant ? »
+ * sous le diagnostic, l'offre de redessin quand une limite a ete nommee, et le
+ * paragraphe d'offre sous un brief de graphiste. Les trois donnent l'adresse
+ * ECRITE, aucun ne fabrique de formulaire.
+ *
+ * Il reste un drapeau et il garde son sens : si la boite tombe, il repasse a
+ * faux en une ligne et les trois blocs disparaissent ensemble.
  */
-export const CONTACT_OPERATIONNEL = false;
+export const CONTACT_OPERATIONNEL = true;
 
 /**
  * LE REDESSIN, ET SON PRIX, arbitrage Alex du 26/08, precise le 30/08.

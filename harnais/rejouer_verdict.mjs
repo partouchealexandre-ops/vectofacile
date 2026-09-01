@@ -881,6 +881,10 @@ const controle = (libelle, ok, detail) => resultats.push({ libelle, ok, detail }
     await import('../src/verdict/feux.js');
   const { rendreFeux, pointsAttention, luminance } =
     await import('../src/verdict/rendu_feux.js');
+  // Le drapeau de l'adresse et l'adresse elle-meme, lus a la source : ce bloc
+  // ne les recopie pas, sinon il mesurerait sa propre copie.
+  const { CONTACT, CONTACT_OPERATIONNEL } =
+    await import('../src/verdict/rendu_grille.js');
   const seuils = SEUILS;
   const base = { fusion: { fusionne: false }, degrade: false, seuils };
   const par = (feux) => Object.fromEntries(feux.map((f) => [f.cle, f]));
@@ -962,6 +966,23 @@ const controle = (libelle, ok, detail) => resultats.push({ libelle, ok, detail }
            rendreFeux([neuf.tampographie]).match(/en acceptent[^:]*/)?.[0] ?? '');
   controle('(temoin) la phrase ne pose plus le plafond comme un fait etabli',
            !/Les ateliers en acceptent 4 :/.test(rendreFeux([neuf.tampographie])));
+  // LE TROISIEME BLOC DE CONTACT, celui qui vit sous un brief de graphiste.
+  //
+  // Il avait dormi derriere le drapeau avec un champ email et un bouton sans
+  // gestionnaire, pendant que les deux autres etaient corriges le 31/08.
+  // Personne ne l'a vu parce qu'aucun ecran ne l'affichait. Il est desormais
+  // mesure comme les deux autres, et dans les deux sens.
+  const briefRouge = rendreFeux([neuf.tampographie]);
+  controle('sous un rouge, l\'offre suit le drapeau de l\'adresse',
+           /Envoyez-nous votre logo/.test(briefRouge) === CONTACT_OPERATIONNEL,
+           CONTACT_OPERATIONNEL ? 'adresse operationnelle' : 'adresse pas encore ouverte');
+  controle('elle ne fabrique ni formulaire ni bouton sans gestionnaire',
+           !/<input/.test(briefRouge) && !/id="brief_envoyer"/.test(briefRouge));
+  controle('et elle donne l\'adresse en toutes lettres',
+           !CONTACT_OPERATIONNEL || briefRouge.includes(`>${CONTACT}<`), CONTACT);
+  controle('le reflexe gratuit reste avant l\'offre',
+           briefRouge.indexOf('elle vous appartient') < briefRouge.indexOf('€ HT')
+             || !CONTACT_OPERATIONNEL);
 
   // 5 bis. LE NOMBRE DE COULEURS SE LIT SUR LES EMPLACEMENTS, 26/08/2026.
   //
