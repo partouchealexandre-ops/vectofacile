@@ -64,10 +64,14 @@ pas un procédé industriel : il ne remplace ni l'avis d'un marqueur, ni un bon 
 <p>Parce que ça ne nous coûte presque rien. Tout le calcul se fait sur la machine du
 visiteur : notre serveur n'envoie qu'un peu de code, puis ne fait plus rien. Il n'y a ni
 file d'attente à financer, ni stockage à payer, puisque nous ne conservons aucun fichier.</p>
-<p>Bytouch édite par ailleurs des activités commerciales dans l'univers de l'objet
-publicitaire. Cet outil-ci n'en est pas la vitrine : il n'y a pas de formulaire, pas de
-collecte d'adresses, pas de relance. Si un jour un modèle économique s'y greffe, il sera
-écrit ici, en clair, et il ne passera jamais par vos fichiers.</p>`,
+<p>Bytouch édite par ailleurs <a href="https://iagoodies.fr" rel="noopener">IA Goodies</a>,
+un moteur de recherche d'objets publicitaires. Nous l'écrivons ici parce qu'un site qui
+compare des techniques de marquage doit dire d'où il vient, et non pour vous y envoyer :
+cet outil n'a ni formulaire, ni collecte d'adresses, ni relance.</p>
+<p>Ce site rapporte quelque chose depuis le 1er septembre 2026, et nous avions promis de
+l'écrire ici le jour où ce serait le cas. Quand le diagnostic nomme une limite sur votre
+fichier, nous proposons de le redessiner, à un tarif annoncé dans l'offre elle-même. C'est
+vous qui écrivez, jamais nous, et votre logo ne quitte toujours pas votre navigateur.</p>`,
     },
     {
       h2: 'Comment ce site est construit',
