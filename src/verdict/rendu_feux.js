@@ -136,26 +136,38 @@ function raison(ligne) {
       + 'des courbes, pas une image. Cela s\'appelle un fichier vectoriel, et nous '
       + 'vous le fabriquons ici, gratuitement.';
   }
-  // LE TROISIEME ORANGE, 26/08/2026. Il ne se compose pas d'une phrase toute
-  // faite mais de DEUX FAITS COMPTES, parce qu'un seul mot ne sait pas decrire
-  // un partage. Aucun seuil n'y est publie : ce qui est dit, c'est le nombre
-  // d'emplacements, lu dans archetypes.json, et la mecanique qui l'explique.
-  // Le mot « impossible » n'y figure jamais, arbitrage P0.5.
+  // LE TROISIEME ORANGE, 26/08/2026, REECRIT LE 01/09/2026.
+  //
+  // IL PARLAIT DE NOUS. « Sur les 56 emplacements que nous connaissons pour
+  // cette technique, 31 acceptent 6 couleurs » : c'est vrai, c'est verifiable,
+  // et ca n'aide personne. Le visiteur ne sait pas ce qu'est notre corpus, il
+  // ne sait pas pourquoi il y a 56 emplacements et pas 500, et le chiffre
+  // l'invite a juger notre echantillon au lieu de decider de son marquage. Il
+  // dit meme quelque chose qu'on ne veut pas dire : la taille de ce qu'on a
+  // releve.
+  //
+  // Ce que le visiteur a besoin de savoir tient en deux points : des marqueurs
+  // savent le faire, et ca se paie. Arbitrage Alex du 01/09/2026 : on raisonne
+  // USAGE, pas inventaire.
+  //
+  // Ce qui ne change pas : le plafond appartient a l'EMPLACEMENT, jamais a la
+  // technique. « Des marqueurs acceptent » et « d'autres s'arretent avant »
+  // gardent cette verite, la ou « la serigraphie accepte 6 couleurs » en
+  // ferait une regle du metier qui n'existe pas. Et le mot « impossible » n'y
+  // figure jamais, arbitrage P0.5.
   if (ligne.feu === 'orange' && ligne.nuance === 'couleurs') {
-    const { couleurs, accepte, confortable, total } = ligne.chiffres;
-    const en = (n) => `${n} emplacement${n > 1 ? 's' : ''}`;
-    const debut = `Sur les ${total} emplacements que nous connaissons pour cette technique, `
-      + `${accepte} acceptent ${couleurs} couleurs.`;
+    const { couleurs, accepte, confortable } = ligne.chiffres;
+    const debut = `Des marqueurs acceptent d'aller jusqu'à ${couleurs} couleurs`;
     if (confortable === 0) {
-      return `${debut} Aucun ne le fait sans un écran, un passage et un calage par `
-        + 'couleur : le marquage pèsera lourd dans le devis.';
+      return `${debut}, mais aucun sans un écran, un passage et un calage par couleur : `
+        + 'ce marquage pèsera dans votre devis.';
     }
     if (confortable < accepte) {
-      return `${debut} ${en(confortable)} le font sans surcoût notable ; sur les autres, `
-        + 'chaque couleur demande son propre écran, son propre passage et son propre calage.';
+      return `${debut}. Selon l'emplacement, ça passe presque sans surcoût, ou chaque `
+        + 'couleur ajoute son écran, son passage et son calage.';
     }
-    return `${debut} Les autres n'en acceptent pas autant : c'est l'emplacement qui décide, `
-      + 'pas la technique.';
+    return `${debut}, d'autres s'arrêtent avant : ça se décide à l'emplacement, pas à la `
+      + 'technique. Demandez ce que chaque couleur ajoute à votre devis.';
   }
   if (ligne.feu === 'orange' && ligne.nuance === 'definition') {
     return `Votre image est trop petite pour un marquage de ${ligne.chiffres.tailleMm} mm, `

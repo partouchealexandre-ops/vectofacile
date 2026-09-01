@@ -1057,11 +1057,25 @@ const controle = (libelle, ok, detail) => resultats.push({ libelle, ok, detail }
     controle('la broderie reste verte a sept couleurs : ses emplacements montent a huit',
              sept.broderie.feu === 'vert', sept.broderie.feu);
 
-    // LE TEXTE NE PUBLIE AUCUN SEUIL. Il compte des emplacements et il explique
-    // une mecanique. Et il ne prononce jamais le mot interdit, arbitrage P0.5.
+    // LE TEXTE PARLE DU MARQUAGE DU VISITEUR, PAS DE NOTRE INVENTAIRE,
+    // arbitrage Alex du 01/09/2026. Il disait « sur les 56 emplacements que
+    // nous connaissons pour cette technique, 31 acceptent 6 couleurs » : vrai,
+    // verifiable, et sans usage. Le visiteur ne sait pas ce qu'est notre
+    // corpus, et le chiffre l'invite a juger notre echantillon au lieu de
+    // decider de son marquage.
+    //
+    // Le controle est ecrit sur ce que la phrase DOIT dire, et un temoin
+    // separe interdit le retour de l'ancienne : un controle ecrit en negation
+    // seule passerait au vert sur une phrase vide.
     const texteSept = rendreFeux([sept.serigraphie]);
-    controle('l\'orange couleurs nomme les emplacements, pas un chiffre de metier',
-             /emplacements que nous connaissons/.test(texteSept));
+    controle('l\'orange couleurs parle de marqueurs et de devis',
+             /marqueurs? acceptent/.test(texteSept) && /devis/.test(texteSept));
+    controle('et il laisse le plafond a l\'emplacement, jamais a la technique',
+             /à l'emplacement, pas à la technique/.test(texteSept)
+               && !/la sérigraphie accepte/i.test(texteSept));
+    controle('(temoin) il ne publie plus la taille de notre releve',
+             !/que nous connaissons/.test(texteSept)
+               && !new RegExp(`\\b${sept.serigraphie.chiffres.total}\\b`).test(texteSept));
     controle('(temoin) et il ne dit jamais qu\'un marquage est impossible',
              !/impossible/i.test(texteSept));
 
