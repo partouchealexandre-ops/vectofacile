@@ -113,6 +113,10 @@ for (const f of pages.sort()) {
     // c'est le NOM et l'ancien domaine en .fr qu'on traque.
     ancienNom: [...h.matchAll(/Vecto(?:\s|&nbsp;|<[^>]{1,12}>)+Facile|vectofacile\.fr/gi)].map((m) => m[0]),
     renvoi: (corps.match(RENVOIS) || [])[0] || null,
+    // LES LIENS INTERNES QUE LA PAGE EMET, pour le controle des orphelines
+    // plus bas. On garde l'adresse telle qu'elle est ecrite : la
+    // normalisation se fait au moment de comparer, en un seul endroit.
+    liens: [...new Set([...h.matchAll(/href="(\/[^"#?]*)/g)].map((m) => m[1]))],
   });
 }
 
@@ -168,6 +172,65 @@ for (const l of lignes) {
   if (l.renvoi) ajouter(l.url, `renvoi interne « ${l.renvoi} » : illisible une fois cite seul`);
   if (l.ancienNom.length > 0) {
     ajouter(l.url, `ancien nom servi : ${[...new Set(l.ancienNom)].join(', ')}`);
+  }
+}
+
+/**
+ * LES PAGES ORPHELINES, 01/09/2026.
+ *
+ * POURQUOI CE CONTROLE EXISTE. `/referentiel` est restee deux heures en ligne
+ * sans qu'aucune page du site n'y mene. Le sitemap la declarait, les harnais
+ * etaient verts, et elle etait pourtant invisible : un moteur explore tard et
+ * classe bas une page que rien ne recommande. Aucun instrument ne l'a dit,
+ * c'est un humain qui l'a vu.
+ *
+ * CE QU'IL MESURE. Une page doit RECEVOIR au moins un lien depuis une AUTRE
+ * page. Le controle est ecrit sur ce qui doit etre la, pas sur l'absence d'un
+ * manque : il liste les liens recus, puis nomme celles qui n'en ont aucun.
+ *
+ * UN LIEN VERS SOI-MEME NE COMPTE PAS. Chaque page porte le logotype, qui
+ * mene a l'accueil, et une page qui se citerait elle-meme se declarerait non
+ * orpheline toute seule. C'est exactement le genre de faux vert que le projet
+ * a deja paye.
+ *
+ * LA BARRE FINALE NE COMPTE PAS NON PLUS. Le HTML ecrit `/guide/serigraphie`,
+ * l'arborescence donne `/guide/serigraphie/`. Sans normalisation, ce controle
+ * declarerait les vingt-six pages orphelines et serait ignore des le premier
+ * jour.
+ */
+const sansBarreFinale = (u) => (u.length > 1 ? u.replace(/\/$/, '') : u);
+
+function orphelines(pages) {
+  const recues = new Set();
+  for (const p of pages) {
+    const source = sansBarreFinale(p.url);
+    for (const cible of p.liens) {
+      const c = sansBarreFinale(cible);
+      if (c !== source) recues.add(c);
+    }
+  }
+  return pages.filter((p) => !recues.has(sansBarreFinale(p.url))).map((p) => p.url);
+}
+
+for (const url of orphelines(lignes)) {
+  ajouter(url, 'aucun lien entrant depuis une autre page : page orpheline');
+}
+
+// TEMOIN. Un controle d'absence passe au vert sur du vide, et celui-ci
+// pourrait se taire pour trois raisons : une normalisation qui rate, un
+// selecteur de liens qui ne trouve rien, un lien vers soi-meme compte comme
+// entrant. On lui donne donc un jeu ou la reponse est connue : deux pages qui
+// se citent l'une l'autre, et une troisieme qui ne cite qu'elle-meme. Il doit
+// nommer la troisieme, et elle seule.
+{
+  const attendu = ['/c/'];
+  const rendu = orphelines([
+    { url: '/a/', liens: ['/b'] },
+    { url: '/b/', liens: ['/a'] },
+    { url: '/c/', liens: ['/c'] },
+  ]);
+  if (rendu.join(',') !== attendu.join(',')) {
+    ajouter('(temoin)', `le detecteur d'orphelines rend ${JSON.stringify(rendu)} au lieu de ${JSON.stringify(attendu)}`);
   }
 }
 
